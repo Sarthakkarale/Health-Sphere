@@ -1,0 +1,29 @@
+# Maven
+target/
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Firebase
+src/main/resources/firebase/serviceAccountKey.json
+
+# IntelliJ
+.idea/
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# NetBeans
+nbproject/
+
+# Compiled Java
+*.class
