@@ -23,23 +23,24 @@ public class SelectAccountView {
 
     private final Stage stage;
 
-    // Multi-Step State Tracking
+    // Multi-Step State Tracking (1: Account, 2: Profile, 3: Role Details, 4: Verification, 5: Status Outcome)
     private int currentStep = 1;
     private String selectedRole = "Patient";
 
-    // Dynamic UI Container Handles
+    // Dynamic UI Handles
     private VBox currentlySelectedRoleCard = null;
     private HBox stepIndicatorContainer;
     private StackPane formContentContainer;
     private Text headingText;
     private Text subtitleText;
 
-    // Persisted Input Fields across steps
+    // Persisted Inputs across steps
     private final TextField firstNameField = new TextField();
     private final TextField lastNameField = new TextField();
     private final TextField emailField = new TextField();
     private final PasswordField passwordField = new PasswordField();
     private final PasswordField confirmPasswordField = new PasswordField();
+    private final TextField phoneField = new TextField();
 
     public SelectAccountView(Stage stage) {
         this.stage = stage;
@@ -54,7 +55,6 @@ public class SelectAccountView {
         StackPane leftPanel = createLeftMarketingPanel();
         ScrollPane rightPanel = createRightRegistrationPanel();
 
-        // 38% Left, 62% Right layout proportions
         HBox.setHgrow(leftPanel, Priority.ALWAYS);
         HBox.setHgrow(rightPanel, Priority.ALWAYS);
 
@@ -81,7 +81,7 @@ public class SelectAccountView {
     }
 
     // =========================================================================
-    // LEFT MARKETING PANEL (Design Preserved)
+    // LEFT PANEL (Preserved Design)
     // =========================================================================
     private StackPane createLeftMarketingPanel() {
         StackPane leftStack = new StackPane();
@@ -117,7 +117,7 @@ public class SelectAccountView {
         ImageView logoIcon = createSafeImageView("/images/logo.png", 45, 45);
         Node logoGraphic = logoIcon.getImage() != null ? logoIcon : createFallbackLogoGraphic();
 
-        Text brandTitle = new Text("MediNexus AI");
+        Text brandTitle = new Text("Health-Sphere AI");
         brandTitle.getStyleClass().add("left-logo-text");
         logoBox.getChildren().addAll(logoGraphic, brandTitle);
 
@@ -184,7 +184,7 @@ public class SelectAccountView {
     }
 
     // =========================================================================
-    // RIGHT PANEL & MAIN CONTAINER
+    // RIGHT PANEL MAIN CONTAINER
     // =========================================================================
     private ScrollPane createRightRegistrationPanel() {
         VBox outerWrapper = new VBox();
@@ -228,10 +228,10 @@ public class SelectAccountView {
     }
 
     // =========================================================================
-    // NAVIGATION & STEP INDICATOR UPDATES
+    // STEP NAVIGATION CONTROLLER
     // =========================================================================
     private void goToNextStep() {
-        if (currentStep < 4) {
+        if (currentStep < 5) {
             currentStep++;
             updateStepIndicator();
             renderCurrentStepView();
@@ -249,24 +249,29 @@ public class SelectAccountView {
     private void renderCurrentStepView() {
         switch (currentStep) {
             case 1:
-                headingText.setText("Create Your Account");
-                subtitleText.setText("Join the future of smart healthcare management");
+                headingText.setText("Select Portal");
+                subtitleText.setText("Choose your portal type to get started");
                 formContentContainer.getChildren().setAll(createStep1Pane());
                 break;
             case 2:
                 headingText.setText("Personal Information");
-                subtitleText.setText("Provide your identity details for verification");
+                subtitleText.setText("Provide your personal details for identity verification");
                 formContentContainer.getChildren().setAll(createStep2Pane());
                 break;
             case 3:
                 headingText.setText(selectedRole + " Information");
-                subtitleText.setText("Enter specific details required for your role");
+                subtitleText.setText("Enter role-specific credentials for onboarding");
                 formContentContainer.getChildren().setAll(createStep3Pane());
                 break;
             case 4:
-                headingText.setText("Verify Email Address");
+                headingText.setText("Email Verification");
                 subtitleText.setText("Enter the 6-digit activation code sent to your email");
                 formContentContainer.getChildren().setAll(createStep4Pane());
+                break;
+            case 5:
+                stepIndicatorContainer.setVisible(false);
+                stepIndicatorContainer.setManaged(false);
+                formContentContainer.getChildren().setAll(createStep5Pane());
                 break;
         }
     }
@@ -275,13 +280,13 @@ public class SelectAccountView {
         stepIndicatorContainer.getChildren().clear();
 
         stepIndicatorContainer.getChildren().addAll(
-                createStepNode(1, "Account"),
+                createStepNode(1, "Portal"),
                 createStepLine(),
-                createStepNode(2, "Profile"),
+                createStepNode(2, "Personal"),
                 createStepLine(),
-                createStepNode(3, "Role Details"),
+                createStepNode(3, "Role Info"),
                 createStepLine(),
-                createStepNode(4, "Complete")
+                createStepNode(4, "Verify")
         );
     }
 
@@ -329,7 +334,7 @@ public class SelectAccountView {
     }
 
     // =========================================================================
-    // STEP 1 PANE (Preserved Role Cards)
+    // STEP 1 - SELECT PORTAL (INFORMATIVE CARDS)
     // =========================================================================
     private VBox createStep1Pane() {
         VBox container = new VBox(20);
@@ -338,10 +343,17 @@ public class SelectAccountView {
         grid.setHgap(16);
         grid.setVgap(16);
 
-        VBox patientCard = createRoleCard("/images/patient.png", "👤", "Patient", "Manage health records, appointments & AI medical assistance.", false, false);
-        VBox doctorCard = createRoleCard("/images/doctor.png", "🩺", "Doctor", "Access AI diagnostics, write prescriptions & manage clinic workflows.", false, false);
-        VBox hospitalCard = createRoleCard("/images/hospital.png", "🏥", "Hospital", "Organization level operations, bed tracking & triage scheduling.", false, false);
-        VBox adminCard = createRoleCard("/images/admin.png", "🛡️", "Administrator", "System controls, security audit logs & user governance.", true, true);
+        VBox patientCard = createRoleCard("/images/patient.png", "👤", "Patient", 
+                "Book appointments • Access reports • AI Assistant", false, "Instant Access", "badge-instant-access");
+        
+        VBox doctorCard = createRoleCard("/images/doctor.png", "🩺", "Doctor", 
+                "Medical License Required • Professional Verification", false, "Verification Required", "badge-verification-required");
+        
+        VBox hospitalCard = createRoleCard("/images/hospital.png", "🏥", "Hospital", 
+                "Organization Registration • Admin Approval Required", false, "Approval Required", "badge-verification-required");
+        
+        VBox adminCard = createRoleCard("/images/admin.png", "🛡️", "Administrator", 
+                "System controls • Audit logs • User governance", true, "Invite Only", "badge-invite-only");
 
         if (selectedRole.equalsIgnoreCase("Doctor")) currentlySelectedRoleCard = doctorCard;
         else if (selectedRole.equalsIgnoreCase("Hospital")) currentlySelectedRoleCard = hospitalCard;
@@ -382,7 +394,7 @@ public class SelectAccountView {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button continueBtn = new Button("Continue");
+        Button continueBtn = new Button("Continue →");
         continueBtn.getStyleClass().add("btn-continue");
         addBtnAnimations(continueBtn);
         continueBtn.setOnAction(e -> goToNextStep());
@@ -393,7 +405,7 @@ public class SelectAccountView {
         return container;
     }
 
-    private VBox createRoleCard(String iconPath, String fallbackEmoji, String titleText, String descText, boolean isDisabled, boolean isInviteOnly) {
+    private VBox createRoleCard(String iconPath, String fallbackEmoji, String titleText, String descText, boolean isDisabled, String badgeText, String badgeStyleClass) {
         VBox card = new VBox(8);
         card.getStyleClass().add("role-card");
         card.setAlignment(Pos.CENTER_LEFT);
@@ -413,9 +425,9 @@ public class SelectAccountView {
 
         cardHeader.getChildren().addAll(iconBox, spacer);
 
-        if (isInviteOnly) {
-            Label badge = new Label("INVITE ONLY");
-            badge.getStyleClass().add("badge-invite-only");
+        if (badgeText != null && !badgeText.isEmpty()) {
+            Label badge = new Label(badgeText);
+            badge.getStyleClass().add(badgeStyleClass);
             cardHeader.getChildren().add(badge);
         }
 
@@ -479,7 +491,7 @@ public class SelectAccountView {
     }
 
     // =========================================================================
-    // STEP 2 PANE (Personal Information)
+    // STEP 2 - PERSONAL INFORMATION
     // =========================================================================
     private VBox createStep2Pane() {
         VBox container = new VBox(16);
@@ -499,7 +511,11 @@ public class SelectAccountView {
 
         emailField.setPromptText("john.doe@example.com");
         emailField.getStyleClass().add("text-field-custom");
-        formGrid.add(createFieldWrapper("Email Address", emailField), 0, 1, 2, 1);
+        formGrid.add(createFieldWrapper("Email Address", emailField), 0, 1);
+
+        phoneField.setPromptText("+1 (555) 000-0000");
+        phoneField.getStyleClass().add("text-field-custom");
+        formGrid.add(createFieldWrapper("Phone Number", phoneField), 1, 1);
 
         passwordField.setPromptText("••••••••");
         passwordField.getStyleClass().add("text-field-custom");
@@ -527,7 +543,7 @@ public class SelectAccountView {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button continueBtn = new Button("Continue");
+        Button continueBtn = new Button("Continue →");
         continueBtn.getStyleClass().add("btn-continue");
         addBtnAnimations(continueBtn);
         continueBtn.setOnAction(e -> goToNextStep());
@@ -539,7 +555,7 @@ public class SelectAccountView {
     }
 
     // =========================================================================
-    // STEP 3 PANE (Role Information)
+    // STEP 3 - DYNAMIC ROLE SPECIFIC INFORMATION
     // =========================================================================
     private VBox createStep3Pane() {
         VBox container = new VBox(16);
@@ -565,43 +581,56 @@ public class SelectAccountView {
             bloodGroupCombo.getStyleClass().add("combo-box-custom");
             bloodGroupCombo.setMaxWidth(Double.MAX_VALUE);
 
-            TextField phoneField = new TextField();
-            phoneField.setPromptText("+1 (555) 000-0000");
-            phoneField.getStyleClass().add("text-field-custom");
+            TextField emergencyContactField = new TextField();
+            emergencyContactField.setPromptText("Emergency Contact Name / Phone");
+            emergencyContactField.getStyleClass().add("text-field-custom");
 
             TextField addressField = new TextField();
-            addressField.setPromptText("123 Health Street, City, Country");
+            addressField.setPromptText("123 Health Street, City, State");
             addressField.getStyleClass().add("text-field-custom");
 
             formGrid.add(createFieldWrapper("Date of Birth", dobField), 0, 0);
             formGrid.add(createFieldWrapper("Gender", genderCombo), 1, 0);
             formGrid.add(createFieldWrapper("Blood Group", bloodGroupCombo), 0, 1);
-            formGrid.add(createFieldWrapper("Phone Number", phoneField), 1, 1);
+            formGrid.add(createFieldWrapper("Emergency Contact", emergencyContactField), 1, 1);
             formGrid.add(createFieldWrapper("Residential Address", addressField), 0, 2, 2, 1);
 
         } else if (selectedRole.equalsIgnoreCase("Doctor")) {
-            TextField licenseField = new TextField();
-            licenseField.setPromptText("MED-897452-X");
-            licenseField.getStyleClass().add("text-field-custom");
+            TextField regNoField = new TextField();
+            regNoField.setPromptText("MED-REG-897452");
+            regNoField.getStyleClass().add("text-field-custom");
 
             ComboBox<String> specCombo = new ComboBox<>();
             specCombo.getItems().addAll("Cardiology", "Neurology", "Pediatrics", "General Practice", "Orthopedics", "Dermatology");
-            specCombo.setPromptText("Select Specialty");
+            specCombo.setPromptText("Select Specialization");
             specCombo.getStyleClass().add("combo-box-custom");
             specCombo.setMaxWidth(Double.MAX_VALUE);
+
+            TextField expField = new TextField();
+            expField.setPromptText("Years of Experience (e.g. 8)");
+            expField.getStyleClass().add("text-field-custom");
 
             TextField hospitalAffiliation = new TextField();
             hospitalAffiliation.setPromptText("St. Jude Memorial Hospital");
             hospitalAffiliation.getStyleClass().add("text-field-custom");
 
-            TextField experienceField = new TextField();
-            experienceField.setPromptText("Years of Practice (e.g. 8)");
-            experienceField.getStyleClass().add("text-field-custom");
+            TextField medicalCouncilField = new TextField();
+            medicalCouncilField.setPromptText("Medical Council Name");
+            medicalCouncilField.getStyleClass().add("text-field-custom");
 
-            formGrid.add(createFieldWrapper("Medical License Number", licenseField), 0, 0);
+            HBox uploadStubBox = new HBox();
+            uploadStubBox.setAlignment(Pos.CENTER_LEFT);
+            uploadStubBox.getStyleClass().add("upload-stub-box");
+            Text uploadText = new Text("📄 Medical License (Upload Later via Firebase Storage)");
+            uploadText.getStyleClass().add("upload-stub-text");
+            uploadStubBox.getChildren().add(uploadText);
+
+            formGrid.add(createFieldWrapper("Medical Registration Number", regNoField), 0, 0);
             formGrid.add(createFieldWrapper("Specialization", specCombo), 1, 0);
-            formGrid.add(createFieldWrapper("Hospital Affiliation", hospitalAffiliation), 0, 1);
-            formGrid.add(createFieldWrapper("Years of Experience", experienceField), 1, 1);
+            formGrid.add(createFieldWrapper("Experience (Years)", expField), 0, 1);
+            formGrid.add(createFieldWrapper("Hospital Name", hospitalAffiliation), 1, 1);
+            formGrid.add(createFieldWrapper("Medical Council", medicalCouncilField), 0, 2);
+            formGrid.add(createFieldWrapper("Upload License Document", uploadStubBox), 1, 2);
 
         } else if (selectedRole.equalsIgnoreCase("Hospital")) {
             TextField hospitalName = new TextField();
@@ -612,18 +641,40 @@ public class SelectAccountView {
             regNo.setPromptText("HOSP-REG-9941");
             regNo.getStyleClass().add("text-field-custom");
 
-            TextField addressField = new TextField();
-            addressField.setPromptText("Hospital Facility Address");
-            addressField.getStyleClass().add("text-field-custom");
+            ComboBox<String> typeCombo = new ComboBox<>();
+            typeCombo.getItems().addAll("General Hospital", "Specialized Clinic", "Multispecialty Center", "Trauma Care");
+            typeCombo.setPromptText("Select Type");
+            typeCombo.getStyleClass().add("combo-box-custom");
+            typeCombo.setMaxWidth(Double.MAX_VALUE);
+
+            TextField bedsField = new TextField();
+            bedsField.setPromptText("e.g. 250");
+            bedsField.getStyleClass().add("text-field-custom");
+
+            TextField repNameField = new TextField();
+            repNameField.setPromptText("Authorized Representative Name");
+            repNameField.getStyleClass().add("text-field-custom");
 
             TextField cityField = new TextField();
-            cityField.setPromptText("City / Region");
+            cityField.setPromptText("City");
             cityField.getStyleClass().add("text-field-custom");
+
+            TextField stateField = new TextField();
+            stateField.setPromptText("State / Province");
+            stateField.getStyleClass().add("text-field-custom");
+
+            TextField addressField = new TextField();
+            addressField.setPromptText("Full Facility Street Address");
+            addressField.getStyleClass().add("text-field-custom");
 
             formGrid.add(createFieldWrapper("Hospital / Facility Name", hospitalName), 0, 0, 2, 1);
             formGrid.add(createFieldWrapper("Registration Number", regNo), 0, 1);
-            formGrid.add(createFieldWrapper("City / Location", cityField), 1, 1);
-            formGrid.add(createFieldWrapper("Full Facility Address", addressField), 0, 2, 2, 1);
+            formGrid.add(createFieldWrapper("Facility Type", typeCombo), 1, 1);
+            formGrid.add(createFieldWrapper("Number of Beds", bedsField), 0, 2);
+            formGrid.add(createFieldWrapper("Representative Name", repNameField), 1, 2);
+            formGrid.add(createFieldWrapper("City", cityField), 0, 3);
+            formGrid.add(createFieldWrapper("State", stateField), 1, 3);
+            formGrid.add(createFieldWrapper("Facility Address", addressField), 0, 4, 2, 1);
         }
 
         ColumnConstraints col1 = new ColumnConstraints();
@@ -643,7 +694,7 @@ public class SelectAccountView {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button continueBtn = new Button("Continue");
+        Button continueBtn = new Button("Continue →");
         continueBtn.getStyleClass().add("btn-continue");
         addBtnAnimations(continueBtn);
         continueBtn.setOnAction(e -> goToNextStep());
@@ -655,7 +706,7 @@ public class SelectAccountView {
     }
 
     // =========================================================================
-    // STEP 4 PANE (Verification)
+    // STEP 4 - EMAIL VERIFICATION
     // =========================================================================
     private VBox createStep4Pane() {
         VBox container = new VBox(20);
@@ -684,7 +735,7 @@ public class SelectAccountView {
         Text resendPrompt = new Text("Didn't receive code? ");
         resendPrompt.setStyle("-fx-font-size: 13px; -fx-fill: #6B7280;");
 
-        Text resendLink = new Text("Resend OTP");
+        Text resendLink = new Text("Resend Code");
         resendLink.getStyleClass().add("login-link-text");
 
         resendBox.getChildren().addAll(resendPrompt, resendLink);
@@ -700,18 +751,91 @@ public class SelectAccountView {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button verifyBtn = new Button("Complete Registration");
+        Button verifyBtn = new Button("Verify Email →");
         verifyBtn.getStyleClass().add("btn-continue");
-        verifyBtn.setPrefWidth(220);
+        verifyBtn.setPrefWidth(180);
         addBtnAnimations(verifyBtn);
 
-        verifyBtn.setOnAction(e -> {
-            LoginView loginView = new LoginView(stage);
-            stage.getScene().setRoot(loginView.getScene().getRoot());
-        });
+        verifyBtn.setOnAction(e -> goToNextStep());
 
         bottomControls.getChildren().addAll(backBtn, spacer, verifyBtn);
         container.getChildren().addAll(infoText, otpBox, resendBox, bottomControls);
+
+        return container;
+    }
+
+    // =========================================================================
+    // STEP 5 - DYNAMIC REGISTRATION OUTCOME SCREEN
+    // =========================================================================
+    private VBox createStep5Pane() {
+        VBox container = new VBox(20);
+        container.setAlignment(Pos.CENTER);
+        container.setPadding(new Insets(20, 20, 20, 20));
+
+        if (selectedRole.equalsIgnoreCase("Patient")) {
+            headingText.setText("Registration Successful");
+            subtitleText.setText("Your account is ready for use");
+
+            Label badge = new Label("STATUS: ACTIVE");
+            badge.getStyleClass().add("badge-success");
+
+            Text mainDesc = new Text("Welcome to Health-Sphere! You can now book appointments, access health records, and utilize AI medical assistance.");
+            mainDesc.setStyle("-fx-font-size: 14px; -fx-fill: #4B5563; -fx-text-alignment: center;");
+            mainDesc.setWrappingWidth(500);
+
+            Button actionBtn = new Button("Go to Dashboard →");
+            actionBtn.getStyleClass().add("btn-continue");
+            actionBtn.setPrefWidth(200);
+            addBtnAnimations(actionBtn);
+            actionBtn.setOnAction(e -> {
+                LoginView loginView = new LoginView(stage);
+                stage.getScene().setRoot(loginView.getScene().getRoot());
+            });
+
+            container.getChildren().addAll(badge, mainDesc, actionBtn);
+
+        } else if (selectedRole.equalsIgnoreCase("Doctor")) {
+            headingText.setText("Registration Submitted");
+            subtitleText.setText("Your professional credentials will now be verified");
+
+            Label badge = new Label("STATUS: PENDING APPROVAL");
+            badge.getStyleClass().add("badge-pending");
+
+            Text mainDesc = new Text("Thank you for registering. Our administrative team is reviewing your medical registration details.\n\nEstimated Verification Time: 24–48 Hours");
+            mainDesc.setStyle("-fx-font-size: 14px; -fx-fill: #4B5563; -fx-text-alignment: center;");
+            mainDesc.setWrappingWidth(500);
+
+            Button actionBtn = new Button("Back to Login");
+            actionBtn.getStyleClass().add("btn-back");
+            actionBtn.setPrefWidth(180);
+            actionBtn.setOnAction(e -> {
+                LoginView loginView = new LoginView(stage);
+                stage.getScene().setRoot(loginView.getScene().getRoot());
+            });
+
+            container.getChildren().addAll(badge, mainDesc, actionBtn);
+
+        } else if (selectedRole.equalsIgnoreCase("Hospital")) {
+            headingText.setText("Registration Submitted");
+            subtitleText.setText("Organization verification has started");
+
+            Label badge = new Label("STATUS: PENDING APPROVAL");
+            badge.getStyleClass().add("badge-pending");
+
+            Text mainDesc = new Text("Thank you for onboarding your hospital facility. Our administrative board will contact your official representative for identity confirmation.\n\nEstimated Verification Time: 24–48 Hours");
+            mainDesc.setStyle("-fx-font-size: 14px; -fx-fill: #4B5563; -fx-text-alignment: center;");
+            mainDesc.setWrappingWidth(500);
+
+            Button actionBtn = new Button("Back to Login");
+            actionBtn.getStyleClass().add("btn-back");
+            actionBtn.setPrefWidth(180);
+            actionBtn.setOnAction(e -> {
+                LoginView loginView = new LoginView(stage);
+                stage.getScene().setRoot(loginView.getScene().getRoot());
+            });
+
+            container.getChildren().addAll(badge, mainDesc, actionBtn);
+        }
 
         return container;
     }
@@ -759,7 +883,7 @@ public class SelectAccountView {
         footer.getStyleClass().add("footer-bar");
         footer.setAlignment(Pos.CENTER);
 
-        Text copyright = new Text("MediNexus AI © 2026 Health-Sphere Systems Inc.");
+        Text copyright = new Text("Health-Sphere AI © 2026 Health-Sphere Systems Inc.");
         copyright.getStyleClass().add("footer-copyright");
 
         Region spacer = new Region();

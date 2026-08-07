@@ -6,7 +6,6 @@
     -fx-font-family: 'System', 'Segoe UI', sans-serif;
 }
 
-/* ScrollPane transparent background fix */
 .right-scroll-pane {
     -fx-background-color: transparent;
     -fx-background: transparent;
@@ -129,7 +128,7 @@
 }
 
 /* ==========================================================================
-   ROLE CARDS (STEP 1)
+   ROLE CARDS & BADGES
    ========================================================================== */
 .role-card {
     -fx-background-color: #FFFFFF;
@@ -137,7 +136,7 @@
     -fx-border-width: 1.5px;
     -fx-border-radius: 12px;
     -fx-background-radius: 12px;
-    -fx-padding: 20px;
+    -fx-padding: 18px;
     -fx-cursor: hand;
 }
 
@@ -160,12 +159,49 @@
     -fx-padding: 10px;
 }
 
-.badge-invite-only {
-    -fx-background-color: #FEF3C7;
-    -fx-text-fill: #D97706;
+/* BADGES */
+.badge-instant-access {
+    -fx-background-color: #D1FAE5;
+    -fx-text-fill: #059669;
     -fx-font-size: 10px;
     -fx-font-weight: bold;
     -fx-padding: 4px 8px;
+    -fx-background-radius: 6px;
+}
+
+.badge-verification-required {
+    -fx-background-color: #DBEAFE;
+    -fx-text-fill: #2563EB;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 4px 8px;
+    -fx-background-radius: 6px;
+}
+
+.badge-invite-only {
+    -fx-background-color: #F3F4F6;
+    -fx-text-fill: #6B7280;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 4px 8px;
+    -fx-background-radius: 6px;
+}
+
+.badge-pending {
+    -fx-background-color: #FEF3C7;
+    -fx-text-fill: #D97706;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 6px 12px;
+    -fx-background-radius: 6px;
+}
+
+.badge-success {
+    -fx-background-color: #D1FAE5;
+    -fx-text-fill: #059669;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 6px 12px;
     -fx-background-radius: 6px;
 }
 
@@ -212,12 +248,27 @@
     -fx-border-width: 1.5px;
 }
 
+.upload-stub-box {
+    -fx-background-color: #F9FAFB;
+    -fx-border-color: #D1D5DB;
+    -fx-border-style: segments(4, 4);
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 8px 14px;
+    -fx-pref-height: 42px;
+}
+
+.upload-stub-text {
+    -fx-font-size: 12px;
+    -fx-fill: #6B7280;
+}
+
 .btn-continue {
     -fx-background-color: #2563EB;
     -fx-text-fill: #FFFFFF;
     -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-pref-width: 140px;
+    -fx-pref-width: 150px;
     -fx-pref-height: 44px;
     -fx-background-radius: 10px;
     -fx-cursor: hand;
