@@ -2,28 +2,21 @@ package com.healthsphere;
 
 import com.healthsphere.view.authentication.*;
 import javafx.application.Application;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        try {
-            primaryStage.setTitle("Health-Sphere | Select Portal");
+        primaryStage.setTitle("Health-Sphere AI - Welcome & Account Ready");
 
-            SelectAccountView selectAccountView = new SelectAccountView(primaryStage);
-            Scene scene = selectAccountView.getScene();
+        PatientRegistrationSuccessView successView = new PatientRegistrationSuccessView(primaryStage);
+        primaryStage.setScene(successView.getScene());
 
-            primaryStage.setScene(scene);
-            primaryStage.setMinWidth(1024);
-            primaryStage.setMinHeight(720);
-            primaryStage.setMaximized(true);
-            primaryStage.show();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        primaryStage.setMinWidth(1100);
+        primaryStage.setMinHeight(750);
+        primaryStage.centerOnScreen();
+        primaryStage.show();
     }
 
     public static void main(String[] args) {
