@@ -2,7 +2,7 @@ package com.healthsphere.view.authentication;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node; // Added explicit import for Node
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -26,16 +26,17 @@ import javafx.stage.Stage;
 
 /**
  * Pure JavaFX Login View for Health-Sphere / MediNexus AI.
- * Updated with complete explicit imports including javafx.scene.Node.
+ * Implements navigation using the static View.stage reference.
  */
 public class LoginView {
 
-    private final Stage stage;
     private Button selectedRoleBtn = null;
 
-    public LoginView(Stage stage) {
-        this.stage = stage;
-    }
+    // Default Constructor
+    public LoginView() {}
+
+    // Overloaded Constructor for compatibility
+    public LoginView(Stage stage) {}
 
     public Scene getScene() {
         HBox root = new HBox();
@@ -224,10 +225,9 @@ public class LoginView {
         loginBtn.getStyleClass().add("btn-login-primary");
         loginBtn.setMaxWidth(Double.MAX_VALUE);
 
-        // Navigation on Login Click -> Switch scene root directly to DashboardView
+        // NAVIGATION: Switches stage scene back to initial View using static stage reference
         loginBtn.setOnAction(e -> {
-            DashboardView dashboard = new DashboardView(stage);
-            stage.getScene().setRoot(dashboard.getScene().getRoot());
+            View.stage.setScene(new View().getScene());
         });
 
         Button createAccountBtn = new Button("Create New Account");

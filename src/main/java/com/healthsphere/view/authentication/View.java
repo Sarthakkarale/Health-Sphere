@@ -1,5 +1,6 @@
 package com.healthsphere.view.authentication;
 
+import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -19,15 +20,24 @@ import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 
 /**
- * Pure JavaFX Dashboard / Landing View for Health-Sphere.
- * Option B Implementation: Uses direct image asset for logo.
+ * Main Entry View Class for Health-Sphere UI.
+ * Extends Application and holds the central shared static Stage for navigation.
  */
-public class DashboardView {
+public class View extends Application {
 
-    private final Stage stage;
+    // Single static Stage shared across all views in the application
+    public static Stage stage;
 
-    public DashboardView(Stage stage) {
-        this.stage = stage;
+    @Override
+    public void start(Stage primaryStage) {
+        View.stage = primaryStage;
+        View.stage.setTitle("Health-Sphere | AI Powered Healthcare Management System");
+        View.stage.setMinWidth(1024);
+        View.stage.setMinHeight(700);
+
+        View.stage.setScene(getScene());
+        View.stage.centerOnScreen();
+        View.stage.show();
     }
 
     public Scene getScene() {
@@ -40,7 +50,7 @@ public class DashboardView {
         root.setBottom(createFooter());
 
         Scene scene = new Scene(root, 1280, 800);
-        
+
         // Attach Stylesheet safely
         String cssPath = getClass().getResource("/css/dashboard.css") != null 
                 ? getClass().getResource("/css/dashboard.css").toExternalForm() 
@@ -105,7 +115,6 @@ public class DashboardView {
         HBox.setHgrow(leftContent, Priority.ALWAYS);
         leftContent.setMaxWidth(520);
 
-        // Option B: Standard ImageView Logo replacing BrandLogo custom component
         ImageView logoView = createSafeImageView("/images/icons/brand_logo.png", 110, 110);
 
         // Headline Text
@@ -129,12 +138,17 @@ public class DashboardView {
 
         Button signUpBtn = new Button("Sign Up");
         signUpBtn.getStyleClass().add("btn-primary");
-        signUpBtn.setOnAction(e->{
-            stage.setScene(new LoginView(stage).getScene());
+        signUpBtn.setOnAction(e -> {
+            // Direct stage scene switching using shared static stage
+            View.stage.setScene(new LoginView(View.stage).getScene());
         });
 
         Button registerBtn = new Button("Register");
         registerBtn.getStyleClass().add("btn-teal");
+        registerBtn.setOnAction(e -> {
+            // Direct stage scene switching using shared static stage
+            View.stage.setScene(new RegisterView(View.stage).getScene());
+        });
 
         buttonRow.getChildren().addAll(signUpBtn, registerBtn);
 
@@ -180,7 +194,7 @@ public class DashboardView {
 
         HBox cardHeader = new HBox(6);
         cardHeader.setAlignment(Pos.CENTER_LEFT);
-        
+
         ImageView sparkleIcon = createSafeImageView("/images/icons/icon_sparkle.png", 14, 14);
         Text cardTitle = new Text("LIVE INSIGHT");
         cardTitle.getStyleClass().add("floating-card-title");

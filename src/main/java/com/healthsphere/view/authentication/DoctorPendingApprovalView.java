@@ -202,18 +202,25 @@ public class DoctorPendingApprovalView {
         // 7. Why Verification Card
         HBox whyVerificationCard = createWhyVerificationCard();
 
-        // 8 & 9. Buttons
+        // 8. Track Application Status Button (Direct Pure JavaFX Navigation)
         Button trackStatusBtn = new Button("Track Application Status");
         trackStatusBtn.getStyleClass().add("btn-continue");
         trackStatusBtn.setMaxWidth(Double.MAX_VALUE);
         addBtnAnimations(trackStatusBtn, Color.rgb(37, 99, 235, 0.40));
+        
+        trackStatusBtn.setOnAction(e -> {
+            // Example direct navigation:
+            // DoctorDashboardView dashboardView = new DoctorDashboardView(stage);
+            // stage.setScene(dashboardView.getScene());
+        });
 
+        // 9. Back to Login Button (Direct Pure JavaFX Navigation)
         Button backToLoginBtn = new Button("Back to Login");
         backToLoginBtn.getStyleClass().add("btn-back");
         backToLoginBtn.setMaxWidth(Double.MAX_VALUE);
         backToLoginBtn.setOnAction(e -> {
             LoginView loginView = new LoginView(stage);
-            stage.getScene().setRoot(loginView.getScene().getRoot());
+            stage.setScene(loginView.getScene());
         });
 
         // 10. Support Link
@@ -250,7 +257,6 @@ public class DoctorPendingApprovalView {
             return illustrationImg;
         }
 
-        // Vector Fallback Illustration (Shield + Clock + Document Concept)
         StackPane illustrationPane = new StackPane();
         illustrationPane.setPrefSize(160, 160);
         illustrationPane.setMaxSize(160, 160);
@@ -298,7 +304,6 @@ public class DoctorPendingApprovalView {
         card.setPadding(new Insets(18));
         card.setStyle("-fx-background-color: #FFFFFF; -fx-border-color: #E5E7EB; -fx-border-width: 1px; -fx-border-radius: 12px; -fx-background-radius: 12px;");
 
-        // Header Line
         HBox header = new HBox();
         header.setAlignment(Pos.CENTER_LEFT);
 
@@ -313,11 +318,9 @@ public class DoctorPendingApprovalView {
 
         header.getChildren().addAll(headerTitle, spacer, pendingBadge);
 
-        // Divider Line
         Line divider = new Line(0, 0, 580, 0);
         divider.setStyle("-fx-stroke: #F3F4F6; -fx-stroke-width: 1px;");
 
-        // Checklist Rows
         VBox checklist = new VBox(12);
 
         HBox row1 = createChecklistRow("✓", "#16A34A", "Application received", "#16A34A");

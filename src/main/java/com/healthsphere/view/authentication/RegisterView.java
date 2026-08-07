@@ -19,7 +19,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-public class SelectAccountView {
+public class RegisterView {
 
     private final Stage stage;
 
@@ -42,7 +42,7 @@ public class SelectAccountView {
     private final PasswordField confirmPasswordField = new PasswordField();
     private final TextField phoneField = new TextField();
 
-    public SelectAccountView(Stage stage) {
+    public RegisterView(Stage stage) {
         this.stage = stage;
     }
 
@@ -385,8 +385,7 @@ public class SelectAccountView {
         loginLink.getStyleClass().add("login-link-text");
 
         loginLink.setOnMouseClicked(e -> {
-            LoginView loginView = new LoginView(stage);
-            stage.getScene().setRoot(loginView.getScene().getRoot());
+            stage.setScene(new LoginView(stage).getScene());
         });
 
         loginPromptBox.getChildren().addAll(promptText, loginLink);
@@ -765,163 +764,110 @@ public class SelectAccountView {
     }
 
     // =========================================================================
-    // STEP 5 - DYNAMIC REGISTRATION OUTCOME SCREEN
+    // STEP 5 - DYNAMIC REGISTRATION OUTCOME / STATUS
     // =========================================================================
     private VBox createStep5Pane() {
         VBox container = new VBox(20);
         container.setAlignment(Pos.CENTER);
-        container.setPadding(new Insets(20, 20, 20, 20));
+        container.setPadding(new Insets(20, 30, 20, 30));
 
-        if (selectedRole.equalsIgnoreCase("Patient")) {
-            headingText.setText("Registration Successful");
-            subtitleText.setText("Your account is ready for use");
+        StackPane statusIconPane = new StackPane();
+        Circle statusCircle = new Circle(36);
 
-            Label badge = new Label("STATUS: ACTIVE");
-            badge.getStyleClass().add("badge-success");
+        boolean isInstant = selectedRole.equalsIgnoreCase("Patient");
 
-            Text mainDesc = new Text("Welcome to Health-Sphere! You can now book appointments, access health records, and utilize AI medical assistance.");
-            mainDesc.setStyle("-fx-font-size: 14px; -fx-fill: #4B5563; -fx-text-alignment: center;");
-            mainDesc.setWrappingWidth(500);
+        if (isInstant) {
+            statusCircle.setFill(Color.web("#DCFCE7"));
+            Text checkMark = new Text("✓");
+            checkMark.setStyle("-fx-fill: #166534; -fx-font-size: 32px; -fx-font-weight: bold;");
+            statusIconPane.getChildren().addAll(statusCircle, checkMark);
 
-            Button actionBtn = new Button("Go to Dashboard →");
-            actionBtn.getStyleClass().add("btn-continue");
-            actionBtn.setPrefWidth(200);
-            addBtnAnimations(actionBtn);
-            actionBtn.setOnAction(e -> {
-                LoginView loginView = new LoginView(stage);
-                stage.getScene().setRoot(loginView.getScene().getRoot());
-            });
+            headingText.setText("Registration Complete!");
+            subtitleText.setText("Your account has been successfully created");
 
-            container.getChildren().addAll(badge, mainDesc, actionBtn);
+            Label successMsg = new Label("Welcome to Health-Sphere AI! Your patient profile is active and ready.");
+            successMsg.setStyle("-fx-font-size: 14px; -fx-text-fill: #374151; -fx-wrap-text: true; -fx-text-alignment: center;");
+            container.getChildren().addAll(statusIconPane, successMsg);
 
-        } else if (selectedRole.equalsIgnoreCase("Doctor")) {
-            headingText.setText("Registration Submitted");
-            subtitleText.setText("Your professional credentials will now be verified");
+        } else {
+            statusCircle.setFill(Color.web("#FEF3C7"));
+            Text pendingIcon = new Text("⏳");
+            pendingIcon.setStyle("-fx-fill: #92400E; -fx-font-size: 28px;");
+            statusIconPane.getChildren().addAll(statusCircle, pendingIcon);
 
-            Label badge = new Label("STATUS: PENDING APPROVAL");
-            badge.getStyleClass().add("badge-pending");
+            headingText.setText("Verification Pending");
+            subtitleText.setText("Application submitted successfully");
 
-            Text mainDesc = new Text("Thank you for registering. Our administrative team is reviewing your medical registration details.\n\nEstimated Verification Time: 24–48 Hours");
-            mainDesc.setStyle("-fx-font-size: 14px; -fx-fill: #4B5563; -fx-text-alignment: center;");
-            mainDesc.setWrappingWidth(500);
-
-            Button actionBtn = new Button("Back to Login");
-            actionBtn.getStyleClass().add("btn-back");
-            actionBtn.setPrefWidth(180);
-            actionBtn.setOnAction(e -> {
-                LoginView loginView = new LoginView(stage);
-                stage.getScene().setRoot(loginView.getScene().getRoot());
-            });
-
-            container.getChildren().addAll(badge, mainDesc, actionBtn);
-
-        } else if (selectedRole.equalsIgnoreCase("Hospital")) {
-            headingText.setText("Registration Submitted");
-            subtitleText.setText("Organization verification has started");
-
-            Label badge = new Label("STATUS: PENDING APPROVAL");
-            badge.getStyleClass().add("badge-pending");
-
-            Text mainDesc = new Text("Thank you for onboarding your hospital facility. Our administrative board will contact your official representative for identity confirmation.\n\nEstimated Verification Time: 24–48 Hours");
-            mainDesc.setStyle("-fx-font-size: 14px; -fx-fill: #4B5563; -fx-text-alignment: center;");
-            mainDesc.setWrappingWidth(500);
-
-            Button actionBtn = new Button("Back to Login");
-            actionBtn.getStyleClass().add("btn-back");
-            actionBtn.setPrefWidth(180);
-            actionBtn.setOnAction(e -> {
-                LoginView loginView = new LoginView(stage);
-                stage.getScene().setRoot(loginView.getScene().getRoot());
-            });
-
-            container.getChildren().addAll(badge, mainDesc, actionBtn);
+            Label pendingMsg = new Label("Thank you for registering as a " + selectedRole + 
+                    ". Your application and medical credentials are currently under review by our administration team. " +
+                    "You will receive an email notification once your account is verified.");
+            pendingMsg.setStyle("-fx-font-size: 14px; -fx-text-fill: #374151; -fx-wrap-text: true; -fx-text-alignment: center;");
+            container.getChildren().addAll(statusIconPane, pendingMsg);
         }
+
+        Button proceedLoginBtn = new Button("Proceed to Login");
+        proceedLoginBtn.getStyleClass().add("btn-continue");
+        proceedLoginBtn.setPrefWidth(220);
+        addBtnAnimations(proceedLoginBtn);
+
+        proceedLoginBtn.setOnAction(e -> {
+            stage.setScene(new LoginView(stage).getScene());
+        });
+
+        container.getChildren().add(proceedLoginBtn);
 
         return container;
     }
 
     // =========================================================================
-    // HELPER UI FACTORIES
+    // HELPER UI BUILDERS & UTILITIES
     // =========================================================================
-    private VBox createFieldWrapper(String labelText, Node inputNode) {
-        VBox box = new VBox(6);
-        box.setAlignment(Pos.CENTER_LEFT);
-
+    private VBox createFieldWrapper(String labelText, Node field) {
+        VBox wrapper = new VBox(6);
         Label label = new Label(labelText);
-        label.getStyleClass().add("form-label");
-
-        box.getChildren().addAll(label, inputNode);
-        return box;
+        label.getStyleClass().add("field-label");
+        wrapper.getChildren().addAll(label, field);
+        return wrapper;
     }
 
-    private void addBtnAnimations(Button btn) {
-        DropShadow btnGlow = new DropShadow();
-        btnGlow.setColor(Color.rgb(37, 99, 235, 0.40));
-        btnGlow.setRadius(12);
+    private ImageView createSafeImageView(String resourcePath, double width, double height) {
+        ImageView imageView = new ImageView();
+        imageView.setFitWidth(width);
+        imageView.setFitHeight(height);
+        imageView.setPreserveRatio(true);
 
-        ScaleTransition scaleUp = new ScaleTransition(Duration.millis(120), btn);
+        try {
+            if (getClass().getResource(resourcePath) != null) {
+                imageView.setImage(new Image(getClass().getResourceAsStream(resourcePath)));
+            }
+        } catch (Exception ignored) {}
+
+        return imageView;
+    }
+
+    private void addBtnAnimations(Button button) {
+        ScaleTransition scaleUp = new ScaleTransition(Duration.millis(120), button);
         scaleUp.setToX(1.02);
         scaleUp.setToY(1.02);
 
-        ScaleTransition scaleDown = new ScaleTransition(Duration.millis(120), btn);
+        ScaleTransition scaleDown = new ScaleTransition(Duration.millis(120), button);
         scaleDown.setToX(1.0);
         scaleDown.setToY(1.0);
 
-        btn.setOnMouseEntered(e -> {
-            btn.setEffect(btnGlow);
-            scaleUp.playFromStart();
-        });
-
-        btn.setOnMouseExited(e -> {
-            btn.setEffect(null);
-            scaleDown.playFromStart();
-        });
+        button.setOnMouseEntered(e -> scaleUp.playFromStart());
+        button.setOnMouseExited(e -> scaleDown.playFromStart());
     }
 
     private HBox createFooter() {
         HBox footer = new HBox();
-        footer.getStyleClass().add("footer-bar");
+        footer.getStyleClass().add("footer-container");
         footer.setAlignment(Pos.CENTER);
+        footer.setPadding(new Insets(12, 24, 12, 24));
 
-        Text copyright = new Text("Health-Sphere AI © 2026 Health-Sphere Systems Inc.");
-        copyright.getStyleClass().add("footer-copyright");
+        Text footerText = new Text("© 2026 Health-Sphere AI. All rights reserved. | Terms of Service | Privacy Policy");
+        footerText.getStyleClass().add("footer-text");
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        HBox linksBox = new HBox(20);
-        linksBox.setAlignment(Pos.CENTER_RIGHT);
-
-        Text privacy = new Text("Privacy");
-        privacy.getStyleClass().add("footer-hyperlink");
-
-        Text terms = new Text("Terms");
-        terms.getStyleClass().add("footer-hyperlink");
-
-        Text security = new Text("Security");
-        security.getStyleClass().add("footer-hyperlink");
-
-        Text hipaa = new Text("HIPAA");
-        hipaa.getStyleClass().add("footer-hyperlink");
-
-        linksBox.getChildren().addAll(privacy, terms, security, hipaa);
-        footer.getChildren().addAll(copyright, spacer, linksBox);
-
+        footer.getChildren().add(footerText);
         return footer;
-    }
-
-    private ImageView createSafeImageView(String path, double width, double height) {
-        ImageView img = new ImageView();
-        img.setFitWidth(width);
-        img.setFitHeight(height);
-        img.setPreserveRatio(true);
-
-        try {
-            if (getClass().getResource(path) != null) {
-                img.setImage(new Image(getClass().getResourceAsStream(path)));
-            }
-        } catch (Exception ignored) {}
-
-        return img;
     }
 }

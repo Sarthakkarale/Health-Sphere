@@ -319,28 +319,36 @@ public class PatientRegistrationSuccessView {
     }
 
     // =========================================================================
-    // BUTTONS LAYOUT (HBox)
+    // BUTTONS LAYOUT (HBox) WITH DIRECT PURE JAVAFX NAVIGATION
     // =========================================================================
     private HBox createButtonLayout() {
         HBox box = new HBox(16);
         box.setAlignment(Pos.CENTER);
         box.setPadding(new Insets(8, 0, 0, 0));
 
-        // Secondary Button: White (220 x 50)
+        // Secondary Button: White (220 x 50) -> Navigates to LoginView
         Button backToLoginBtn = new Button("Back to Login");
         backToLoginBtn.getStyleClass().add("btn-back");
         backToLoginBtn.setPrefSize(220, 50);
         backToLoginBtn.setOnAction(e -> {
             LoginView loginView = new LoginView(stage);
-            stage.getScene().setRoot(loginView.getScene().getRoot());
+            stage.setScene(loginView.getScene());
         });
 
-        // Primary Button: Blue #2563EB (250 x 50)
+        // Primary Button: Blue #2563EB (250 x 50) -> Navigates to PatientDashboardView
         Button continueBtn = new Button("Continue to Dashboard →");
         continueBtn.getStyleClass().add("btn-continue");
         continueBtn.setPrefSize(250, 50);
         continueBtn.setStyle("-fx-background-color: #2563EB; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 8px;");
         addBtnHoverEffect(continueBtn, Color.rgb(37, 99, 235, 0.40));
+        
+        // continueBtn.setOnAction(e -> {
+        //     // Instantiate and navigate directly to Patient Dashboard
+        //     // (Make sure PatientDashboardView exists in your patient view package)
+        //     com.healthsphere.view.patient.PatientDashboardView dashboardView = 
+        //         new com.healthsphere.view.patient.PatientDashboardView(stage);
+        //     stage.setScene(dashboardView.getScene());
+        // });
 
         box.getChildren().addAll(backToLoginBtn, continueBtn);
         return box;
