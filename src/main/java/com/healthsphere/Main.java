@@ -1,6 +1,6 @@
 package com.healthsphere;
 
-import com.healthsphere.view.authentication.SplashView;
+import com.healthsphere.view.authentication.*;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -9,26 +9,21 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        try {
+            primaryStage.setTitle("Health-Sphere | Select Portal");
 
-        // Create Splash Screen
-        SplashView splashView = new SplashView();
+            SelectAccountView selectAccountView = new SelectAccountView(primaryStage);
+            Scene scene = selectAccountView.getScene();
 
-        // Create Scene
-        Scene scene = splashView.getScene();
+            primaryStage.setScene(scene);
+            primaryStage.setMinWidth(1024);
+            primaryStage.setMinHeight(720);
+            primaryStage.setMaximized(true);
+            primaryStage.show();
 
-        // Configure Stage
-        primaryStage.setTitle("Health-Sphere");
-        primaryStage.setScene(scene);
-
-        primaryStage.setWidth(1440);
-        primaryStage.setHeight(900);
-
-        primaryStage.setMinWidth(1200);
-        primaryStage.setMinHeight(700);
-
-        primaryStage.setMaximized(true);
-
-        primaryStage.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) {
