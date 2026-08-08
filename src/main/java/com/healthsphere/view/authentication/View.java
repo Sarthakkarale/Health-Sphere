@@ -32,11 +32,10 @@ public class View extends Application {
     public void start(Stage primaryStage) {
         View.stage = primaryStage;
         View.stage.setTitle("Health-Sphere | AI Powered Healthcare Management System");
-        View.stage.setMinWidth(1024);
-        View.stage.setMinHeight(700);
 
         View.stage.setScene(getScene());
         View.stage.centerOnScreen();
+        View.stage.setMaximized(true);
         View.stage.show();
     }
 
@@ -49,7 +48,7 @@ public class View extends Application {
         root.setCenter(createMainContent());
         root.setBottom(createFooter());
 
-        Scene scene = new Scene(root, 1280, 800);
+        Scene scene = new Scene(root,stage.getWidth(),stage.getHeight());
 
         // Attach Stylesheet safely
         String cssPath = getClass().getResource("/css/dashboard.css") != null 
