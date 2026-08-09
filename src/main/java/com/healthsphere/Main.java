@@ -14,3 +14,4 @@ public class Main {
         Application.launch(View.class, args);
     }
 }
+

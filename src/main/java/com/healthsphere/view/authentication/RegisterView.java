@@ -68,7 +68,7 @@ public class RegisterView {
         root.setCenter(mainContent);
         root.setBottom(createFooter());
 
-        Scene scene = new Scene(root, 1280, 850);
+        Scene scene = new Scene(root,stage.getWidth(),stage.getHeight());
 
         String cssResource = getClass().getResource("/css/auth.css") != null
                 ? getClass().getResource("/css/auth.css").toExternalForm()

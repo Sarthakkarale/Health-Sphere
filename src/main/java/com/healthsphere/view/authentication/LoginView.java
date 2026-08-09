@@ -31,12 +31,16 @@ import javafx.stage.Stage;
 public class LoginView {
 
     private Button selectedRoleBtn = null;
+    private final Stage stage;
 
     // Default Constructor
-    public LoginView() {}
+    public LoginView() {
+        this.stage = new Stage();}
 
     // Overloaded Constructor for compatibility
-    public LoginView(Stage stage) {}
+    public LoginView(Stage stage) {
+        this.stage=stage;
+    }
 
     public Scene getScene() {
         HBox root = new HBox();
@@ -55,7 +59,7 @@ public class LoginView {
 
         root.getChildren().addAll(leftHero, rightScroll);
 
-        Scene scene = new Scene(root, 1280, 850);
+        Scene scene = new Scene(root,stage.getWidth(),stage.getHeight());
 
         // Load CSS stylesheet safely
         String cssPath = getClass().getResource("/css/login.css") != null 
@@ -209,6 +213,14 @@ public class LoginView {
         HBox.setHgrow(passSpacer, Priority.ALWAYS);
         Hyperlink forgotPass = new Hyperlink("Forgot Password?");
         forgotPass.setStyle("-fx-font-size: 11px; -fx-text-fill: #0256D0; -fx-padding: 0;");
+        // Assuming 'forgotPasswordLink' is your Hyperlink or Button for resetting passwords
+        forgotPass.setOnAction(event -> {
+            // Instantiate the ForgotPasswordView, passing the primary stage
+            ForgotPasswordView forgotPasswordView = new ForgotPasswordView(stage);
+            
+            // Switch the scene directly on the stage (No FXML, No Navigator class)
+            stage.setScene(forgotPasswordView.getScene());
+        });
         passHeader.getChildren().addAll(passLabel, passSpacer, forgotPass);
 
         PasswordField passField = new PasswordField();
@@ -230,9 +242,19 @@ public class LoginView {
             View.stage.setScene(new View().getScene());
         });
 
+       
+        // Inside createRightFormPanel() in LoginView.java:
+
         Button createAccountBtn = new Button("Create New Account");
         createAccountBtn.getStyleClass().add("btn-outline");
         createAccountBtn.setMaxWidth(Double.MAX_VALUE);
+
+        // ADD THIS NAVIGATION HANDLER:
+        createAccountBtn.setOnAction(e -> {
+            RegisterView registerView = new RegisterView(stage);
+            stage.setScene(registerView.getScene());
+        });
+
 
         // Divider
         HBox divider = new HBox(10);
