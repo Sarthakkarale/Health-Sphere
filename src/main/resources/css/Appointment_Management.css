@@ -1,0 +1,992 @@
+/* =========================================================
+   ROOT
+   ========================================================= */
+
+.appointment-root {
+    -fx-background-color: #F8F8FD;
+    -fx-font-family: "Segoe UI";
+}
+
+.main-scroll {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.main-scroll > .viewport {
+    -fx-background-color: #F8F8FD;
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.sidebar {
+    -fx-background-color: #FAFAFF;
+
+    -fx-border-color: #D9DDE7;
+    -fx-border-width: 0 1px 0 0;
+}
+
+.logo {
+    -fx-font-size: 25px;
+
+    -fx-font-weight: bold;
+
+    -fx-text-fill: #0752BE;
+
+    -fx-line-spacing: -5px;
+}
+
+.logo-subtitle {
+    -fx-font-size: 9px;
+
+    -fx-text-fill: #6D7480;
+}
+
+
+/* Navigation */
+
+.navigation-button {
+    -fx-background-color: transparent;
+
+    -fx-background-radius: 7px;
+
+    -fx-padding: 0 9px;
+
+    -fx-cursor: hand;
+}
+
+.navigation-button:hover {
+    -fx-background-color: #EEF3FF;
+}
+
+.navigation-active {
+    -fx-background-color: #E9EEFC;
+}
+
+.navigation-icon {
+    -fx-min-width: 20px;
+
+    -fx-font-size: 16px;
+
+    -fx-text-fill: #303846;
+}
+
+.navigation-text {
+    -fx-font-size: 11px;
+
+    -fx-text-fill: #303846;
+}
+
+.navigation-active .navigation-icon,
+.navigation-active .navigation-text {
+    -fx-text-fill: #15479C;
+}
+
+
+/* Sidebar buttons */
+
+.consultation-button {
+    -fx-background-color: #2864DD;
+
+    -fx-background-radius: 7px;
+
+    -fx-text-fill: white;
+
+    -fx-font-size: 11px;
+
+    -fx-font-weight: bold;
+
+    -fx-cursor: hand;
+}
+
+.consultation-button:hover {
+    -fx-background-color: #1854C4;
+}
+
+.bottom-button {
+    -fx-background-color: transparent;
+
+    -fx-text-fill: #404752;
+
+    -fx-font-size: 11px;
+
+    -fx-alignment: CENTER_LEFT;
+
+    -fx-padding: 7px 10px;
+
+    -fx-cursor: hand;
+}
+
+.bottom-button:hover {
+    -fx-background-color: #EFF1F6;
+
+    -fx-background-radius: 7px;
+}
+
+
+/* =========================================================
+   TOP BAR
+   ========================================================= */
+
+.top-bar {
+    -fx-background-color: white;
+
+    -fx-border-color: #D9DDE7;
+
+    -fx-border-width: 0 0 1px 0;
+}
+
+.search-box {
+    -fx-background-color: #F3F2FC;
+
+    -fx-background-radius: 15px;
+}
+
+.search-icon {
+    -fx-font-size: 19px;
+
+    -fx-text-fill: #252D39;
+}
+
+.search-box .text-field {
+    -fx-background-color: transparent;
+
+    -fx-border-color: transparent;
+
+    -fx-font-size: 10px;
+
+    -fx-prompt-text-fill: #747B88;
+}
+
+.emergency-alert {
+    -fx-background-color: #F8E7E9;
+
+    -fx-background-radius: 6px;
+
+    -fx-text-fill: #A7353F;
+
+    -fx-padding: 7px 12px;
+
+    -fx-font-size: 10px;
+
+    -fx-font-weight: bold;
+}
+
+.top-icon-button {
+    -fx-background-color: transparent;
+
+    -fx-text-fill: #272F3A;
+
+    -fx-font-size: 17px;
+
+    -fx-cursor: hand;
+}
+
+.top-icon-button:hover {
+    -fx-background-color: #EFF2F8;
+
+    -fx-background-radius: 7px;
+}
+
+.top-divider {
+    -fx-background-color: #D7DBE4;
+}
+
+.admin-name {
+    -fx-font-size: 10px;
+
+    -fx-font-weight: bold;
+
+    -fx-text-fill: #252B34;
+}
+
+.admin-role {
+    -fx-font-size: 8px;
+
+    -fx-text-fill: #707783;
+}
+
+.admin-avatar {
+    -fx-background-color: #E2EAF7;
+
+    -fx-background-radius: 50%;
+
+    -fx-min-width: 32px;
+
+    -fx-min-height: 32px;
+
+    -fx-max-width: 32px;
+
+    -fx-max-height: 32px;
+
+    -fx-alignment: CENTER;
+
+    -fx-font-size: 9px;
+
+    -fx-font-weight: bold;
+
+    -fx-text-fill: #2559A6;
+}
+
+
+/* =========================================================
+   CONTENT
+   ========================================================= */
+
+.content-area {
+    -fx-background-color: #F8F8FD;
+}
+
+.page-title {
+    -fx-font-size: 22px;
+
+    -fx-font-weight: bold;
+
+    -fx-text-fill: #151A23;
+}
+
+.page-description {
+    -fx-font-size: 10px;
+
+    -fx-text-fill: #626A77;
+}
+
+
+/* =========================================================
+   HEADER BUTTONS
+   ========================================================= */
+
+.advanced-filter-button {
+    -fx-background-color: #E4ECFC;
+
+    -fx-background-radius: 7px;
+
+    -fx-text-fill: #214F9E;
+
+    -fx-font-size: 10px;
+
+    -fx-padding: 9px 13px;
+
+    -fx-cursor: hand;
+}
+
+.advanced-filter-button:hover {
+    -fx-background-color: #D8E4FA;
+}
+
+.schedule-button {
+    -fx-background-color: #0759D4;
+
+    -fx-background-radius: 7px;
+
+    -fx-text-fill: white;
+
+    -fx-font-size: 10px;
+
+    -fx-font-weight: bold;
+
+    -fx-padding: 9px 14px;
+
+    -fx-cursor: hand;
+}
+
+
+/* =========================================================
+   FILTER BAR
+   ========================================================= */
+
+.filter-bar {
+    -fx-background-color: white;
+
+    -fx-background-radius: 8px;
+
+    -fx-border-color: #D9DDE5;
+
+    -fx-border-radius: 8px;
+}
+
+.filter-combo {
+    -fx-background-color: #F9F9FD;
+
+    -fx-border-color: #E0E2E9;
+
+    -fx-border-radius: 6px;
+
+    -fx-background-radius: 6px;
+
+    -fx-font-size: 9px;
+
+    -fx-pref-height: 31px;
+}
+
+.filter-combo .list-cell {
+    -fx-font-size: 9px;
+}
+
+.date-filter {
+    -fx-background-color: #F9F9FD;
+
+    -fx-border-color: #E0E2E9;
+
+    -fx-border-radius: 6px;
+
+    -fx-background-radius: 6px;
+
+    -fx-text-fill: #4D5562;
+
+    -fx-font-size: 9px;
+
+    -fx-pref-height: 31px;
+}
+
+.show-label {
+    -fx-font-size: 9px;
+
+    -fx-text-fill: #666E7A;
+
+    -fx-font-weight: bold;
+}
+
+.view-button,
+.view-button-active {
+    -fx-pref-width: 28px;
+
+    -fx-pref-height: 28px;
+
+    -fx-background-radius: 5px;
+
+    -fx-font-size: 11px;
+}
+
+.view-button {
+    -fx-background-color: transparent;
+
+    -fx-text-fill: #5D6571;
+}
+
+.view-button-active {
+    -fx-background-color: #DCE7FC;
+
+    -fx-text-fill: #1A58BE;
+}
+
+
+/* =========================================================
+   KPI CARDS
+   ========================================================= */
+
+.kpi-card {
+    -fx-background-color: white;
+
+    -fx-background-radius: 9px;
+
+    -fx-border-color: #D8DCE5;
+
+    -fx-border-radius: 9px;
+
+    -fx-padding: 17px;
+
+    -fx-effect: dropshadow(
+        gaussian,
+        rgba(20,40,80,0.04),
+        7,
+        0,
+        0,
+        2
+    );
+}
+
+.kpi-icon-blue,
+.kpi-icon-green,
+.kpi-icon-purple,
+.kpi-icon-red {
+    -fx-padding: 9px;
+
+    -fx-background-radius: 7px;
+
+    -fx-font-size: 17px;
+}
+
+.kpi-icon-blue {
+    -fx-background-color: #E8F0FF;
+
+    -fx-text-fill: #1854C1;
+}
+
+.kpi-icon-green {
+    -fx-background-color: #E8F8F4;
+
+    -fx-text-fill: #087C68;
+}
+
+.kpi-icon-purple {
+    -fx-background-color: #F3E9FC;
+
+    -fx-text-fill: #7A2FC4;
+}
+
+.kpi-icon-red {
+    -fx-background-color: #FFF0F0;
+
+    -fx-text-fill: #C1262E;
+}
+
+.change-blue,
+.change-green,
+.change-purple,
+.change-red {
+    -fx-background-radius: 12px;
+
+    -fx-padding: 4px 7px;
+
+    -fx-font-size: 8px;
+
+    -fx-font-weight: bold;
+}
+
+.change-blue,
+.change-green {
+    -fx-background-color: #DFF6EA;
+
+    -fx-text-fill: #228A57;
+}
+
+.change-purple {
+    -fx-background-color: #E4ECFC;
+
+    -fx-text-fill: #3D5F9C;
+}
+
+.change-red {
+    -fx-background-color: #FFE4E5;
+
+    -fx-text-fill: #B32B32;
+}
+
+.kpi-title {
+    -fx-font-size: 11px;
+
+    -fx-text-fill: #4C5460;
+}
+
+.kpi-value {
+    -fx-font-size: 27px;
+
+    -fx-font-weight: bold;
+
+    -fx-text-fill: #171D27;
+}
+
+
+/* =========================================================
+   PATIENT SCHEDULE
+   ========================================================= */
+
+.schedule-card {
+    -fx-background-color: white;
+
+    -fx-background-radius: 9px;
+
+    -fx-border-color: #D6DAE3;
+
+    -fx-border-radius: 9px;
+
+    -fx-effect: dropshadow(
+        gaussian,
+        rgba(20,40,80,0.04),
+        8,
+        0,
+        0,
+        2
+    );
+}
+
+.schedule-title {
+    -fx-font-size: 15px;
+
+    -fx-font-weight: bold;
+
+    -fx-text-fill: #1B212B;
+}
+
+.table-action {
+    -fx-background-color: transparent;
+
+    -fx-text-fill: #323A45;
+
+    -fx-font-size: 15px;
+
+    -fx-cursor: hand;
+}
+
+.table-header {
+    -fx-background-color: #F4F6FC;
+
+    -fx-border-color: #D8DCE5;
+
+    -fx-border-width: 1px 0 1px 0;
+}
+
+.table-header-label {
+    -fx-font-size: 8px;
+
+    -fx-font-weight: bold;
+
+    -fx-text-fill: #353D49;
+}
+
+.appointment-row {
+    -fx-border-color: #E7E9EE;
+
+    -fx-border-width: 0 0 1px 0;
+}
+
+.appointment-row:hover {
+    -fx-background-color: #F8FAFF;
+}
+
+.patient-avatar {
+    -fx-background-color: #E5ECF8;
+
+    -fx-background-radius: 50%;
+
+    -fx-min-width: 29px;
+
+    -fx-min-height: 29px;
+
+    -fx-max-width: 29px;
+
+    -fx-max-height: 29px;
+
+    -fx-alignment: CENTER;
+
+    -fx-text-fill: #2A5CA7;
+
+    -fx-font-size: 9px;
+
+    -fx-font-weight: bold;
+}
+
+.patient-name {
+    -fx-font-size: 10px;
+
+    -fx-font-weight: bold;
+
+    -fx-text-fill: #242A34;
+}
+
+.patient-id {
+    -fx-font-size: 7px;
+
+    -fx-text-fill: #737B87;
+}
+
+.doctor-label {
+    -fx-font-size: 9px;
+
+    -fx-text-fill: #3E4651;
+}
+
+.department-label {
+    -fx-font-size: 9px;
+
+    -fx-text-fill: #39414C;
+
+    -fx-alignment: CENTER_LEFT;
+}
+
+.time-label {
+    -fx-font-size: 9px;
+
+    -fx-text-fill: #202731;
+
+    -fx-font-weight: bold;
+}
+
+
+/* Status */
+
+.appointment-status-green,
+.appointment-status-purple,
+.appointment-status-blue,
+.appointment-status-red {
+    -fx-background-radius: 12px;
+
+    -fx-padding: 5px 8px;
+
+    -fx-font-size: 8px;
+
+    -fx-font-weight: bold;
+}
+
+.appointment-status-green {
+    -fx-background-color: #E2F7F1;
+
+    -fx-text-fill: #20836C;
+}
+
+.appointment-status-purple {
+    -fx-background-color: #EAD9FA;
+
+    -fx-text-fill: #7931B7;
+}
+
+.appointment-status-blue {
+    -fx-background-color: #DCE9FC;
+
+    -fx-text-fill: #2457A6;
+}
+
+.appointment-status-red {
+    -fx-background-color: #FCE5E4;
+
+    -fx-text-fill: #B33C3B;
+}
+
+
+/* =========================================================
+   AI INSIGHT IN TABLE
+   ========================================================= */
+
+.table-insight {
+    -fx-background-color: #F6F7FC;
+
+    -fx-border-color: #ECEEF5;
+
+    -fx-border-width: 0 0 1px 0;
+}
+
+.insight-icon {
+    -fx-background-color: #E7DDF9;
+
+    -fx-background-radius: 50%;
+
+    -fx-min-width: 22px;
+
+    -fx-min-height: 22px;
+
+    -fx-max-width: 22px;
+
+    -fx-max-height: 22px;
+
+    -fx-alignment: CENTER;
+
+    -fx-text-fill: #7131BD;
+
+    -fx-font-size: 9px;
+}
+
+.insight-text {
+    -fx-font-size: 8px;
+
+    -fx-text-fill: #565E6B;
+}
+
+
+/* =========================================================
+   TABLE FOOTER
+   ========================================================= */
+
+.table-footer {
+    -fx-border-color: #DCE0E8;
+
+    -fx-border-width: 1px 0 0 0;
+}
+
+.showing-label {
+    -fx-font-size: 8px;
+
+    -fx-text-fill: #626A76;
+}
+
+.page-button,
+.page-active {
+    -fx-pref-width: 28px;
+
+    -fx-pref-height: 28px;
+
+    -fx-background-radius: 5px;
+
+    -fx-font-size: 10px;
+
+    -fx-cursor: hand;
+}
+
+.page-button {
+    -fx-background-color: white;
+
+    -fx-border-color: #D7DBE4;
+
+    -fx-border-radius: 5px;
+
+    -fx-text-fill: #525A66;
+}
+
+.page-active {
+    -fx-background-color: #0759D4;
+
+    -fx-text-fill: white;
+
+    -fx-font-weight: bold;
+}
+
+
+/* =========================================================
+   RIGHT SIDE CARDS
+   ========================================================= */
+
+.side-card {
+    -fx-background-color: white;
+
+    -fx-background-radius: 9px;
+
+    -fx-border-color: #D7DBE4;
+
+    -fx-border-radius: 9px;
+
+    -fx-padding: 15px;
+
+    -fx-effect: dropshadow(
+        gaussian,
+        rgba(20,40,80,0.04),
+        7,
+        0,
+        0,
+        2
+    );
+}
+
+.side-card-title {
+    -fx-font-size: 9px;
+
+    -fx-font-weight: bold;
+
+    -fx-text-fill: #424A56;
+}
+
+.calendar-nav {
+    -fx-background-color: transparent;
+
+    -fx-font-size: 14px;
+
+    -fx-text-fill: #353D47;
+
+    -fx-cursor: hand;
+}
+
+.month-label {
+    -fx-font-size: 11px;
+
+    -fx-font-weight: bold;
+
+    -fx-text-fill: #202731;
+}
+
+
+/* =========================================================
+   CALENDAR
+   ========================================================= */
+
+.calendar-day-name {
+    -fx-font-size: 7px;
+
+    -fx-font-weight: bold;
+
+    -fx-text-fill: #565E6A;
+
+    -fx-alignment: CENTER;
+}
+
+.calendar-date {
+    -fx-font-size: 8px;
+
+    -fx-text-fill: #252C36;
+
+    -fx-alignment: CENTER;
+}
+
+.outside-date {
+    -fx-font-size: 8px;
+
+    -fx-text-fill: #C1C5CD;
+
+    -fx-alignment: CENTER;
+}
+
+.selected-date {
+    -fx-background-color: #2864DD;
+
+    -fx-background-radius: 4px;
+
+    -fx-text-fill: white;
+}
+
+.selected-date .label {
+    -fx-text-fill: white;
+
+    -fx-font-weight: bold;
+
+    -fx-font-size: 8px;
+}
+
+
+/* =========================================================
+   TIMELINE
+   ========================================================= */
+
+.live-label {
+    -fx-font-size: 8px;
+
+    -fx-font-weight: bold;
+
+    -fx-text-fill: #1B4EAB;
+}
+
+.timeline-time {
+    -fx-font-size: 8px;
+
+    -fx-font-weight: bold;
+
+    -fx-text-fill: #343C47;
+}
+
+.timeline-event-green,
+.timeline-event-blue,
+.timeline-event-purple,
+.timeline-event-red {
+    -fx-background-radius: 5px;
+
+    -fx-border-radius: 5px;
+
+    -fx-padding: 7px;
+}
+
+.timeline-event-green {
+    -fx-background-color: #EEF9F5;
+
+    -fx-border-color: #73BCA8;
+
+    -fx-border-width: 0 0 0 2px;
+}
+
+.timeline-event-blue {
+    -fx-background-color: #EEF4FF;
+
+    -fx-border-color: #2864DD;
+
+    -fx-border-width: 0 0 0 2px;
+}
+
+.timeline-event-purple {
+    -fx-background-color: #F6F0FC;
+
+    -fx-border-color: #8030C9;
+
+    -fx-border-width: 0 0 0 2px;
+}
+
+.timeline-event-red {
+    -fx-background-color: #FFF4F3;
+
+    -fx-border-color: #C93232;
+
+    -fx-border-width: 0 0 0 2px;
+}
+
+.timeline-title {
+    -fx-font-size: 8px;
+
+    -fx-font-weight: bold;
+
+    -fx-text-fill: #28303A;
+}
+
+.timeline-people {
+    -fx-font-size: 7px;
+
+    -fx-text-fill: #555E6B;
+}
+
+.timeline-status {
+    -fx-font-size: 6px;
+
+    -fx-text-fill: #3C667C;
+}
+
+.full-calendar-button {
+    -fx-background-color: transparent;
+
+    -fx-text-fill: #2859A4;
+
+    -fx-font-size: 9px;
+
+    -fx-cursor: hand;
+}
+
+
+/* =========================================================
+   AI ADVISOR
+   ========================================================= */
+
+.ai-advisor {
+    -fx-background-color: linear-gradient(
+        to bottom right,
+        #343ED5,
+        #6422D9
+    );
+
+    -fx-background-radius: 9px;
+
+    -fx-effect: dropshadow(
+        gaussian,
+        rgba(30,30,100,0.20),
+        10,
+        0,
+        0,
+        3
+    );
+}
+
+.ai-advisor-icon {
+    -fx-text-fill: white;
+
+    -fx-font-size: 15px;
+}
+
+.ai-advisor-title {
+    -fx-text-fill: white;
+
+    -fx-font-size: 9px;
+
+    -fx-font-weight: bold;
+
+    -fx-letter-spacing: 1px;
+}
+
+.ai-advisor-message {
+    -fx-text-fill: #F3F2FF;
+
+    -fx-font-size: 9px;
+
+    -fx-line-spacing: 1px;
+}
+
+.apply-button {
+    -fx-background-color: white;
+
+    -fx-background-radius: 6px;
+
+    -fx-text-fill: #3D36BE;
+
+    -fx-font-size: 9px;
+
+    -fx-font-weight: bold;
+
+    -fx-cursor: hand;
+}
+
+.apply-button:hover {
+    -fx-background-color: #F0F0FF;
+}
