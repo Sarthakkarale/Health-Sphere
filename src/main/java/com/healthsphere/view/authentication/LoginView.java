@@ -1,5 +1,11 @@
 package com.healthsphere.view.authentication;
 
+import com.healthsphere.view.patient.PatientDashboardView;
+import com.healthsphere.view.doctor.DoctorDashboardView;
+import com.healthsphere.view.hospital.HospitalDashboardView;
+import com.healthsphere.view.admin.AdminDashboardView;
+import com.healthsphere.view.authentication.*;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -26,20 +32,27 @@ import javafx.stage.Stage;
 
 /**
  * Pure JavaFX Login View for Health-Sphere / MediNexus AI.
- * Implements navigation using the static View.stage reference.
+ * Implements navigation using the static View.stage reference and dynamic role routing.
  */
 public class LoginView {
 
     private Button selectedRoleBtn = null;
     private final Stage stage;
 
+    // Role references to track active selection
+    private Button btnPatient;
+    private Button btnDoctor;
+    private Button btnHospital;
+    private Button btnAdmin;
+
     // Default Constructor
     public LoginView() {
-        this.stage = new Stage();}
+        this.stage = new Stage();
+    }
 
     // Overloaded Constructor for compatibility
     public LoginView(Stage stage) {
-        this.stage=stage;
+        this.stage = stage;
     }
 
     public Scene getScene() {
@@ -59,7 +72,7 @@ public class LoginView {
 
         root.getChildren().addAll(leftHero, rightScroll);
 
-        Scene scene = new Scene(root,stage.getWidth(),stage.getHeight());
+        Scene scene = new Scene(root, stage.getWidth(), stage.getHeight());
 
         // Load CSS stylesheet safely
         String cssPath = getClass().getResource("/css/login.css") != null 
@@ -171,10 +184,10 @@ public class LoginView {
         roleGrid.setHgap(10);
         roleGrid.setVgap(10);
 
-        Button btnPatient = createRoleButton("Patient", "/images/icon_patient.png", "👤");
-        Button btnDoctor = createRoleButton("Doctor", "/images/icon_doctor.png", "🩺");
-        Button btnHospital = createRoleButton("Hospital", "/images/icon_hospital.png", "🏥");
-        Button btnAdmin = createRoleButton("Admin", "/images/icon_admin.png", "🔑");
+        btnPatient = createRoleButton("Patient", "/images/icon_patient.png", "👤");
+        btnDoctor = createRoleButton("Doctor", "/images/icon_doctor.png", "🩺");
+        btnHospital = createRoleButton("Hospital", "/images/icon_hospital.png", "🏥");
+        btnAdmin = createRoleButton("Admin", "/images/icon_admin.png", "🔑");
 
         // Set Doctor as Default Selected Role
         selectRole(btnDoctor);
@@ -213,12 +226,9 @@ public class LoginView {
         HBox.setHgrow(passSpacer, Priority.ALWAYS);
         Hyperlink forgotPass = new Hyperlink("Forgot Password?");
         forgotPass.setStyle("-fx-font-size: 11px; -fx-text-fill: #0256D0; -fx-padding: 0;");
-        // Assuming 'forgotPasswordLink' is your Hyperlink or Button for resetting passwords
+        
         forgotPass.setOnAction(event -> {
-            // Instantiate the ForgotPasswordView, passing the primary stage
             ForgotPasswordView forgotPasswordView = new ForgotPasswordView(stage);
-            
-            // Switch the scene directly on the stage (No FXML, No Navigator class)
             stage.setScene(forgotPasswordView.getScene());
         });
         passHeader.getChildren().addAll(passLabel, passSpacer, forgotPass);
@@ -237,24 +247,36 @@ public class LoginView {
         loginBtn.getStyleClass().add("btn-login-primary");
         loginBtn.setMaxWidth(Double.MAX_VALUE);
 
-        // NAVIGATION: Switches stage scene back to initial View using static stage reference
+        // ROUTED NAVIGATION: Switches to the selected role's dashboard view
         loginBtn.setOnAction(e -> {
-            View.stage.setScene(new View().getScene());
+            if (selectedRoleBtn == btnPatient) {
+                stage.setScene(new PatientDashboardView(stage).getScene());
+            } else if (selectedRoleBtn == btnDoctor) {
+                stage.setScene(new DoctorDashboardView(stage).getScene());
+            } else if (selectedRoleBtn == btnHospital) {
+                stage.setScene(new HospitalDashboardView(stage).getScene());
+            } else if (selectedRoleBtn == btnAdmin) {
+                stage.setScene(new AdminDashboardView(stage).getScene());
+            } else {
+                stage.setScene(new PatientDashboardView(stage).getScene());
+            }
         });
-
-       
-        // Inside createRightFormPanel() in LoginView.java:
 
         Button createAccountBtn = new Button("Create New Account");
         createAccountBtn.getStyleClass().add("btn-outline");
         createAccountBtn.setMaxWidth(Double.MAX_VALUE);
 
-        // ADD THIS NAVIGATION HANDLER:
+        // TAB-AWARE NAVIGATION: Passes active role to register page section
         createAccountBtn.setOnAction(e -> {
+            // String currentRole = "Patient";
+            // if (selectedRoleBtn == btnDoctor) currentRole = "Doctor";
+            // else if (selectedRoleBtn == btnHospital) currentRole = "Hospital";
+            // else if (selectedRoleBtn == btnAdmin) currentRole = "Admin";
+            // else if (selectedRoleBtn == btnPatient) currentRole = "Patient";
+
             RegisterView registerView = new RegisterView(stage);
             stage.setScene(registerView.getScene());
         });
-
 
         // Divider
         HBox divider = new HBox(10);
