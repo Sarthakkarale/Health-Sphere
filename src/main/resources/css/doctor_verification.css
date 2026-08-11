@@ -1,0 +1,17 @@
+/* HealthSphere AI - Custom Styles */
+.scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.button:hover {
+    -fx-opacity: 0.9;
+}
+
+.text-field:focused {
+    -fx-border-color: #2563EB;
+    -fx-border-radius: 20;
+}

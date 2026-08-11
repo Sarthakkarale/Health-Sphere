@@ -94,7 +94,8 @@
 
                 <configuration>
 
-                    <mainClass>com.healthsphere.Main</mainClass>
+                    <!-- FIXED HERE: Main changed to MainApp -->
+                    <mainClass>com.healthsphere.MainApp</mainClass>
 
                 </configuration>
 
