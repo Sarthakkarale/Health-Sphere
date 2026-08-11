@@ -32,6 +32,8 @@ public class Main extends Application {
         stage.setWidth(1280);
         stage.setHeight(820);
 
+        stage.setMaximized(true);
+
         stage.show();
     }
 

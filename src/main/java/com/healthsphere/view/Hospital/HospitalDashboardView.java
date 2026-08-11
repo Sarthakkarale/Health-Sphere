@@ -49,7 +49,7 @@ public class HospitalDashboardView {
         root.setTop(createTopBar());
         root.setCenter(createMainContent());
 
-        Scene scene = new Scene(root, 1280, 820);
+        Scene scene = new Scene(root, stage.getWidth(), stage.getHeight());
 
         return scene;
     }

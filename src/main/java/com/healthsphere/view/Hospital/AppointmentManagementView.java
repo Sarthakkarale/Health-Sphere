@@ -51,7 +51,7 @@ public class AppointmentManagementView {
         root.setTop(createTopBar());
         root.setCenter(createMainContent());
 
-        return new Scene(root, 1280, 820);
+        return new Scene(root, stage.getWidth(), stage.getHeight());
     }
 
     // =========================================================
