@@ -76,11 +76,11 @@ public class HospitalVerificationView {
 
         VBox titleBox = new VBox(4);
         Label title = new Label("Hospital Verification & NABH Audit");
-        title.setFont(Font.font("System", FontWeight.BOLD, 22));
+        title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
         title.setTextFill(Color.web("#0F172A"));
 
         Label sub = new Label("AI-driven verification of clinical licenses, NABH accreditation, and infrastructure compliance.");
-        sub.setFont(Font.font("System", FontWeight.NORMAL, 12));
+        sub.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 12));
         sub.setTextFill(Color.web("#64748B"));
         titleBox.getChildren().addAll(title, sub);
 
@@ -98,8 +98,14 @@ public class HospitalVerificationView {
     private HBox createAiOcrBanner() {
         HBox banner = new HBox(20);
         banner.setAlignment(Pos.CENTER_LEFT);
-        banner.setPadding(new Insets(16, 20, 16, 20));
-        banner.setStyle("-fx-background-color: linear-gradient(to right, #0F172A, #065F46); -fx-background-radius: 14;");
+        banner.setPadding(new Insets(18, 20, 18, 20));
+        // Refined Light SaaS gradient with subtle border & card shadow
+        banner.setStyle(
+            "-fx-background-color: linear-gradient(to right, #EEF2FF, #ECFDF5); " +
+            "-fx-border-color: #C7D2FE; " +
+            "-fx-border-radius: 14; " +
+            "-fx-background-radius: 14;"
+        );
         banner.setEffect(getCardShadow());
 
         ImageView img = createSafeImageView("https://images.unsplash.com/photo-1516549655169-df83a0774514?w=300", 110, 70);
@@ -110,12 +116,12 @@ public class HospitalVerificationView {
 
         VBox textGroup = new VBox(6);
         Label aiTitle = new Label("🔍 Automated Document Vision OCR & NABH Verification Engine");
-        aiTitle.setFont(Font.font("System", FontWeight.BOLD, 14));
-        aiTitle.setTextFill(Color.web("#34D399"));
+        aiTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
+        aiTitle.setTextFill(Color.web("#1E40AF")); // Deep Indigo text for high contrast
 
         Label aiDesc = new Label("AI extracts certificate serial numbers, cross-checks official NABH government registries, and alerts on fraudulent or expired clinical licenses instantly.");
-        aiDesc.setFont(Font.font("System", FontWeight.NORMAL, 12));
-        aiDesc.setTextFill(Color.web("#E2E8F0"));
+        aiDesc.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 12));
+        aiDesc.setTextFill(Color.web("#334155")); // Crisp Slate dark body text
         aiDesc.setWrapText(true);
 
         textGroup.getChildren().addAll(aiTitle, aiDesc);
@@ -133,17 +139,17 @@ public class HospitalVerificationView {
 
         Label nameLbl = new Label(name);
         nameLbl.setPrefWidth(240);
-        nameLbl.setFont(Font.font("System", FontWeight.BOLD, 13));
+        nameLbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
         nameLbl.setTextFill(Color.web("#0F172A"));
 
         Label licLbl = new Label(lic);
         licLbl.setPrefWidth(160);
-        licLbl.setFont(Font.font("System", FontWeight.SEMI_BOLD, 12));
+        licLbl.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
         licLbl.setTextFill(Color.web("#334155"));
 
         Label matchLbl = new Label(match);
         matchLbl.setPrefWidth(160);
-        matchLbl.setFont(Font.font("System", FontWeight.BOLD, 12));
+        matchLbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
         matchLbl.setTextFill(Color.web(matchColor));
 
         HBox stBox = new HBox();
@@ -212,7 +218,7 @@ public class HospitalVerificationView {
 
     private Label createColHeader(String title, double width) {
         Label lbl = new Label(title);
-        lbl.setFont(Font.font("System", FontWeight.BOLD, 11));
+        lbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
         lbl.setTextFill(Color.web("#475569"));
         lbl.setPrefWidth(width);
         return lbl;

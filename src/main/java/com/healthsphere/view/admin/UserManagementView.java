@@ -33,11 +33,11 @@ public class UserManagementView extends ScrollPane {
         this.primaryStage = stage;
 
         setFitToWidth(true);
-        setStyle("-fx-background-color: #0F172A; -fx-background: #0F172A;");
+        setStyle("-fx-background-color: #F8FAFC; -fx-background: #F8FAFC;");
 
         VBox mainContainer = new VBox(25);
         mainContainer.setPadding(new Insets(30));
-        mainContainer.setStyle("-fx-background-color: #0F172A;");
+        mainContainer.setStyle("-fx-background-color: #F8FAFC;");
 
         // 1. Header Section
         VBox header = createHeader();
@@ -66,11 +66,11 @@ public class UserManagementView extends ScrollPane {
         VBox header = new VBox(5);
         Label title = new Label("User Directory & Access Control");
         title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 26));
-        title.setTextFill(Color.WHITE);
+        title.setTextFill(Color.web("#0F172A"));
 
         Label subtitle = new Label("Manage system accounts, user roles, security flags, and active sessions in real-time.");
         subtitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 14));
-        subtitle.setTextFill(Color.web("#94A3B8"));
+        subtitle.setTextFill(Color.web("#64748B"));
 
         header.getChildren().addAll(title, subtitle);
         return header;
@@ -84,9 +84,9 @@ public class UserManagementView extends ScrollPane {
         HBox.setHgrow(statsBox, Priority.ALWAYS);
 
         totalUsersCountLabel = new Label("2,845");
-        VBox totalCard = createStatBadge("Total Registered Users", totalUsersCountLabel, "+14% from last month", "#6366F1");
-        VBox activeCard = createStatBadge("Active Today", new Label("1,920"), "67% online now", "#10B981");
-        VBox suspendedCard = createStatBadge("Suspended / Banned", new Label("12"), "Requires Security Review", "#EF4444");
+        VBox totalCard = createStatBadge("Total Registered Users", totalUsersCountLabel, "+14% from last month", "#4F46E5");
+        VBox activeCard = createStatBadge("Active Today", new Label("1,920"), "67% online now", "#059669");
+        VBox suspendedCard = createStatBadge("Suspended / Banned", new Label("12"), "Requires Security Review", "#DC2626");
 
         HBox topTwo = new HBox(15, totalCard, activeCard);
         HBox.setHgrow(totalCard, Priority.ALWAYS);
@@ -99,15 +99,15 @@ public class UserManagementView extends ScrollPane {
         chartCard.setPadding(new Insets(15));
         chartCard.setMinWidth(380);
         chartCard.setStyle(
-            "-fx-background-color: #1E293B; " +
+            "-fx-background-color: #FFFFFF; " +
             "-fx-background-radius: 12px; " +
-            "-fx-border-color: #334155; " +
+            "-fx-border-color: #E2E8F0; " +
             "-fx-border-radius: 12px;"
         );
 
         Label chartTitle = new Label("User Demographics Breakdown");
         chartTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
-        chartTitle.setTextFill(Color.WHITE);
+        chartTitle.setTextFill(Color.web("#0F172A"));
 
         rolePieChart = new PieChart();
         rolePieChart.setPrefHeight(160);
@@ -124,18 +124,18 @@ public class UserManagementView extends ScrollPane {
         VBox card = new VBox(6);
         card.setPadding(new Insets(15));
         card.setStyle(
-            "-fx-background-color: #1E293B; " +
+            "-fx-background-color: #FFFFFF; " +
             "-fx-background-radius: 12px; " +
-            "-fx-border-color: #334155; " +
+            "-fx-border-color: #E2E8F0; " +
             "-fx-border-radius: 12px;"
         );
 
         Label titleLabel = new Label(title);
         titleLabel.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
-        titleLabel.setTextFill(Color.web("#94A3B8"));
+        titleLabel.setTextFill(Color.web("#64748B"));
 
         valueLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
-        valueLabel.setTextFill(Color.WHITE);
+        valueLabel.setTextFill(Color.web("#0F172A"));
 
         Label subLabel = new Label(subtext);
         subLabel.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 11));
@@ -150,9 +150,9 @@ public class UserManagementView extends ScrollPane {
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(15));
         bar.setStyle(
-            "-fx-background-color: #1E293B; " +
+            "-fx-background-color: #FFFFFF; " +
             "-fx-background-radius: 10px; " +
-            "-fx-border-color: #334155; " +
+            "-fx-border-color: #E2E8F0; " +
             "-fx-border-radius: 10px;"
         );
 
@@ -160,9 +160,9 @@ public class UserManagementView extends ScrollPane {
         searchInput.setPromptText("🔍 Search by Name, Email or User ID...");
         searchInput.setPrefWidth(320);
         searchInput.setStyle(
-            "-fx-background-color: #0F172A; " +
-            "-fx-text-fill: white; " +
-            "-fx-border-color: #475569; " +
+            "-fx-background-color: #F8FAFC; " +
+            "-fx-text-fill: #0F172A; " +
+            "-fx-border-color: #CBD5E1; " +
             "-fx-border-radius: 6px; " +
             "-fx-padding: 8px 12px;"
         );
@@ -170,12 +170,12 @@ public class UserManagementView extends ScrollPane {
         ComboBox<String> roleFilter = new ComboBox<>();
         roleFilter.getItems().addAll("All Roles", "PATIENT", "DOCTOR", "ADMIN");
         roleFilter.setValue("All Roles");
-        roleFilter.setStyle("-fx-background-color: #0F172A; -fx-mark-color: white;");
+        roleFilter.setStyle("-fx-background-color: #F8FAFC; -fx-text-fill: #0F172A; -fx-border-color: #CBD5E1; -fx-border-radius: 6px;");
 
         ComboBox<String> statusFilter = new ComboBox<>();
         statusFilter.getItems().addAll("All Status", "ACTIVE", "SUSPENDED");
         statusFilter.setValue("All Status");
-        statusFilter.setStyle("-fx-background-color: #0F172A; -fx-mark-color: white;");
+        statusFilter.setStyle("-fx-background-color: #F8FAFC; -fx-text-fill: #0F172A; -fx-border-color: #CBD5E1; -fx-border-radius: 6px;");
 
         Runnable applyFilters = () -> {
             String query = searchInput.getText().toLowerCase().trim();
@@ -205,7 +205,7 @@ public class UserManagementView extends ScrollPane {
         Button addUserBtn = new Button("+ Add New User");
         addUserBtn.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
         addUserBtn.setStyle(
-            "-fx-background-color: #6366F1; " +
+            "-fx-background-color: #4F46E5; " +
             "-fx-text-fill: white; " +
             "-fx-background-radius: 6px; " +
             "-fx-padding: 8px 16px; " +
@@ -220,7 +220,7 @@ public class UserManagementView extends ScrollPane {
     @SuppressWarnings("unchecked")
     private VBox createTableContainer() {
         VBox container = new VBox();
-        container.setStyle("-fx-background-color: #1E293B; -fx-background-radius: 12px; -fx-border-color: #334155; -fx-border-radius: 12px;");
+        container.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 12px; -fx-border-color: #E2E8F0; -fx-border-radius: 12px;");
 
         userTable = new TableView<>();
         userTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -249,11 +249,11 @@ public class UserManagementView extends ScrollPane {
                     VBox textContainer = new VBox(2);
                     Label nameLbl = new Label(name);
                     nameLbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
-                    nameLbl.setTextFill(Color.WHITE);
+                    nameLbl.setTextFill(Color.web("#0F172A"));
 
                     Label emailLbl = new Label(user.getEmail());
                     emailLbl.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 11));
-                    emailLbl.setTextFill(Color.web("#94A3B8"));
+                    emailLbl.setTextFill(Color.web("#64748B"));
 
                     textContainer.getChildren().addAll(nameLbl, emailLbl);
                     box.getChildren().addAll(avatar, textContainer);
@@ -276,9 +276,9 @@ public class UserManagementView extends ScrollPane {
                     badge.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
 
                     switch (role.toUpperCase()) {
-                        case "DOCTOR" -> badge.setStyle("-fx-background-color: #1E1B4B; -fx-text-fill: #818CF8; -fx-background-radius: 20px;");
-                        case "ADMIN" -> badge.setStyle("-fx-background-color: #881337; -fx-text-fill: #FDA4AF; -fx-background-radius: 20px;");
-                        default -> badge.setStyle("-fx-background-color: #064E3B; -fx-text-fill: #34D399; -fx-background-radius: 20px;");
+                        case "DOCTOR" -> badge.setStyle("-fx-background-color: #EEF2FF; -fx-text-fill: #4F46E5; -fx-background-radius: 20px;");
+                        case "ADMIN" -> badge.setStyle("-fx-background-color: #FFE4E6; -fx-text-fill: #E11D48; -fx-background-radius: 20px;");
+                        default -> badge.setStyle("-fx-background-color: #ECFDF5; -fx-text-fill: #059669; -fx-background-radius: 20px;");
                     }
                     setGraphic(badge);
                 }
@@ -299,9 +299,9 @@ public class UserManagementView extends ScrollPane {
                     badge.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
 
                     if ("ACTIVE".equalsIgnoreCase(status)) {
-                        badge.setStyle("-fx-background-color: #064E3B; -fx-text-fill: #10B981; -fx-background-radius: 6px;");
+                        badge.setStyle("-fx-background-color: #DCFCE7; -fx-text-fill: #15803D; -fx-background-radius: 6px;");
                     } else {
-                        badge.setStyle("-fx-background-color: #7F1D1D; -fx-text-fill: #EF4444; -fx-background-radius: 6px;");
+                        badge.setStyle("-fx-background-color: #FEE2E2; -fx-text-fill: #B91C1C; -fx-background-radius: 6px;");
                     }
                     setGraphic(badge);
                 }
@@ -319,8 +319,8 @@ public class UserManagementView extends ScrollPane {
 
             {
                 btnGroup.setAlignment(Pos.CENTER);
-                viewBtn.setStyle("-fx-background-color: #334155; -fx-text-fill: white; -fx-cursor: hand; -fx-font-size: 11px;");
-                toggleStatusBtn.setStyle("-fx-cursor: hand; -fx-font-size: 11px;");
+                viewBtn.setStyle("-fx-background-color: #E2E8F0; -fx-text-fill: #1E293B; -fx-cursor: hand; -fx-font-size: 11px; -fx-background-radius: 4px;");
+                toggleStatusBtn.setStyle("-fx-cursor: hand; -fx-font-size: 11px; -fx-background-radius: 4px;");
 
                 viewBtn.setOnAction(e -> {
                     UserModel user = getTableView().getItems().get(getIndex());
@@ -347,10 +347,10 @@ public class UserManagementView extends ScrollPane {
                     UserModel user = getTableView().getItems().get(getIndex());
                     if ("ACTIVE".equalsIgnoreCase(user.getStatus())) {
                         toggleStatusBtn.setText("Suspend");
-                        toggleStatusBtn.setStyle("-fx-background-color: #7F1D1D; -fx-text-fill: #FCA5A5; -fx-cursor: hand; -fx-font-size: 11px;");
+                        toggleStatusBtn.setStyle("-fx-background-color: #FEE2E2; -fx-text-fill: #991B1B; -fx-cursor: hand; -fx-font-size: 11px; -fx-background-radius: 4px;");
                     } else {
                         toggleStatusBtn.setText("Activate");
-                        toggleStatusBtn.setStyle("-fx-background-color: #064E3B; -fx-text-fill: #6EE7B7; -fx-cursor: hand; -fx-font-size: 11px;");
+                        toggleStatusBtn.setStyle("-fx-background-color: #DCFCE7; -fx-text-fill: #166534; -fx-cursor: hand; -fx-font-size: 11px; -fx-background-radius: 4px;");
                     }
                     setGraphic(btnGroup);
                 }
@@ -364,13 +364,13 @@ public class UserManagementView extends ScrollPane {
 
     private StackPane createStyledAvatar(String initials) {
         Circle circle = new Circle(16);
-        circle.setFill(Color.web("#334155"));
+        circle.setFill(Color.web("#E2E8F0"));
         circle.setStroke(Color.web("#6366F1"));
         circle.setStrokeWidth(1.5);
 
         Label label = new Label(initials);
         label.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
-        label.setTextFill(Color.web("#E2E8F0"));
+        label.setTextFill(Color.web("#334155"));
 
         return new StackPane(circle, label);
     }

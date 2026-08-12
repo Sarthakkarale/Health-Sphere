@@ -38,14 +38,14 @@ public class ReportsAnalyticsView extends ScrollPane {
         this.primaryStage = stage;
 
         setFitToWidth(true);
-        setStyle("-fx-background-color: #0F172A; -fx-background: #0F172A;");
+        setStyle("-fx-background-color: #F8FAFC; -fx-background: #F8FAFC;");
 
         VBox mainContainer = new VBox(25);
         mainContainer.setPadding(new Insets(30));
-        mainContainer.setStyle("-fx-background-color: #0F172A;");
+        mainContainer.setStyle("-fx-background-color: #F8FAFC;");
 
-        // Inject Custom CSS for dark table theme
-        this.getStylesheets().add("data:text/css," + getDarkThemeCSS());
+        // Inject Custom CSS for light table theme
+        this.getStylesheets().add("data:text/css," + getLightThemeCSS());
 
         // 1. Header Section
         VBox header = createHeader();
@@ -74,11 +74,11 @@ public class ReportsAnalyticsView extends ScrollPane {
         VBox header = new VBox(6);
         Label title = new Label("Reports, Moderation & Telemetry BI");
         title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 26));
-        title.setTextFill(Color.WHITE);
+        title.setTextFill(Color.web("#0F172A"));
 
         Label subtitle = new Label("Monitor platform disputes, automated AI anomaly flags, medical malpractice inquiries, and support velocity.");
         subtitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 14));
-        subtitle.setTextFill(Color.web("#94A3B8"));
+        subtitle.setTextFill(Color.web("#64748B"));
 
         header.getChildren().addAll(title, subtitle);
         return header;
@@ -95,9 +95,9 @@ public class ReportsAnalyticsView extends ScrollPane {
         resolvedTicketsLabel = new Label("342");
         avgSlaLabel = new Label("1.8 Hours");
 
-        VBox openCard = createStatCard("Active Incidents", openTicketsLabel, "⚡ 2 Critical Escalations", "#EF4444", "#311B20");
-        VBox resolvedCard = createStatCard("Resolved Tickets", resolvedTicketsLabel, "✓ 94.8% SLA Clearance Rate", "#10B981", "#06281E");
-        VBox slaCard = createStatCard("Avg Resolution Velocity", avgSlaLabel, "⏱ -14 mins improvement w/o/w", "#6366F1", "#1E1B4B");
+        VBox openCard = createStatCard("Active Incidents", openTicketsLabel, "⚡ 2 Critical Escalations", "#DC2626", "#FEF2F2");
+        VBox resolvedCard = createStatCard("Resolved Tickets", resolvedTicketsLabel, "✓ 94.8% SLA Clearance Rate", "#059669", "#ECFDF5");
+        VBox slaCard = createStatCard("Avg Resolution Velocity", avgSlaLabel, "⏱ -14 mins improvement w/o/w", "#4F46E5", "#EEF2FF");
 
         HBox.setHgrow(openCard, Priority.ALWAYS);
         HBox.setHgrow(resolvedCard, Priority.ALWAYS);
@@ -114,12 +114,12 @@ public class ReportsAnalyticsView extends ScrollPane {
 
         Label lineTitle = new Label("Incident Influx vs Resolution Velocity");
         lineTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 15));
-        lineTitle.setTextFill(Color.WHITE);
+        lineTitle.setTextFill(Color.web("#0F172A"));
 
         CategoryAxis xAxis = new CategoryAxis();
         NumberAxis yAxis = new NumberAxis();
-        xAxis.setTickLabelFill(Color.web("#94A3B8"));
-        yAxis.setTickLabelFill(Color.web("#94A3B8"));
+        xAxis.setTickLabelFill(Color.web("#64748B"));
+        yAxis.setTickLabelFill(Color.web("#64748B"));
 
         activityLineChart = new LineChart<>(xAxis, yAxis);
         activityLineChart.setPrefHeight(220);
@@ -134,7 +134,7 @@ public class ReportsAnalyticsView extends ScrollPane {
 
         Label pieTitle = new Label("Category Breakdown");
         pieTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 15));
-        pieTitle.setTextFill(Color.WHITE);
+        pieTitle.setTextFill(Color.web("#0F172A"));
 
         categoryPieChart = new PieChart();
         categoryPieChart.setPrefHeight(220);
@@ -155,17 +155,17 @@ public class ReportsAnalyticsView extends ScrollPane {
         card.setStyle(
             "-fx-background-color: " + bgGlow + "; " +
             "-fx-background-radius: 12px; " +
-            "-fx-border-color: " + accentColor + "44; " +
+            "-fx-border-color: " + accentColor + "33; " +
             "-fx-border-radius: 12px; " +
             "-fx-border-width: 1px;"
         );
 
         Label titleLabel = new Label(title);
         titleLabel.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 13));
-        titleLabel.setTextFill(Color.web("#94A3B8"));
+        titleLabel.setTextFill(Color.web("#64748B"));
 
         valueLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 26));
-        valueLabel.setTextFill(Color.WHITE);
+        valueLabel.setTextFill(Color.web("#0F172A"));
 
         Label subLabel = new Label(subtext);
         subLabel.setFont(Font.font("Segoe UI", FontWeight.MEDIUM, 11));
@@ -179,9 +179,9 @@ public class ReportsAnalyticsView extends ScrollPane {
         VBox card = new VBox(12);
         card.setPadding(new Insets(18));
         card.setStyle(
-            "-fx-background-color: #1E293B; " +
+            "-fx-background-color: #FFFFFF; " +
             "-fx-background-radius: 12px; " +
-            "-fx-border-color: #334155; " +
+            "-fx-border-color: #E2E8F0; " +
             "-fx-border-radius: 12px;"
         );
         return card;
@@ -192,9 +192,9 @@ public class ReportsAnalyticsView extends ScrollPane {
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(15));
         bar.setStyle(
-            "-fx-background-color: #1E293B; " +
+            "-fx-background-color: #FFFFFF; " +
             "-fx-background-radius: 10px; " +
-            "-fx-border-color: #334155; " +
+            "-fx-border-color: #E2E8F0; " +
             "-fx-border-radius: 10px;"
         );
 
@@ -202,9 +202,9 @@ public class ReportsAnalyticsView extends ScrollPane {
         searchInput.setPromptText("🔍 Search Ticket ID, Reporter, or Keyword...");
         searchInput.setPrefWidth(320);
         searchInput.setStyle(
-            "-fx-background-color: #0F172A; " +
-            "-fx-text-fill: white; " +
-            "-fx-border-color: #475569; " +
+            "-fx-background-color: #F8FAFC; " +
+            "-fx-text-fill: #0F172A; " +
+            "-fx-border-color: #CBD5E1; " +
             "-fx-border-radius: 6px; " +
             "-fx-padding: 8px 12px;"
         );
@@ -212,12 +212,12 @@ public class ReportsAnalyticsView extends ScrollPane {
         ComboBox<String> categoryFilter = new ComboBox<>();
         categoryFilter.getItems().addAll("All Categories", "Billing Dispute", "Doctor Misbehavior", "App Bug", "Fake Profile");
         categoryFilter.setValue("All Categories");
-        categoryFilter.setStyle("-fx-background-color: #0F172A; -fx-mark-color: white;");
+        categoryFilter.setStyle("-fx-background-color: #F8FAFC; -fx-mark-color: #0F172A; -fx-border-color: #CBD5E1; -fx-border-radius: 6px;");
 
         ComboBox<String> statusFilter = new ComboBox<>();
         statusFilter.getItems().addAll("All Status", "OPEN", "IN_REVIEW", "RESOLVED");
         statusFilter.setValue("All Status");
-        statusFilter.setStyle("-fx-background-color: #0F172A; -fx-mark-color: white;");
+        statusFilter.setStyle("-fx-background-color: #F8FAFC; -fx-mark-color: #0F172A; -fx-border-color: #CBD5E1; -fx-border-radius: 6px;");
 
         Runnable applyFilter = () -> {
             String query = searchInput.getText().toLowerCase().trim();
@@ -247,7 +247,7 @@ public class ReportsAnalyticsView extends ScrollPane {
         Button exportBtn = new Button("📥 Export BI Audit Trail");
         exportBtn.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
         exportBtn.setStyle(
-            "-fx-background-color: #6366F1; " +
+            "-fx-background-color: #4F46E5; " +
             "-fx-text-fill: white; " +
             "-fx-background-radius: 6px; " +
             "-fx-padding: 8px 16px; " +
@@ -262,7 +262,7 @@ public class ReportsAnalyticsView extends ScrollPane {
     @SuppressWarnings("unchecked")
     private VBox createTableContainer() {
         VBox container = new VBox();
-        container.setStyle("-fx-background-color: #1E293B; -fx-background-radius: 12px; -fx-border-color: #334155; -fx-border-radius: 12px;");
+        container.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 12px; -fx-border-color: #E2E8F0; -fx-border-radius: 12px;");
 
         reportTable = new TableView<>();
         reportTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -287,11 +287,11 @@ public class ReportsAnalyticsView extends ScrollPane {
                     VBox textContainer = new VBox(2);
                     Label idLbl = new Label(id + " • " + rep.getCategory());
                     idLbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
-                    idLbl.setTextFill(Color.WHITE);
+                    idLbl.setTextFill(Color.web("#0F172A"));
 
                     Label repLbl = new Label("By: " + rep.getReporterName() + " (" + rep.getReporterRole() + ")");
                     repLbl.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 11));
-                    repLbl.setTextFill(Color.web("#94A3B8"));
+                    repLbl.setTextFill(Color.web("#64748B"));
 
                     textContainer.getChildren().addAll(idLbl, repLbl);
                     box.getChildren().addAll(icon, textContainer);
@@ -311,7 +311,7 @@ public class ReportsAnalyticsView extends ScrollPane {
                     setText(null);
                 } else {
                     setText(subj);
-                    setTextFill(Color.web("#E2E8F0"));
+                    setTextFill(Color.web("#334155"));
                     setFont(Font.font("Segoe UI", FontWeight.NORMAL, 12));
                 }
             }
@@ -332,9 +332,9 @@ public class ReportsAnalyticsView extends ScrollPane {
                     badge.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
 
                     switch (prio.toUpperCase()) {
-                        case "CRITICAL" -> badge.setStyle("-fx-background-color: #881337; -fx-text-fill: #FDA4AF; -fx-background-radius: 20px;");
-                        case "HIGH" -> badge.setStyle("-fx-background-color: #7C2D12; -fx-text-fill: #FDBA74; -fx-background-radius: 20px;");
-                        default -> badge.setStyle("-fx-background-color: #0F172A; -fx-text-fill: #94A3B8; -fx-background-radius: 20px;");
+                        case "CRITICAL" -> badge.setStyle("-fx-background-color: #FFE4E6; -fx-text-fill: #9F1239; -fx-background-radius: 20px;");
+                        case "HIGH" -> badge.setStyle("-fx-background-color: #FFEDD5; -fx-text-fill: #9A3412; -fx-background-radius: 20px;");
+                        default -> badge.setStyle("-fx-background-color: #F1F5F9; -fx-text-fill: #475569; -fx-background-radius: 20px;");
                     }
                     setGraphic(badge);
                 }
@@ -356,9 +356,9 @@ public class ReportsAnalyticsView extends ScrollPane {
                     badge.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
 
                     switch (status.toUpperCase()) {
-                        case "RESOLVED" -> badge.setStyle("-fx-background-color: #064E3B; -fx-text-fill: #34D399; -fx-background-radius: 6px;");
-                        case "IN_REVIEW" -> badge.setStyle("-fx-background-color: #78350F; -fx-text-fill: #FBBF24; -fx-background-radius: 6px;");
-                        default -> badge.setStyle("-fx-background-color: #7F1D1D; -fx-text-fill: #FCA5A5; -fx-background-radius: 6px;");
+                        case "RESOLVED" -> badge.setStyle("-fx-background-color: #D1FAE5; -fx-text-fill: #065F46; -fx-background-radius: 6px;");
+                        case "IN_REVIEW" -> badge.setStyle("-fx-background-color: #FEF3C7; -fx-text-fill: #92400E; -fx-background-radius: 6px;");
+                        default -> badge.setStyle("-fx-background-color: #FEE2E2; -fx-text-fill: #991B1B; -fx-background-radius: 6px;");
                     }
                     setGraphic(badge);
                 }
@@ -374,8 +374,8 @@ public class ReportsAnalyticsView extends ScrollPane {
 
             {
                 btnGroup.setAlignment(Pos.CENTER);
-                inspectBtn.setStyle("-fx-background-color: #334155; -fx-text-fill: #F1F5F9; -fx-cursor: hand; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 5px 10px;");
-                resolveBtn.setStyle("-fx-background-color: #064E3B; -fx-text-fill: #34D399; -fx-cursor: hand; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 5px 10px;");
+                inspectBtn.setStyle("-fx-background-color: #E2E8F0; -fx-text-fill: #1E293B; -fx-cursor: hand; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 5px 10px; -fx-background-radius: 4px;");
+                resolveBtn.setStyle("-fx-background-color: #059669; -fx-text-fill: #FFFFFF; -fx-cursor: hand; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 5px 10px; -fx-background-radius: 4px;");
 
                 inspectBtn.setOnAction(e -> {
                     ReportModel rep = getTableView().getItems().get(getIndex());
@@ -409,17 +409,17 @@ public class ReportsAnalyticsView extends ScrollPane {
     private StackPane createReportBadge(String priority) {
         Circle circle = new Circle(15);
         if ("CRITICAL".equalsIgnoreCase(priority)) {
-            circle.setFill(Color.web("#881337"));
-            circle.setStroke(Color.web("#FDA4AF"));
+            circle.setFill(Color.web("#FFE4E6"));
+            circle.setStroke(Color.web("#F43F5E"));
         } else {
-            circle.setFill(Color.web("#0F172A"));
-            circle.setStroke(Color.web("#64748B"));
+            circle.setFill(Color.web("#F1F5F9"));
+            circle.setStroke(Color.web("#94A3B8"));
         }
         circle.setStrokeWidth(1.5);
 
         Label label = new Label(priority.substring(0, 1));
         label.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
-        label.setTextFill(Color.WHITE);
+        label.setTextFill("CRITICAL".equalsIgnoreCase(priority) ? Color.web("#9F1239") : Color.web("#475569"));
 
         return new StackPane(circle, label);
     }
@@ -523,43 +523,43 @@ public class ReportsAnalyticsView extends ScrollPane {
         dialog.showAndWait();
     }
 
-    private String getDarkThemeCSS() {
+    private String getLightThemeCSS() {
         return """
             .table-view {
                 -fx-background-color: transparent;
-                -fx-base: #1E293B;
-                -fx-control-inner-background: #1E293B;
+                -fx-base: #FFFFFF;
+                -fx-control-inner-background: #FFFFFF;
                 -fx-background-insets: 0;
             }
             .table-view .column-header-background {
-                -fx-background-color: #0F172A;
+                -fx-background-color: #F8FAFC;
             }
             .table-view .column-header, .table-view .filler {
-                -fx-background-color: #0F172A;
-                -fx-border-color: #334155;
+                -fx-background-color: #F8FAFC;
+                -fx-border-color: #E2E8F0;
                 -fx-border-width: 0 0 1px 0;
             }
             .table-view .column-header .label {
-                -fx-text-fill: #94A3B8;
+                -fx-text-fill: #64748B;
                 -fx-font-weight: bold;
                 -fx-alignment: CENTER-LEFT;
             }
             .table-row-cell {
-                -fx-background-color: #1E293B;
-                -fx-border-color: #334155;
+                -fx-background-color: #FFFFFF;
+                -fx-border-color: #F1F5F9;
                 -fx-border-width: 0 0 1px 0;
             }
             .table-row-cell:odd {
-                -fx-background-color: #182232;
+                -fx-background-color: #F8FAFC;
             }
             .table-row-cell:selected {
-                -fx-background-color: #334155;
+                -fx-background-color: #E2E8F0;
             }
             .scroll-bar:vertical, .scroll-bar:horizontal {
-                -fx-background-color: #0F172A;
+                -fx-background-color: #F1F5F9;
             }
             .scroll-bar:vertical .thumb, .scroll-bar:horizontal .thumb {
-                -fx-background-color: #475569;
+                -fx-background-color: #CBD5E1;
                 -fx-background-radius: 4px;
             }
             """;
