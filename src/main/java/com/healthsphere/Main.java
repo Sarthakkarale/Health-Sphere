@@ -11,33 +11,50 @@ public class Main extends Application {
     @Override
     public void start(Stage stage) {
 
-        // Create the first screen of the Hospital module
-        HospitalDashboardView dashboardView =
-                new HospitalDashboardView();
+        // ---------------------------------------------------------
+        // APPLICATION WINDOW
+        // ---------------------------------------------------------
 
-        // Get the Dashboard scene
-        Scene scene =
-                dashboardView.createScene(stage);
+        stage.setTitle("Health-Sphere | Smart Healthcare");
 
-        // Configure application window
-        stage.setTitle(
-                "Health-Sphere | Hospital Management System"
-        );
+        // Initial window size
+        stage.setWidth(1400);
+        stage.setHeight(850);
 
-        stage.setScene(scene);
-
+        // Minimum window size
         stage.setMinWidth(1100);
         stage.setMinHeight(700);
 
-        stage.setWidth(1280);
-        stage.setHeight(820);
+        // ---------------------------------------------------------
+        // INITIAL SCREEN
+        // ---------------------------------------------------------
 
+        HospitalDashboardView dashboardView =
+                new HospitalDashboardView();
+
+        Scene scene =
+                dashboardView.createScene(stage);
+
+        stage.setScene(scene);
+
+        // ---------------------------------------------------------
+        // WINDOW SETTINGS
+        // ---------------------------------------------------------
+
+        stage.setResizable(true);
+
+        // Start maximized
         stage.setMaximized(true);
 
         stage.show();
     }
 
+    // -------------------------------------------------------------
+    // APPLICATION ENTRY POINT
+    // -------------------------------------------------------------
+
     public static void main(String[] args) {
         launch(args);
     }
 }
+
