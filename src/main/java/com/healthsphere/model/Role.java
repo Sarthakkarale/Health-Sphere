@@ -9,5 +9,5 @@ public enum Role {
     PATIENT,
     DOCTOR,
     HOSPITAL,
-    ADMINISTRATOR
+    ADMINISTRATOR, ADMIN
 }

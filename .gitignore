@@ -27,3 +27,17 @@ nbproject/
 
 # Compiled Java
 *.class
+
+# Firebase service account credentials
+serviceAccountKey.json
+*-firebase-adminsdk-*.json
+
+# Environment/local configuration
+.env
+
+# Firebase service account credentials
+serviceAccountKey.json
+*-firebase-adminsdk-*.json
+
+# Local environment configuration
+.env
