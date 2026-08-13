@@ -1,34 +1,25 @@
 package com.healthsphere;
 
-import com.healthsphere.view.authentication.SplashView;
+import com.healthsphere.view.Patient.PatientNavigator;
+
 import javafx.application.Application;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public class Main extends Application {
 
     @Override
-    public void start(Stage primaryStage) {
+    public void start(Stage stage) {
 
-        // Create Splash Screen
-        SplashView splashView = new SplashView();
+        stage.setTitle(
+                "MediNexus AI - Patient Module"
+        );
 
-        // Create Scene
-        Scene scene = splashView.getScene();
+        PatientNavigator navigator =
+                new PatientNavigator(stage);
 
-        // Configure Stage
-        primaryStage.setTitle("Health-Sphere");
-        primaryStage.setScene(scene);
+        navigator.showDashboard();
 
-        primaryStage.setWidth(1440);
-        primaryStage.setHeight(900);
-
-        primaryStage.setMinWidth(1200);
-        primaryStage.setMinHeight(700);
-
-        primaryStage.setMaximized(true);
-
-        primaryStage.show();
+        stage.show();
     }
 
     public static void main(String[] args) {
