@@ -42,7 +42,7 @@ import java.util.List;
 public class HospitalAnalyticsView {
 
     // =========================================================
-    // COLOR PALETTE (Modern Light Theme)
+    // COLOR PALETTE (Modern Light Content Theme + Dark Sidebar)
     // =========================================================
 
     private static final String PRIMARY_BLUE = "#1E62D0";
@@ -52,6 +52,15 @@ public class HospitalAnalyticsView {
     private static final String LIGHT_BACKGROUND = "#F8FAFC";
     private static final String CARD_BG = "#FFFFFF";
     private static final String BORDER = "#E2E8F0";
+
+    // Dark Sidebar Palette
+    private static final String SIDEBAR_BG = "#0F172A";
+    private static final String SIDEBAR_BORDER = "#1E293B";
+    private static final String SIDEBAR_TEXT = "#94A3B8";
+    private static final String SIDEBAR_TEXT_ACTIVE = "#F8FAFC";
+    private static final String SIDEBAR_ICON_ACTIVE = "#3B82F6";
+    private static final String SIDEBAR_ACTIVE_BG = "#1E293B";
+    private static final String SIDEBAR_HOVER_BG = "#1E293B80";
 
     private static final String SUCCESS_GREEN = "#059669";
     private static final String SUCCESS_LIGHT = "#ECFDF5";
@@ -130,7 +139,7 @@ public class HospitalAnalyticsView {
     }
 
     // =========================================================
-    // SIDEBAR
+    // SIDEBAR (DARK THEME)
     // =========================================================
 
     private VBox createSidebar(Stage stage) {
@@ -140,8 +149,8 @@ public class HospitalAnalyticsView {
         sidebar.setPadding(new Insets(24, 16, 20, 16));
 
         sidebar.setStyle(
-                "-fx-background-color: " + CARD_BG + ";" +
-                "-fx-border-color: " + BORDER + ";" +
+                "-fx-background-color: " + SIDEBAR_BG + ";" +
+                "-fx-border-color: " + SIDEBAR_BORDER + ";" +
                 "-fx-border-width: 0 1 0 0;"
         );
 
@@ -153,7 +162,7 @@ public class HospitalAnalyticsView {
         logo.setStyle(
                 "-fx-font-size: 22px;" +
                 "-fx-font-weight: 800;" +
-                "-fx-text-fill: " + PRIMARY_BLUE + ";"
+                "-fx-text-fill: #60A5FA;"
         );
 
         Label subtitle = new Label("SMART HEALTHCARE");
@@ -161,7 +170,7 @@ public class HospitalAnalyticsView {
                 "-fx-font-size: 9px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-letter-spacing: 1px;" +
-                "-fx-text-fill: " + SECONDARY_TEXT + ";"
+                "-fx-text-fill: " + SIDEBAR_TEXT + ";"
         );
 
         logoBox.getChildren().addAll(logo, subtitle);
@@ -209,7 +218,7 @@ public class HospitalAnalyticsView {
     }
 
     // =========================================================
-    // NAVIGATION BUTTON
+    // NAVIGATION BUTTON (DARK THEME)
     // =========================================================
 
     private Button createNavigationButton(String icon, String text, boolean selected) {
@@ -219,14 +228,14 @@ public class HospitalAnalyticsView {
         Label iconLabel = new Label(icon);
         iconLabel.setStyle(
                 "-fx-font-size: 16px;" +
-                "-fx-text-fill: " + (selected ? PRIMARY_BLUE : SECONDARY_TEXT) + ";"
+                "-fx-text-fill: " + (selected ? SIDEBAR_ICON_ACTIVE : SIDEBAR_TEXT) + ";"
         );
 
         Label textLabel = new Label(text);
         textLabel.setStyle(
                 "-fx-font-size: 13px;" +
                 "-fx-font-weight: " + (selected ? "bold" : "500") + ";" +
-                "-fx-text-fill: " + (selected ? PRIMARY_BLUE : DARK_TEXT) + ";"
+                "-fx-text-fill: " + (selected ? SIDEBAR_TEXT_ACTIVE : SIDEBAR_TEXT) + ";"
         );
 
         HBox content = new HBox(12);
@@ -242,12 +251,12 @@ public class HospitalAnalyticsView {
         String baseStyle = "-fx-background-radius: 8; -fx-cursor: hand;";
 
         if (selected) {
-            button.setStyle(baseStyle + "-fx-background-color: " + PRIMARY_LIGHT + ";");
+            button.setStyle(baseStyle + "-fx-background-color: " + SIDEBAR_ACTIVE_BG + ";");
         } else {
             button.setStyle(baseStyle + "-fx-background-color: transparent;");
 
             // Hover effects
-            button.setOnMouseEntered(e -> button.setStyle(baseStyle + "-fx-background-color: #F1F5F9;"));
+            button.setOnMouseEntered(e -> button.setStyle(baseStyle + "-fx-background-color: " + SIDEBAR_HOVER_BG + ";"));
             button.setOnMouseExited(e -> button.setStyle(baseStyle + "-fx-background-color: transparent;"));
         }
 

@@ -25,7 +25,7 @@ import java.util.Optional;
 public class AppointmentManagementView {
 
     // =========================================================
-    // COLOR PALETTE (Clean Light Theme)
+    // COLOR PALETTE (Clean Light Theme with Dark Sidebar)
     // =========================================================
 
     private static final String PRIMARY_BLUE = "#1E62D0";
@@ -35,6 +35,13 @@ public class AppointmentManagementView {
     private static final String LIGHT_BACKGROUND = "#F8FAFC";
     private static final String CARD_BG = "#FFFFFF";
     private static final String BORDER = "#E2E8F0";
+
+    // DARK SIDEBAR THEME
+    private static final String SIDEBAR_BG = "#0F172A";
+    private static final String SIDEBAR_BORDER = "#1E293B";
+    private static final String SIDEBAR_TEXT = "#94A3B8";
+    private static final String SIDEBAR_TEXT_HOVER = "#F8FAFC";
+    private static final String SIDEBAR_HOVER_BG = "#1E293B";
 
     private static final String SUCCESS_GREEN = "#059669";
     private static final String SUCCESS_LIGHT = "#ECFDF5";
@@ -99,7 +106,7 @@ public class AppointmentManagementView {
     }
 
     // =========================================================
-    // SIDEBAR
+    // SIDEBAR (DARK THEME)
     // =========================================================
 
     private VBox createSidebar(Stage stage) {
@@ -109,8 +116,8 @@ public class AppointmentManagementView {
         sidebar.setPadding(new Insets(24, 16, 20, 16));
 
         sidebar.setStyle(
-                "-fx-background-color: " + CARD_BG + ";" +
-                "-fx-border-color: " + BORDER + ";" +
+                "-fx-background-color: " + SIDEBAR_BG + ";" +
+                "-fx-border-color: " + SIDEBAR_BORDER + ";" +
                 "-fx-border-width: 0 1 0 0;"
         );
 
@@ -122,7 +129,7 @@ public class AppointmentManagementView {
         logo.setStyle(
                 "-fx-font-size: 22px;" +
                 "-fx-font-weight: 800;" +
-                "-fx-text-fill: " + PRIMARY_BLUE + ";"
+                "-fx-text-fill: #FFFFFF;"
         );
 
         Label subtitle = new Label("SMART HEALTHCARE");
@@ -155,7 +162,7 @@ public class AppointmentManagementView {
                 settingsButton
         );
 
-        // DIRECT NAVIGATION HANDLERS (Safe navigation stubs)
+        // DIRECT NAVIGATION HANDLERS
         dashboardButton.setOnAction(event -> navigateSafely(stage, () -> new HospitalDashboardView().createScene(stage)));
         doctorButton.setOnAction(event -> navigateSafely(stage, () -> new DoctorManagementView().createScene(stage)));
         departmentButton.setOnAction(event -> navigateSafely(stage, () -> new DepartmentManagementView().createScene(stage)));
@@ -194,7 +201,7 @@ public class AppointmentManagementView {
     }
 
     // =========================================================
-    // NAVIGATION BUTTON
+    // NAVIGATION BUTTON (DARK THEME)
     // =========================================================
 
     private Button createNavigationButton(String icon, String text, boolean selected) {
@@ -204,14 +211,14 @@ public class AppointmentManagementView {
         Label iconLabel = new Label(icon);
         iconLabel.setStyle(
                 "-fx-font-size: 16px;" +
-                "-fx-text-fill: " + (selected ? PRIMARY_BLUE : SECONDARY_TEXT) + ";"
+                "-fx-text-fill: " + (selected ? "#FFFFFF" : SIDEBAR_TEXT) + ";"
         );
 
         Label textLabel = new Label(text);
         textLabel.setStyle(
                 "-fx-font-size: 13px;" +
                 "-fx-font-weight: " + (selected ? "bold" : "500") + ";" +
-                "-fx-text-fill: " + (selected ? PRIMARY_BLUE : DARK_TEXT) + ";"
+                "-fx-text-fill: " + (selected ? "#FFFFFF" : SIDEBAR_TEXT) + ";"
         );
 
         HBox content = new HBox(12);
@@ -227,12 +234,20 @@ public class AppointmentManagementView {
         String baseStyle = "-fx-background-radius: 8; -fx-cursor: hand;";
 
         if (selected) {
-            button.setStyle(baseStyle + "-fx-background-color: " + PRIMARY_LIGHT + ";");
+            button.setStyle(baseStyle + "-fx-background-color: " + PRIMARY_BLUE + ";");
         } else {
             button.setStyle(baseStyle + "-fx-background-color: transparent;");
 
-            button.setOnMouseEntered(e -> button.setStyle(baseStyle + "-fx-background-color: #F1F5F9;"));
-            button.setOnMouseExited(e -> button.setStyle(baseStyle + "-fx-background-color: transparent;"));
+            button.setOnMouseEntered(e -> {
+                button.setStyle(baseStyle + "-fx-background-color: " + SIDEBAR_HOVER_BG + ";");
+                iconLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: " + SIDEBAR_TEXT_HOVER + ";");
+                textLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: " + SIDEBAR_TEXT_HOVER + ";");
+            });
+            button.setOnMouseExited(e -> {
+                button.setStyle(baseStyle + "-fx-background-color: transparent;");
+                iconLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: " + SIDEBAR_TEXT + ";");
+                textLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: " + SIDEBAR_TEXT + ";");
+            });
         }
 
         return button;
@@ -267,7 +282,6 @@ public class AppointmentManagementView {
         );
         HBox.setHgrow(topSearchField, Priority.ALWAYS);
 
-        // Bind global top search to filter table
         topSearchField.textProperty().addListener((obs, oldVal, newVal) -> {
             if (filterSearchField != null) {
                 filterSearchField.setText(newVal);
@@ -389,7 +403,6 @@ public class AppointmentManagementView {
         ));
         newAppointment.setOnMouseExited(e -> newAppointment.setStyle(actionBtnStyle));
 
-        // Action Handler: Open New Appointment Dialog
         newAppointment.setOnAction(e -> openAppointmentFormDialog(stage, null));
 
         header.getChildren().addAll(titleBox, spacer, newAppointment);
@@ -410,7 +423,6 @@ public class AppointmentManagementView {
         VBox upcomingCard = createStatisticCard("Upcoming", "0", "Waiting for consultation", "◷", PURPLE, PURPLE_LIGHT);
         VBox cancelledCard = createStatisticCard("Cancelled", "0", "Cancelled appointments", "×", ERROR_RED, ERROR_LIGHT);
 
-        // Bind Labels to state fields
         todayCountVal = (Label) todayCard.getChildren().get(1);
         completedCountVal = (Label) completedCard.getChildren().get(1);
         upcomingCountVal = (Label) upcomingCard.getChildren().get(1);
@@ -535,7 +547,6 @@ public class AppointmentManagementView {
         filterStatusCombo.setPrefHeight(40);
         filterStatusCombo.setStyle("-fx-font-size: 12px;");
 
-        // Attach listeners to active controls
         filterSearchField.textProperty().addListener((o, oldV, newV) -> updateFilteredData());
         filterDatePicker.valueProperty().addListener((o, oldV, newV) -> updateFilteredData());
         filterDoctorCombo.valueProperty().addListener((o, oldV, newV) -> updateFilteredData());
@@ -601,7 +612,6 @@ public class AppointmentManagementView {
         VBox table = new VBox(0);
         applyCardStyle(table);
 
-        // Header section
         HBox tableHeader = new HBox();
         tableHeader.setAlignment(Pos.CENTER_LEFT);
         tableHeader.setPadding(new Insets(20));
@@ -682,12 +692,10 @@ public class AppointmentManagementView {
         row.setAlignment(Pos.CENTER_LEFT);
         row.setPadding(new Insets(14, 20, 14, 20));
 
-        // Time
         Label timeLabel = new Label(appt.getTime());
         timeLabel.setPrefWidth(100);
         timeLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: 700; -fx-text-fill: " + DARK_TEXT + ";");
 
-        // Patient
         HBox patientBox = new HBox(12);
         patientBox.setPrefWidth(230);
         patientBox.setAlignment(Pos.CENTER_LEFT);
@@ -711,22 +719,18 @@ public class AppointmentManagementView {
         patientInfo.getChildren().addAll(patientName, patientId);
         patientBox.getChildren().addAll(avatarPane, patientInfo);
 
-        // Department
         Label departmentLabel = new Label(appt.getDepartment());
         departmentLabel.setPrefWidth(150);
         departmentLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + DARK_TEXT + ";");
 
-        // Doctor
         Label doctorLabel = new Label(appt.getDoctorName());
         doctorLabel.setPrefWidth(180);
         doctorLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: 500; -fx-text-fill: " + SECONDARY_TEXT + ";");
 
-        // Type
         Label typeLabel = new Label(appt.getType());
         typeLabel.setPrefWidth(130);
         typeLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + DARK_TEXT + ";");
 
-        // Status Tag Colors
         String statusColor = getStatusColor(appt.getStatus());
         String statusBgColor = getStatusBgColor(appt.getStatus());
 
@@ -744,7 +748,6 @@ public class AppointmentManagementView {
         statusBox.setPrefWidth(120);
         statusBox.setAlignment(Pos.CENTER_LEFT);
 
-        // Actions
         HBox actions = new HBox(8);
         actions.setPrefWidth(180);
         actions.setAlignment(Pos.CENTER_LEFT);
@@ -753,7 +756,6 @@ public class AppointmentManagementView {
         Button reschedule = createSmallButton("Reschedule", PURPLE, PURPLE_LIGHT);
         Button cancel = createSmallButton("Cancel", ERROR_RED, ERROR_LIGHT);
 
-        // Functional Handlers
         view.setOnAction(e -> showAppointmentDetailsDialog(appt));
         reschedule.setOnAction(e -> openAppointmentFormDialog((Stage) row.getScene().getWindow(), appt));
         cancel.setOnAction(e -> handleCancelAppointment(appt));
@@ -770,7 +772,6 @@ public class AppointmentManagementView {
                 actions
         );
 
-        // Row Hover Effect
         row.setOnMouseEntered(e -> row.setStyle("-fx-background-color: #F8FAFC;"));
         row.setOnMouseExited(e -> row.setStyle("-fx-background-color: transparent;"));
 
@@ -846,7 +847,7 @@ public class AppointmentManagementView {
     }
 
     // =========================================================
-    // MODALS & DIALOGS (Full Functionality)
+    // MODALS & DIALOGS
     // =========================================================
 
     private void openAppointmentFormDialog(Stage owner, Appointment existingAppt) {

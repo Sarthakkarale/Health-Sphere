@@ -22,7 +22,7 @@ import java.util.Optional;
 public class DepartmentManagementView {
 
     // =========================================================
-    // COLOR PALETTE (Modern Light Theme)
+    // COLOR PALETTE (Modern Light Theme with Dark Sidebar)
     // =========================================================
 
     private static final String PRIMARY_BLUE = "#1E62D0";
@@ -32,6 +32,12 @@ public class DepartmentManagementView {
     private static final String LIGHT_BACKGROUND = "#F8FAFC";
     private static final String CARD_BG = "#FFFFFF";
     private static final String BORDER = "#E2E8F0";
+
+    // Dark Sidebar Theme Colors
+    private static final String SIDEBAR_BG = "#0F172A";
+    private static final String SIDEBAR_HOVER = "#1E293B";
+    private static final String SIDEBAR_TEXT_MUTED = "#94A3B8";
+    private static final String SIDEBAR_BORDER = "#1E293B";
 
     private static final String SUCCESS_GREEN = "#059669";
     private static final String SUCCESS_LIGHT = "#ECFDF5";
@@ -191,7 +197,7 @@ public class DepartmentManagementView {
     }
 
     // =========================================================
-    // SIDEBAR
+    // DARK SIDEBAR
     // =========================================================
 
     private VBox createSidebar(Stage stage) {
@@ -201,8 +207,8 @@ public class DepartmentManagementView {
         sidebar.setPadding(new Insets(24, 16, 20, 16));
 
         sidebar.setStyle(
-                "-fx-background-color: " + CARD_BG + ";" +
-                "-fx-border-color: " + BORDER + ";" +
+                "-fx-background-color: " + SIDEBAR_BG + ";" +
+                "-fx-border-color: " + SIDEBAR_BORDER + ";" +
                 "-fx-border-width: 0 1 0 0;"
         );
 
@@ -214,7 +220,7 @@ public class DepartmentManagementView {
         logo.setStyle(
                 "-fx-font-size: 22px;" +
                 "-fx-font-weight: 800;" +
-                "-fx-text-fill: " + PRIMARY_BLUE + ";"
+                "-fx-text-fill: #FFFFFF;"
         );
 
         Label subtitle = new Label("SMART HEALTHCARE");
@@ -222,7 +228,7 @@ public class DepartmentManagementView {
                 "-fx-font-size: 9px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-letter-spacing: 1px;" +
-                "-fx-text-fill: " + SECONDARY_TEXT + ";"
+                "-fx-text-fill: " + SIDEBAR_TEXT_MUTED + ";"
         );
 
         logoBox.getChildren().addAll(logo, subtitle);
@@ -279,14 +285,14 @@ public class DepartmentManagementView {
         Label iconLabel = new Label(icon);
         iconLabel.setStyle(
                 "-fx-font-size: 16px;" +
-                "-fx-text-fill: " + (selected ? PRIMARY_BLUE : SECONDARY_TEXT) + ";"
+                "-fx-text-fill: " + (selected ? "#FFFFFF" : SIDEBAR_TEXT_MUTED) + ";"
         );
 
         Label textLabel = new Label(text);
         textLabel.setStyle(
                 "-fx-font-size: 13px;" +
                 "-fx-font-weight: " + (selected ? "bold" : "500") + ";" +
-                "-fx-text-fill: " + (selected ? PRIMARY_BLUE : DARK_TEXT) + ";"
+                "-fx-text-fill: " + (selected ? "#FFFFFF" : SIDEBAR_TEXT_MUTED) + ";"
         );
 
         HBox content = new HBox(12);
@@ -302,11 +308,11 @@ public class DepartmentManagementView {
         String baseStyle = "-fx-background-radius: 8; -fx-cursor: hand;";
 
         if (selected) {
-            button.setStyle(baseStyle + "-fx-background-color: " + PRIMARY_LIGHT + ";");
+            button.setStyle(baseStyle + "-fx-background-color: " + PRIMARY_BLUE + ";");
         } else {
             button.setStyle(baseStyle + "-fx-background-color: transparent;");
 
-            button.setOnMouseEntered(e -> button.setStyle(baseStyle + "-fx-background-color: #F1F5F9;"));
+            button.setOnMouseEntered(e -> button.setStyle(baseStyle + "-fx-background-color: " + SIDEBAR_HOVER + ";"));
             button.setOnMouseExited(e -> button.setStyle(baseStyle + "-fx-background-color: transparent;"));
         }
 

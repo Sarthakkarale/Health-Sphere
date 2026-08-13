@@ -40,6 +40,13 @@ public class BedManagementView {
     private static final String CARD_BG = "#FFFFFF";
     private static final String BORDER = "#E2E8F0";
 
+    // Dark Sidebar Colors
+    private static final String DARK_SIDEBAR_BG = "#0F172A";
+    private static final String DARK_SIDEBAR_BORDER = "#1E293B";
+    private static final String DARK_TEXT_MUTED = "#94A3B8";
+    private static final String DARK_ACCENT = "#38BDF8";
+    private static final String DARK_HOVER_BG = "#1E293B";
+
     private static final String SUCCESS_GREEN = "#059669";
     private static final String SUCCESS_LIGHT = "#ECFDF5";
 
@@ -53,26 +60,23 @@ public class BedManagementView {
     private static final String PURPLE_LIGHT = "#F5F3FF";
 
     // =========================================================
-    // BUS RESERVATION STYLE DATA MODELS & DYNAMIC REFRESH LABELS
+    // BUS RESERVATION DATA MODELS & DYNAMIC REFRESH LABELS
     // =========================================================
     private enum BedStatus { AVAILABLE, OCCUPIED, RESERVED }
     private final Map<String, BedStatus> bedGridData = new HashMap<>();
     
-    // Dynamically updateable KPI & Progress controls
     private Label totalBedsKpiLabel;
     private Label occupiedKpiLabel;
     private Label availableKpiLabel;
     private ProgressBar totalProgressBar;
     private Label totalOccupancyPctLabel;
 
-    // Filter controls
     private ComboBox<String> wardFilter;
     private ComboBox<String> statusFilter;
     private TextField searchInput;
     private GridPane reservationGrid;
 
     public BedManagementView() {
-        // Initialize sample visual beds (Bus layout pattern)
         for (int i = 1; i <= 24; i++) {
             String bedId = "B-" + (i < 10 ? "0" + i : i);
             if (i % 3 == 0) {
@@ -105,15 +109,15 @@ public class BedManagementView {
     }
 
     // =========================================================
-    // SIDEBAR
+    // DARK SIDEBAR
     // =========================================================
     private VBox createSidebar(Stage stage) {
         VBox sidebar = new VBox(6);
         sidebar.setPrefWidth(240);
         sidebar.setPadding(new Insets(24, 16, 20, 16));
         sidebar.setStyle(
-                "-fx-background-color: " + CARD_BG + ";" +
-                "-fx-border-color: " + BORDER + ";" +
+                "-fx-background-color: " + DARK_SIDEBAR_BG + ";" +
+                "-fx-border-color: " + DARK_SIDEBAR_BORDER + ";" +
                 "-fx-border-width: 0 1 0 0;"
         );
 
@@ -122,10 +126,10 @@ public class BedManagementView {
         logoBox.setPadding(new Insets(0, 8, 24, 8));
 
         Label logo = new Label("Health-Sphere");
-        logo.setStyle("-fx-font-size: 22px; -fx-font-weight: 800; -fx-text-fill: " + PRIMARY_BLUE + ";");
+        logo.setStyle("-fx-font-size: 22px; -fx-font-weight: 800; -fx-text-fill: " + DARK_ACCENT + ";");
 
         Label subtitle = new Label("SMART HEALTHCARE");
-        subtitle.setStyle("-fx-font-size: 9px; -fx-font-weight: bold; -fx-letter-spacing: 1px; -fx-text-fill: " + SECONDARY_TEXT + ";");
+        subtitle.setStyle("-fx-font-size: 9px; -fx-font-weight: bold; -fx-letter-spacing: 1px; -fx-text-fill: " + DARK_TEXT_MUTED + ";");
 
         logoBox.getChildren().addAll(logo, subtitle);
         sidebar.getChildren().add(logoBox);
@@ -134,7 +138,7 @@ public class BedManagementView {
         Button dashboardButton = createNavigationButton("▦", "Dashboard", false);
         Button doctorButton = createNavigationButton("♙", "Doctors", false);
         Button departmentButton = createNavigationButton("✚", "Departments", false);
-        Button bedButton = createNavigationButton("▥", "Beds", true); // Currently Selected
+        Button bedButton = createNavigationButton("▥", "Beds", true);
         Button appointmentButton = createNavigationButton("▣", "Appointments", false);
         Button analyticsButton = createNavigationButton("◈", "Analytics", false);
         Button settingsButton = createNavigationButton("⚙", "Hospital Settings", false);
@@ -195,11 +199,14 @@ public class BedManagementView {
     private Button createNavigationButton(String icon, String text, boolean selected) {
         Button button = new Button();
 
+        String unselectedColor = DARK_TEXT_MUTED;
+        String selectedColor = DARK_ACCENT;
+
         Label iconLabel = new Label(icon);
-        iconLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: " + (selected ? PRIMARY_BLUE : SECONDARY_TEXT) + ";");
+        iconLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: " + (selected ? selectedColor : unselectedColor) + ";");
 
         Label textLabel = new Label(text);
-        textLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: " + (selected ? "bold" : "500") + "; -fx-text-fill: " + (selected ? PRIMARY_BLUE : DARK_TEXT) + ";");
+        textLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: " + (selected ? "bold" : "500") + "; -fx-text-fill: " + (selected ? selectedColor : unselectedColor) + ";");
 
         HBox content = new HBox(12);
         content.setAlignment(Pos.CENTER_LEFT);
@@ -214,10 +221,10 @@ public class BedManagementView {
         String baseStyle = "-fx-background-radius: 8; -fx-cursor: hand;";
 
         if (selected) {
-            button.setStyle(baseStyle + "-fx-background-color: " + PRIMARY_LIGHT + ";");
+            button.setStyle(baseStyle + "-fx-background-color: " + DARK_HOVER_BG + ";");
         } else {
             button.setStyle(baseStyle + "-fx-background-color: transparent;");
-            button.setOnMouseEntered(e -> button.setStyle(baseStyle + "-fx-background-color: #F1F5F9;"));
+            button.setOnMouseEntered(e -> button.setStyle(baseStyle + "-fx-background-color: " + DARK_HOVER_BG + ";"));
             button.setOnMouseExited(e -> button.setStyle(baseStyle + "-fx-background-color: transparent;"));
         }
 
@@ -294,7 +301,7 @@ public class BedManagementView {
                 createHeader(stage),
                 createKpiCards(),
                 createFilterBar(),
-                createBusReservationGridCard(), // NEW FEATURE: Interactive Bus Reservation Matrix
+                createBusReservationGridCard(),
                 createLowerSection(stage)
         );
 
@@ -320,7 +327,6 @@ public class BedManagementView {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        // ACTION BUTTONS
         Button manageWardsBtn = new Button("Manage Wards");
         manageWardsBtn.setStyle(
                 "-fx-background-color: " + CARD_BG + ";" +
@@ -345,7 +351,6 @@ public class BedManagementView {
                 "-fx-cursor: hand;"
         );
 
-        // NAVIGATE TO NEXT WINDOWS/VIEWS ON CLICK
         manageWardsBtn.setOnAction(e -> {
             ManageWardsView manageWardsView = new ManageWardsView();
             stage.setScene(manageWardsView.createScene(stage));
@@ -454,7 +459,6 @@ public class BedManagementView {
         statusFilter.setValue("All Status");
         statusFilter.setStyle("-fx-background-color: " + LIGHT_BACKGROUND + "; -fx-border-color: " + BORDER + "; -fx-border-radius: 6;");
 
-        // Dynamic Filtering Event Handling
         statusFilter.setOnAction(e -> renderReservationGrid());
         searchInput.textProperty().addListener((obs, oldV, newV) -> renderReservationGrid());
 
@@ -473,7 +477,7 @@ public class BedManagementView {
     }
 
     // =========================================================
-    // FEATURE: BUS RESERVATION SYSTEM STYLE BED MATRIX
+    // BUS RESERVATION STYLE BED MATRIX
     // =========================================================
     private VBox createBusReservationGridCard() {
         VBox card = createCard();
@@ -482,7 +486,7 @@ public class BedManagementView {
         header.setAlignment(Pos.CENTER_LEFT);
 
         VBox titleBox = new VBox(2);
-        Label title = new Label("Visual Bed Layout (Bed Reservation View)");
+        Label title = new Label("Visual Bed Layout (Bus Reservation View)");
         title.setStyle("-fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: " + DARK_TEXT + ";");
         Label subtitle = new Label("Click on any bed seat to manage booking or status");
         subtitle.setStyle("-fx-font-size: 12px; -fx-text-fill: " + SECONDARY_TEXT + ";");
@@ -491,7 +495,6 @@ public class BedManagementView {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        // Grid Legend
         HBox legendBox = new HBox(12);
         legendBox.setAlignment(Pos.CENTER_RIGHT);
         legendBox.getChildren().addAll(
@@ -528,7 +531,6 @@ public class BedManagementView {
             String bedId = entry.getKey();
             BedStatus status = entry.getValue();
 
-            // Filter validation
             if (!query.isEmpty() && !bedId.toLowerCase().contains(query)) {
                 continue;
             }
@@ -570,7 +572,6 @@ public class BedManagementView {
             reservationGrid.add(bedSeatBtn, col, row);
 
             col++;
-            // Bus seating structure layout (2x2 aisle split simulation across 6 columns)
             if (col == 6) {
                 col = 0;
                 row++;
@@ -665,13 +666,11 @@ public class BedManagementView {
         header.getChildren().addAll(text, spacer, totalOccupancyPctLabel);
         card.getChildren().add(header);
 
-        // Overall progress
         totalProgressBar = new ProgressBar(0.742);
         totalProgressBar.setMaxWidth(Double.MAX_VALUE);
         totalProgressBar.setStyle("-fx-accent: " + PRIMARY_BLUE + ";");
         card.getChildren().add(totalProgressBar);
 
-        // Legend
         HBox legend = new HBox(16);
         legend.getChildren().addAll(
                 createLegendItem("Occupied (386)", ERROR_RED),
@@ -680,7 +679,6 @@ public class BedManagementView {
         );
         card.getChildren().add(legend);
 
-        // Detailed Ward Progresses
         VBox wardBars = new VBox(12);
         wardBars.getChildren().addAll(
                 createWardProgressBar("General Ward", 180, 240, PRIMARY_BLUE),

@@ -42,6 +42,13 @@ public class HospitalDashboardView {
     private static final String LIGHT_BACKGROUND = "#F8FAFC";
     private static final String CARD_BG = "#FFFFFF";
     private static final String BORDER = "#E2E8F0";
+
+    // Dark Sidebar Colors
+    private static final String DARK_SIDEBAR_BG = "#0F172A";
+    private static final String DARK_SIDEBAR_BORDER = "#1E293B";
+    private static final String DARK_TEXT_MUTED = "#94A3B8";
+    private static final String DARK_ACCENT = "#38BDF8";
+    private static final String DARK_HOVER_BG = "#1E293B";
     
     private static final String SUCCESS_GREEN = "#059669";
     private static final String SUCCESS_LIGHT = "#ECFDF5";
@@ -64,13 +71,11 @@ public class HospitalDashboardView {
     private Label bedOccupancyLabel;
     private final ObservableList<HBox> activityEntries = FXCollections.observableArrayList();
 
-    // KPI Labels for dynamic updates
     private Label totalDoctorsValue;
     private Label todayAppointmentsValue;
     private Label availableBedsValue;
     private Label emergencyCasesValue;
 
-    // Appointment Status Labels
     private Label completedApptLabel;
     private Label waitingApptLabel;
     private Label upcomingApptLabel;
@@ -89,7 +94,6 @@ public class HospitalDashboardView {
         root.setLeft(createSidebar(stage));
         root.setTop(createTopBar(stage));
 
-        // Wrap main content in a scroll pane for better adaptability
         ScrollPane scrollPane = new ScrollPane(createMainContent(stage));
         scrollPane.setFitToWidth(true);
         scrollPane.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-padding: 0;");
@@ -100,7 +104,7 @@ public class HospitalDashboardView {
     }
 
     // =========================================================
-    // SIDEBAR (Includes Patient Reviews Link)
+    // DARK SIDEBAR
     // =========================================================
 
     private VBox createSidebar(Stage stage) {
@@ -110,8 +114,8 @@ public class HospitalDashboardView {
         sidebar.setPadding(new Insets(24, 16, 20, 16));
 
         sidebar.setStyle(
-                "-fx-background-color: " + CARD_BG + ";" +
-                "-fx-border-color: " + BORDER + ";" +
+                "-fx-background-color: " + DARK_SIDEBAR_BG + ";" +
+                "-fx-border-color: " + DARK_SIDEBAR_BORDER + ";" +
                 "-fx-border-width: 0 1 0 0;"
         );
 
@@ -123,7 +127,7 @@ public class HospitalDashboardView {
         logo.setStyle(
                 "-fx-font-size: 22px;" +
                 "-fx-font-weight: 800;" +
-                "-fx-text-fill: " + PRIMARY_BLUE + ";"
+                "-fx-text-fill: " + DARK_ACCENT + ";"
         );
 
         Label subtitle = new Label("SMART HEALTHCARE");
@@ -131,7 +135,7 @@ public class HospitalDashboardView {
                 "-fx-font-size: 9px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-letter-spacing: 1px;" +
-                "-fx-text-fill: " + SECONDARY_TEXT + ";"
+                "-fx-text-fill: " + DARK_TEXT_MUTED + ";"
         );
 
         logoBox.getChildren().addAll(logo, subtitle);
@@ -143,7 +147,7 @@ public class HospitalDashboardView {
         Button departmentButton = createNavigationButton("✚", "Departments", false);
         Button bedButton = createNavigationButton("▥", "Beds", false);
         Button appointmentButton = createNavigationButton("▣", "Appointments", false);
-        Button reviewsButton = createNavigationButton("★", "Patient Reviews", false); // Added Reviews Button
+        Button reviewsButton = createNavigationButton("★", "Patient Reviews", false);
         Button analyticsButton = createNavigationButton("◈", "Analytics", false);
         Button settingsButton = createNavigationButton("⚙", "Hospital Settings", false);
 
@@ -183,7 +187,6 @@ public class HospitalDashboardView {
             stage.setScene(appointmentView.createScene(stage));
         });
 
-        // Patient Reviews Navigation Event
         reviewsButton.setOnAction(event -> {
             HospitalReviewView reviewView = new HospitalReviewView();
             stage.setScene(reviewView.createScene(stage));
@@ -199,12 +202,10 @@ public class HospitalDashboardView {
             stage.setScene(settingsView.createScene(stage));
         });
 
-        // SPACER
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
         sidebar.getChildren().add(spacer);
 
-        // FOOTER BUTTONS
         Button helpButton = createNavigationButton("?", "Help Center", false);
         Button logoutButton = createNavigationButton("↪", "Logout", false);
 
@@ -216,25 +217,24 @@ public class HospitalDashboardView {
         return sidebar;
     }
 
-    // =========================================================
-    // NAVIGATION BUTTON
-    // =========================================================
-
     private Button createNavigationButton(String icon, String text, boolean selected) {
 
         Button button = new Button();
         
+        String unselectedColor = DARK_TEXT_MUTED;
+        String selectedColor = DARK_ACCENT;
+
         Label iconLabel = new Label(icon);
         iconLabel.setStyle(
                 "-fx-font-size: 16px;" +
-                "-fx-text-fill: " + (selected ? PRIMARY_BLUE : SECONDARY_TEXT) + ";"
+                "-fx-text-fill: " + (selected ? selectedColor : unselectedColor) + ";"
         );
 
         Label textLabel = new Label(text);
         textLabel.setStyle(
                 "-fx-font-size: 13px;" +
                 "-fx-font-weight: " + (selected ? "bold" : "500") + ";" +
-                "-fx-text-fill: " + (selected ? PRIMARY_BLUE : DARK_TEXT) + ";"
+                "-fx-text-fill: " + (selected ? selectedColor : unselectedColor) + ";"
         );
 
         HBox content = new HBox(12);
@@ -250,11 +250,11 @@ public class HospitalDashboardView {
         String baseStyle = "-fx-background-radius: 8; -fx-cursor: hand;";
         
         if (selected) {
-            button.setStyle(baseStyle + "-fx-background-color: " + PRIMARY_LIGHT + ";");
+            button.setStyle(baseStyle + "-fx-background-color: " + DARK_HOVER_BG + ";");
         } else {
             button.setStyle(baseStyle + "-fx-background-color: transparent;");
             
-            button.setOnMouseEntered(e -> button.setStyle(baseStyle + "-fx-background-color: #F1F5F9;"));
+            button.setOnMouseEntered(e -> button.setStyle(baseStyle + "-fx-background-color: " + DARK_HOVER_BG + ";"));
             button.setOnMouseExited(e -> button.setStyle(baseStyle + "-fx-background-color: transparent;"));
         }
 
@@ -277,7 +277,6 @@ public class HospitalDashboardView {
                 "-fx-border-width: 0 0 1 0;"
         );
 
-        // Search Input Bar
         Label searchIcon = new Label("⌕");
         searchIcon.setStyle("-fx-font-size: 18px; -fx-text-fill: " + SECONDARY_TEXT + ";");
 
@@ -309,7 +308,6 @@ public class HospitalDashboardView {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        // Topbar Icons
         Label notification = new Label("🔔");
         notification.setStyle("-fx-font-size: 16px; -fx-cursor: hand; -fx-text-fill: " + SECONDARY_TEXT + ";");
         notification.setOnMouseClicked(e -> showNotificationsMenu(notification));
@@ -473,7 +471,6 @@ public class HospitalDashboardView {
         return section;
     }
 
-    // APPOINTMENT OVERVIEW
     private VBox createAppointmentOverview() {
 
         VBox card = createCard();
@@ -527,7 +524,6 @@ public class HospitalDashboardView {
         return box;
     }
 
-    // BED OCCUPANCY
     private VBox createBedOccupancy() {
 
         VBox card = createCard();
@@ -615,7 +611,6 @@ public class HospitalDashboardView {
         return section;
     }
 
-    // DEPARTMENT STATISTICS
     private VBox createDepartmentStatistics() {
 
         VBox card = createCard();
@@ -655,7 +650,6 @@ public class HospitalDashboardView {
         return row;
     }
 
-    // RECENT ACTIVITIES
     private VBox createRecentActivities() {
 
         VBox card = createCard();
@@ -703,7 +697,6 @@ public class HospitalDashboardView {
         return row;
     }
 
-    // QUICK ACTIONS
     private VBox createQuickActions(Stage stage) {
 
         VBox card = createCard();

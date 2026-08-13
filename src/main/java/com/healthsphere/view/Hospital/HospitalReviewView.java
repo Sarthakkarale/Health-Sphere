@@ -27,7 +27,7 @@ import java.util.Optional;
 public class HospitalReviewView {
 
     // =========================================================
-    // COLOR PALETTE (Light Theme - Matching Dashboard View)
+    // COLOR PALETTE (Light Content with Dark Sidebar)
     // =========================================================
 
     private static final String PRIMARY_BLUE = "#1E62D0";
@@ -37,6 +37,13 @@ public class HospitalReviewView {
     private static final String LIGHT_BACKGROUND = "#F8FAFC";
     private static final String CARD_BG = "#FFFFFF";
     private static final String BORDER = "#E2E8F0";
+
+    // DARK SIDEBAR THEME
+    private static final String SIDEBAR_BG = "#0F172A";
+    private static final String SIDEBAR_BORDER = "#1E293B";
+    private static final String SIDEBAR_TEXT = "#94A3B8";
+    private static final String SIDEBAR_TEXT_HOVER = "#F8FAFC";
+    private static final String SIDEBAR_HOVER_BG = "#1E293B";
 
     private static final String SUCCESS_GREEN = "#059669";
     private static final String SUCCESS_LIGHT = "#ECFDF5";
@@ -73,7 +80,7 @@ public class HospitalReviewView {
     }
 
     // =========================================================
-    // SIDEBAR
+    // SIDEBAR (DARK THEME)
     // =========================================================
 
     private VBox createSidebar(Stage stage) {
@@ -83,8 +90,8 @@ public class HospitalReviewView {
         sidebar.setPadding(new Insets(24, 16, 20, 16));
 
         sidebar.setStyle(
-                "-fx-background-color: " + CARD_BG + ";" +
-                "-fx-border-color: " + BORDER + ";" +
+                "-fx-background-color: " + SIDEBAR_BG + ";" +
+                "-fx-border-color: " + SIDEBAR_BORDER + ";" +
                 "-fx-border-width: 0 1 0 0;"
         );
 
@@ -93,7 +100,7 @@ public class HospitalReviewView {
         logoBox.setPadding(new Insets(0, 8, 24, 8));
 
         Label logo = new Label("Health-Sphere");
-        logo.setStyle("-fx-font-size: 22px; -fx-font-weight: 800; -fx-text-fill: " + PRIMARY_BLUE + ";");
+        logo.setStyle("-fx-font-size: 22px; -fx-font-weight: 800; -fx-text-fill: #FFFFFF;");
 
         Label subtitle = new Label("SMART HEALTHCARE");
         subtitle.setStyle("-fx-font-size: 9px; -fx-font-weight: bold; -fx-letter-spacing: 1px; -fx-text-fill: " + SECONDARY_TEXT + ";");
@@ -177,10 +184,10 @@ public class HospitalReviewView {
         Button button = new Button();
 
         Label iconLabel = new Label(icon);
-        iconLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: " + (selected ? PRIMARY_BLUE : SECONDARY_TEXT) + ";");
+        iconLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: " + (selected ? "#FFFFFF" : SIDEBAR_TEXT) + ";");
 
         Label textLabel = new Label(text);
-        textLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: " + (selected ? "bold" : "500") + "; -fx-text-fill: " + (selected ? PRIMARY_BLUE : DARK_TEXT) + ";");
+        textLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: " + (selected ? "bold" : "500") + "; -fx-text-fill: " + (selected ? "#FFFFFF" : SIDEBAR_TEXT) + ";");
 
         HBox content = new HBox(12);
         content.setAlignment(Pos.CENTER_LEFT);
@@ -195,11 +202,19 @@ public class HospitalReviewView {
         String baseStyle = "-fx-background-radius: 8; -fx-cursor: hand;";
 
         if (selected) {
-            button.setStyle(baseStyle + "-fx-background-color: " + PRIMARY_LIGHT + ";");
+            button.setStyle(baseStyle + "-fx-background-color: " + PRIMARY_BLUE + ";");
         } else {
             button.setStyle(baseStyle + "-fx-background-color: transparent;");
-            button.setOnMouseEntered(e -> button.setStyle(baseStyle + "-fx-background-color: #F1F5F9;"));
-            button.setOnMouseExited(e -> button.setStyle(baseStyle + "-fx-background-color: transparent;"));
+            button.setOnMouseEntered(e -> {
+                button.setStyle(baseStyle + "-fx-background-color: " + SIDEBAR_HOVER_BG + ";");
+                iconLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: " + SIDEBAR_TEXT_HOVER + ";");
+                textLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: " + SIDEBAR_TEXT_HOVER + ";");
+            });
+            button.setOnMouseExited(e -> {
+                button.setStyle(baseStyle + "-fx-background-color: transparent;");
+                iconLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: " + SIDEBAR_TEXT + ";");
+                textLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: " + SIDEBAR_TEXT + ";");
+            });
         }
 
         return button;
@@ -390,7 +405,6 @@ public class HospitalReviewView {
         bar.setPrefHeight(8);
         bar.setStyle("-fx-background-color: " + GOLDEN_YELLOW + "; -fx-background-radius: 6;");
 
-        // Dynamic width calculation visually handled via binding/alignment
         StackPane.setAlignment(bar, Pos.CENTER_LEFT);
         bar.prefWidthProperty().bind(progressContainer.widthProperty().multiply(fillPercent));
 
@@ -470,7 +484,6 @@ public class HospitalReviewView {
 
         reviewListContainer = new VBox(16);
 
-        // Dummy Sample Reviews Data
         reviewListContainer.getChildren().addAll(
                 createReviewCard(
                         "Ananya Roy",
@@ -508,7 +521,6 @@ public class HospitalReviewView {
 
         VBox card = createCard();
 
-        // Top Row: Patient Info + Date
         HBox topRow = new HBox(12);
         topRow.setAlignment(Pos.CENTER_LEFT);
 
@@ -549,7 +561,6 @@ public class HospitalReviewView {
 
         topRow.getChildren().addAll(avatarPane, patientDetailBox, spacer, date);
 
-        // Rating Stars Line
         StringBuilder starStr = new StringBuilder();
         for (int i = 0; i < 5; i++) {
             if (i < rating) starStr.append("★ ");
@@ -559,7 +570,6 @@ public class HospitalReviewView {
         Label ratingStars = new Label(starStr.toString().trim());
         ratingStars.setStyle("-fx-font-size: 14px; -fx-text-fill: " + GOLDEN_YELLOW + ";");
 
-        // Review Subject & Body
         Label reviewTitle = new Label(titleText);
         reviewTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: " + DARK_TEXT + ";");
 
@@ -567,7 +577,6 @@ public class HospitalReviewView {
         body.setWrapText(true);
         body.setStyle("-fx-font-size: 12px; -fx-text-fill: " + DARK_TEXT + "; -fx-line-spacing: 3;");
 
-        // Action Buttons Row (Reply, Flag, Acknowledge)
         HBox actionRow = new HBox(10);
         actionRow.setAlignment(Pos.CENTER_LEFT);
 
