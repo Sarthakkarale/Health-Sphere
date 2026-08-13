@@ -3,7 +3,9 @@ package com.healthsphere.view.Hospital;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
@@ -11,6 +13,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -19,6 +22,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 public class BedManagementView {
 
@@ -44,6 +51,39 @@ public class BedManagementView {
 
     private static final String PURPLE = "#7C3AED";
     private static final String PURPLE_LIGHT = "#F5F3FF";
+
+    // =========================================================
+    // BUS RESERVATION STYLE DATA MODELS & DYNAMIC REFRESH LABELS
+    // =========================================================
+    private enum BedStatus { AVAILABLE, OCCUPIED, RESERVED }
+    private final Map<String, BedStatus> bedGridData = new HashMap<>();
+    
+    // Dynamically updateable KPI & Progress controls
+    private Label totalBedsKpiLabel;
+    private Label occupiedKpiLabel;
+    private Label availableKpiLabel;
+    private ProgressBar totalProgressBar;
+    private Label totalOccupancyPctLabel;
+
+    // Filter controls
+    private ComboBox<String> wardFilter;
+    private ComboBox<String> statusFilter;
+    private TextField searchInput;
+    private GridPane reservationGrid;
+
+    public BedManagementView() {
+        // Initialize sample visual beds (Bus layout pattern)
+        for (int i = 1; i <= 24; i++) {
+            String bedId = "B-" + (i < 10 ? "0" + i : i);
+            if (i % 3 == 0) {
+                bedGridData.put(bedId, BedStatus.OCCUPIED);
+            } else if (i % 7 == 0) {
+                bedGridData.put(bedId, BedStatus.RESERVED);
+            } else {
+                bedGridData.put(bedId, BedStatus.AVAILABLE);
+            }
+        }
+    }
 
     // =========================================================
     // CREATE SCENE
@@ -254,6 +294,7 @@ public class BedManagementView {
                 createHeader(stage),
                 createKpiCards(),
                 createFilterBar(),
+                createBusReservationGridCard(), // NEW FEATURE: Interactive Bus Reservation Matrix
                 createLowerSection(stage)
         );
 
@@ -329,13 +370,17 @@ public class BedManagementView {
     private HBox createKpiCards() {
         HBox cards = new HBox(16);
 
-        cards.getChildren().addAll(
-                createKpiCard("Total Beds", "520", "Hospital capacity", "=", PRIMARY_BLUE, PRIMARY_LIGHT),
-                createKpiCard("Occupied", "386", "74.2% occupancy rate", "●", ERROR_RED, ERROR_LIGHT),
-                createKpiCard("Available", "134", "Beds ready for patients", "✓", SUCCESS_GREEN, SUCCESS_LIGHT),
-                createKpiCard("ICU Beds", "48", "36 occupied currently", "♥", PURPLE, PURPLE_LIGHT),
-                createKpiCard("Emergency Beds", "24", "18 available for triage", "!", WARNING_ORANGE, WARNING_LIGHT)
-        );
+        VBox totalCard = createKpiCard("Total Beds", "520", "Hospital capacity", "=", PRIMARY_BLUE, PRIMARY_LIGHT);
+        VBox occupiedCard = createKpiCard("Occupied", "386", "74.2% occupancy rate", "●", ERROR_RED, ERROR_LIGHT);
+        VBox availableCard = createKpiCard("Available", "134", "Beds ready for patients", "✓", SUCCESS_GREEN, SUCCESS_LIGHT);
+        VBox icuCard = createKpiCard("ICU Beds", "48", "36 occupied currently", "♥", PURPLE, PURPLE_LIGHT);
+        VBox emergencyCard = createKpiCard("Emergency Beds", "24", "18 available for triage", "!", WARNING_ORANGE, WARNING_LIGHT);
+
+        totalBedsKpiLabel = (Label) totalCard.getChildren().get(1);
+        occupiedKpiLabel = (Label) occupiedCard.getChildren().get(1);
+        availableKpiLabel = (Label) availableCard.getChildren().get(1);
+
+        cards.getChildren().addAll(totalCard, occupiedCard, availableCard, icuCard, emergencyCard);
 
         for (javafx.scene.Node node : cards.getChildren()) {
             HBox.setHgrow(node, Priority.ALWAYS);
@@ -391,7 +436,7 @@ public class BedManagementView {
         filterBar.setPadding(new Insets(12, 16, 12, 16));
         filterBar.setStyle("-fx-background-color: " + CARD_BG + "; -fx-background-radius: 10; -fx-border-color: " + BORDER + "; -fx-border-radius: 10;");
 
-        TextField searchInput = new TextField();
+        searchInput = new TextField();
         searchInput.setPromptText("Search bed number or patient...");
         searchInput.setStyle("-fx-background-color: transparent; -fx-prompt-text-fill: #94A3B8; -fx-font-size: 13px;");
         searchInput.setPrefWidth(260);
@@ -399,15 +444,19 @@ public class BedManagementView {
         HBox searchContainer = new HBox(searchInput);
         searchContainer.setStyle("-fx-border-color: " + BORDER + "; -fx-border-radius: 6; -fx-padding: 2;");
 
-        ComboBox<String> wardFilter = new ComboBox<>();
+        wardFilter = new ComboBox<>();
         wardFilter.getItems().addAll("All Wards", "General Ward", "ICU", "Emergency", "Private Ward");
         wardFilter.setValue("All Wards");
         wardFilter.setStyle("-fx-background-color: " + LIGHT_BACKGROUND + "; -fx-border-color: " + BORDER + "; -fx-border-radius: 6;");
 
-        ComboBox<String> statusFilter = new ComboBox<>();
+        statusFilter = new ComboBox<>();
         statusFilter.getItems().addAll("All Status", "Available", "Occupied", "Reserved");
         statusFilter.setValue("All Status");
         statusFilter.setStyle("-fx-background-color: " + LIGHT_BACKGROUND + "; -fx-border-color: " + BORDER + "; -fx-border-radius: 6;");
+
+        // Dynamic Filtering Event Handling
+        statusFilter.setOnAction(e -> renderReservationGrid());
+        searchInput.textProperty().addListener((obs, oldV, newV) -> renderReservationGrid());
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -421,6 +470,162 @@ public class BedManagementView {
         filterBar.getChildren().addAll(searchContainer, wardFilter, statusFilter, spacer, filtersBtn, exportBtn);
 
         return filterBar;
+    }
+
+    // =========================================================
+    // FEATURE: BUS RESERVATION SYSTEM STYLE BED MATRIX
+    // =========================================================
+    private VBox createBusReservationGridCard() {
+        VBox card = createCard();
+
+        HBox header = new HBox();
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        VBox titleBox = new VBox(2);
+        Label title = new Label("Visual Bed Layout (Bed Reservation View)");
+        title.setStyle("-fx-font-size: 16px; -fx-font-weight: 700; -fx-text-fill: " + DARK_TEXT + ";");
+        Label subtitle = new Label("Click on any bed seat to manage booking or status");
+        subtitle.setStyle("-fx-font-size: 12px; -fx-text-fill: " + SECONDARY_TEXT + ";");
+        titleBox.getChildren().addAll(title, subtitle);
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        // Grid Legend
+        HBox legendBox = new HBox(12);
+        legendBox.setAlignment(Pos.CENTER_RIGHT);
+        legendBox.getChildren().addAll(
+                createLegendItem("Available", SUCCESS_GREEN),
+                createLegendItem("Occupied", ERROR_RED),
+                createLegendItem("Reserved", WARNING_ORANGE)
+        );
+
+        header.getChildren().addAll(titleBox, spacer, legendBox);
+        card.getChildren().add(header);
+
+        reservationGrid = new GridPane();
+        reservationGrid.setHgap(12);
+        reservationGrid.setVgap(12);
+
+        renderReservationGrid();
+
+        card.getChildren().add(reservationGrid);
+
+        return card;
+    }
+
+    private void renderReservationGrid() {
+        if (reservationGrid == null) return;
+        reservationGrid.getChildren().clear();
+
+        String selectedStatus = statusFilter != null ? statusFilter.getValue() : "All Status";
+        String query = searchInput != null ? searchInput.getText().toLowerCase().trim() : "";
+
+        int col = 0;
+        int row = 0;
+
+        for (Map.Entry<String, BedStatus> entry : bedGridData.entrySet()) {
+            String bedId = entry.getKey();
+            BedStatus status = entry.getValue();
+
+            // Filter validation
+            if (!query.isEmpty() && !bedId.toLowerCase().contains(query)) {
+                continue;
+            }
+            if (!selectedStatus.equals("All Status")) {
+                if (selectedStatus.equalsIgnoreCase("Available") && status != BedStatus.AVAILABLE) continue;
+                if (selectedStatus.equalsIgnoreCase("Occupied") && status != BedStatus.OCCUPIED) continue;
+                if (selectedStatus.equalsIgnoreCase("Reserved") && status != BedStatus.RESERVED) continue;
+            }
+
+            Button bedSeatBtn = new Button("🛏 " + bedId);
+            bedSeatBtn.setPrefSize(95, 50);
+
+            String statusColor;
+            String statusBg;
+            if (status == BedStatus.AVAILABLE) {
+                statusColor = SUCCESS_GREEN;
+                statusBg = SUCCESS_LIGHT;
+            } else if (status == BedStatus.OCCUPIED) {
+                statusColor = ERROR_RED;
+                statusBg = ERROR_LIGHT;
+            } else {
+                statusColor = WARNING_ORANGE;
+                statusBg = WARNING_LIGHT;
+            }
+
+            bedSeatBtn.setStyle(
+                    "-fx-background-color: " + statusBg + ";" +
+                    "-fx-border-color: " + statusColor + ";" +
+                    "-fx-border-radius: 8;" +
+                    "-fx-background-radius: 8;" +
+                    "-fx-text-fill: " + statusColor + ";" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-font-size: 11px;" +
+                    "-fx-cursor: hand;"
+            );
+
+            bedSeatBtn.setOnAction(e -> handleBedReservationClick(bedId, status));
+
+            reservationGrid.add(bedSeatBtn, col, row);
+
+            col++;
+            // Bus seating structure layout (2x2 aisle split simulation across 6 columns)
+            if (col == 6) {
+                col = 0;
+                row++;
+            }
+        }
+    }
+
+    private void handleBedReservationClick(String bedId, BedStatus currentStatus) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Bed Reservation Action");
+        alert.setHeaderText("Manage Bed Seat: " + bedId + " (Current: " + currentStatus + ")");
+        alert.setContentText("Select an action to update this bed seat's status:");
+
+        ButtonType reserveBtn = new ButtonType("Reserve Bed");
+        ButtonType occupyBtn = new ButtonType("Occupy Bed");
+        ButtonType releaseBtn = new ButtonType("Make Available");
+        ButtonType cancelBtn = new ButtonType("Cancel", ButtonType.CANCEL.getButtonData());
+
+        alert.getButtonTypes().setAll(reserveBtn, occupyBtn, releaseBtn, cancelBtn);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isPresent()) {
+            if (result.get() == reserveBtn) {
+                bedGridData.put(bedId, BedStatus.RESERVED);
+            } else if (result.get() == occupyBtn) {
+                bedGridData.put(bedId, BedStatus.OCCUPIED);
+            } else if (result.get() == releaseBtn) {
+                bedGridData.put(bedId, BedStatus.AVAILABLE);
+            }
+            updateBedMetrics();
+            renderReservationGrid();
+        }
+    }
+
+    private void updateBedMetrics() {
+        int occupiedCount = 0;
+        int total = bedGridData.size();
+
+        for (BedStatus status : bedGridData.values()) {
+            if (status == BedStatus.OCCUPIED || status == BedStatus.RESERVED) {
+                occupiedCount++;
+            }
+        }
+
+        int availableCount = total - occupiedCount;
+        double ratio = (double) occupiedCount / total;
+
+        if (totalBedsKpiLabel != null) totalBedsKpiLabel.setText(String.valueOf(total));
+        if (occupiedKpiLabel != null) occupiedKpiLabel.setText(String.valueOf(occupiedCount));
+        if (availableKpiLabel != null) availableKpiLabel.setText(String.valueOf(availableCount));
+
+        if (totalProgressBar != null) totalProgressBar.setProgress(ratio);
+        if (totalOccupancyPctLabel != null) {
+            totalOccupancyPctLabel.setText(String.format("%.1f%%", ratio * 100));
+        }
     }
 
     // =========================================================
@@ -454,17 +659,17 @@ public class BedManagementView {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Label percentage = new Label("74.2%");
-        percentage.setStyle("-fx-font-size: 22px; -fx-font-weight: 800; -fx-text-fill: " + PRIMARY_BLUE + ";");
+        totalOccupancyPctLabel = new Label("74.2%");
+        totalOccupancyPctLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: 800; -fx-text-fill: " + PRIMARY_BLUE + ";");
 
-        header.getChildren().addAll(text, spacer, percentage);
+        header.getChildren().addAll(text, spacer, totalOccupancyPctLabel);
         card.getChildren().add(header);
 
         // Overall progress
-        ProgressBar totalProgress = new ProgressBar(0.742);
-        totalProgress.setMaxWidth(Double.MAX_VALUE);
-        totalProgress.setStyle("-fx-accent: " + PRIMARY_BLUE + ";");
-        card.getChildren().add(totalProgress);
+        totalProgressBar = new ProgressBar(0.742);
+        totalProgressBar.setMaxWidth(Double.MAX_VALUE);
+        totalProgressBar.setStyle("-fx-accent: " + PRIMARY_BLUE + ";");
+        card.getChildren().add(totalProgressBar);
 
         // Legend
         HBox legend = new HBox(16);
