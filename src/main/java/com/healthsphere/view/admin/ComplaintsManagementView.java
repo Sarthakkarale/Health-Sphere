@@ -5,7 +5,8 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
@@ -38,7 +39,17 @@ public class ComplaintsManagementView {
         this.stage = stage;
     }
 
-    public Node getView() {
+    /**
+     * Creates and returns a new Scene wrapping the root View node.
+     */
+    public Scene getScene() {
+        return new Scene(getView());
+    }
+
+    /**
+     * Builds and returns the main View container as a Parent node.
+     */
+    public Parent getView() {
         VBox root = new VBox(24);
         root.setPadding(new Insets(28));
         root.setStyle("-fx-background-color: #F8FAFC;");

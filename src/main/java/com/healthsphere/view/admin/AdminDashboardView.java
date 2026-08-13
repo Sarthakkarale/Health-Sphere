@@ -5,6 +5,7 @@ import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
@@ -21,9 +22,10 @@ import javafx.util.Duration;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
-public class AdminDashboardView extends ScrollPane {
+public class AdminDashboardView {
 
     private Stage primaryStage;
+    private final ScrollPane rootPane;
 
     // Dynamic Live KPI Labels
     private Label totalHospitalsVal;
@@ -46,12 +48,13 @@ public class AdminDashboardView extends ScrollPane {
     // Constructor with Stage
     public AdminDashboardView(Stage stage) {
         this.primaryStage = stage;
+        this.rootPane = new ScrollPane();
 
-        setFitToWidth(true);
-        setStyle("-fx-background-color: #F8FAFC; -fx-background: #F8FAFC;");
+        rootPane.setFitToWidth(true);
+        rootPane.setStyle("-fx-background-color: #F8FAFC; -fx-background: #F8FAFC;");
 
         // Embed Modern Light Theme CSS
-        this.getStylesheets().add("data:text/css," + getLightThemeCSS());
+        rootPane.getStylesheets().add("data:text/css," + getLightThemeCSS());
 
         VBox mainContainer = new VBox(25);
         mainContainer.setPadding(new Insets(30));
@@ -70,14 +73,18 @@ public class AdminDashboardView extends ScrollPane {
         GridPane bottomGrid = createBottomGrid();
 
         mainContainer.getChildren().addAll(header, statsSection, middleSection, bottomGrid);
-        setContent(mainContainer);
+        rootPane.setContent(mainContainer);
 
         // Start Live Telemetry Updates
         initLiveTelemetryEngine();
     }
 
     public Parent getView() {
-        return this;
+        return rootPane;
+    }
+
+    public Scene getScene() {
+        return new Scene(rootPane);
     }
 
     private HBox createCommandHeader() {

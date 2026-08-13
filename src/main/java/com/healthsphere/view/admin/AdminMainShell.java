@@ -1,9 +1,7 @@
 package com.healthsphere.view.admin;
 
-import com.healthsphere.util.UIUtils;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -14,174 +12,183 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class AdminMainShell {
 
-    private final Stage stage;
-    private BorderPane mainLayout;
-    private final List<Button> navButtons = new ArrayList<>();
-    private int currentActiveIndex = 0;
+    private final Stage primaryStage;
+    private final BorderPane rootLayout;
+    private List<Button> allNavButtons;
 
     public AdminMainShell(Stage stage) {
-        this.stage = stage;
-    }
+        this.primaryStage = stage;
+        this.rootLayout = new BorderPane();
 
-    public Scene getScene() {
-        mainLayout = new BorderPane();
-        mainLayout.setStyle("-fx-background-color: " + UIUtils.COLOR_BG_DARK + ";");
-
+        // 1. Build and attach the persistent sidebar on the left
         VBox sidebar = createSidebar();
-        mainLayout.setLeft(sidebar);
+        rootLayout.setLeft(sidebar);
 
-        switchView(0, new AdminDashboardView(stage).getView());
-
-        double w = (stage != null && stage.getWidth() > 0) ? stage.getWidth() : 1366;
-        double h = (stage != null && stage.getHeight() > 0) ? stage.getHeight() : 768;
-
-        return new Scene(mainLayout, w, h);
+        // 2. Load the initial Command Dashboard view in the center
+        AdminDashboardView dashboardView = new AdminDashboardView(stage);
+        rootLayout.setCenter(dashboardView.getView());
     }
 
     public void show() {
-        if (stage != null) {
-            stage.setTitle("HealthSphere AI — Enterprise Command Center");
-            stage.setScene(getScene());
-            stage.setMaximized(true);
-            stage.show();
-        }
+        Scene scene = new Scene(rootLayout, 1366, 768);
+        primaryStage.setTitle("HealthSphere AI — Enterprise Command Center");
+        primaryStage.setScene(scene);
+        primaryStage.setMaximized(true);
+        primaryStage.show();
     }
 
     private VBox createSidebar() {
-        VBox sidebar = new VBox(14);
-        sidebar.setPrefWidth(270);
-        sidebar.setPadding(new Insets(24, 16, 20, 16));
-        sidebar.setStyle("-fx-background-color: " + UIUtils.COLOR_SIDEBAR + "; -fx-border-color: #1E293B; -fx-border-width: 0 1 0 0;");
+        VBox sidebar = new VBox(10);
+        sidebar.setPrefWidth(260);
+        sidebar.setPadding(new Insets(20));
+        sidebar.setStyle("-fx-background-color: #0F172A;"); // Dark enterprise navy theme
 
-        // Logo
-        HBox logoBox = new HBox(12);
-        logoBox.setAlignment(Pos.CENTER_LEFT);
-        logoBox.setPadding(new Insets(0, 0, 12, 8));
+        // Brand Header
+        VBox brandBox = new VBox(2);
+        Label brandTitle = new Label("HealthSphere");
+        brandTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 20));
+        brandTitle.setTextFill(Color.WHITE);
+        Label brandSub = new Label("COMMAND CENTER v4.2");
+        brandSub.setFont(Font.font("Segoe UI", FontWeight.BOLD, 10));
+        brandSub.setTextFill(Color.web("#94A3B8"));
+        brandBox.getChildren().addAll(brandTitle, brandSub);
+        brandBox.setPadding(new Insets(0, 0, 15, 0));
 
-        StackPane iconPane = new StackPane();
-        Circle iconBg = new Circle(18, Color.web("#4F46E5"));
-        iconBg.setEffect(UIUtils.getGlowEffect("#6366F1", 12));
-        Label logoIcon = new Label("✨");
-        logoIcon.setFont(Font.font(16));
-        iconPane.getChildren().addAll(iconBg, logoIcon);
+        // Navigation Buttons
+        Button dashboardBtn = createNavButton("📊  Command Dashboard");
+        Button userDirBtn = createNavButton("👥  User Directory");
+        Button hospitalBtn = createNavButton("🏥  Hospital Verification");
+        Button doctorBtn = createNavButton("🩺  Doctor Credentialing");
+        Button reportsBtn = createNavButton("📋  Reports & Moderation");
+        Button analyticsBtn = createNavButton("📈  BI & Analytics");
+        Button settingsBtn = createNavButton("⚙️  Neural Settings");
 
-        VBox titleBox = new VBox(2);
-        Label logoText = new Label("HealthSphere");
-        logoText.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
-        logoText.setTextFill(Color.web(UIUtils.COLOR_TEXT_MAIN));
+        allNavButtons = List.of(dashboardBtn, userDirBtn, hospitalBtn, doctorBtn, reportsBtn, analyticsBtn, settingsBtn);
 
-        Label subText = new Label("COMMAND CENTER v4.2");
-        subText.setFont(Font.font("Segoe UI", FontWeight.BOLD, 9));
-        subText.setTextFill(Color.web("#818CF8"));
+        // Wire Event Handlers for View Swapping to actual modules
+        dashboardBtn.setOnAction(e -> {
+            setActiveButton(dashboardBtn);
+            AdminDashboardView dashboardView = new AdminDashboardView(primaryStage);
+            rootLayout.setCenter(dashboardView.getView());
+        });
 
-        titleBox.getChildren().addAll(logoText, subText);
-        logoBox.getChildren().addAll(iconPane, titleBox);
+        userDirBtn.setOnAction(e -> {
+            setActiveButton(userDirBtn);
+            UserManagementView userManagementView = new UserManagementView();
+            rootLayout.setCenter(userManagementView.getView());
+        });
 
-        // Navigation
-        VBox navList = new VBox(6);
-        navButtons.clear();
+        hospitalBtn.setOnAction(e -> {
+            setActiveButton(hospitalBtn);
+            HospitalManagementView hospitalManagementView = new HospitalManagementView();
+            rootLayout.setCenter(hospitalManagementView.getView());
+        });
 
-        navList.getChildren().addAll(
-            createNavButton("📊  Command Dashboard", 0, () -> switchView(0, new AdminDashboardView(stage).getView())),
-            createNavButton("👥  User Directory", 1, () -> switchView(1, new UserManagementView(stage).getView())),
-            createNavButton("🏥  Hospital Verification", 2, () -> switchView(2, new HospitalManagementView(stage).getView())),
-            createNavButton("🩺  Doctor Credentialing", 3, () -> switchView(3, new DoctorManagementView(stage).getView())),
-            createNavButton("🚨  Reports & Moderation", 4, () -> switchView(4, new ComplaintsManagementView(stage).getView())),
-            createNavButton("📈  BI & Analytics", 5, () -> switchView(5, new ReportsAnalyticsView(stage).getView())),
-            createNavButton("⚙️  Neural Settings", 6, () -> switchView(6, new AdminSettingsView(stage).getView()))
-        );
+        doctorBtn.setOnAction(e -> {
+            setActiveButton(doctorBtn);
+            DoctorManagementView doctorManagementView = new DoctorManagementView();
+            rootLayout.setCenter(doctorManagementView.getView());
+        });
+
+        reportsBtn.setOnAction(e -> {
+            setActiveButton(reportsBtn);
+            ReportsAnalyticsView reportsView = new ReportsAnalyticsView();
+            rootLayout.setCenter(reportsView);
+        });
+
+        // analyticsBtn.setOnAction(e -> {
+        //     setActiveButton(analyticsBtn);
+        //     AppReviewDashboard analyticsView = new AppReviewDashboard();
+        //     rootLayout.setCenter(analyticsView.getView());
+        // });
+
+        // settingsBtn.setOnAction(e -> {
+        //     setActiveButton(settingsBtn);
+        //     AdminSettingsView settingsView = new AdminSettingsView();
+        //     rootLayout.setCenter(settingsView.getView());
+        // });
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
-        VBox footerCard = createFooterUserCard();
-        sidebar.getChildren().addAll(logoBox, navList, spacer, footerCard);
+        // User Profile Footer Card
+        VBox userProfileCard = createUserProfileFooter();
+
+        sidebar.getChildren().addAll(
+                brandBox,
+                dashboardBtn,
+                userDirBtn,
+                hospitalBtn,
+                doctorBtn,
+                reportsBtn,
+                analyticsBtn,
+                settingsBtn,
+                spacer,
+                userProfileCard
+        );
+
+        setActiveButton(dashboardBtn);
         return sidebar;
     }
 
-    private Button createNavButton(String text, int index, Runnable onClick) {
+    private Button createNavButton(String text) {
         Button btn = new Button(text);
         btn.setMaxWidth(Double.MAX_VALUE);
         btn.setAlignment(Pos.CENTER_LEFT);
-        btn.setPadding(new Insets(12, 16, 12, 16));
-
-        applyInactiveStyle(btn);
-
-        btn.setOnMouseEntered(e -> {
-            if (navButtons.indexOf(btn) != currentActiveIndex) {
-                btn.setStyle("-fx-background-color: #1E293B; -fx-text-fill: #E2E8F0; -fx-font-weight: bold; -fx-font-size: 13px; -fx-background-radius: 10; -fx-cursor: hand;");
-            }
-        });
-
-        btn.setOnMouseExited(e -> {
-            if (navButtons.indexOf(btn) != currentActiveIndex) {
-                applyInactiveStyle(btn);
-            }
-        });
-
-        btn.setOnAction(e -> onClick.run());
-        navButtons.add(btn);
+        btn.setPadding(new Insets(10, 14, 10, 14));
+        btn.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 13));
+        btn.setStyle(
+                "-fx-background-color: transparent; " +
+                "-fx-text-fill: #94A3B8; " +
+                "-fx-background-radius: 8px; " +
+                "-fx-cursor: hand;"
+        );
         return btn;
     }
 
-    private void switchView(int selectedIndex, Node viewNode) {
-        currentActiveIndex = selectedIndex;
-        mainLayout.setCenter(viewNode);
-        for (int i = 0; i < navButtons.size(); i++) {
-            Button btn = navButtons.get(i);
-            if (i == selectedIndex) applyActiveStyle(btn);
-            else applyInactiveStyle(btn);
+    private void setActiveButton(Button selectedBtn) {
+        for (Button btn : allNavButtons) {
+            btn.setStyle(
+                    "-fx-background-color: transparent; " +
+                    "-fx-text-fill: #94A3B8; " +
+                    "-fx-background-radius: 8px; " +
+                    "-fx-cursor: hand;"
+            );
         }
+        selectedBtn.setStyle(
+                "-fx-background-color: #4F46E5; " +
+                "-fx-text-fill: #FFFFFF; " +
+                "-fx-background-radius: 8px; " +
+                "-fx-cursor: hand;"
+        );
     }
 
-    private void applyActiveStyle(Button btn) {
-        btn.setStyle("-fx-background-color: linear-gradient(to right, #312E81, #4338CA); -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-font-size: 13px; -fx-background-radius: 10; -fx-border-color: #6366F1; -fx-border-radius: 10; -fx-cursor: hand;");
-        btn.setEffect(UIUtils.getGlowEffect("#6366F1", 10));
-    }
+    private VBox createUserProfileFooter() {
+        VBox footer = new VBox(4);
+        footer.setPadding(new Insets(12));
+        footer.setStyle("-fx-background-color: #1E293B; -fx-background-radius: 8px;");
 
-    private void applyInactiveStyle(Button btn) {
-        btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #94A3B8; -fx-font-weight: bold; -fx-font-size: 13px; -fx-border-color: transparent; -fx-cursor: hand;");
-        btn.setEffect(null);
-    }
+        Label nameLbl = new Label("Prajwal Patil");
+        nameLbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
+        nameLbl.setTextFill(Color.WHITE);
 
-    private VBox createFooterUserCard() {
-        VBox card = new VBox(8);
-        card.setPadding(new Insets(12));
-        card.setStyle("-fx-background-color: " + UIUtils.COLOR_CARD_DARK + "; -fx-background-radius: 12; -fx-border-color: #334155; -fx-border-radius: 12;");
+        Label roleLbl = new Label("Super Administrator");
+        roleLbl.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 11));
+        roleLbl.setTextFill(Color.web("#94A3B8"));
 
-        HBox userBox = new HBox(10);
-        userBox.setAlignment(Pos.CENTER_LEFT);
+        HBox statusRow = new HBox(6);
+        statusRow.setAlignment(Pos.CENTER_LEFT);
+        Circle dot = new Circle(4, Color.web("#10B981"));
+        Label statusLbl = new Label("Node: Asia-South1 (Active)");
+        statusLbl.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 10));
+        statusLbl.setTextFill(Color.web("#10B981"));
+        statusRow.getChildren().addAll(dot, statusLbl);
 
-        Circle avatar = new Circle(14, Color.web(UIUtils.COLOR_ACCENT));
-        
-        VBox info = new VBox(2);
-        Label name = new Label("Prajwal Patil");
-        name.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
-        name.setTextFill(Color.web(UIUtils.COLOR_TEXT_MAIN));
-
-        Label role = new Label("Super Administrator");
-        role.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 10));
-        role.setTextFill(Color.web(UIUtils.COLOR_TEXT_MUTED));
-
-        info.getChildren().addAll(name, role);
-        userBox.getChildren().addAll(avatar, info);
-
-        HBox statusBox = new HBox(6);
-        statusBox.setAlignment(Pos.CENTER_LEFT);
-        Circle liveDot = new Circle(4, Color.web(UIUtils.COLOR_SUCCESS));
-        liveDot.setEffect(UIUtils.getGlowEffect(UIUtils.COLOR_SUCCESS, 6));
-
-        Label statusText = new Label("Node: Asia-South1 (Active)");
-        statusText.setFont(Font.font("Segoe UI", FontWeight.BOLD, 10));
-        statusText.setTextFill(Color.web(UIUtils.COLOR_SUCCESS));
-        statusBox.getChildren().addAll(liveDot, statusText);
-
-        card.getChildren().addAll(userBox, statusBox);
-        return card;
+        footer.getChildren().addAll(nameLbl, roleLbl, statusRow);
+        return footer;
     }
 }

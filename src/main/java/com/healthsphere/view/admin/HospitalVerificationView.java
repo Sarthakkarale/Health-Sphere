@@ -3,6 +3,8 @@ package com.healthsphere.view.admin;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene; // Added import
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
@@ -68,6 +70,11 @@ public class HospitalVerificationView {
         scroll.setFitToWidth(true);
         scroll.setStyle("-fx-background-color: transparent; -fx-background: #F8FAFC; -fx-border-color: transparent;");
         return scroll;
+    }
+
+    // Added getScene() method
+    public Scene getScene() {
+        return new Scene((Parent) getView());
     }
 
     private HBox createHeader() {

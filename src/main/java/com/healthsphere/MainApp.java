@@ -8,6 +8,7 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        // Initializes AdminMainShell passing the primary stage
         AdminMainShell adminShell = new AdminMainShell(primaryStage);
         adminShell.show();
     }

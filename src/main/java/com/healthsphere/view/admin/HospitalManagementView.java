@@ -1,17 +1,20 @@
 package com.healthsphere.view.admin;
 
+import javafx.beans.Observable;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -74,6 +77,11 @@ public class HospitalManagementView extends ScrollPane {
         return this;
     }
 
+    // Renamed from getScene() to createScene() to avoid clashing with Node.getScene()
+    public Scene createScene() {
+        return new Scene(this);
+    }
+
     // ------------------------------------------------------------------------
     // UI COMPONENTS & LAYOUTS
     // ------------------------------------------------------------------------
@@ -131,7 +139,6 @@ public class HospitalManagementView extends ScrollPane {
         HBox section = new HBox(20);
         section.setAlignment(Pos.CENTER);
 
-        // Stats Cards Layout
         GridPane statsGrid = new GridPane();
         statsGrid.setHgap(16);
         statsGrid.setVgap(16);
@@ -158,7 +165,6 @@ public class HospitalManagementView extends ScrollPane {
         statsGrid.add(verifiedCard, 0, 1);
         statsGrid.add(rejectedCard, 1, 1);
 
-        // Bar Chart Analytics Card
         VBox chartCard = new VBox(12);
         chartCard.setPadding(new Insets(16));
         chartCard.setMinWidth(420);
@@ -284,7 +290,6 @@ public class HospitalManagementView extends ScrollPane {
         return bar;
     }
 
-    @SuppressWarnings("unchecked")
     private VBox createTableContainer() {
         VBox container = new VBox(12);
         container.setPadding(new Insets(16));
@@ -301,7 +306,7 @@ public class HospitalManagementView extends ScrollPane {
 
         // Facility Name Column
         TableColumn<HospitalModel, String> nameCol = new TableColumn<>("Facility Name & License");
-        nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+        nameCol.setCellValueFactory(cellData -> cellData.getValue().nameProperty());
         nameCol.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(String name, boolean empty) {
@@ -309,14 +314,18 @@ public class HospitalManagementView extends ScrollPane {
                 if (empty || name == null) {
                     setGraphic(null);
                 } else {
-                    HospitalModel hosp = getTableView().getItems().get(getIndex());
+                    HospitalModel hosp = getTableRow() != null ? getTableRow().getItem() : null;
+                    if (hosp == null) {
+                        setGraphic(null);
+                        return;
+                    }
                     HBox box = new HBox(12);
                     box.setAlignment(Pos.CENTER_LEFT);
 
                     StackPane icon = createHospitalBadge(hosp.getName().substring(0, 1));
 
                     VBox textContainer = new VBox(2);
-                    Label nameLbl = new Label(name);
+                    Label nameLbl = new Label(hosp.getName());
                     nameLbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
                     nameLbl.setTextFill(Color.web("#0F172A"));
 
@@ -332,25 +341,25 @@ public class HospitalManagementView extends ScrollPane {
         });
 
         // Bed Capacity Column
-        TableColumn<HospitalModel, Integer> bedsCol = new TableColumn<>("Beds / ICU");
-        bedsCol.setCellValueFactory(new PropertyValueFactory<>("bedCapacity"));
+        TableColumn<HospitalModel, Number> bedsCol = new TableColumn<>("Beds / ICU");
+        bedsCol.setCellValueFactory(cellData -> cellData.getValue().bedCapacityProperty());
         bedsCol.setCellFactory(col -> new TableCell<>() {
             @Override
-            protected void updateItem(Integer beds, boolean empty) {
+            protected void updateItem(Number beds, boolean empty) {
                 super.updateItem(beds, empty);
                 if (empty || beds == null) {
                     setText(null);
                 } else {
-                    setText(beds + " Beds");
+                    setText(beds.intValue() + " Beds");
                     setTextFill(Color.web("#334155"));
                     setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
                 }
             }
         });
 
-        // Verification Status Badge
+        // Verification Status Badge Column
         TableColumn<HospitalModel, String> statusCol = new TableColumn<>("Verification Status");
-        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+        statusCol.setCellValueFactory(cellData -> cellData.getValue().statusProperty());
         statusCol.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(String status, boolean empty) {
@@ -374,10 +383,11 @@ public class HospitalManagementView extends ScrollPane {
 
         // Applied Date Column
         TableColumn<HospitalModel, String> dateCol = new TableColumn<>("Applied Date");
-        dateCol.setCellValueFactory(new PropertyValueFactory<>("appliedDate"));
+        dateCol.setCellValueFactory(cellData -> cellData.getValue().appliedDateProperty());
 
         // Actions Column
-        TableColumn<HospitalModel, Void> actionCol = new TableColumn<>("Actions & Audit");
+        TableColumn<HospitalModel, HospitalModel> actionCol = new TableColumn<>("Actions & Audit");
+        actionCol.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue()));
         actionCol.setCellFactory(col -> new TableCell<>() {
             private final Button inspectBtn = new Button("Inspect Docs");
             private final Button approveBtn = new Button("Approve");
@@ -391,29 +401,29 @@ public class HospitalManagementView extends ScrollPane {
                 rejectBtn.setStyle("-fx-background-color: #FEE2E2; -fx-text-fill: #B91C1C; -fx-cursor: hand; -fx-font-size: 11px; -fx-background-radius: 4px;");
 
                 inspectBtn.setOnAction(e -> {
-                    HospitalModel hosp = getTableView().getItems().get(getIndex());
-                    showDocumentInspectionModal(hosp);
+                    HospitalModel hosp = getItem();
+                    if (hosp != null) showDocumentInspectionModal(hosp);
                 });
 
                 approveBtn.setOnAction(e -> {
-                    HospitalModel hosp = getTableView().getItems().get(getIndex());
-                    hosp.setStatus("VERIFIED");
-                    hospitalTable.refresh();
-                    updateCountersAndChart();
+                    HospitalModel hosp = getItem();
+                    if (hosp != null) {
+                        hosp.setStatus("VERIFIED");
+                    }
                 });
 
                 rejectBtn.setOnAction(e -> {
-                    HospitalModel hosp = getTableView().getItems().get(getIndex());
-                    hosp.setStatus("REJECTED");
-                    hospitalTable.refresh();
-                    updateCountersAndChart();
+                    HospitalModel hosp = getItem();
+                    if (hosp != null) {
+                        hosp.setStatus("REJECTED");
+                    }
                 });
             }
 
             @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) {
+            protected void updateItem(HospitalModel hosp, boolean empty) {
+                super.updateItem(hosp, empty);
+                if (empty || hosp == null) {
                     setGraphic(null);
                 } else {
                     setGraphic(btnGroup);
@@ -445,6 +455,10 @@ public class HospitalManagementView extends ScrollPane {
 
     private void loadHospitalData() {
         masterHospitalData = FXCollections.observableArrayList(
+            hosp -> new Observable[]{ hosp.statusProperty(), hosp.cityProperty(), hosp.bedCapacityProperty() }
+        );
+
+        masterHospitalData.addAll(
             new HospitalModel("HOSP-801", "City Care Superspeciality Hospital", "MH-MUM-8890", "Mumbai", 350, "PENDING", "2026-08-01"),
             new HospitalModel("HOSP-802", "Ruby Hall Medical Center", "MH-PUN-1044", "Pune", 500, "VERIFIED", "2026-07-15"),
             new HospitalModel("HOSP-803", "Orange City Care Hospital", "MH-NAG-3321", "Nagpur", 180, "PENDING", "2026-08-05"),
@@ -452,6 +466,8 @@ public class HospitalManagementView extends ScrollPane {
             new HospitalModel("HOSP-805", "Sahyadri Health Campus", "MH-PUN-7712", "Pune", 420, "VERIFIED", "2026-06-19"),
             new HospitalModel("HOSP-806", "Lilavati Hospital & Research Centre", "MH-MUM-4432", "Mumbai", 320, "VERIFIED", "2026-07-10")
         );
+
+        masterHospitalData.addListener((ListChangeListener<HospitalModel>) c -> updateCountersAndChart());
 
         filteredData = new FilteredList<>(masterHospitalData, p -> true);
         hospitalTable.setItems(filteredData);
@@ -470,7 +486,6 @@ public class HospitalManagementView extends ScrollPane {
         verifiedCountLabel.setText(String.valueOf(verified));
         rejectedCountLabel.setText(String.valueOf(rejected));
 
-        // Dynamically recalculate City Bar Chart
         cityBarChart.getData().clear();
         Map<String, Long> cityCounts = masterHospitalData.stream()
                 .collect(Collectors.groupingBy(HospitalModel::getCity, Collectors.counting()));
@@ -558,7 +573,6 @@ public class HospitalManagementView extends ScrollPane {
         Optional<HospitalModel> result = dialog.showAndWait();
         result.ifPresent(newHosp -> {
             masterHospitalData.add(0, newHosp);
-            updateCountersAndChart();
             showAlert("Facility Registered", "New hospital " + newHosp.getName() + " was submitted for verification.");
         });
     }
@@ -572,35 +586,54 @@ public class HospitalManagementView extends ScrollPane {
     }
 
     // ------------------------------------------------------------------------
-    // INNER MODEL CLASS
+    // INNER MODEL CLASS (JavaFX Properties)
     // ------------------------------------------------------------------------
 
     public static class HospitalModel {
-        private final String hospitalId;
-        private final String name;
-        private final String licenseNo;
-        private final String city;
-        private final int bedCapacity;
-        private String status;
-        private final String appliedDate;
+        private final StringProperty hospitalId = new SimpleStringProperty();
+        private final StringProperty name = new SimpleStringProperty();
+        private final StringProperty licenseNo = new SimpleStringProperty();
+        private final StringProperty city = new SimpleStringProperty();
+        private final IntegerProperty bedCapacity = new SimpleIntegerProperty();
+        private final StringProperty status = new SimpleStringProperty();
+        private final StringProperty appliedDate = new SimpleStringProperty();
 
         public HospitalModel(String hospitalId, String name, String licenseNo, String city, int bedCapacity, String status, String appliedDate) {
-            this.hospitalId = hospitalId;
-            this.name = name;
-            this.licenseNo = licenseNo;
-            this.city = city;
-            this.bedCapacity = bedCapacity;
-            this.status = status;
-            this.appliedDate = appliedDate;
+            setHospitalId(hospitalId);
+            setName(name);
+            setLicenseNo(licenseNo);
+            setCity(city);
+            setBedCapacity(bedCapacity);
+            setStatus(status);
+            setAppliedDate(appliedDate);
         }
 
-        public String getHospitalId() { return hospitalId; }
-        public String getName() { return name; }
-        public String getLicenseNo() { return licenseNo; }
-        public String getCity() { return city; }
-        public int getBedCapacity() { return bedCapacity; }
-        public String getStatus() { return status; }
-        public void setStatus(String status) { this.status = status; }
-        public String getAppliedDate() { return appliedDate; }
+        public StringProperty hospitalIdProperty() { return hospitalId; }
+        public String getHospitalId() { return hospitalId.get(); }
+        public void setHospitalId(String hospitalId) { this.hospitalId.set(hospitalId); }
+
+        public StringProperty nameProperty() { return name; }
+        public String getName() { return name.get(); }
+        public void setName(String name) { this.name.set(name); }
+
+        public StringProperty licenseNoProperty() { return licenseNo; }
+        public String getLicenseNo() { return licenseNo.get(); }
+        public void setLicenseNo(String licenseNo) { this.licenseNo.set(licenseNo); }
+
+        public StringProperty cityProperty() { return city; }
+        public String getCity() { return city.get(); }
+        public void setCity(String city) { this.city.set(city); }
+
+        public IntegerProperty bedCapacityProperty() { return bedCapacity; }
+        public int getBedCapacity() { return bedCapacity.get(); }
+        public void setBedCapacity(int bedCapacity) { this.bedCapacity.set(bedCapacity); }
+
+        public StringProperty statusProperty() { return status; }
+        public String getStatus() { return status.get(); }
+        public void setStatus(String status) { this.status.set(status); }
+
+        public StringProperty appliedDateProperty() { return appliedDate; }
+        public String getAppliedDate() { return appliedDate.get(); }
+        public void setAppliedDate(String appliedDate) { this.appliedDate.set(appliedDate); }
     }
 }

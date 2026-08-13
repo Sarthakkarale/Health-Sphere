@@ -1,20 +1,27 @@
 package com.healthsphere.view.admin;
 
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.chart.*;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ReportsAnalyticsView extends ScrollPane {
 
@@ -44,8 +51,14 @@ public class ReportsAnalyticsView extends ScrollPane {
         mainContainer.setPadding(new Insets(30));
         mainContainer.setStyle("-fx-background-color: #F8FAFC;");
 
-        // Inject Custom CSS for light table theme
-        this.getStylesheets().add("data:text/css," + getLightThemeCSS());
+        // Safely encode CSS Data URI for modern JavaFX compatibility
+        try {
+            String cssData = getLightThemeCSS();
+            String encodedCss = URLEncoder.encode(cssData, StandardCharsets.UTF_8).replace("+", "%20");
+            this.getStylesheets().add("data:text/css," + encodedCss);
+        } catch (Exception e) {
+            System.err.println("Failed to load inline CSS stylesheet: " + e.getMessage());
+        }
 
         // 1. Header Section
         VBox header = createHeader();
@@ -62,12 +75,17 @@ public class ReportsAnalyticsView extends ScrollPane {
         mainContainer.getChildren().addAll(header, biSection, filterBar, tableContainer);
         setContent(mainContainer);
 
-        // Load Data
+        // Load Initial Data
         loadReportData();
     }
 
     public Parent getView() {
         return this;
+    }
+
+    // Renamed from getScene() to createScene() to avoid overriding Node.getScene()
+    public Scene createScene() {
+        return new Scene(this);
     }
 
     private VBox createHeader() {
@@ -87,12 +105,11 @@ public class ReportsAnalyticsView extends ScrollPane {
     private VBox createBITelemetrySection() {
         VBox section = new VBox(20);
 
-        // Top Metrics Cards Row
         HBox statsRow = new HBox(20);
         statsRow.setAlignment(Pos.CENTER);
 
-        openTicketsLabel = new Label("05");
-        resolvedTicketsLabel = new Label("342");
+        openTicketsLabel = new Label("00");
+        resolvedTicketsLabel = new Label("0");
         avgSlaLabel = new Label("1.8 Hours");
 
         VBox openCard = createStatCard("Active Incidents", openTicketsLabel, "⚡ 2 Critical Escalations", "#DC2626", "#FEF2F2");
@@ -105,10 +122,8 @@ public class ReportsAnalyticsView extends ScrollPane {
 
         statsRow.getChildren().addAll(openCard, resolvedCard, slaCard);
 
-        // Charts Dual Grid Row
         HBox chartsRow = new HBox(20);
 
-        // Line Chart Container
         VBox lineChartCard = createCardContainer();
         HBox.setHgrow(lineChartCard, Priority.ALWAYS);
 
@@ -128,7 +143,6 @@ public class ReportsAnalyticsView extends ScrollPane {
 
         lineChartCard.getChildren().addAll(lineTitle, activityLineChart);
 
-        // Pie Chart Container
         VBox pieChartCard = createCardContainer();
         pieChartCard.setMinWidth(360);
 
@@ -230,8 +244,8 @@ public class ReportsAnalyticsView extends ScrollPane {
                         rep.getReporterName().toLowerCase().contains(query) ||
                         rep.getSubject().toLowerCase().contains(query);
 
-                boolean matchesCat = cat.equals("All Categories") || rep.getCategory().equalsIgnoreCase(cat);
-                boolean matchesStatus = status.equals("All Status") || rep.getStatus().equalsIgnoreCase(status);
+                boolean matchesCat = "All Categories".equals(cat) || rep.getCategory().equalsIgnoreCase(cat);
+                boolean matchesStatus = "All Status".equals(status) || rep.getStatus().equalsIgnoreCase(status);
 
                 return matchesQuery && matchesCat && matchesStatus;
             });
@@ -259,26 +273,31 @@ public class ReportsAnalyticsView extends ScrollPane {
         return bar;
     }
 
-    @SuppressWarnings("unchecked")
     private VBox createTableContainer() {
         VBox container = new VBox();
         container.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 12px; -fx-border-color: #E2E8F0; -fx-border-radius: 12px;");
 
         reportTable = new TableView<>();
-        reportTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        reportTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         reportTable.setPrefHeight(420);
 
         // Column 1: Ticket & Reporter
         TableColumn<ReportModel, String> idCol = new TableColumn<>("Incident / Reporter");
-        idCol.setCellValueFactory(new PropertyValueFactory<>("ticketId"));
+        idCol.setCellValueFactory(data -> data.getValue().ticketIdProperty());
         idCol.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(String id, boolean empty) {
                 super.updateItem(id, empty);
                 if (empty || id == null) {
                     setGraphic(null);
+                    setText(null);
                 } else {
-                    ReportModel rep = getTableView().getItems().get(getIndex());
+                    ReportModel rep = getTableRow() != null ? getTableRow().getItem() : null;
+                    if (rep == null) {
+                        setGraphic(null);
+                        setText(null);
+                        return;
+                    }
                     HBox box = new HBox(12);
                     box.setAlignment(Pos.CENTER_LEFT);
 
@@ -296,17 +315,19 @@ public class ReportsAnalyticsView extends ScrollPane {
                     textContainer.getChildren().addAll(idLbl, repLbl);
                     box.getChildren().addAll(icon, textContainer);
                     setGraphic(box);
+                    setText(null);
                 }
             }
         });
 
         // Column 2: Subject
         TableColumn<ReportModel, String> subjectCol = new TableColumn<>("Incident Summary");
-        subjectCol.setCellValueFactory(new PropertyValueFactory<>("subject"));
+        subjectCol.setCellValueFactory(data -> data.getValue().subjectProperty());
         subjectCol.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(String subj, boolean empty) {
                 super.updateItem(subj, empty);
+                setGraphic(null);
                 if (empty || subj == null) {
                     setText(null);
                 } else {
@@ -319,11 +340,12 @@ public class ReportsAnalyticsView extends ScrollPane {
 
         // Column 3: Priority
         TableColumn<ReportModel, String> priorityCol = new TableColumn<>("Priority");
-        priorityCol.setCellValueFactory(new PropertyValueFactory<>("priority"));
+        priorityCol.setCellValueFactory(data -> data.getValue().priorityProperty());
         priorityCol.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(String prio, boolean empty) {
                 super.updateItem(prio, empty);
+                setText(null);
                 if (empty || prio == null) {
                     setGraphic(null);
                 } else {
@@ -343,11 +365,12 @@ public class ReportsAnalyticsView extends ScrollPane {
 
         // Column 4: Status
         TableColumn<ReportModel, String> statusCol = new TableColumn<>("Status");
-        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+        statusCol.setCellValueFactory(data -> data.getValue().statusProperty());
         statusCol.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(String status, boolean empty) {
                 super.updateItem(status, empty);
+                setText(null);
                 if (empty || status == null) {
                     setGraphic(null);
                 } else {
@@ -378,21 +401,25 @@ public class ReportsAnalyticsView extends ScrollPane {
                 resolveBtn.setStyle("-fx-background-color: #059669; -fx-text-fill: #FFFFFF; -fx-cursor: hand; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 5px 10px; -fx-background-radius: 4px;");
 
                 inspectBtn.setOnAction(e -> {
-                    ReportModel rep = getTableView().getItems().get(getIndex());
-                    showAdvancedInvestigationModal(rep);
+                    ReportModel rep = getTableRow() != null ? getTableRow().getItem() : null;
+                    if (rep != null) {
+                        showAdvancedInvestigationModal(rep);
+                    }
                 });
 
                 resolveBtn.setOnAction(e -> {
-                    ReportModel rep = getTableView().getItems().get(getIndex());
-                    rep.setStatus("RESOLVED");
-                    reportTable.refresh();
-                    updateCounters();
+                    ReportModel rep = getTableRow() != null ? getTableRow().getItem() : null;
+                    if (rep != null) {
+                        rep.setStatus("RESOLVED");
+                        updateAnalyticsAndCharts();
+                    }
                 });
             }
 
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
+                setText(null);
                 if (empty) {
                     setGraphic(null);
                 } else {
@@ -417,7 +444,7 @@ public class ReportsAnalyticsView extends ScrollPane {
         }
         circle.setStrokeWidth(1.5);
 
-        Label label = new Label(priority.substring(0, 1));
+        Label label = new Label(priority != null && !priority.isEmpty() ? priority.substring(0, 1) : "?");
         label.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
         label.setTextFill("CRITICAL".equalsIgnoreCase(priority) ? Color.web("#9F1239") : Color.web("#475569"));
 
@@ -436,20 +463,27 @@ public class ReportsAnalyticsView extends ScrollPane {
         filteredData = new FilteredList<>(masterReportData, p -> true);
         reportTable.setItems(filteredData);
 
-        updateCounters();
-        loadBICharts();
+        updateAnalyticsAndCharts();
+        loadStaticActivityLineChart();
     }
 
-    private void updateCounters() {
+    private void updateAnalyticsAndCharts() {
         long openCount = masterReportData.stream().filter(r -> !r.getStatus().equalsIgnoreCase("RESOLVED")).count();
         long resolvedCount = masterReportData.stream().filter(r -> r.getStatus().equalsIgnoreCase("RESOLVED")).count();
 
         openTicketsLabel.setText(String.format("%02d", openCount));
-        resolvedTicketsLabel.setText(String.valueOf(342 + resolvedCount - 1));
+        resolvedTicketsLabel.setText(String.valueOf(342 + resolvedCount));
+
+        // Dynamically compute category distribution from active table data
+        Map<String, Long> categoryCounts = masterReportData.stream()
+                .collect(Collectors.groupingBy(ReportModel::getCategory, Collectors.counting()));
+
+        ObservableList<PieChart.Data> pieData = FXCollections.observableArrayList();
+        categoryCounts.forEach((cat, count) -> pieData.add(new PieChart.Data(cat, count)));
+        categoryPieChart.setData(pieData);
     }
 
-    private void loadBICharts() {
-        // Line Chart Data
+    private void loadStaticActivityLineChart() {
         XYChart.Series<String, Number> seriesOpened = new XYChart.Series<>();
         seriesOpened.setName("Tickets Opened");
         seriesOpened.getData().add(new XYChart.Data<>("May", 45));
@@ -466,14 +500,6 @@ public class ReportsAnalyticsView extends ScrollPane {
 
         activityLineChart.getData().clear();
         activityLineChart.getData().addAll(seriesOpened, seriesResolved);
-
-        // Pie Chart Data
-        categoryPieChart.setData(FXCollections.observableArrayList(
-            new PieChart.Data("Billing Dispute", 40),
-            new PieChart.Data("Doctor Misconduct", 25),
-            new PieChart.Data("App Bug", 20),
-            new PieChart.Data("Fake Profile", 15)
-        ));
     }
 
     private void showAdvancedInvestigationModal(ReportModel rep) {
@@ -505,12 +531,10 @@ public class ReportsAnalyticsView extends ScrollPane {
         dialog.showAndWait().ifPresent(type -> {
             if (type == refundBtn) {
                 rep.setStatus("RESOLVED");
-                reportTable.refresh();
-                updateCounters();
+                updateAnalyticsAndCharts();
             } else if (type == warnBtn) {
                 rep.setStatus("IN_REVIEW");
-                reportTable.refresh();
-                updateCounters();
+                updateAnalyticsAndCharts();
             }
         });
     }
@@ -565,36 +589,51 @@ public class ReportsAnalyticsView extends ScrollPane {
             """;
     }
 
-    // --- Inner Model Class ---
+    // --- Inner Observable Model Class ---
     public static class ReportModel {
-        private final String ticketId;
-        private final String reporterName;
-        private final String reporterRole;
-        private final String category;
-        private final String subject;
-        private final String priority;
-        private String status;
-        private final String createdDate;
+        private final StringProperty ticketId;
+        private final StringProperty reporterName;
+        private final StringProperty reporterRole;
+        private final StringProperty category;
+        private final StringProperty subject;
+        private final StringProperty priority;
+        private final StringProperty status;
+        private final StringProperty createdDate;
 
         public ReportModel(String ticketId, String reporterName, String reporterRole, String category, String subject, String priority, String status, String createdDate) {
-            this.ticketId = ticketId;
-            this.reporterName = reporterName;
-            this.reporterRole = reporterRole;
-            this.category = category;
-            this.subject = subject;
-            this.priority = priority;
-            this.status = status;
-            this.createdDate = createdDate;
+            this.ticketId = new SimpleStringProperty(ticketId);
+            this.reporterName = new SimpleStringProperty(reporterName);
+            this.reporterRole = new SimpleStringProperty(reporterRole);
+            this.category = new SimpleStringProperty(category);
+            this.subject = new SimpleStringProperty(subject);
+            this.priority = new SimpleStringProperty(priority);
+            this.status = new SimpleStringProperty(status);
+            this.createdDate = new SimpleStringProperty(createdDate);
         }
 
-        public String getTicketId() { return ticketId; }
-        public String getReporterName() { return reporterName; }
-        public String getReporterRole() { return reporterRole; }
-        public String getCategory() { return category; }
-        public String getSubject() { return subject; }
-        public String getPriority() { return priority; }
-        public String getStatus() { return status; }
-        public void setStatus(String status) { this.status = status; }
-        public String getCreatedDate() { return createdDate; }
+        public String getTicketId() { return ticketId.get(); }
+        public StringProperty ticketIdProperty() { return ticketId; }
+
+        public String getReporterName() { return reporterName.get(); }
+        public StringProperty reporterNameProperty() { return reporterName; }
+
+        public String getReporterRole() { return reporterRole.get(); }
+        public StringProperty reporterRoleProperty() { return reporterRole; }
+
+        public String getCategory() { return category.get(); }
+        public StringProperty categoryProperty() { return category; }
+
+        public String getSubject() { return subject.get(); }
+        public StringProperty subjectProperty() { return subject; }
+
+        public String getPriority() { return priority.get(); }
+        public StringProperty priorityProperty() { return priority; }
+
+        public String getStatus() { return status.get(); }
+        public StringProperty statusProperty() { return status; }
+        public void setStatus(String status) { this.status.set(status); }
+
+        public String getCreatedDate() { return createdDate.get(); }
+        public StringProperty createdDateProperty() { return createdDate; }
     }
 }

@@ -6,6 +6,7 @@ import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
+import javafx.scene.Scene; // Added import
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
@@ -13,10 +14,21 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
+import javafx.stage.Stage; // Added import
 
 import java.time.LocalDate;
 
 public class AppReviewDashboard {
+
+    private final Stage stage;
+
+    public AppReviewDashboard(Stage stage) {
+        this.stage = stage;
+    }
+
+    public Scene getScene() {
+        return new Scene(getContent());
+    }
 
     // Inner Model Class for Review
     public static class Review {

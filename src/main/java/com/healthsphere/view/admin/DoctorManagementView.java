@@ -6,6 +6,7 @@ import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
@@ -19,6 +20,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -30,20 +32,11 @@ public class DoctorManagementView extends ScrollPane {
     private ObservableList<DoctorModel> masterDoctorData;
     private FilteredList<DoctorModel> filteredData;
 
-    // Analytics Labels
-    private Label totalDoctorsLabel;
-    private Label verifiedDoctorsLabel;
-    private Label pendingAuditsLabel;
-    private Label flaggedProfilesLabel;
-    private Label tableCountLabel;
-
-    // Filter Controls
-    private TextField searchInput;
-    private ComboBox<String> deptFilter;
-    private ComboBox<String> statusFilter;
-
-    // Department Chart
-    private BarChart<String, Number> deptBarChart;
+    private Label totalCountLabel;
+    private Label activeCountLabel;
+    private Label leaveCountLabel;
+    private Label surgeryCountLabel;
+    private BarChart<String, Number> departmentBarChart;
 
     public DoctorManagementView() {
         this(null);
@@ -53,29 +46,28 @@ public class DoctorManagementView extends ScrollPane {
         this.primaryStage = stage;
 
         setFitToWidth(true);
-        setStyle("-fx-background-color: #F8FAFC; -fx-background: #F8FAFC;");
-        getStylesheets().add("data:text/css," + getLightThemeCSS());
+        setStyle("-fx-background-color: #F8FAFC; -fx-background: #F8FAFC; -fx-border-color: transparent;");
 
-        VBox mainContainer = new VBox(22);
+        VBox mainContainer = new VBox(24);
         mainContainer.setPadding(new Insets(28));
         mainContainer.setStyle("-fx-background-color: #F8FAFC;");
 
-        // 1. Header with Export & Refresh Actions
+        // 1. Header Section
         HBox header = createHeader();
 
-        // 2. Dynamic Metric Cards & Specialization Chart
+        // 2. Doctor Analytics & Department Breakdown Section
         HBox topAnalyticsSection = createTopAnalyticsSection();
 
-        // 3. Search & Department Filters Toolbar
+        // 3. Multi-Filter Bar
         HBox filterBar = createFilterBar();
 
-        // 4. Interactive Data Table
+        // 4. Data Table Container
         VBox tableContainer = createTableContainer();
 
         mainContainer.getChildren().addAll(header, topAnalyticsSection, filterBar, tableContainer);
         setContent(mainContainer);
 
-        // Load Initial Data
+        // Load Initial Sample Data
         loadDoctorData();
     }
 
@@ -83,104 +75,110 @@ public class DoctorManagementView extends ScrollPane {
         return this;
     }
 
-    private HBox createHeader() {
-        HBox headerBox = new HBox();
-        headerBox.setAlignment(Pos.CENTER_LEFT);
+    /**
+     * Renamed from getScene() to createScene() to avoid overriding 
+     * the final method Node#getScene().
+     */
+    public Scene createScene() {
+        return new Scene(this);
+    }
 
-        VBox textContainer = new VBox(4);
-        Label title = new Label("Doctor Credentials & Medical Council Audit");
+    // ------------------------------------------------------------------------
+    // UI COMPONENTS & LAYOUTS
+    // ------------------------------------------------------------------------
+
+    private HBox createHeader() {
+        HBox header = new HBox();
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        VBox titleBox = new VBox(4);
+        Label title = new Label("Doctor & Specialist Directory");
         title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 24));
         title.setTextFill(Color.web("#0F172A"));
 
-        Label subtitle = new Label("Verify doctor licenses, Medical Council (MCI/NMC) registrations, specializations, and practice compliance.");
+        Label subtitle = new Label("Manage medical staff credentials, department allocations, shift schedules, and OPD availability.");
         subtitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 13));
         subtitle.setTextFill(Color.web("#64748B"));
 
-        textContainer.getChildren().addAll(title, subtitle);
+        titleBox.getChildren().addAll(title, subtitle);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        // Header Action Buttons
-        Button refreshBtn = new Button("🔄 Refresh Data");
-        refreshBtn.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
-        refreshBtn.setStyle(
-            "-fx-background-color: #FFFFFF; " +
-            "-fx-text-fill: #334155; " +
-            "-fx-border-color: #CBD5E1; " +
-            "-fx-border-radius: 6px; " +
-            "-fx-background-radius: 6px; " +
-            "-fx-padding: 8px 14px; " +
-            "-fx-cursor: hand;"
-        );
-        refreshBtn.setOnAction(e -> {
-            loadDoctorData();
-            showNotification("Data Synced", "Practitioner database successfully refreshed from NMC server.");
-        });
-
-        Button exportBtn = new Button("📥 Export CSV");
-        exportBtn.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
+        Button exportBtn = new Button("Export Directory");
+        exportBtn.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
         exportBtn.setStyle(
             "-fx-background-color: #FFFFFF; " +
             "-fx-text-fill: #334155; " +
             "-fx-border-color: #CBD5E1; " +
-            "-fx-border-radius: 6px; " +
-            "-fx-background-radius: 6px; " +
-            "-fx-padding: 8px 14px; " +
+            "-fx-border-radius: 8px; " +
+            "-fx-background-radius: 8px; " +
+            "-fx-padding: 8px 16px; " +
             "-fx-cursor: hand;"
         );
-        exportBtn.setOnAction(e -> handleExportCSV());
+        exportBtn.setOnAction(e -> showAlert("Directory Exported", "Doctor roster and department metrics exported to CSV successfully."));
 
-        HBox actions = new HBox(10, refreshBtn, exportBtn);
-        actions.setAlignment(Pos.CENTER_RIGHT);
+        Button addDoctorBtn = new Button("+ Add New Doctor");
+        addDoctorBtn.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
+        addDoctorBtn.setStyle(
+            "-fx-background-color: #4F46E5; " +
+            "-fx-text-fill: white; " +
+            "-fx-background-radius: 8px; " +
+            "-fx-padding: 8px 16px; " +
+            "-fx-cursor: hand;"
+        );
+        addDoctorBtn.setOnAction(e -> showAddDoctorDialog());
 
-        headerBox.getChildren().addAll(textContainer, spacer, actions);
-        return headerBox;
+        HBox buttonGroup = new HBox(12, exportBtn, addDoctorBtn);
+        buttonGroup.setAlignment(Pos.CENTER_RIGHT);
+
+        header.getChildren().addAll(titleBox, spacer, buttonGroup);
+        return header;
     }
 
     private HBox createTopAnalyticsSection() {
         HBox section = new HBox(20);
         section.setAlignment(Pos.CENTER);
 
-        // Stat Cards Layout
-        totalDoctorsLabel = new Label("0");
-        verifiedDoctorsLabel = new Label("0");
-        pendingAuditsLabel = new Label("0");
-        flaggedProfilesLabel = new Label("0");
-
-        VBox totalCard = createStatCard("Total Practitioners", totalDoctorsLabel, "Active Network Staff", "#4F46E5");
-        VBox verifiedCard = createStatCard("Verified Staff", verifiedDoctorsLabel, "MCI / NMC Cleared", "#059669");
-        VBox pendingCard = createStatCard("Pending Audits", pendingAuditsLabel, "Awaiting Degree Audit", "#D97706");
-        VBox flaggedCard = createStatCard("Flagged Profiles", flaggedProfilesLabel, "Under Compliance Review", "#DC2626");
-
+        // Stats Cards Layout
         GridPane statsGrid = new GridPane();
-        statsGrid.setHgap(15);
-        statsGrid.setVgap(15);
-        GridPane.setHgrow(totalCard, Priority.ALWAYS);
-        GridPane.setHgrow(verifiedCard, Priority.ALWAYS);
-        GridPane.setHgrow(pendingCard, Priority.ALWAYS);
-        GridPane.setHgrow(flaggedCard, Priority.ALWAYS);
-
-        statsGrid.add(totalCard, 0, 0);
-        statsGrid.add(verifiedCard, 1, 0);
-        statsGrid.add(pendingCard, 0, 1);
-        statsGrid.add(flaggedCard, 1, 1);
-
+        statsGrid.setHgap(16);
+        statsGrid.setVgap(16);
         HBox.setHgrow(statsGrid, Priority.ALWAYS);
 
-        // Department Breakdown Bar Chart Card
-        VBox chartCard = new VBox(10);
+        totalCountLabel = new Label("0");
+        activeCountLabel = new Label("0");
+        leaveCountLabel = new Label("0");
+        surgeryCountLabel = new Label("0");
+
+        VBox totalCard = createStatCard("Total Specialists", totalCountLabel, "Registered Doctors", "#4F46E5");
+        VBox activeCard = createStatCard("On Duty / OPD", activeCountLabel, "Available for Consult", "#059669");
+        VBox leaveCard = createStatCard("On Leave / Off Duty", leaveCountLabel, "Unavailable Today", "#D97706");
+        VBox surgeryCard = createStatCard("In Surgery", surgeryCountLabel, "OT / Critical Duties", "#DC2626");
+
+        ColumnConstraints c1 = new ColumnConstraints();
+        c1.setPercentWidth(50);
+        ColumnConstraints c2 = new ColumnConstraints();
+        c2.setPercentWidth(50);
+        statsGrid.getColumnConstraints().addAll(c1, c2);
+
+        statsGrid.add(totalCard, 0, 0);
+        statsGrid.add(activeCard, 1, 0);
+        statsGrid.add(leaveCard, 0, 1);
+        statsGrid.add(surgeryCard, 1, 1);
+
+        // Department Distribution Bar Chart Card
+        VBox chartCard = new VBox(12);
         chartCard.setPadding(new Insets(16));
         chartCard.setMinWidth(420);
         chartCard.setStyle(
             "-fx-background-color: #FFFFFF; " +
             "-fx-background-radius: 12px; " +
             "-fx-border-color: #E2E8F0; " +
-            "-fx-border-radius: 12px; " +
-            "-fx-effect: dropshadow(three-pass-box, rgba(15,23,42,0.02), 6, 0, 0, 1);"
+            "-fx-border-radius: 12px;"
         );
 
-        Label chartTitle = new Label("Specialization Distribution");
+        Label chartTitle = new Label("Departmental Staff Allocation");
         chartTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
         chartTitle.setTextFill(Color.web("#0F172A"));
 
@@ -189,26 +187,25 @@ public class DoctorManagementView extends ScrollPane {
         xAxis.setTickLabelFill(Color.web("#64748B"));
         yAxis.setTickLabelFill(Color.web("#64748B"));
 
-        deptBarChart = new BarChart<>(xAxis, yAxis);
-        deptBarChart.setPrefHeight(150);
-        deptBarChart.setLegendVisible(false);
-        deptBarChart.setAnimated(true);
+        departmentBarChart = new BarChart<>(xAxis, yAxis);
+        departmentBarChart.setPrefHeight(180);
+        departmentBarChart.setLegendVisible(false);
+        departmentBarChart.setAnimated(false);
 
-        chartCard.getChildren().addAll(chartTitle, deptBarChart);
+        chartCard.getChildren().addAll(chartTitle, departmentBarChart);
 
         section.getChildren().addAll(statsGrid, chartCard);
         return section;
     }
 
-    private VBox createStatCard(String title, Label valueLabel, String subtext, String accentColor) {
-        VBox card = new VBox(5);
-        card.setPadding(new Insets(14, 16, 14, 16));
+    private VBox createStatCard(String title, Label valueLabel, String subtext, String accentColorHex) {
+        VBox card = new VBox(6);
+        card.setPadding(new Insets(16));
         card.setStyle(
             "-fx-background-color: #FFFFFF; " +
-            "-fx-background-radius: 10px; " +
+            "-fx-background-radius: 12px; " +
             "-fx-border-color: #E2E8F0; " +
-            "-fx-border-radius: 10px; " +
-            "-fx-effect: dropshadow(three-pass-box, rgba(15,23,42,0.02), 4, 0, 0, 1);"
+            "-fx-border-radius: 12px;"
         );
 
         Label titleLabel = new Label(title);
@@ -220,134 +217,100 @@ public class DoctorManagementView extends ScrollPane {
 
         Label subLabel = new Label(subtext);
         subLabel.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 11));
-        subLabel.setTextFill(Color.web(accentColor));
+        subLabel.setTextFill(Color.web(accentColorHex));
 
         card.getChildren().addAll(titleLabel, valueLabel, subLabel);
         return card;
     }
 
     private HBox createFilterBar() {
-        HBox bar = new HBox(12);
+        HBox bar = new HBox(14);
         bar.setAlignment(Pos.CENTER_LEFT);
-        bar.setPadding(new Insets(14, 16, 14, 16));
+        bar.setPadding(new Insets(14));
         bar.setStyle(
             "-fx-background-color: #FFFFFF; " +
             "-fx-background-radius: 10px; " +
             "-fx-border-color: #E2E8F0; " +
-            "-fx-border-radius: 10px; " +
-            "-fx-effect: dropshadow(three-pass-box, rgba(15,23,42,0.02), 4, 0, 0, 1);"
+            "-fx-border-radius: 10px;"
         );
 
-        searchInput = new TextField();
-        searchInput.setPromptText("🔍 Search Doctor, MCI License, or Specialty...");
-        searchInput.setPrefWidth(300);
+        TextField searchInput = new TextField();
+        searchInput.setPromptText("🔍 Search Doctor Name, ID, Specialization, or Email...");
+        searchInput.setPrefWidth(320);
         searchInput.setStyle(
             "-fx-background-color: #F8FAFC; " +
             "-fx-text-fill: #0F172A; " +
             "-fx-border-color: #CBD5E1; " +
             "-fx-border-radius: 6px; " +
-            "-fx-background-radius: 6px; " +
             "-fx-padding: 8px 12px;"
         );
 
-        deptFilter = new ComboBox<>();
-        deptFilter.getItems().addAll("All Specializations", "Cardiology", "Neurology", "Orthopedics", "Pediatrics", "Oncology");
-        deptFilter.setValue("All Specializations");
-        deptFilter.setStyle("-fx-background-color: #F8FAFC; -fx-border-color: #CBD5E1; -fx-border-radius: 6px;");
+        ComboBox<String> statusFilter = new ComboBox<>();
+        statusFilter.getItems().addAll("All Statuses", "ON DUTY", "ON LEAVE", "IN SURGERY");
+        statusFilter.setValue("All Statuses");
+        statusFilter.setStyle("-fx-background-color: #F8FAFC; -fx-text-fill: #0F172A; -fx-border-color: #CBD5E1; -fx-border-radius: 6px;");
 
-        statusFilter = new ComboBox<>();
-        statusFilter.getItems().addAll("All Status", "VERIFIED", "PENDING", "FLAGGED");
-        statusFilter.setValue("All Status");
-        statusFilter.setStyle("-fx-background-color: #F8FAFC; -fx-border-color: #CBD5E1; -fx-border-radius: 6px;");
-
-        Button resetBtn = new Button("Clear Filters");
-        resetBtn.setFont(Font.font("Segoe UI", FontWeight.MEDIUM, 12));
-        resetBtn.setStyle("-fx-background-color: #F1F5F9; -fx-text-fill: #475569; -fx-background-radius: 6px; -fx-padding: 8px 12px; -fx-cursor: hand;");
-        resetBtn.setOnAction(e -> {
-            searchInput.clear();
-            deptFilter.setValue("All Specializations");
-            statusFilter.setValue("All Status");
-        });
+        ComboBox<String> deptFilter = new ComboBox<>();
+        deptFilter.getItems().addAll("All Departments", "Cardiology", "Neurology", "Orthopedics", "Pediatrics", "Oncology", "General Medicine");
+        deptFilter.setValue("All Departments");
+        deptFilter.setStyle("-fx-background-color: #F8FAFC; -fx-text-fill: #0F172A; -fx-border-color: #CBD5E1; -fx-border-radius: 6px;");
 
         Runnable applyFilter = () -> {
-            if (filteredData == null) return;
-            String query = searchInput.getText() == null ? "" : searchInput.getText().toLowerCase().trim();
-            String dept = deptFilter.getValue();
-            String status = statusFilter.getValue();
+            String query = searchInput.getText().toLowerCase().trim();
+            String selectedStatus = statusFilter.getValue();
+            String selectedDept = deptFilter.getValue();
 
-            filteredData.setPredicate(doc -> {
+            filteredData.setPredicate(doctor -> {
                 boolean matchesQuery = query.isEmpty() ||
-                        doc.getName().toLowerCase().contains(query) ||
-                        doc.getMciNumber().toLowerCase().contains(query) ||
-                        doc.getSpecialization().toLowerCase().contains(query) ||
-                        doc.getHospitalName().toLowerCase().contains(query);
+                        doctor.getName().toLowerCase().contains(query) ||
+                        doctor.getDoctorId().toLowerCase().contains(query) ||
+                        doctor.getSpecialization().toLowerCase().contains(query) ||
+                        doctor.getEmail().toLowerCase().contains(query);
 
-                boolean matchesDept = dept == null || dept.equals("All Specializations") || doc.getSpecialization().equalsIgnoreCase(dept);
-                boolean matchesStatus = status == null || status.equals("All Status") || doc.getStatus().equalsIgnoreCase(status);
+                boolean matchesStatus = selectedStatus.equals("All Statuses") || doctor.getStatus().equalsIgnoreCase(selectedStatus);
+                boolean matchesDept = selectedDept.equals("All Departments") || doctor.getDepartment().equalsIgnoreCase(selectedDept);
 
-                return matchesQuery && matchesDept && matchesStatus;
+                return matchesQuery && matchesStatus && matchesDept;
             });
-
-            updateTableCountLabel();
         };
 
         searchInput.textProperty().addListener((obs, oldVal, newVal) -> applyFilter.run());
-        deptFilter.valueProperty().addListener((obs, oldVal, newVal) -> applyFilter.run());
         statusFilter.valueProperty().addListener((obs, oldVal, newVal) -> applyFilter.run());
+        deptFilter.valueProperty().addListener((obs, oldVal, newVal) -> applyFilter.run());
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button registerDocBtn = new Button("+ Onboard Doctor");
-        registerDocBtn.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
-        registerDocBtn.setStyle(
-            "-fx-background-color: #4F46E5; " +
-            "-fx-text-fill: white; " +
-            "-fx-background-radius: 6px; " +
-            "-fx-padding: 8px 16px; " +
-            "-fx-cursor: hand;"
-        );
-        registerDocBtn.setOnAction(e -> showOnboardDoctorDialog());
+        Button resetBtn = new Button("Reset Filters");
+        resetBtn.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
+        resetBtn.setStyle("-fx-background-color: #F1F5F9; -fx-text-fill: #475569; -fx-background-radius: 6px; -fx-padding: 8px 14px; -fx-cursor: hand;");
+        resetBtn.setOnAction(e -> {
+            searchInput.clear();
+            statusFilter.setValue("All Statuses");
+            deptFilter.setValue("All Departments");
+        });
 
-        bar.getChildren().addAll(searchInput, deptFilter, statusFilter, resetBtn, spacer, registerDocBtn);
+        bar.getChildren().addAll(searchInput, statusFilter, deptFilter, spacer, resetBtn);
         return bar;
     }
 
     @SuppressWarnings("unchecked")
     private VBox createTableContainer() {
-        VBox container = new VBox(10);
+        VBox container = new VBox(12);
         container.setPadding(new Insets(16));
-        container.setStyle(
-            "-fx-background-color: #FFFFFF; " +
-            "-fx-background-radius: 12px; " +
-            "-fx-border-color: #E2E8F0; " +
-            "-fx-border-radius: 12px; " +
-            "-fx-effect: dropshadow(three-pass-box, rgba(15,23,42,0.03), 8, 0, 0, 2);"
-        );
+        container.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 12px; -fx-border-color: #E2E8F0; -fx-border-radius: 12px;");
 
-        HBox tableHeaderBox = new HBox();
-        tableHeaderBox.setAlignment(Pos.CENTER_LEFT);
-
-        Label tableTitle = new Label("Practitioner Directory & Compliance Status");
-        tableTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
+        Label tableTitle = new Label("Medical Staff & Specialist Roster");
+        tableTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 15));
         tableTitle.setTextFill(Color.web("#0F172A"));
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        tableCountLabel = new Label("Showing 0 practitioners");
-        tableCountLabel.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 12));
-        tableCountLabel.setTextFill(Color.web("#64748B"));
-
-        tableHeaderBox.getChildren().addAll(tableTitle, spacer, tableCountLabel);
 
         doctorTable = new TableView<>();
         doctorTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         doctorTable.setStyle("-fx-background-color: transparent;");
-        doctorTable.setPrefHeight(380);
+        doctorTable.setPrefHeight(400);
 
-        // 1. Doctor Name & Avatar Column
-        TableColumn<DoctorModel, String> nameCol = new TableColumn<>("Practitioner Info");
+        // Doctor Name & Avatar Column
+        TableColumn<DoctorModel, String> nameCol = new TableColumn<>("Doctor Profile");
         nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
         nameCol.setCellFactory(col -> new TableCell<>() {
             @Override
@@ -356,32 +319,31 @@ public class DoctorManagementView extends ScrollPane {
                 if (empty || name == null) {
                     setGraphic(null);
                 } else {
-                    DoctorModel doc = getTableView().getItems().get(getIndex());
+                    DoctorModel doctor = getTableView().getItems().get(getIndex());
                     HBox box = new HBox(12);
                     box.setAlignment(Pos.CENTER_LEFT);
 
-                    String initial = doc.getName().replace("Dr. ", "").trim().substring(0, 1);
-                    StackPane avatar = createDoctorAvatar(initial);
+                    StackPane icon = createDoctorAvatar(doctor.getName());
 
                     VBox textContainer = new VBox(2);
                     Label nameLbl = new Label(name);
                     nameLbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
                     nameLbl.setTextFill(Color.web("#0F172A"));
 
-                    Label mciLbl = new Label("MCI Reg: " + doc.getMciNumber() + " • " + doc.getHospitalName());
-                    mciLbl.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 11));
-                    mciLbl.setTextFill(Color.web("#64748B"));
+                    Label subLbl = new Label("ID: " + doctor.getDoctorId() + " • " + doctor.getSpecialization());
+                    subLbl.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 11));
+                    subLbl.setTextFill(Color.web("#64748B"));
 
-                    textContainer.getChildren().addAll(nameLbl, mciLbl);
-                    box.getChildren().addAll(avatar, textContainer);
+                    textContainer.getChildren().addAll(nameLbl, subLbl);
+                    box.getChildren().addAll(icon, textContainer);
                     setGraphic(box);
                 }
             }
         });
 
-        // 2. Specialization Column
-        TableColumn<DoctorModel, String> deptCol = new TableColumn<>("Specialization");
-        deptCol.setCellValueFactory(new PropertyValueFactory<>("specialization"));
+        // Department & Room Column
+        TableColumn<DoctorModel, String> deptCol = new TableColumn<>("Department & OPD Room");
+        deptCol.setCellValueFactory(new PropertyValueFactory<>("department"));
         deptCol.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(String dept, boolean empty) {
@@ -389,34 +351,52 @@ public class DoctorManagementView extends ScrollPane {
                 if (empty || dept == null) {
                     setGraphic(null);
                 } else {
-                    Label badge = new Label(dept);
-                    badge.setPadding(new Insets(4, 10, 4, 10));
-                    badge.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
-                    badge.setStyle("-fx-background-color: #EEF2FF; -fx-text-fill: #4F46E5; -fx-background-radius: 12px;");
-                    setGraphic(badge);
+                    DoctorModel doctor = getTableView().getItems().get(getIndex());
+                    VBox textContainer = new VBox(2);
+
+                    Label deptLbl = new Label(dept);
+                    deptLbl.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
+                    deptLbl.setTextFill(Color.web("#334155"));
+
+                    Label roomLbl = new Label("OPD Room: " + doctor.getOpdRoom());
+                    roomLbl.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 11));
+                    roomLbl.setTextFill(Color.web("#64748B"));
+
+                    textContainer.getChildren().addAll(deptLbl, roomLbl);
+                    setGraphic(textContainer);
                 }
             }
         });
 
-        // 3. Experience Column
-        TableColumn<DoctorModel, Integer> expCol = new TableColumn<>("Experience");
-        expCol.setCellValueFactory(new PropertyValueFactory<>("experienceYears"));
-        expCol.setCellFactory(col -> new TableCell<>() {
+        // Contact Info Column
+        TableColumn<DoctorModel, String> contactCol = new TableColumn<>("Contact & Email");
+        contactCol.setCellValueFactory(new PropertyValueFactory<>("contactNo"));
+        contactCol.setCellFactory(col -> new TableCell<>() {
             @Override
-            protected void updateItem(Integer exp, boolean empty) {
-                super.updateItem(exp, empty);
-                if (empty || exp == null) {
-                    setText(null);
+            protected void updateItem(String contact, boolean empty) {
+                super.updateItem(contact, empty);
+                if (empty || contact == null) {
+                    setGraphic(null);
                 } else {
-                    setText(exp + " Years");
-                    setTextFill(Color.web("#334155"));
-                    setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
+                    DoctorModel doctor = getTableView().getItems().get(getIndex());
+                    VBox textContainer = new VBox(2);
+
+                    Label phoneLbl = new Label(contact);
+                    phoneLbl.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 12));
+                    phoneLbl.setTextFill(Color.web("#334155"));
+
+                    Label emailLbl = new Label(doctor.getEmail());
+                    emailLbl.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 11));
+                    emailLbl.setTextFill(Color.web("#64748B"));
+
+                    textContainer.getChildren().addAll(phoneLbl, emailLbl);
+                    setGraphic(textContainer);
                 }
             }
         });
 
-        // 4. Verification Status Badge Column
-        TableColumn<DoctorModel, String> statusCol = new TableColumn<>("Audit Status");
+        // Duty Status Badge Column
+        TableColumn<DoctorModel, String> statusCol = new TableColumn<>("Availability Status");
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
         statusCol.setCellFactory(col -> new TableCell<>() {
             @Override
@@ -425,60 +405,50 @@ public class DoctorManagementView extends ScrollPane {
                 if (empty || status == null) {
                     setGraphic(null);
                 } else {
-                    Label badge = new Label(status);
+                    Label badge = new Label(status.toUpperCase());
                     badge.setPadding(new Insets(4, 10, 4, 10));
-                    badge.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
+                    badge.setFont(Font.font("Segoe UI", FontWeight.BOLD, 10));
 
                     switch (status.toUpperCase()) {
-                        case "VERIFIED" -> badge.setStyle("-fx-background-color: #ECFDF5; -fx-text-fill: #059669; -fx-background-radius: 12px;");
-                        case "FLAGGED" -> badge.setStyle("-fx-background-color: #FEF2F2; -fx-text-fill: #DC2626; -fx-background-radius: 12px;");
-                        default -> badge.setStyle("-fx-background-color: #FFFBEB; -fx-text-fill: #D97706; -fx-background-radius: 12px;");
+                        case "ON DUTY" -> badge.setStyle("-fx-background-color: #DCFCE7; -fx-text-fill: #15803D; -fx-background-radius: 20px;");
+                        case "IN SURGERY" -> badge.setStyle("-fx-background-color: #FEE2E2; -fx-text-fill: #B91C1C; -fx-background-radius: 20px;");
+                        default -> badge.setStyle("-fx-background-color: #FEF3C7; -fx-text-fill: #D97706; -fx-background-radius: 20px;");
                     }
                     setGraphic(badge);
                 }
             }
         });
 
-        // 5. Functional Action Buttons Column
-        TableColumn<DoctorModel, Void> actionCol = new TableColumn<>("Actions");
+        // Shift Schedule Column
+        TableColumn<DoctorModel, String> shiftCol = new TableColumn<>("Current Shift");
+        shiftCol.setCellValueFactory(new PropertyValueFactory<>("shift"));
+
+        // Actions Column
+        TableColumn<DoctorModel, Void> actionCol = new TableColumn<>("Management");
         actionCol.setCellFactory(col -> new TableCell<>() {
-            private final Button auditBtn = new Button("Audit");
-            private final Button verifyBtn = new Button("Approve");
-            private final Button flagBtn = new Button("Flag");
-            private final Button deleteBtn = new Button("Offboard");
-            private final HBox btnGroup = new HBox(5, auditBtn, verifyBtn, flagBtn, deleteBtn);
+            private final Button profileBtn = new Button("View Schedule");
+            private final Button toggleStatusBtn = new Button("Toggle Duty");
+            private final HBox btnGroup = new HBox(6, profileBtn, toggleStatusBtn);
 
             {
-                btnGroup.setAlignment(Pos.CENTER_LEFT);
-                auditBtn.setStyle("-fx-background-color: #F1F5F9; -fx-text-fill: #334155; -fx-border-color: #CBD5E1; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-cursor: hand; -fx-font-size: 11px; -fx-font-weight: bold;");
-                verifyBtn.setStyle("-fx-background-color: #ECFDF5; -fx-text-fill: #059669; -fx-border-color: #A7F3D0; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-cursor: hand; -fx-font-size: 11px; -fx-font-weight: bold;");
-                flagBtn.setStyle("-fx-background-color: #FFFBEB; -fx-text-fill: #D97706; -fx-border-color: #FDE68A; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-cursor: hand; -fx-font-size: 11px; -fx-font-weight: bold;");
-                deleteBtn.setStyle("-fx-background-color: #FEF2F2; -fx-text-fill: #DC2626; -fx-border-color: #FCA5A5; -fx-border-radius: 5px; -fx-background-radius: 5px; -fx-cursor: hand; -fx-font-size: 11px; -fx-font-weight: bold;");
+                btnGroup.setAlignment(Pos.CENTER);
+                profileBtn.setStyle("-fx-background-color: #EEF2FF; -fx-text-fill: #4338CA; -fx-cursor: hand; -fx-font-size: 11px; -fx-background-radius: 4px;");
+                toggleStatusBtn.setStyle("-fx-background-color: #F1F5F9; -fx-text-fill: #334155; -fx-cursor: hand; -fx-font-size: 11px; -fx-background-radius: 4px;");
 
-                auditBtn.setOnAction(e -> {
-                    DoctorModel doc = getTableView().getItems().get(getIndex());
-                    showAuditModal(doc);
+                profileBtn.setOnAction(e -> {
+                    DoctorModel doctor = getTableView().getItems().get(getIndex());
+                    showDoctorProfileModal(doctor);
                 });
 
-                verifyBtn.setOnAction(e -> {
-                    DoctorModel doc = getTableView().getItems().get(getIndex());
-                    doc.setStatus("VERIFIED");
+                toggleStatusBtn.setOnAction(e -> {
+                    DoctorModel doctor = getTableView().getItems().get(getIndex());
+                    if ("ON DUTY".equalsIgnoreCase(doctor.getStatus())) {
+                        doctor.setStatus("ON LEAVE");
+                    } else {
+                        doctor.setStatus("ON DUTY");
+                    }
                     doctorTable.refresh();
-                    recalculateMetricsAndChart();
-                    showNotification("Status Updated", doc.getName() + " has been approved and verified.");
-                });
-
-                flagBtn.setOnAction(e -> {
-                    DoctorModel doc = getTableView().getItems().get(getIndex());
-                    doc.setStatus("FLAGGED");
-                    doctorTable.refresh();
-                    recalculateMetricsAndChart();
-                    showNotification("Profile Flagged", doc.getName() + " flagged for compliance inquiry.");
-                });
-
-                deleteBtn.setOnAction(e -> {
-                    DoctorModel doc = getTableView().getItems().get(getIndex());
-                    handleDeleteDoctor(doc);
+                    updateCountersAndChart();
                 });
             }
 
@@ -493,258 +463,222 @@ public class DoctorManagementView extends ScrollPane {
             }
         });
 
-        doctorTable.getColumns().addAll(nameCol, deptCol, expCol, statusCol, actionCol);
-        container.getChildren().addAll(tableHeaderBox, doctorTable);
+        doctorTable.getColumns().addAll(nameCol, deptCol, contactCol, statusCol, shiftCol, actionCol);
+        container.getChildren().addAll(tableTitle, doctorTable);
         return container;
     }
 
-    private StackPane createDoctorAvatar(String initial) {
+    private StackPane createDoctorAvatar(String name) {
+        String initials = "DR";
+        if (name != null && name.contains(" ")) {
+            String[] parts = name.replace("Dr. ", "").split(" ");
+            if (parts.length >= 2) {
+                initials = ("" + parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+            } else if (parts.length == 1 && !parts[0].isEmpty()) {
+                initials = ("" + parts[0].charAt(0)).toUpperCase();
+            }
+        }
+
         Circle circle = new Circle(16);
-        circle.setFill(Color.web("#ECFDF5"));
-        circle.setStroke(Color.web("#10B981"));
+        circle.setFill(Color.web("#E0E7FF"));
+        circle.setStroke(Color.web("#4F46E5"));
         circle.setStrokeWidth(1.5);
 
-        Label label = new Label(initial);
-        label.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
-        label.setTextFill(Color.web("#047857"));
+        Label label = new Label(initials);
+        label.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
+        label.setTextFill(Color.web("#3730A3"));
 
         return new StackPane(circle, label);
     }
 
+    // ------------------------------------------------------------------------
+    // DATA MANAGEMENT & COMPUTATIONS
+    // ------------------------------------------------------------------------
+
     private void loadDoctorData() {
         masterDoctorData = FXCollections.observableArrayList(
-            new DoctorModel("DOC-301", "Dr. Rajesh Sharma", "MCI-884920", "Cardiology", "City Care Hospital", 14, "VERIFIED"),
-            new DoctorModel("DOC-302", "Dr. Priya Nair", "MCI-990142", "Neurology", "Ruby Hall Center", 9, "PENDING"),
-            new DoctorModel("DOC-303", "Dr. Amit Deshmukh", "MCI-331045", "Orthopedics", "Sahyadri Health", 18, "VERIFIED"),
-            new DoctorModel("DOC-304", "Dr. Sneha Kulkarni", "MCI-449102", "Pediatrics", "Orange City Care", 6, "PENDING"),
-            new DoctorModel("DOC-305", "Dr. Vikram Joshi", "MCI-110093", "Oncology", "Apex Multi-Speciality", 11, "FLAGGED"),
-            new DoctorModel("DOC-306", "Dr. Ananya Rao", "MCI-772109", "Cardiology", "City Care Hospital", 8, "VERIFIED"),
-            new DoctorModel("DOC-307", "Dr. Rohan Verma", "MCI-554281", "Orthopedics", "KEM Hospital", 12, "PENDING")
+            new DoctorModel("DOC-101", "Dr. Rajesh Sharma", "Cardiology", "Interventional Cardiologist", "+91 98220 12345", "r.sharma@healthsphere.org", "OPD-102", "ON DUTY", "Morning (08:00 - 14:00)", "2021-03-15"),
+            new DoctorModel("DOC-102", "Dr. Ananya Deshmukh", "Neurology", "Neurosurgeon & Specialist", "+91 97650 98765", "a.deshmukh@healthsphere.org", "OPD-204", "IN SURGERY", "Full Day (09:00 - 17:00)", "2019-07-22"),
+            new DoctorModel("DOC-103", "Dr. Vikram Patil", "Orthopedics", "Joint Replacement Surgeon", "+91 94221 45678", "v.patil@healthsphere.org", "OPD-108", "ON DUTY", "Evening (14:00 - 20:00)", "2020-11-01"),
+            new DoctorModel("DOC-104", "Dr. Meera Joshi", "Pediatrics", "Pediatric Intensivist", "+91 98902 34567", "m.joshi@healthsphere.org", "OPD-005", "ON LEAVE", "Night Shift", "2022-01-10"),
+            new DoctorModel("DOC-105", "Dr. Siddharth Rao", "Oncology", "Medical Oncologist", "+91 91582 67890", "s.rao@healthsphere.org", "OPD-301", "ON DUTY", "Morning (08:00 - 14:00)", "2018-05-19")
         );
 
-        filteredData = new FilteredList<>(masterDoctorData, p -> true);
+        filteredData = new FilteredList<>(masterDoctorData, d -> true);
         doctorTable.setItems(filteredData);
 
-        recalculateMetricsAndChart();
+        updateCountersAndChart();
     }
 
-    private void recalculateMetricsAndChart() {
+    private void updateCountersAndChart() {
         int total = masterDoctorData.size();
-        long verified = masterDoctorData.stream().filter(d -> d.getStatus().equalsIgnoreCase("VERIFIED")).count();
-        long pending = masterDoctorData.stream().filter(d -> d.getStatus().equalsIgnoreCase("PENDING")).count();
-        long flagged = masterDoctorData.stream().filter(d -> d.getStatus().equalsIgnoreCase("FLAGGED")).count();
+        long active = masterDoctorData.stream().filter(d -> d.getStatus().equalsIgnoreCase("ON DUTY")).count();
+        long leave = masterDoctorData.stream().filter(d -> d.getStatus().equalsIgnoreCase("ON LEAVE")).count();
+        long surgery = masterDoctorData.stream().filter(d -> d.getStatus().equalsIgnoreCase("IN SURGERY")).count();
 
-        totalDoctorsLabel.setText(String.valueOf(total));
-        verifiedDoctorsLabel.setText(String.valueOf(verified));
-        pendingAuditsLabel.setText(String.valueOf(pending));
-        flaggedProfilesLabel.setText(String.valueOf(flagged));
+        totalCountLabel.setText(String.valueOf(total));
+        activeCountLabel.setText(String.valueOf(active));
+        leaveCountLabel.setText(String.valueOf(leave));
+        surgeryCountLabel.setText(String.valueOf(surgery));
 
-        updateTableCountLabel();
-        updateDeptChartData();
-    }
+        // Department Bar Chart Calculation
+        departmentBarChart.getData().clear();
 
-    private void updateTableCountLabel() {
-        if (filteredData != null && tableCountLabel != null) {
-            tableCountLabel.setText("Showing " + filteredData.size() + " of " + masterDoctorData.size() + " practitioners");
-        }
-    }
-
-    private void updateDeptChartData() {
-        if (deptBarChart == null) return;
-
-        Map<String, Long> counts = masterDoctorData.stream()
-                .collect(Collectors.groupingBy(DoctorModel::getSpecialization, Collectors.counting()));
+        Map<String, Long> deptCounts = masterDoctorData.stream()
+                .collect(Collectors.groupingBy(DoctorModel::getDepartment, Collectors.counting()));
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
-        counts.forEach((dept, count) -> series.getData().add(new XYChart.Data<>(dept, count)));
+        deptCounts.forEach((dept, count) -> series.getData().add(new XYChart.Data<>(dept, count)));
 
-        deptBarChart.getData().clear();
-        deptBarChart.getData().add(series);
+        departmentBarChart.getData().add(series);
     }
 
-    // --- Actions & Modals ---
+    // ------------------------------------------------------------------------
+    // DIALOGS & ACTIONS
+    // ------------------------------------------------------------------------
 
-    private void showOnboardDoctorDialog() {
+    private void showDoctorProfileModal(DoctorModel doctor) {
+        Alert dialog = new Alert(Alert.AlertType.INFORMATION);
+        dialog.setTitle("Doctor Credentials & Schedule");
+        dialog.setHeaderText("Specialist Profile: " + doctor.getName() + " (" + doctor.getDoctorId() + ")");
+        dialog.setContentText(
+            "🩺 Department: " + doctor.getDepartment() + " | Specialization: " + doctor.getSpecialization() + "\n" +
+            "🏢 OPD Location: " + doctor.getOpdRoom() + "\n" +
+            "📞 Contact: " + doctor.getContactNo() + "\n" +
+            "✉️ Email: " + doctor.getEmail() + "\n" +
+            "⏰ Shift Schedule: " + doctor.getShift() + "\n" +
+            "📅 Joining Date: " + doctor.getJoiningDate() + "\n" +
+            "🏷️ Current Status: " + doctor.getStatus() + "\n\n" +
+            "Weekly Consultation Hours:\n" +
+            "• Mon - Thu: 09:00 AM - 01:00 PM (OPD)\n" +
+            "• Fri: 02:00 PM - 06:00 PM (Rounds / Consultations)\n" +
+            "• Medical License: Verified & Active."
+        );
+        dialog.showAndWait();
+    }
+
+    private void showAddDoctorDialog() {
         Dialog<DoctorModel> dialog = new Dialog<>();
-        dialog.setTitle("Onboard New Medical Specialist");
-        dialog.setHeaderText("Register Practitioner into HealthSphere Audit Portal");
+        dialog.setTitle("Register New Medical Specialist");
+        dialog.setHeaderText("Add New Doctor to HealthSphere Roster");
 
-        ButtonType onboardButtonType = new ButtonType("Onboard Practitioner", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(onboardButtonType, ButtonType.CANCEL);
+        ButtonType addDoctorButtonType = new ButtonType("Add Specialist", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(addDoctorButtonType, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
-        grid.setHgap(12);
+        grid.setHgap(10);
         grid.setVgap(12);
-        grid.setPadding(new Insets(20));
+        grid.setPadding(new Insets(20, 150, 10, 10));
 
         TextField nameField = new TextField();
-        nameField.setPromptText("Dr. First Last");
+        nameField.setPromptText("Dr. Full Name");
 
-        TextField mciField = new TextField();
-        mciField.setPromptText("MCI-XXXXXX");
+        ComboBox<String> deptCombo = new ComboBox<>();
+        deptCombo.getItems().addAll("Cardiology", "Neurology", "Orthopedics", "Pediatrics", "Oncology", "General Medicine");
+        deptCombo.setValue("Cardiology");
 
-        ComboBox<String> specBox = new ComboBox<>(FXCollections.observableArrayList(
-                "Cardiology", "Neurology", "Orthopedics", "Pediatrics", "Oncology"
-        ));
-        specBox.setValue("Cardiology");
+        TextField specField = new TextField();
+        specField.setPromptText("e.g., Senior Surgeon");
 
-        TextField hospitalField = new TextField();
-        hospitalField.setPromptText("Hospital / Medical Center");
+        TextField phoneField = new TextField();
+        phoneField.setPromptText("+91 98765 XXXXX");
 
-        Spinner<Integer> expSpinner = new Spinner<>(1, 50, 5);
+        TextField emailField = new TextField();
+        emailField.setPromptText("doctor@healthsphere.org");
+
+        TextField roomField = new TextField();
+        roomField.setPromptText("OPD-101");
+
+        ComboBox<String> shiftCombo = new ComboBox<>();
+        shiftCombo.getItems().addAll("Morning (08:00 - 14:00)", "Evening (14:00 - 20:00)", "Night Shift", "Full Day (09:00 - 17:00)");
+        shiftCombo.setValue("Morning (08:00 - 14:00)");
 
         grid.add(new Label("Full Name:"), 0, 0);
         grid.add(nameField, 1, 0);
-        grid.add(new Label("MCI / NMC License:"), 0, 1);
-        grid.add(mciField, 1, 1);
+        grid.add(new Label("Department:"), 0, 1);
+        grid.add(deptCombo, 1, 1);
         grid.add(new Label("Specialization:"), 0, 2);
-        grid.add(specBox, 1, 2);
-        grid.add(new Label("Affiliated Hospital:"), 0, 3);
-        grid.add(hospitalField, 1, 3);
-        grid.add(new Label("Experience (Years):"), 0, 4);
-        grid.add(expSpinner, 1, 4);
+        grid.add(specField, 1, 2);
+        grid.add(new Label("Contact No:"), 0, 3);
+        grid.add(phoneField, 1, 3);
+        grid.add(new Label("Email Address:"), 0, 4);
+        grid.add(emailField, 1, 4);
+        grid.add(new Label("OPD Room:"), 0, 5);
+        grid.add(roomField, 1, 5);
+        grid.add(new Label("Shift Schedule:"), 0, 6);
+        grid.add(shiftCombo, 1, 6);
 
         dialog.getDialogPane().setContent(grid);
 
         dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == onboardButtonType) {
-                String rawName = nameField.getText().trim();
-                String docName = rawName.startsWith("Dr.") ? rawName : "Dr. " + rawName;
-                String mci = mciField.getText().trim().isEmpty() ? "MCI-" + (100000 + (int)(Math.random() * 899999)) : mciField.getText().trim();
-                String hospital = hospitalField.getText().trim().isEmpty() ? "General Hospital" : hospitalField.getText().trim();
-                String id = "DOC-" + (300 + masterDoctorData.size() + 1);
+            if (dialogButton == addDoctorButtonType && !nameField.getText().trim().isEmpty()) {
+                String newId = "DOC-" + (100 + masterDoctorData.size() + 1);
+                String name = nameField.getText().trim().startsWith("Dr.") ? nameField.getText().trim() : "Dr. " + nameField.getText().trim();
+                String spec = specField.getText().trim().isEmpty() ? "General Consultant" : specField.getText().trim();
+                String phone = phoneField.getText().trim().isEmpty() ? "+91 90000 00000" : phoneField.getText().trim();
+                String email = emailField.getText().trim().isEmpty() ? "doctor@healthsphere.org" : emailField.getText().trim();
+                String room = roomField.getText().trim().isEmpty() ? "OPD-101" : roomField.getText().trim();
 
-                return new DoctorModel(id, docName, mci, specBox.getValue(), hospital, expSpinner.getValue(), "PENDING");
+                return new DoctorModel(newId, name, deptCombo.getValue(), spec, phone, email, room, "ON DUTY", shiftCombo.getValue(), LocalDate.now().toString());
             }
             return null;
         });
 
         Optional<DoctorModel> result = dialog.showAndWait();
-        result.ifPresent(newDoc -> {
-            masterDoctorData.add(0, newDoc);
-            recalculateMetricsAndChart();
-            showNotification("Practitioner Registered", newDoc.getName() + " added for MCI verification audit.");
+        result.ifPresent(newDoctor -> {
+            masterDoctorData.add(0, newDoctor);
+            updateCountersAndChart();
+            showAlert("Doctor Registered", newDoctor.getName() + " has been added to the hospital directory.");
         });
     }
 
-    private void showAuditModal(DoctorModel doc) {
-        Alert dialog = new Alert(Alert.AlertType.INFORMATION);
-        dialog.setTitle("Medical License & Degree Audit");
-        dialog.setHeaderText("Credentials Inspection: " + doc.getName());
-        dialog.setContentText(
-            "🩺 MCI Registration No: " + doc.getMciNumber() + "\n" +
-            "🏥 Primary Hospital: " + doc.getHospitalName() + "\n" +
-            "🧬 Specialization: " + doc.getSpecialization() + "\n" +
-            "⏳ Experience: " + doc.getExperienceYears() + " Years\n\n" +
-            "✓ MBBS / MD Degree Verification: VERIFIED (NMC Portal)\n" +
-            "✓ Active License Status: VALID (Expiring 2029)\n" +
-            "✓ Malpractice History Log: CLEAN (0 Claims Flagged)"
-        );
-        dialog.showAndWait();
-    }
-
-    private void handleDeleteDoctor(DoctorModel doc) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Confirm Practitioner Offboarding");
-        alert.setHeaderText("Remove " + doc.getName() + " from System?");
-        alert.setContentText("This will revoke system privileges and archive their MCI registration log.");
-
-        Optional<ButtonType> result = alert.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.OK) {
-            masterDoctorData.remove(doc);
-            recalculateMetricsAndChart();
-            showNotification("Practitioner Offboarded", doc.getName() + " removed successfully.");
-        }
-    }
-
-    private void handleExportCSV() {
-        StringBuilder csv = new StringBuilder("ID,Name,MCI Number,Specialization,Hospital,Experience,Status\n");
-        for (DoctorModel doc : filteredData) {
-            csv.append(doc.getDoctorId()).append(",")
-               .append("\"").append(doc.getName()).append("\",")
-               .append(doc.getMciNumber()).append(",")
-               .append(doc.getSpecialization()).append(",")
-               .append("\"").append(doc.getHospitalName()).append("\",")
-               .append(doc.getExperienceYears()).append(",")
-               .append(doc.getStatus()).append("\n");
-        }
-
+    private void showAlert(String title, String content) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Export CSV Complete");
-        alert.setHeaderText("Audit Log Exported (" + filteredData.size() + " Records)");
-        alert.setContentText("Data preview generated:\n\n" + csv.toString().substring(0, Math.min(csv.length(), 220)) + "\n...");
-        alert.showAndWait();
-    }
-
-    private void showNotification(String header, String content) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("HealthSphere System Notification");
-        alert.setHeaderText(header);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
         alert.setContentText(content);
         alert.showAndWait();
     }
 
-    private String getLightThemeCSS() {
-        return """
-            .table-view {
-                -fx-background-color: transparent;
-                -fx-border-color: #E2E8F0;
-                -fx-border-radius: 8px;
-            }
-            .table-view .column-header-background {
-                -fx-background-color: #F8FAFC;
-            }
-            .table-view .column-header {
-                -fx-background-color: #F8FAFC;
-                -fx-size: 38px;
-            }
-            .table-view .column-header .label {
-                -fx-text-fill: #475569;
-                -fx-font-weight: bold;
-                -fx-font-size: 12px;
-            }
-            .table-row-cell {
-                -fx-background-color: #FFFFFF;
-                -fx-border-color: #F1F5F9;
-                -fx-border-width: 0 0 1 0;
-            }
-            .table-row-cell:hover {
-                -fx-background-color: #F8FAFC;
-            }
-            .chart-bar {
-                -fx-bar-fill: #6366F1;
-                -fx-background-radius: 4px 4px 0 0;
-            }
-            """;
-    }
+    // ------------------------------------------------------------------------
+    // INNER MODEL CLASS
+    // ------------------------------------------------------------------------
 
-    // --- Inner Model Class ---
     public static class DoctorModel {
         private final String doctorId;
         private final String name;
-        private final String mciNumber;
+        private final String department;
         private final String specialization;
-        private final String hospitalName;
-        private final int experienceYears;
+        private final String contactNo;
+        private final String email;
+        private final String opdRoom;
         private String status;
+        private final String shift;
+        private final String joiningDate;
 
-        public DoctorModel(String doctorId, String name, String mciNumber, String specialization, String hospitalName, int experienceYears, String status) {
+        public DoctorModel(String doctorId, String name, String department, String specialization, String contactNo, String email, String opdRoom, String status, String shift, String joiningDate) {
             this.doctorId = doctorId;
             this.name = name;
-            this.mciNumber = mciNumber;
+            this.department = department;
             this.specialization = specialization;
-            this.hospitalName = hospitalName;
-            this.experienceYears = experienceYears;
+            this.contactNo = contactNo;
+            this.email = email;
+            this.opdRoom = opdRoom;
             this.status = status;
+            this.shift = shift;
+            this.joiningDate = joiningDate;
         }
 
         public String getDoctorId() { return doctorId; }
         public String getName() { return name; }
-        public String getMciNumber() { return mciNumber; }
+        public String getDepartment() { return department; }
         public String getSpecialization() { return specialization; }
-        public String getHospitalName() { return hospitalName; }
-        public int getExperienceYears() { return experienceYears; }
+        public String getContactNo() { return contactNo; }
+        public String getEmail() { return email; }
+        public String getOpdRoom() { return opdRoom; }
         public String getStatus() { return status; }
         public void setStatus(String status) { this.status = status; }
+        public String getShift() { return shift; }
+        public String getJoiningDate() { return joiningDate; }
     }
 }
