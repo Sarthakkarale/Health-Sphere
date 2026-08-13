@@ -1,61 +1,91 @@
 package com.healthsphere.model;
 
-/**
- * Contains information specific to a doctor.
- */
 public class DoctorProfile {
 
-    private String userId;
-    private String medicalLicenseNumber;
-    private String medicalCouncil;
+    private String uid;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String phone;
+    private String registrationNumber;
     private String specialization;
-    private int yearsOfExperience;
-    private String hospitalOrClinic;
-    private String department;
+    private String experience;
+    private String hospitalAffiliation;
+    private String medicalCouncil;
 
     public DoctorProfile() {
     }
 
     public DoctorProfile(
-            String userId,
-            String medicalLicenseNumber,
-            String medicalCouncil,
+            String uid,
+            String firstName,
+            String lastName,
+            String email,
+            String phone,
+            String registrationNumber,
             String specialization,
-            int yearsOfExperience,
-            String hospitalOrClinic,
-            String department) {
+            String experience,
+            String hospitalAffiliation,
+            String medicalCouncil) {
 
-        this.userId = userId;
-        this.medicalLicenseNumber = medicalLicenseNumber;
-        this.medicalCouncil = medicalCouncil;
+        this.uid = uid;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.phone = phone;
+        this.registrationNumber = registrationNumber;
         this.specialization = specialization;
-        this.yearsOfExperience = yearsOfExperience;
-        this.hospitalOrClinic = hospitalOrClinic;
-        this.department = department;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public String getMedicalLicenseNumber() {
-        return medicalLicenseNumber;
-    }
-
-    public void setMedicalLicenseNumber(String medicalLicenseNumber) {
-        this.medicalLicenseNumber = medicalLicenseNumber;
-    }
-
-    public String getMedicalCouncil() {
-        return medicalCouncil;
-    }
-
-    public void setMedicalCouncil(String medicalCouncil) {
+        this.experience = experience;
+        this.hospitalAffiliation = hospitalAffiliation;
         this.medicalCouncil = medicalCouncil;
+    }
+
+    public String getUid() {
+        return uid;
+    }
+
+    public void setUid(String uid) {
+        this.uid = uid;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getRegistrationNumber() {
+        return registrationNumber;
+    }
+
+    public void setRegistrationNumber(String registrationNumber) {
+        this.registrationNumber = registrationNumber;
     }
 
     public String getSpecialization() {
@@ -66,27 +96,27 @@ public class DoctorProfile {
         this.specialization = specialization;
     }
 
-    public int getYearsOfExperience() {
-        return yearsOfExperience;
+    public String getExperience() {
+        return experience;
     }
 
-    public void setYearsOfExperience(int yearsOfExperience) {
-        this.yearsOfExperience = yearsOfExperience;
+    public void setExperience(String experience) {
+        this.experience = experience;
     }
 
-    public String getHospitalOrClinic() {
-        return hospitalOrClinic;
+    public String getHospitalAffiliation() {
+        return hospitalAffiliation;
     }
 
-    public void setHospitalOrClinic(String hospitalOrClinic) {
-        this.hospitalOrClinic = hospitalOrClinic;
+    public void setHospitalAffiliation(String hospitalAffiliation) {
+        this.hospitalAffiliation = hospitalAffiliation;
     }
 
-    public String getDepartment() {
-        return department;
+    public String getMedicalCouncil() {
+        return medicalCouncil;
     }
 
-    public void setDepartment(String department) {
-        this.department = department;
+    public void setMedicalCouncil(String medicalCouncil) {
+        this.medicalCouncil = medicalCouncil;
     }
 }

@@ -6,6 +6,13 @@ import com.healthsphere.view.hospital.HospitalDashboardView;
 import com.healthsphere.view.admin.AdminDashboardView;
 import com.healthsphere.view.authentication.*;
 
+import com.healthsphere.controller.authentication.LoginController;
+import com.healthsphere.exceptions.AuthenticationException;
+import com.healthsphere.exceptions.DatabaseException;
+import com.healthsphere.model.LoginDestination;
+import com.healthsphere.model.Role;
+import com.healthsphere.model.UserProfile;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -45,14 +52,19 @@ public class LoginView {
     private Button btnHospital;
     private Button btnAdmin;
 
+    private final LoginController loginController;
+    private Label errorLabel;
+
     // Default Constructor
     public LoginView() {
         this.stage = new Stage();
+        this.loginController = new LoginController();
     }
 
     // Overloaded Constructor for compatibility
     public LoginView(Stage stage) {
         this.stage = stage;
+        this.loginController = new LoginController();
     }
 
     public Scene getScene() {
@@ -189,8 +201,8 @@ public class LoginView {
         btnHospital = createRoleButton("Hospital", "/images/icon_hospital.png", "🏥");
         btnAdmin = createRoleButton("Admin", "/images/icon_admin.png", "🔑");
 
-        // Set Doctor as Default Selected Role
-        selectRole(btnDoctor);
+        // Autofocus / Default Selected Role set to Patient
+        selectRole(btnPatient);
 
         btnPatient.setOnAction(e -> selectRole(btnPatient));
         btnDoctor.setOnAction(e -> selectRole(btnDoctor));
@@ -208,6 +220,14 @@ public class LoginView {
         roleGrid.getColumnConstraints().addAll(colCon, colCon, colCon, colCon);
 
         roleSection.getChildren().addAll(roleLabel, roleGrid);
+
+        // Visible Error Message Label on screen
+        errorLabel = new Label();
+        errorLabel.setWrapText(true);
+        errorLabel.setVisible(false);
+        errorLabel.setManaged(false);
+        errorLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-size: 12px; -fx-background-color: #ffeeef; -fx-padding: 8px; -fx-background-radius: 4px;");
+        errorLabel.setMaxWidth(Double.MAX_VALUE);
 
         // Input Fields
         VBox emailBox = new VBox(6);
@@ -247,18 +267,33 @@ public class LoginView {
         loginBtn.getStyleClass().add("btn-login-primary");
         loginBtn.setMaxWidth(Double.MAX_VALUE);
 
-        // ROUTED NAVIGATION: Switches to the selected role's dashboard view
+        // Login Action validating that selected tab matches user's role from profile
         loginBtn.setOnAction(e -> {
-            if (selectedRoleBtn == btnPatient) {
-                stage.setScene(new PatientDashboardView(stage).getScene());
-            } else if (selectedRoleBtn == btnDoctor) {
-                stage.setScene(new DoctorDashboardView(stage).getScene());
-            } else if (selectedRoleBtn == btnHospital) {
-                stage.setScene(new HospitalDashboardView(stage).getScene());
-            } else if (selectedRoleBtn == btnAdmin) {
-                stage.setScene(new AdminDashboardView(stage).getScene());
-            } else {
-                stage.setScene(new PatientDashboardView(stage).getScene());
+            String email = emailField.getText().trim();
+            String password = passField.getText();
+
+            try {
+                UserProfile profile = loginController.login(email, password);
+
+                // Determine selected role from UI tab
+                String selectedTabRole = getSelectedTabRoleString();
+                String accountRole = profile.getRole();
+
+                // Validate tab-role match to prevent logging into wrong dashboard
+                if (!accountRole.equalsIgnoreCase(selectedTabRole)) {
+                    showError("Access Denied: Selected role tab (" + selectedTabRole + ") does not match your account role.");
+                    return;
+                }
+
+                LoginDestination destination = loginController.determineDestination(profile);
+                handleLoginDestination(destination);
+
+            } catch (AuthenticationException ex) {
+                showError(ex.getMessage());
+            } catch (DatabaseException ex) {
+                showError(ex.getMessage());
+            } catch (Exception ex) {
+                showError("Unable to login. Please try again.");
             }
         });
 
@@ -266,49 +301,25 @@ public class LoginView {
         createAccountBtn.getStyleClass().add("btn-outline");
         createAccountBtn.setMaxWidth(Double.MAX_VALUE);
 
-        // TAB-AWARE NAVIGATION: Passes active role to register page section
         createAccountBtn.setOnAction(e -> {
-            // String currentRole = "Patient";
-            // if (selectedRoleBtn == btnDoctor) currentRole = "Doctor";
-            // else if (selectedRoleBtn == btnHospital) currentRole = "Hospital";
-            // else if (selectedRoleBtn == btnAdmin) currentRole = "Admin";
-            // else if (selectedRoleBtn == btnPatient) currentRole = "Patient";
-
             RegisterView registerView = new RegisterView(stage);
             stage.setScene(registerView.getScene());
         });
 
-        // Divider
-        HBox divider = new HBox(10);
-        divider.setAlignment(Pos.CENTER);
-        Separator s1 = new Separator();
-        Separator s2 = new Separator();
-        HBox.setHgrow(s1, Priority.ALWAYS);
-        HBox.setHgrow(s2, Priority.ALWAYS);
-        Text orText = new Text("OR");
-        orText.setStyle("-fx-font-size: 11px; -fx-fill: #94A3B8;");
-        divider.getChildren().addAll(s1, orText, s2);
+        // Assemble Form Card (Google and Microsoft login buttons removed per request)
+        card.getChildren().addAll(
+                cardLogo, titleBox, roleSection, errorLabel, emailBox, passBox, rememberBox,
+                loginBtn, createAccountBtn
+        );
 
-        // Social Login Placeholders
-        Button googleBtn = new Button("Login with Google");
-        googleBtn.getStyleClass().add("btn-social");
-        googleBtn.setMaxWidth(Double.MAX_VALUE);
+        container.getChildren().addAll(card, formFooterHelper());
 
-        Button msBtn = new Button("Login with Microsoft");
-        msBtn.getStyleClass().add("btn-social");
-        msBtn.setMaxWidth(Double.MAX_VALUE);
+        ScrollPane scrollPane = new ScrollPane(container);
+        scrollPane.getStyleClass().add("right-panel-scroll");
+        return scrollPane;
+    }
 
-        Text socialNote = new Text("Social login available in a future release");
-        socialNote.setStyle("-fx-font-size: 11px; -fx-fill: #94A3B8;");
-
-        VBox socialBox = new VBox(8);
-        socialBox.setAlignment(Pos.CENTER);
-        socialBox.getChildren().addAll(googleBtn, msBtn, socialNote);
-
-        // Security Info Banner
-        HBox securityBox = createSecurityNotice();
-
-        // Footer Legal Links
+    private HBox formFooterHelper() {
         HBox formFooter = new HBox(12);
         formFooter.setAlignment(Pos.CENTER);
         formFooter.setPadding(new Insets(16, 0, 0, 0));
@@ -328,18 +339,7 @@ public class LoginView {
         verText.setStyle("-fx-font-size: 11px; -fx-fill: #94A3B8;");
 
         formFooter.getChildren().addAll(privacyLink, termsLink, helpLink, footSpacer, verText);
-
-        // Assemble Form Card
-        card.getChildren().addAll(
-                cardLogo, titleBox, roleSection, emailBox, passBox, rememberBox,
-                loginBtn, createAccountBtn, divider, socialBox, securityBox
-        );
-
-        container.getChildren().addAll(card, formFooter);
-
-        ScrollPane scrollPane = new ScrollPane(container);
-        scrollPane.getStyleClass().add("right-panel-scroll");
-        return scrollPane;
+        return formFooter;
     }
 
     // ==========================================
@@ -371,10 +371,57 @@ public class LoginView {
             if (!selectedRoleBtn.getStyleClass().contains("role-btn")) {
                 selectedRoleBtn.getStyleClass().add("role-btn");
             }
+            selectedRoleBtn.setStyle("");
         }
         btn.getStyleClass().remove("role-btn");
         btn.getStyleClass().add("role-btn-selected");
+        // Update selection box color styling when a specific role box is clicked/selected
+        btn.setStyle("-fx-background-color: #E6F0FA; -fx-border-color: #0256D0; -fx-border-width: 2px; -fx-background-radius: 8px; -fx-border-radius: 8px;");
         selectedRoleBtn = btn;
+    }
+
+    private String getSelectedTabRoleString() {
+        if (selectedRoleBtn == btnPatient) return Role.PATIENT.name();
+        if (selectedRoleBtn == btnDoctor) return Role.DOCTOR.name();
+        if (selectedRoleBtn == btnHospital) return Role.HOSPITAL.name();
+        if (selectedRoleBtn == btnAdmin) return Role.ADMIN.name();
+        return Role.PATIENT.name();
+    }
+
+    private void handleLoginDestination(LoginDestination destination) {
+        switch (destination) {
+            case PATIENT_DASHBOARD -> {
+                stage.setScene(new PatientDashboardView(stage).getScene());
+            }
+            case DOCTOR_DASHBOARD -> {
+                stage.setScene(new DoctorDashboardView(stage).getScene());
+            }
+            case DOCTOR_PENDING -> {
+                // Handle doctor pending screen navigation if implemented
+                stage.setScene(new DoctorPendingApprovalView(stage).getScene());
+            }
+            case HOSPITAL_DASHBOARD -> {
+                stage.setScene(new HospitalDashboardView(stage).getScene());
+            }
+            case HOSPITAL_PENDING -> {
+                // Handle hospital pending screen navigation if implemented
+                stage.setScene(new DoctorPendingApprovalView(stage).getScene());
+            }
+            case ADMIN_DASHBOARD -> {
+                stage.setScene(new AdminDashboardView(stage).getScene());
+            }
+            case LOGIN -> {
+                showError("Unable to determine user access.");
+            }
+        }
+    }
+
+    private void showError(String message) {
+        if (errorLabel != null) {
+            errorLabel.setText(message);
+            errorLabel.setVisible(true);
+            errorLabel.setManaged(true);
+        }
     }
 
     private HBox createSecurityNotice() {

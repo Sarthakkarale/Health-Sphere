@@ -2,17 +2,18 @@ package com.healthsphere.controller.authentication;
 
 import com.healthsphere.dao.authentication.AuthenticationDAO;
 import com.healthsphere.dao.authentication.UserDAO;
+import com.healthsphere.dao.authentication.HospitalDAO;
 import com.healthsphere.exceptions.AuthenticationException;
 import com.healthsphere.exceptions.DatabaseException;
-import com.healthsphere.model.AccountStatus;
 import com.healthsphere.model.AuthenticationResponse;
-import com.healthsphere.model.Role;
+import com.healthsphere.model.HospitalProfile;
 import com.healthsphere.model.UserProfile;
 
 public class HospitalRegistrationController {
 
     private final AuthenticationDAO authenticationDAO;
     private final UserDAO userDAO;
+    private final HospitalDAO hospitalDAO;
 
     public HospitalRegistrationController() {
 
@@ -21,16 +22,29 @@ public class HospitalRegistrationController {
 
         this.userDAO =
                 new UserDAO();
+
+        this.hospitalDAO =
+                new HospitalDAO();
     }
 
-    public UserProfile register(
+    // ============================================================
+    // REGISTER HOSPITAL
+    // ============================================================
+
+    public HospitalProfile register(
             String email,
-            String password) {
+            String password,
+            String hospitalName,
+            String registrationNumber,
+            String hospitalType,
+            String beds,
+            String contact,
+            String address) {
 
         try {
 
             // ====================================================
-            // STEP 1 — Firebase Authentication
+            // STEP 1 — FIREBASE AUTHENTICATION
             // ====================================================
 
             AuthenticationResponse response =
@@ -39,31 +53,49 @@ public class HospitalRegistrationController {
                             password
                     );
 
+            String uid = response.getUid();
+
             // ====================================================
-            // STEP 2 — Create Hospital Profile
+            // STEP 2 — COMMON USER PROFILE
             // ====================================================
 
             UserProfile userProfile =
                     new UserProfile(
-                            response.getUid(),
+                            uid,
                             response.getEmail(),
-                            Role.HOSPITAL.name(),
-                            AccountStatus.PENDING.name()
+                            "HOSPITAL",
+                            "PENDING"
                     );
-
-            // ====================================================
-            // STEP 3 — Save Profile to Firestore
-            // ====================================================
 
             userDAO.createUserProfile(
                     userProfile
             );
 
             // ====================================================
-            // STEP 4 — Return Profile
+            // STEP 3 — HOSPITAL PROFILE
             // ====================================================
 
-            return userProfile;
+            HospitalProfile hospitalProfile =
+                    new HospitalProfile(
+                            uid,
+                            response.getEmail(),
+                            hospitalName,
+                            registrationNumber,
+                            hospitalType,
+                            beds,
+                            contact,
+                            address
+                    );
+
+            hospitalDAO.createHospitalProfile(
+                    hospitalProfile
+            );
+
+            // ====================================================
+            // STEP 4 — RETURN PROFILE
+            // ====================================================
+
+            return hospitalProfile;
 
         } catch (AuthenticationException e) {
 

@@ -4,7 +4,7 @@ import com.healthsphere.config.FirebaseConfig;
 import com.healthsphere.controller.authentication.PatientRegistrationController;
 import com.healthsphere.exceptions.AuthenticationException;
 import com.healthsphere.exceptions.DatabaseException;
-import com.healthsphere.model.UserProfile;
+import com.healthsphere.model.PatientProfile;
 
 public class PatientRegistrationControllerTest {
 
@@ -33,10 +33,18 @@ public class PatientRegistrationControllerTest {
             // REGISTER PATIENT
             // ================================================
 
-            UserProfile profile =
+            PatientProfile profile =
                     controller.register(
+                            "Sarthak",
+                            "Karale",
                             "patienttest@example.com",
-                            "Test@12345"
+                            "Test@12345",
+                            "9999999999",
+                            "2005-01-01",
+                            "Male",
+                            "B+",
+                            "Parent - 9999999999",
+                            "Pune, Maharashtra"
                     );
 
             // ================================================
@@ -57,22 +65,57 @@ public class PatientRegistrationControllerTest {
             );
 
             System.out.println(
+                    "Name: "
+                            + profile.getFirstName()
+                            + " "
+                            + profile.getLastName()
+            );
+
+            System.out.println(
                     "Email: "
                             + profile.getEmail()
             );
 
             System.out.println(
-                    "Role: "
-                            + profile.getRole()
+                    "Phone: "
+                            + profile.getPhone()
             );
 
             System.out.println(
-                    "Status: "
-                            + profile.getStatus()
+                    "Date of Birth: "
+                            + profile.getDateOfBirth()
+            );
+
+            System.out.println(
+                    "Gender: "
+                            + profile.getGender()
+            );
+
+            System.out.println(
+                    "Blood Group: "
+                            + profile.getBloodGroup()
+            );
+
+            System.out.println(
+                    "Emergency Contact: "
+                            + profile.getEmergencyContact()
+            );
+
+            System.out.println(
+                    "Address: "
+                            + profile.getAddress()
             );
 
             System.out.println(
                     "--------------------------------"
+            );
+
+            System.out.println(
+                    "Role: PATIENT"
+            );
+
+            System.out.println(
+                    "Status: ACTIVE"
             );
 
         } catch (AuthenticationException e) {

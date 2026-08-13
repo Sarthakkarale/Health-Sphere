@@ -1,45 +1,53 @@
 package com.healthsphere.model;
 
-/**
- * Contains information specific to a hospital.
- */
 public class HospitalProfile {
 
-    private String userId;
+    private String uid;
+    private String email;
     private String hospitalName;
     private String registrationNumber;
     private String hospitalType;
-    private int numberOfBeds;
+    private String beds;
+    private String contact;
     private String address;
-    private String representativeName;
 
     public HospitalProfile() {
     }
 
     public HospitalProfile(
-            String userId,
+            String uid,
+            String email,
             String hospitalName,
             String registrationNumber,
             String hospitalType,
-            int numberOfBeds,
-            String address,
-            String representativeName) {
+            String beds,
+            String contact,
+            String address) {
 
-        this.userId = userId;
+        this.uid = uid;
+        this.email = email;
         this.hospitalName = hospitalName;
         this.registrationNumber = registrationNumber;
         this.hospitalType = hospitalType;
-        this.numberOfBeds = numberOfBeds;
+        this.beds = beds;
+        this.contact = contact;
         this.address = address;
-        this.representativeName = representativeName;
     }
 
-    public String getUserId() {
-        return userId;
+    public String getUid() {
+        return uid;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setUid(String uid) {
+        this.uid = uid;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getHospitalName() {
@@ -66,12 +74,20 @@ public class HospitalProfile {
         this.hospitalType = hospitalType;
     }
 
-    public int getNumberOfBeds() {
-        return numberOfBeds;
+    public String getBeds() {
+        return beds;
     }
 
-    public void setNumberOfBeds(int numberOfBeds) {
-        this.numberOfBeds = numberOfBeds;
+    public void setBeds(String beds) {
+        this.beds = beds;
+    }
+
+    public String getContact() {
+        return contact;
+    }
+
+    public void setContact(String contact) {
+        this.contact = contact;
     }
 
     public String getAddress() {
@@ -80,13 +96,5 @@ public class HospitalProfile {
 
     public void setAddress(String address) {
         this.address = address;
-    }
-
-    public String getRepresentativeName() {
-        return representativeName;
-    }
-
-    public void setRepresentativeName(String representativeName) {
-        this.representativeName = representativeName;
     }
 }

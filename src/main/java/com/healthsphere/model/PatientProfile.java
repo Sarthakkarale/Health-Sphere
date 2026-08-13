@@ -1,45 +1,83 @@
 package com.healthsphere.model;
 
-/**
- * Contains information specific to a patient.
- */
 public class PatientProfile {
 
-    private String userId;
+    private String uid;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String phone;
     private String dateOfBirth;
     private String gender;
     private String bloodGroup;
-    private String emergencyContactName;
-    private String emergencyContactPhone;
+    private String emergencyContact;
     private String address;
 
     public PatientProfile() {
     }
 
     public PatientProfile(
-            String userId,
+            String uid,
+            String firstName,
+            String lastName,
+            String email,
+            String phone,
             String dateOfBirth,
             String gender,
             String bloodGroup,
-            String emergencyContactName,
-            String emergencyContactPhone,
+            String emergencyContact,
             String address) {
 
-        this.userId = userId;
+        this.uid = uid;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.phone = phone;
         this.dateOfBirth = dateOfBirth;
         this.gender = gender;
         this.bloodGroup = bloodGroup;
-        this.emergencyContactName = emergencyContactName;
-        this.emergencyContactPhone = emergencyContactPhone;
+        this.emergencyContact = emergencyContact;
         this.address = address;
     }
 
-    public String getUserId() {
-        return userId;
+    public String getUid() {
+        return uid;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setUid(String uid) {
+        this.uid = uid;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 
     public String getDateOfBirth() {
@@ -66,20 +104,12 @@ public class PatientProfile {
         this.bloodGroup = bloodGroup;
     }
 
-    public String getEmergencyContactName() {
-        return emergencyContactName;
+    public String getEmergencyContact() {
+        return emergencyContact;
     }
 
-    public void setEmergencyContactName(String emergencyContactName) {
-        this.emergencyContactName = emergencyContactName;
-    }
-
-    public String getEmergencyContactPhone() {
-        return emergencyContactPhone;
-    }
-
-    public void setEmergencyContactPhone(String emergencyContactPhone) {
-        this.emergencyContactPhone = emergencyContactPhone;
+    public void setEmergencyContact(String emergencyContact) {
+        this.emergencyContact = emergencyContact;
     }
 
     public String getAddress() {

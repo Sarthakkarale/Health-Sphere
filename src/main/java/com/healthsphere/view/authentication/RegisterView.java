@@ -1,5 +1,13 @@
 package com.healthsphere.view.authentication;
 
+import com.healthsphere.controller.authentication.PatientRegistrationController;
+import com.healthsphere.controller.authentication.DoctorRegistrationController;
+import com.healthsphere.controller.authentication.HospitalRegistrationController;
+import com.healthsphere.model.DoctorProfile;
+import com.healthsphere.model.HospitalProfile;
+import com.healthsphere.model.PatientProfile;
+import com.healthsphere.model.UserProfile;
+
 import javafx.animation.ScaleTransition;
 import javafx.animation.TranslateTransition;
 import javafx.geometry.Insets;
@@ -23,7 +31,17 @@ public class RegisterView {
 
     private final Stage stage;
 
-    // Multi-Step State Tracking (1: Account, 2: Profile, 3: Role Details, 4: Verification, 5: Status Outcome)
+    // Controllers for registration handling
+    private final PatientRegistrationController patientRegistrationController = new PatientRegistrationController();
+    private final DoctorRegistrationController doctorRegistrationController = new DoctorRegistrationController();
+    private final HospitalRegistrationController hospitalRegistrationController = new HospitalRegistrationController();
+
+    // Persisted UserProfile returned after registration
+    private PatientProfile registeredPatientProfile;
+    private DoctorProfile registeredDoctorProfile;
+    private HospitalProfile registeredHospitalProfile;
+
+    // Multi-Step State Tracking// 1: Portal, 2: Personal Information, 3: Role Details, 4: Registration Outcome
     private int currentStep = 1;
     private String selectedRole = "Patient";
 
@@ -41,6 +59,33 @@ public class RegisterView {
     private final PasswordField passwordField = new PasswordField();
     private final PasswordField confirmPasswordField = new PasswordField();
     private final TextField phoneField = new TextField();
+
+    // Patient role fields
+    private final DatePicker patientDobField = new DatePicker();
+    private final ComboBox<String> patientGenderField = new ComboBox<>();
+    private final ComboBox<String> patientBloodGroupField = new ComboBox<>();
+    private final TextField patientEmergencyContactField = new TextField();
+    private final TextField patientAddressField = new TextField();
+
+    // Doctor role fields
+    private final TextField doctorLicenseField = new TextField();
+    private final TextField doctorSpecializationField = new TextField();
+    private final TextField doctorQualificationField = new TextField();
+    private final TextField doctorExperienceField = new TextField();
+    private final TextField doctorFeeField = new TextField();
+
+    // Hospital role fields
+    private final TextField hospitalNameField = new TextField();
+    private final TextField hospitalRegistrationField = new TextField();
+    private final ComboBox<String> hospitalTypeField = new ComboBox<>();
+    private final TextField hospitalBedsField = new TextField();
+    private final TextField hospitalAddressField = new TextField();
+    private final TextField hospitalContactField = new TextField();
+
+    // Administrator role fields
+    private final TextField adminInvitationCodeField = new TextField();
+    private final TextField adminDepartmentField = new TextField();
+    private final TextField adminIdField = new TextField();
 
     public RegisterView(Stage stage) {
         this.stage = stage;
@@ -68,7 +113,7 @@ public class RegisterView {
         root.setCenter(mainContent);
         root.setBottom(createFooter());
 
-        Scene scene = new Scene(root,stage.getWidth(),stage.getHeight());
+        Scene scene = new Scene(root, stage.getWidth(), stage.getHeight());
 
         String cssResource = getClass().getResource("/css/auth.css") != null
                 ? getClass().getResource("/css/auth.css").toExternalForm()
@@ -231,7 +276,103 @@ public class RegisterView {
     // STEP NAVIGATION CONTROLLER
     // =========================================================================
     private void goToNextStep() {
-        if (currentStep < 5) {
+        if (currentStep == 3) {
+            // Trigger Controller registration logic when moving from step 3 to step 4
+            String dob = patientDobField.getValue() != null
+            ? patientDobField.getValue().toString()
+            : null;
+            try {
+                switch (selectedRole) {
+                    case "Patient":
+                        registeredPatientProfile = patientRegistrationController.register(
+                        firstNameField.getText().trim(),
+                        lastNameField.getText().trim(),
+                        emailField.getText().trim(),
+                        passwordField.getText(),
+                        phoneField.getText().trim(),
+                        dob,
+                        patientGenderField.getValue(),
+                        patientBloodGroupField.getValue(),
+                        patientEmergencyContactField.getText().trim(),
+                        patientAddressField.getText().trim()
+                );
+                        break;
+                    case "Doctor":
+                        registeredDoctorProfile =
+                            doctorRegistrationController.register(
+                                    firstNameField.getText().trim(),
+                                    lastNameField.getText().trim(),
+                                    emailField.getText().trim(),
+                                    passwordField.getText(),
+                                    phoneField.getText().trim(),
+                                    doctorLicenseField
+                                            .getText()
+                                            .trim(),
+                                    doctorSpecializationField.getText().trim(),
+                                    doctorExperienceField
+                                            .getText()
+                                            .trim(),
+                                    doctorQualificationField
+                                            .getText()
+                                            .trim(),
+                                    doctorFeeField
+                                            .getText()
+                                            .trim()
+                            );
+                        break;
+                    case "Hospital":
+
+                        registeredHospitalProfile =
+                                hospitalRegistrationController.register(
+
+                                        emailField
+                                                .getText()
+                                                .trim(),
+
+                                        passwordField
+                                                .getText(),
+
+                                        hospitalNameField
+                                                .getText()
+                                                .trim(),
+
+                                        hospitalRegistrationField
+                                                .getText()
+                                                .trim(),
+
+                                        hospitalTypeField
+                                                .getValue(),
+
+                                        hospitalBedsField
+                                                .getText()
+                                                .trim(),
+
+                                        hospitalContactField
+                                                .getText()
+                                                .trim(),
+
+                                        hospitalAddressField
+                                                .getText()
+                                                .trim()
+                                );
+
+                        break;
+                    case "Administrator":
+                        // Administrator registration disabled
+                        break;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+
+                showRegistrationError(
+                        e.getMessage()
+                );
+
+                return;
+            }
+        }
+
+        if (currentStep < 4) {
             currentStep++;
             updateStepIndicator();
             renderCurrentStepView();
@@ -251,27 +392,30 @@ public class RegisterView {
             case 1:
                 headingText.setText("Select Portal");
                 subtitleText.setText("Choose your portal type to get started");
+                stepIndicatorContainer.setVisible(true);
+                stepIndicatorContainer.setManaged(true);
                 formContentContainer.getChildren().setAll(createStep1Pane());
                 break;
             case 2:
                 headingText.setText("Personal Information");
                 subtitleText.setText("Provide your personal details for identity verification");
+                stepIndicatorContainer.setVisible(true);
+                stepIndicatorContainer.setManaged(true);
                 formContentContainer.getChildren().setAll(createStep2Pane());
                 break;
             case 3:
                 headingText.setText(selectedRole + " Information");
                 subtitleText.setText("Enter role-specific credentials for onboarding");
+                stepIndicatorContainer.setVisible(true);
+                stepIndicatorContainer.setManaged(true);
                 formContentContainer.getChildren().setAll(createStep3Pane());
                 break;
             case 4:
-                headingText.setText("Email Verification");
-                subtitleText.setText("Enter the 6-digit activation code sent to your email");
-                formContentContainer.getChildren().setAll(createStep4Pane());
-                break;
-            case 5:
+                headingText.setText("Registration Complete");
+                subtitleText.setText("Your account status and next steps");
                 stepIndicatorContainer.setVisible(false);
                 stepIndicatorContainer.setManaged(false);
-                formContentContainer.getChildren().setAll(createStep5Pane());
+                formContentContainer.getChildren().setAll(createStep4Pane());
                 break;
         }
     }
@@ -286,7 +430,7 @@ public class RegisterView {
                 createStepLine(),
                 createStepNode(3, "Role Info"),
                 createStepLine(),
-                createStepNode(4, "Verify")
+                createStepNode(4, "Complete")
         );
     }
 
@@ -357,6 +501,7 @@ public class RegisterView {
 
         if (selectedRole.equalsIgnoreCase("Doctor")) currentlySelectedRoleCard = doctorCard;
         else if (selectedRole.equalsIgnoreCase("Hospital")) currentlySelectedRoleCard = hospitalCard;
+        else if (selectedRole.equalsIgnoreCase("Administrator")) currentlySelectedRoleCard = adminCard;
         else currentlySelectedRoleCard = patientCard;
 
         currentlySelectedRoleCard.getStyleClass().add("role-card-selected");
@@ -554,134 +699,420 @@ public class RegisterView {
     }
 
     // =========================================================================
-    // STEP 3 - DYNAMIC ROLE SPECIFIC INFORMATION
+    // STEP 3 - ROLE INFORMATION
     // =========================================================================
-    private VBox createStep3Pane() {
-        VBox container = new VBox(16);
+    private Node createStep3Pane() {
 
-        GridPane formGrid = new GridPane();
-        formGrid.setHgap(16);
-        formGrid.setVgap(14);
+        VBox container = new VBox(18);
+        container.setAlignment(Pos.TOP_LEFT);
+        container.setPadding(new Insets(18, 24, 10, 24));
+        container.getStyleClass().add("form-step-pane");
 
-        if (selectedRole.equalsIgnoreCase("Patient")) {
-            TextField dobField = new TextField();
-            dobField.setPromptText("YYYY-MM-DD");
-            dobField.getStyleClass().add("text-field-custom");
+        switch (selectedRole) {
 
-            ComboBox<String> genderCombo = new ComboBox<>();
-            genderCombo.getItems().addAll("Male", "Female", "Other");
-            genderCombo.setPromptText("Select Gender");
-            genderCombo.getStyleClass().add("combo-box-custom");
-            genderCombo.setMaxWidth(Double.MAX_VALUE);
+            case "Patient":
+                container.getChildren().add(createPatientRoleInfo());
+                break;
 
-            ComboBox<String> bloodGroupCombo = new ComboBox<>();
-            bloodGroupCombo.getItems().addAll("A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-");
-            bloodGroupCombo.setPromptText("Select Blood Group");
-            bloodGroupCombo.getStyleClass().add("combo-box-custom");
-            bloodGroupCombo.setMaxWidth(Double.MAX_VALUE);
+            case "Doctor":
+                container.getChildren().add(createDoctorRoleInfo());
+                break;
 
-            TextField emergencyContactField = new TextField();
-            emergencyContactField.setPromptText("Emergency Contact Name / Phone");
-            emergencyContactField.getStyleClass().add("text-field-custom");
+            case "Hospital":
+                container.getChildren().add(createHospitalRoleInfo());
+                break;
 
-            TextField addressField = new TextField();
-            addressField.setPromptText("123 Health Street, City, State");
-            addressField.getStyleClass().add("text-field-custom");
+            case "Administrator":
+                container.getChildren().add(createAdminRoleInfo());
+                break;
 
-            formGrid.add(createFieldWrapper("Date of Birth", dobField), 0, 0);
-            formGrid.add(createFieldWrapper("Gender", genderCombo), 1, 0);
-            formGrid.add(createFieldWrapper("Blood Group", bloodGroupCombo), 0, 1);
-            formGrid.add(createFieldWrapper("Emergency Contact", emergencyContactField), 1, 1);
-            formGrid.add(createFieldWrapper("Residential Address", addressField), 0, 2, 2, 1);
-
-        } else if (selectedRole.equalsIgnoreCase("Doctor")) {
-            TextField regNoField = new TextField();
-            regNoField.setPromptText("MED-REG-897452");
-            regNoField.getStyleClass().add("text-field-custom");
-
-            ComboBox<String> specCombo = new ComboBox<>();
-            specCombo.getItems().addAll("Cardiology", "Neurology", "Pediatrics", "General Practice", "Orthopedics", "Dermatology");
-            specCombo.setPromptText("Select Specialization");
-            specCombo.getStyleClass().add("combo-box-custom");
-            specCombo.setMaxWidth(Double.MAX_VALUE);
-
-            TextField expField = new TextField();
-            expField.setPromptText("Years of Experience (e.g. 8)");
-            expField.getStyleClass().add("text-field-custom");
-
-            TextField hospitalAffiliation = new TextField();
-            hospitalAffiliation.setPromptText("St. Jude Memorial Hospital");
-            hospitalAffiliation.getStyleClass().add("text-field-custom");
-
-            TextField medicalCouncilField = new TextField();
-            medicalCouncilField.setPromptText("Medical Council Name");
-            medicalCouncilField.getStyleClass().add("text-field-custom");
-
-            HBox uploadStubBox = new HBox();
-            uploadStubBox.setAlignment(Pos.CENTER_LEFT);
-            uploadStubBox.getStyleClass().add("upload-stub-box");
-            Text uploadText = new Text("📄 Medical License (Upload Later via Firebase Storage)");
-            uploadText.getStyleClass().add("upload-stub-text");
-            uploadStubBox.getChildren().add(uploadText);
-
-            formGrid.add(createFieldWrapper("Medical Registration Number", regNoField), 0, 0);
-            formGrid.add(createFieldWrapper("Specialization", specCombo), 1, 0);
-            formGrid.add(createFieldWrapper("Experience (Years)", expField), 0, 1);
-            formGrid.add(createFieldWrapper("Hospital Name", hospitalAffiliation), 1, 1);
-            formGrid.add(createFieldWrapper("Medical Council", medicalCouncilField), 0, 2);
-            formGrid.add(createFieldWrapper("Upload License Document", uploadStubBox), 1, 2);
-
-        } else if (selectedRole.equalsIgnoreCase("Hospital")) {
-            TextField hospitalName = new TextField();
-            hospitalName.setPromptText("City Care General Hospital");
-            hospitalName.getStyleClass().add("text-field-custom");
-
-            TextField regNo = new TextField();
-            regNo.setPromptText("HOSP-REG-9941");
-            regNo.getStyleClass().add("text-field-custom");
-
-            ComboBox<String> typeCombo = new ComboBox<>();
-            typeCombo.getItems().addAll("General Hospital", "Specialized Clinic", "Multispecialty Center", "Trauma Care");
-            typeCombo.setPromptText("Select Type");
-            typeCombo.getStyleClass().add("combo-box-custom");
-            typeCombo.setMaxWidth(Double.MAX_VALUE);
-
-            TextField bedsField = new TextField();
-            bedsField.setPromptText("e.g. 250");
-            bedsField.getStyleClass().add("text-field-custom");
-
-            TextField repNameField = new TextField();
-            repNameField.setPromptText("Authorized Representative Name");
-            repNameField.getStyleClass().add("text-field-custom");
-
-            TextField cityField = new TextField();
-            cityField.setPromptText("City");
-            cityField.getStyleClass().add("text-field-custom");
-
-            TextField stateField = new TextField();
-            stateField.setPromptText("State / Province");
-            stateField.getStyleClass().add("text-field-custom");
-
-            TextField addressField = new TextField();
-            addressField.setPromptText("Full Facility Street Address");
-            addressField.getStyleClass().add("text-field-custom");
-
-            formGrid.add(createFieldWrapper("Hospital / Facility Name", hospitalName), 0, 0, 2, 1);
-            formGrid.add(createFieldWrapper("Registration Number", regNo), 0, 1);
-            formGrid.add(createFieldWrapper("Facility Type", typeCombo), 1, 1);
-            formGrid.add(createFieldWrapper("Number of Beds", bedsField), 0, 2);
-            formGrid.add(createFieldWrapper("Representative Name", repNameField), 1, 2);
-            formGrid.add(createFieldWrapper("City", cityField), 0, 3);
-            formGrid.add(createFieldWrapper("State", stateField), 1, 3);
-            formGrid.add(createFieldWrapper("Facility Address", addressField), 0, 4, 2, 1);
+            default:
+                Label message = new Label("Please select a valid role.");
+                message.getStyleClass().add("form-section-subtitle");
+                container.getChildren().add(message);
         }
+
+        return container;
+    }
+
+    private VBox createPatientRoleInfo() {
+
+        VBox box = new VBox(16);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(16);
+        grid.setVgap(14);
+
+        patientDobField.setPromptText("Select date");
+        patientDobField.getStyleClass().add("text-field-custom");
+
+        patientGenderField.getItems().setAll(
+                "Male",
+                "Female",
+                "Other",
+                "Prefer not to say"
+        );
+        patientGenderField.setPromptText("Select gender");
+        patientGenderField.getStyleClass().add("text-field-custom");
+
+        patientBloodGroupField.getItems().setAll(
+                "A+",
+                "A-",
+                "B+",
+                "B-",
+                "AB+",
+                "AB-",
+                "O+",
+                "O-"
+        );
+        patientBloodGroupField.setPromptText("Select blood group");
+        patientBloodGroupField.getStyleClass().add("text-field-custom");
+
+        patientEmergencyContactField.setPromptText("+91 9876543210");
+        patientEmergencyContactField.getStyleClass().add("text-field-custom");
+
+        patientAddressField.setPromptText("Enter your address");
+        patientAddressField.getStyleClass().add("text-field-custom");
+
+        grid.add(createFieldWrapper("Date of Birth", patientDobField), 0, 0);
+        grid.add(createFieldWrapper("Gender", patientGenderField), 1, 0);
+
+        grid.add(createFieldWrapper("Blood Group", patientBloodGroupField), 0, 1);
+        grid.add(createFieldWrapper("Emergency Contact", patientEmergencyContactField), 1, 1);
+
+        grid.add(createFieldWrapper("Address", patientAddressField), 0, 2, 2, 1);
+
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setPercentWidth(50);
+
+        ColumnConstraints col2 = new ColumnConstraints();
+        col2.setPercentWidth(50);
+
+        grid.getColumnConstraints().addAll(col1, col2);
+
+        box.getChildren().addAll(
+                createRoleInfoHeading(
+                        "Patient Information",
+                        "Provide your personal health profile details"
+                ),
+                grid,
+                createStep3Buttons()
+        );
+
+        return box;
+    }
+
+    private VBox createDoctorRoleInfo() {
+
+        VBox box = new VBox(16);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(16);
+        grid.setVgap(14);
+
+        doctorLicenseField.setPromptText(
+                "Enter medical license number"
+        );
+        doctorLicenseField.getStyleClass()
+                .add("text-field-custom");
+
+        doctorSpecializationField.setPromptText(
+                "e.g. Cardiology"
+        );
+        doctorSpecializationField.getStyleClass()
+                .add("text-field-custom");
+
+        doctorQualificationField.setPromptText(
+                "e.g. MBBS, MD"
+        );
+        doctorQualificationField.getStyleClass()
+                .add("text-field-custom");
+
+        doctorExperienceField.setPromptText(
+                "Years of experience"
+        );
+        doctorExperienceField.getStyleClass()
+                .add("text-field-custom");
+
+        doctorFeeField.setPromptText(
+                "Consultation fee"
+        );
+        doctorFeeField.getStyleClass()
+                .add("text-field-custom");
+
+        grid.add(
+                createFieldWrapper(
+                        "Medical License Number",
+                        doctorLicenseField
+                ),
+                0, 0
+        );
+
+        grid.add(
+                createFieldWrapper(
+                        "Specialization",
+                        doctorSpecializationField
+                ),
+                1, 0
+        );
+
+        grid.add(
+                createFieldWrapper(
+                        "Qualification",
+                        doctorQualificationField
+                ),
+                0, 1
+        );
+
+        grid.add(
+                createFieldWrapper(
+                        "Years of Experience",
+                        doctorExperienceField
+                ),
+                1, 1
+        );
+
+        grid.add(
+                createFieldWrapper(
+                        "Consultation Fee",
+                        doctorFeeField
+                ),
+                0, 2
+        );
+
+        ColumnConstraints col1 =
+                new ColumnConstraints();
+
+        col1.setPercentWidth(50);
+
+        ColumnConstraints col2 =
+                new ColumnConstraints();
+
+        col2.setPercentWidth(50);
+
+        grid.getColumnConstraints()
+                .addAll(col1, col2);
+
+        box.getChildren().addAll(
+                createRoleInfoHeading(
+                        "Doctor Information",
+                        "Provide your professional credentials for verification"
+                ),
+                grid,
+                createStep3Buttons()
+        );
+
+        return box;
+    }
+
+    private VBox createHospitalRoleInfo() {
+
+        VBox box = new VBox(16);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(16);
+        grid.setVgap(14);
+
+        // ============================================================
+        // HOSPITAL NAME
+        // ============================================================
+
+        hospitalNameField.setPromptText(
+                "Hospital name"
+        );
+
+        hospitalNameField.getStyleClass()
+                .add("text-field-custom");
+
+        // ============================================================
+        // REGISTRATION NUMBER
+        // ============================================================
+
+        hospitalRegistrationField.setPromptText(
+                "Hospital registration number"
+        );
+
+        hospitalRegistrationField.getStyleClass()
+                .add("text-field-custom");
+
+        // ============================================================
+        // HOSPITAL TYPE
+        // ============================================================
+
+        hospitalTypeField.getItems().setAll(
+                "Government Hospital",
+                "Private Hospital",
+                "Clinic",
+                "Specialty Hospital",
+                "Multi-Specialty Hospital"
+        );
+
+        hospitalTypeField.setPromptText(
+                "Select hospital type"
+        );
+
+        hospitalTypeField.getStyleClass()
+                .add("text-field-custom");
+
+        // ============================================================
+        // NUMBER OF BEDS
+        // ============================================================
+
+        hospitalBedsField.setPromptText(
+                "Number of beds"
+        );
+
+        hospitalBedsField.getStyleClass()
+                .add("text-field-custom");
+
+        // ============================================================
+        // CONTACT
+        // ============================================================
+
+        hospitalContactField.setPromptText(
+                "+91 9876543210"
+        );
+
+        hospitalContactField.getStyleClass()
+                .add("text-field-custom");
+
+        // ============================================================
+        // ADDRESS
+        // ============================================================
+
+        hospitalAddressField.setPromptText(
+                "Hospital address"
+        );
+
+        hospitalAddressField.getStyleClass()
+                .add("text-field-custom");
+
+        // ============================================================
+        // GRID
+        // ============================================================
+
+        grid.add(
+                createFieldWrapper(
+                        "Hospital Name",
+                        hospitalNameField
+                ),
+                0, 0
+        );
+
+        grid.add(
+                createFieldWrapper(
+                        "Hospital Registration Number",
+                        hospitalRegistrationField
+                ),
+                1, 0
+        );
+
+        grid.add(
+                createFieldWrapper(
+                        "Hospital Type",
+                        hospitalTypeField
+                ),
+                0, 1
+        );
+
+        grid.add(
+                createFieldWrapper(
+                        "Number of Beds",
+                        hospitalBedsField
+                ),
+                1, 1
+        );
+
+        grid.add(
+                createFieldWrapper(
+                        "Contact Number",
+                        hospitalContactField
+                ),
+                0, 2
+        );
+
+        grid.add(
+                createFieldWrapper(
+                        "Hospital Address",
+                        hospitalAddressField
+                ),
+                1, 2
+        );
+
+        ColumnConstraints col1 =
+                new ColumnConstraints();
+
+        col1.setPercentWidth(50);
+
+        ColumnConstraints col2 =
+                new ColumnConstraints();
+
+        col2.setPercentWidth(50);
+
+        grid.getColumnConstraints()
+                .addAll(col1, col2);
+
+        box.getChildren().addAll(
+                createRoleInfoHeading(
+                        "Hospital Information",
+                        "Provide your organization's registration details"
+                ),
+                grid,
+                createStep3Buttons()
+        );
+
+        return box;
+    }
+
+    private VBox createAdminRoleInfo() {
+        VBox box = new VBox(16);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(16);
+        grid.setVgap(14);
+
+        adminInvitationCodeField.setPromptText("Enter admin invite code");
+        adminInvitationCodeField.getStyleClass().add("text-field-custom");
+
+        adminDepartmentField.setPromptText("e.g. IT Operations");
+        adminDepartmentField.getStyleClass().add("text-field-custom");
+
+        adminIdField.setPromptText("Employee ID");
+        adminIdField.getStyleClass().add("text-field-custom");
+
+        grid.add(createFieldWrapper("Invitation Code", adminInvitationCodeField), 0, 0, 2, 1);
+        grid.add(createFieldWrapper("Department", adminDepartmentField), 0, 1);
+        grid.add(createFieldWrapper("Admin ID", adminIdField), 1, 1);
 
         ColumnConstraints col1 = new ColumnConstraints();
         col1.setPercentWidth(50);
         ColumnConstraints col2 = new ColumnConstraints();
         col2.setPercentWidth(50);
-        formGrid.getColumnConstraints().addAll(col1, col2);
+        grid.getColumnConstraints().addAll(col1, col2);
 
+        box.getChildren().addAll(
+                createRoleInfoHeading(
+                        "Administrator Information",
+                        "Provide administrative credentials for governance access"
+                ),
+                grid,
+                createStep3Buttons()
+        );
+
+        return box;
+    }
+
+    private VBox createRoleInfoHeading(String titleText, String subtitleText) {
+        VBox headingBox = new VBox(4);
+        Text t = new Text(titleText);
+        t.getStyleClass().add("form-section-title");
+        Text sub = new Text(subtitleText);
+        sub.getStyleClass().add("form-section-subtitle");
+        headingBox.getChildren().addAll(t, sub);
+        return headingBox;
+    }
+
+    private HBox createStep3Buttons() {
         HBox bottomControls = new HBox(16);
         bottomControls.setAlignment(Pos.CENTER_RIGHT);
         bottomControls.setPadding(new Insets(10, 0, 0, 0));
@@ -693,134 +1124,48 @@ public class RegisterView {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button continueBtn = new Button("Continue →");
+        Button continueBtn = new Button("Complete Registration →");
         continueBtn.getStyleClass().add("btn-continue");
         addBtnAnimations(continueBtn);
         continueBtn.setOnAction(e -> goToNextStep());
 
         bottomControls.getChildren().addAll(backBtn, spacer, continueBtn);
-        container.getChildren().addAll(formGrid, bottomControls);
-
-        return container;
+        return bottomControls;
     }
 
     // =========================================================================
-    // STEP 4 - EMAIL VERIFICATION
+    // STEP 4 - REGISTRATION OUTCOME
     // =========================================================================
     private VBox createStep4Pane() {
         VBox container = new VBox(20);
         container.setAlignment(Pos.CENTER);
-        container.setPadding(new Insets(16, 40, 10, 40));
+        container.setPadding(new Insets(20, 20, 20, 20));
 
-        Text infoText = new Text("We have sent a 6-digit verification code to:\n" 
-                + (emailField.getText().isEmpty() ? "your registered email address" : emailField.getText()));
-        infoText.setStyle("-fx-font-size: 14px; -fx-fill: #4B5563; -fx-text-alignment: center;");
+        StackPane iconPane = new StackPane();
+        Circle bg = new Circle(32, Color.web("#DEF7EC"));
+        Text check = new Text("✓");
+        check.setStyle("-fx-fill: #03543F; -fx-font-size: 28px; -fx-font-weight: bold;");
+        iconPane.getChildren().addAll(bg, check);
 
-        HBox otpBox = new HBox(10);
-        otpBox.setAlignment(Pos.CENTER);
+        Text title = new Text("Registration Successful!");
+        title.getStyleClass().add("heading-text");
 
-        for (int i = 0; i < 6; i++) {
-            TextField digitField = new TextField();
-            digitField.setPrefWidth(46);
-            digitField.setPrefHeight(50);
-            digitField.setAlignment(Pos.CENTER);
-            digitField.getStyleClass().add("text-field-custom");
-            digitField.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
-            otpBox.getChildren().add(digitField);
-        }
+        Label desc = new Label("Your account has been created successfully. You can now log in using your credentials.");
+        desc.getStyleClass().add("subtitle-text");
+        desc.setWrapText(true);
+        desc.setAlignment(Pos.CENTER);
 
-        HBox resendBox = new HBox(4);
-        resendBox.setAlignment(Pos.CENTER);
-        Text resendPrompt = new Text("Didn't receive code? ");
-        resendPrompt.setStyle("-fx-font-size: 13px; -fx-fill: #6B7280;");
+        Button loginBtn = new Button("Proceed to Login");
+        loginBtn.getStyleClass().add("btn-continue");
+        addBtnAnimations(loginBtn);
+        loginBtn.setOnAction(e -> stage.setScene(new LoginView(stage).getScene()));
 
-        Text resendLink = new Text("Resend Code");
-        resendLink.getStyleClass().add("login-link-text");
-
-        resendBox.getChildren().addAll(resendPrompt, resendLink);
-
-        HBox bottomControls = new HBox(16);
-        bottomControls.setAlignment(Pos.CENTER_RIGHT);
-        bottomControls.setPadding(new Insets(10, 0, 0, 0));
-
-        Button backBtn = new Button("Back");
-        backBtn.getStyleClass().add("btn-back");
-        backBtn.setOnAction(e -> goToPreviousStep());
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        Button verifyBtn = new Button("Verify Email →");
-        verifyBtn.getStyleClass().add("btn-continue");
-        verifyBtn.setPrefWidth(180);
-        addBtnAnimations(verifyBtn);
-
-        verifyBtn.setOnAction(e -> goToNextStep());
-
-        bottomControls.getChildren().addAll(backBtn, spacer, verifyBtn);
-        container.getChildren().addAll(infoText, otpBox, resendBox, bottomControls);
-
+        container.getChildren().addAll(iconPane, title, desc, loginBtn);
         return container;
     }
 
     // =========================================================================
-    // STEP 5 - DYNAMIC REGISTRATION OUTCOME / STATUS
-    // =========================================================================
-    private VBox createStep5Pane() {
-        VBox container = new VBox(20);
-        container.setAlignment(Pos.CENTER);
-        container.setPadding(new Insets(20, 30, 20, 30));
-
-        StackPane statusIconPane = new StackPane();
-        Circle statusCircle = new Circle(36);
-
-        boolean isInstant = selectedRole.equalsIgnoreCase("Patient");
-
-        if (isInstant) {
-            statusCircle.setFill(Color.web("#DCFCE7"));
-            Text checkMark = new Text("✓");
-            checkMark.setStyle("-fx-fill: #166534; -fx-font-size: 32px; -fx-font-weight: bold;");
-            statusIconPane.getChildren().addAll(statusCircle, checkMark);
-
-            headingText.setText("Registration Complete!");
-            subtitleText.setText("Your account has been successfully created");
-
-            Label successMsg = new Label("Welcome to Health-Sphere AI! Your patient profile is active and ready.");
-            successMsg.setStyle("-fx-font-size: 14px; -fx-text-fill: #374151; -fx-wrap-text: true; -fx-text-alignment: center;");
-            container.getChildren().addAll(statusIconPane, successMsg);
-
-        } else {
-            statusCircle.setFill(Color.web("#FEF3C7"));
-            Text pendingIcon = new Text("⏳");
-            pendingIcon.setStyle("-fx-fill: #92400E; -fx-font-size: 28px;");
-            statusIconPane.getChildren().addAll(statusCircle, pendingIcon);
-
-            headingText.setText("Verification Pending");
-            subtitleText.setText("Application submitted successfully");
-
-            Label pendingMsg = new Label("Thank you for registering as a " + selectedRole + 
-                    ". Your application and medical credentials are currently under review by our administration team. " +
-                    "You will receive an email notification once your account is verified.");
-            pendingMsg.setStyle("-fx-font-size: 14px; -fx-text-fill: #374151; -fx-wrap-text: true; -fx-text-alignment: center;");
-            container.getChildren().addAll(statusIconPane, pendingMsg);
-        }
-
-        Button proceedLoginBtn = new Button("Proceed to Login");
-        proceedLoginBtn.getStyleClass().add("btn-continue");
-        proceedLoginBtn.setPrefWidth(220);
-        addBtnAnimations(proceedLoginBtn);
-
-        proceedLoginBtn.setOnAction(e -> {
-            stage.setScene(new LoginView(stage).getScene());
-        });
-
-        container.getChildren().add(proceedLoginBtn);
-
-        return container;
-    }
-
-    // =========================================================================
-    // HELPER UI BUILDERS & UTILITIES
+    // HELPERS & UI UTILITIES
     // =========================================================================
     private VBox createFieldWrapper(String labelText, Node field) {
         VBox wrapper = new VBox(6);
@@ -830,44 +1175,48 @@ public class RegisterView {
         return wrapper;
     }
 
-    private ImageView createSafeImageView(String resourcePath, double width, double height) {
-        ImageView imageView = new ImageView();
-        imageView.setFitWidth(width);
-        imageView.setFitHeight(height);
-        imageView.setPreserveRatio(true);
-
+    private ImageView createSafeImageView(String path, double width, double height) {
+        ImageView iv = new ImageView();
+        iv.setFitWidth(width);
+        iv.setFitHeight(height);
+        iv.setPreserveRatio(true);
         try {
-            if (getClass().getResource(resourcePath) != null) {
-                imageView.setImage(new Image(getClass().getResourceAsStream(resourcePath)));
+            if (getClass().getResource(path) != null) {
+                iv.setImage(new Image(getClass().getResourceAsStream(path)));
             }
         } catch (Exception ignored) {}
-
-        return imageView;
+        return iv;
     }
 
-    private void addBtnAnimations(Button button) {
-        ScaleTransition scaleUp = new ScaleTransition(Duration.millis(120), button);
-        scaleUp.setToX(1.02);
-        scaleUp.setToY(1.02);
+    private void addBtnAnimations(Button btn) {
+        ScaleTransition stIn = new ScaleTransition(Duration.millis(100), btn);
+        stIn.setToX(1.03);
+        stIn.setToY(1.03);
 
-        ScaleTransition scaleDown = new ScaleTransition(Duration.millis(120), button);
-        scaleDown.setToX(1.0);
-        scaleDown.setToY(1.0);
+        ScaleTransition stOut = new ScaleTransition(Duration.millis(100), btn);
+        stOut.setToX(1.0);
+        stOut.setToY(1.0);
 
-        button.setOnMouseEntered(e -> scaleUp.playFromStart());
-        button.setOnMouseExited(e -> scaleDown.playFromStart());
+        btn.setOnMouseEntered(e -> stIn.playFromStart());
+        btn.setOnMouseExited(e -> stOut.playFromStart());
+    }
+
+    private void showRegistrationError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Registration Error");
+        alert.setHeaderText("Failed to Complete Registration");
+        alert.setContentText(message != null ? message : "An unexpected error occurred during registration.");
+        alert.showAndWait();
     }
 
     private HBox createFooter() {
         HBox footer = new HBox();
         footer.getStyleClass().add("footer-container");
         footer.setAlignment(Pos.CENTER);
-        footer.setPadding(new Insets(12, 24, 12, 24));
-
-        Text footerText = new Text("© 2026 Health-Sphere AI. All rights reserved. | Terms of Service | Privacy Policy");
-        footerText.getStyleClass().add("footer-text");
-
-        footer.getChildren().add(footerText);
+        footer.setPadding(new Insets(12));
+        Text copyright = new Text("© 2026 Health-Sphere AI. All rights reserved.");
+        copyright.getStyleClass().add("footer-text");
+        footer.getChildren().add(copyright);
         return footer;
     }
 }
