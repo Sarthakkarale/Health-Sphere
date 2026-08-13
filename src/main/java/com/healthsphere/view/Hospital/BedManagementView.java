@@ -61,7 +61,7 @@ public class BedManagementView {
 
         root.setCenter(scrollPane);
 
-        return new Scene(root, stage.getWidth() > 0 ? stage.getWidth() : 1280, stage.getHeight() > 0 ? stage.getHeight() : 800);
+        return new Scene(root, stage.getWidth(), stage.getHeight());
     }
 
     // =========================================================

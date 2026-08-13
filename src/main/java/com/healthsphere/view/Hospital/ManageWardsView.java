@@ -74,7 +74,7 @@ public class ManageWardsView {
 
         root.getChildren().addAll(topHeader, titleBox, card);
 
-        return new Scene(root, stage.getWidth() > 0 ? stage.getWidth() : 1280, stage.getHeight() > 0 ? stage.getHeight() : 800);
+        return new Scene(root, stage.getWidth(), stage.getHeight());
     }
 
     private HBox createWardRow(String wardName, String capacity, String availability, String color) {

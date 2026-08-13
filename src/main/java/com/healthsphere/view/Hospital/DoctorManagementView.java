@@ -126,7 +126,7 @@ public class DoctorManagementView {
         // Initial Filter and Dynamic UI refresh
         applyFiltersAndRefreshUI();
 
-        return new Scene(root, stage.getWidth() > 0 ? stage.getWidth() : 1280, stage.getHeight() > 0 ? stage.getHeight() : 800);
+        return new Scene(root, stage.getWidth(), stage.getHeight());
     }
 
     private void initSampleData() {

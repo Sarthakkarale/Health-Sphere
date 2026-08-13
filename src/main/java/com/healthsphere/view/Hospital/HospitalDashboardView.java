@@ -96,11 +96,11 @@ public class HospitalDashboardView {
         
         root.setCenter(scrollPane);
 
-        return new Scene(root, stage.getWidth() > 0 ? stage.getWidth() : 1280, stage.getHeight() > 0 ? stage.getHeight() : 800);
+        return new Scene(root, stage.getWidth(), stage.getHeight());
     }
 
     // =========================================================
-    // SIDEBAR (Updated to Light Theme)
+    // SIDEBAR (Includes Patient Reviews Link)
     // =========================================================
 
     private VBox createSidebar(Stage stage) {
@@ -143,6 +143,7 @@ public class HospitalDashboardView {
         Button departmentButton = createNavigationButton("✚", "Departments", false);
         Button bedButton = createNavigationButton("▥", "Beds", false);
         Button appointmentButton = createNavigationButton("▣", "Appointments", false);
+        Button reviewsButton = createNavigationButton("★", "Patient Reviews", false); // Added Reviews Button
         Button analyticsButton = createNavigationButton("◈", "Analytics", false);
         Button settingsButton = createNavigationButton("⚙", "Hospital Settings", false);
 
@@ -152,13 +153,13 @@ public class HospitalDashboardView {
                 departmentButton,
                 bedButton,
                 appointmentButton,
+                reviewsButton,
                 analyticsButton,
                 settingsButton
         );
 
         // NAVIGATION ACTIONS
         dashboardButton.setOnAction(event -> {
-            // Already on Dashboard: refresh UI content state
             refreshDashboardData();
         });
 
@@ -182,6 +183,12 @@ public class HospitalDashboardView {
             stage.setScene(appointmentView.createScene(stage));
         });
 
+        // Patient Reviews Navigation Event
+        reviewsButton.setOnAction(event -> {
+            HospitalReviewView reviewView = new HospitalReviewView();
+            stage.setScene(reviewView.createScene(stage));
+        });
+
         analyticsButton.setOnAction(event -> {
             HospitalAnalyticsView analyticsView = new HospitalAnalyticsView();
             stage.setScene(analyticsView.createScene(stage));
@@ -202,7 +209,6 @@ public class HospitalDashboardView {
         Button logoutButton = createNavigationButton("↪", "Logout", false);
 
         helpButton.setOnAction(event -> showHelpDialog());
-
         logoutButton.setOnAction(event -> handleLogout(stage));
 
         sidebar.getChildren().addAll(helpButton, logoutButton);
@@ -211,7 +217,7 @@ public class HospitalDashboardView {
     }
 
     // =========================================================
-    // NAVIGATION BUTTON (Enhanced Visuals)
+    // NAVIGATION BUTTON
     // =========================================================
 
     private Button createNavigationButton(String icon, String text, boolean selected) {
@@ -248,7 +254,6 @@ public class HospitalDashboardView {
         } else {
             button.setStyle(baseStyle + "-fx-background-color: transparent;");
             
-            // Subtle Hover Effect
             button.setOnMouseEntered(e -> button.setStyle(baseStyle + "-fx-background-color: #F1F5F9;"));
             button.setOnMouseExited(e -> button.setStyle(baseStyle + "-fx-background-color: transparent;"));
         }
@@ -286,7 +291,6 @@ public class HospitalDashboardView {
         );
         HBox.setHgrow(searchField, Priority.ALWAYS);
 
-        // Search execution handler
         searchField.setOnAction(e -> handleSearchQuery(searchField.getText()));
 
         HBox searchBox = new HBox(8);
@@ -395,7 +399,6 @@ public class HospitalDashboardView {
         VBox availableBedsCard = createKpiCard("Available Beds", "42", "18 available", "▥", SUCCESS_GREEN, SUCCESS_LIGHT);
         VBox emergencyCard = createKpiCard("Emergency Cases", "07", "3 critical", "!", ERROR_RED, ERROR_LIGHT);
 
-        // Store reference to value labels for dynamic updates
         totalDoctorsValue = (Label) totalDoctorsCard.getChildren().get(1);
         todayAppointmentsValue = (Label) todayApptsCard.getChildren().get(1);
         availableBedsValue = (Label) availableBedsCard.getChildren().get(1);
@@ -495,7 +498,6 @@ public class HospitalDashboardView {
         grid.add(upcomingBox, 0, 1);
         grid.add(cancelledBox, 1, 1);
 
-        // Grid column responsiveness
         grid.getChildren().forEach(child -> GridPane.setHgrow(child, Priority.ALWAYS));
 
         card.getChildren().add(grid);
@@ -531,7 +533,6 @@ public class HospitalDashboardView {
         VBox card = createCard();
         card.getChildren().add(createCardHeading("Bed Occupancy", "Current hospital capacity status"));
 
-        // Occupancy Summary Header
         HBox occHeader = new HBox();
         occHeader.setAlignment(Pos.BASELINE_LEFT);
         
@@ -544,7 +545,6 @@ public class HospitalDashboardView {
         occHeader.getChildren().addAll(bedOccupancyLabel, occSub);
         card.getChildren().add(occHeader);
 
-        // Improved Progress bar
         StackPane progressContainer = new StackPane();
         progressContainer.setPrefHeight(12);
 
@@ -563,7 +563,6 @@ public class HospitalDashboardView {
 
         card.getChildren().add(progressContainer);
 
-        // Bed Breakdown Rows
         VBox rows = new VBox(10);
         rows.getChildren().addAll(
                 createBedRow("General Ward", "48 / 70", PRIMARY_BLUE),
@@ -664,7 +663,6 @@ public class HospitalDashboardView {
 
         recentActivityList = new VBox(12);
 
-        // Populate initial entries
         addActivityItem("Dr. Sharma added a new appointment", "10 minutes ago", PRIMARY_BLUE);
         addActivityItem("Bed #ICU-08 is now available", "25 minutes ago", SUCCESS_GREEN);
         addActivityItem("Emergency case admitted", "42 minutes ago", ERROR_RED);
@@ -718,7 +716,6 @@ public class HospitalDashboardView {
         Button manageBedsBtn = createActionButton("▥  Manage Beds", SUCCESS_GREEN, SUCCESS_LIGHT);
         Button viewAnalyticsBtn = createActionButton("◈  View Analytics", WARNING_ORANGE, WARNING_LIGHT);
 
-        // Actions wiring
         addDoctorBtn.setOnAction(event -> {
             DoctorManagementView doctorView = new DoctorManagementView();
             stage.setScene(doctorView.createScene(stage));
@@ -823,7 +820,6 @@ public class HospitalDashboardView {
                 "-fx-border-radius: 12;"
         );
 
-        // Soft drop shadow for elevation
         DropShadow shadow = new DropShadow();
         shadow.setColor(Color.rgb(15, 23, 42, 0.04));
         shadow.setRadius(10);
@@ -873,53 +869,53 @@ public class HospitalDashboardView {
 
     private void showMoreOptionsMenu(Label anchor, String cardTitle) {
         ContextMenu menu = new ContextMenu();
-        MenuItem refresh = new MenuItem("Refresh " + cardTitle);
-        MenuItem export = new MenuItem("Export Summary");
+        MenuItem refreshItem = new MenuItem("Refresh " + cardTitle);
+        MenuItem exportItem = new MenuItem("Export Summary");
 
-        refresh.setOnAction(e -> refreshDashboardData());
-        export.setOnAction(e -> {
+        refreshItem.setOnAction(e -> refreshDashboardData());
+        exportItem.setOnAction(e -> {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Export");
-            alert.setHeaderText("Data Export");
-            alert.setContentText("Exported summary for: " + cardTitle);
+            alert.setHeaderText("Export Summary Data");
+            alert.setContentText("Exporting report for " + cardTitle + "...");
             alert.showAndWait();
         });
 
-        menu.getItems().addAll(refresh, export);
+        menu.getItems().addAll(refreshItem, exportItem);
         menu.show(anchor, javafx.geometry.Side.BOTTOM, 0, 0);
+    }
+
+    private void recordActivity(String actionText, String color) {
+        String currentTime = LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a"));
+        addActivityItem(actionText, currentTime, color);
+    }
+
+    private void refreshDashboardData() {
+        recordActivity("Dashboard data updated manually", PRIMARY_BLUE);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Dashboard Refresh");
+        alert.setHeaderText(null);
+        alert.setContentText("Dashboard view and real-time statistics refreshed successfully.");
+        alert.showAndWait();
     }
 
     private void showHelpDialog() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Health-Sphere Help Center");
-        alert.setHeaderText("Hospital Management Assistance");
-        alert.setContentText("For technical support or assistance, please contact the administrator desk or visit support.healthsphere.com.");
+        alert.setTitle("Help Center");
+        alert.setHeaderText("Health-Sphere Support & Assistance");
+        alert.setContentText("For technical support or issues, please contact:\nSupport Desk: support@healthsphere.com\nExt: 1800-456-789");
         alert.showAndWait();
     }
 
     private void handleLogout(Stage stage) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Logout Confirmation");
-        alert.setHeaderText("Are you sure you want to log out?");
-        alert.setContentText("Unsaved dashboard changes will be preserved.");
+        alert.setHeaderText("Sign Out");
+        alert.setContentText("Are you sure you want to log out of Health-Sphere?");
 
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             stage.close();
         }
-    }
-
-    private void recordActivity(String actionText, String hexColor) {
-        String currentTime = LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a"));
-        addActivityItem(actionText, "Just now (" + currentTime + ")", hexColor);
-    }
-
-    public void refreshDashboardData() {
-        // Method to trigger dynamic refresh of data cards
-        if (totalDoctorsValue != null) totalDoctorsValue.setText("128");
-        if (todayAppointmentsValue != null) todayAppointmentsValue.setText("86");
-        if (availableBedsValue != null) availableBedsValue.setText("42");
-        if (emergencyCasesValue != null) emergencyCasesValue.setText("07");
-        recordActivity("Dashboard view refreshed", PRIMARY_BLUE);
     }
 }
