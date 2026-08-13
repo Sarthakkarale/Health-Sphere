@@ -64,7 +64,7 @@ public class AdminMainShell {
         Button hospitalBtn = createNavButton("🏥  Hospital Verification");
         Button doctorBtn = createNavButton("🩺  Doctor Credentialing");
         Button reportsBtn = createNavButton("📋  Reports & Moderation");
-        Button analyticsBtn = createNavButton("📈  BI & Analytics");
+        Button analyticsBtn = createNavButton("⭐  App Reviews");
         Button settingsBtn = createNavButton("⚙️  Neural Settings");
 
         allNavButtons = List.of(dashboardBtn, userDirBtn, hospitalBtn, doctorBtn, reportsBtn, analyticsBtn, settingsBtn);
@@ -100,17 +100,17 @@ public class AdminMainShell {
             rootLayout.setCenter(reportsView);
         });
 
-        // analyticsBtn.setOnAction(e -> {
-        //     setActiveButton(analyticsBtn);
-        //     AppReviewDashboard analyticsView = new AppReviewDashboard();
-        //     rootLayout.setCenter(analyticsView.getView());
-        // });
+        analyticsBtn.setOnAction(e -> {
+            setActiveButton(analyticsBtn);
+            AppReviewDashboard analyticsView = new AppReviewDashboard(primaryStage);
+            rootLayout.setCenter(analyticsView.getContent());
+        });
 
-        // settingsBtn.setOnAction(e -> {
-        //     setActiveButton(settingsBtn);
-        //     AdminSettingsView settingsView = new AdminSettingsView();
-        //     rootLayout.setCenter(settingsView.getView());
-        // });
+        settingsBtn.setOnAction(e -> {
+            setActiveButton(settingsBtn);
+            AdminSettingsView settingsView = new AdminSettingsView(primaryStage);
+            rootLayout.setCenter(settingsView.getView());
+        });
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
