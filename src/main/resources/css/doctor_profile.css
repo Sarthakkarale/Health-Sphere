@@ -1,0 +1,185 @@
+/* Core Page Layout */
+.main-container {
+    -fx-background-color: #F8FAFC;
+}
+
+.content-area {
+    -fx-background-color: #F8FAFC;
+}
+
+.custom-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.custom-scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Sidebar Navigation Styles */
+.sidebar {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 0 1px 0 0;
+}
+
+.brand-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1D4ED8;
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #64748B;
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-padding: 10px 14px;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+}
+
+.nav-button:hover {
+    -fx-background-color: #F1F5F9;
+    -fx-text-fill: #1E293B;
+}
+
+.nav-button-active {
+    -fx-background-color: #1D4ED8;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-padding: 10px 14px;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+}
+
+.profile-card {
+    -fx-background-color: #F1F5F9;
+    -fx-background-radius: 10px;
+    -fx-padding: 8px 12px;
+}
+
+/* Top Header Bar */
+.page-header-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1D4ED8;
+}
+
+.search-container {
+    -fx-background-color: #EFF6FF;
+    -fx-border-radius: 20px;
+    -fx-background-radius: 20px;
+}
+
+.search-field-inner {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-size: 11px;
+    -fx-pref-width: 200px;
+}
+
+.icon-button {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 50%;
+    -fx-background-radius: 50%;
+    -fx-padding: 6px;
+    -fx-cursor: hand;
+}
+
+/* Standard Card Styles */
+.card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 8, 0, 0, 2);
+}
+
+.card-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0F172A;
+}
+
+.doctor-name-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0F172A;
+}
+
+.doctor-subtitle {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1D4ED8;
+}
+
+/* Photo Edit Badge */
+.edit-photo-button {
+    -fx-background-color: #1D4ED8;
+    -fx-border-radius: 50%;
+    -fx-background-radius: 50%;
+    -fx-padding: 6px;
+    -fx-cursor: hand;
+}
+
+/* Fee Hero Card */
+.fee-card {
+    -fx-background-color: #0F2942;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-effect: dropshadow(three-pass-box, rgba(15,41,66,0.25), 10, 0, 0, 4);
+}
+
+.fee-button {
+    -fx-background-color: rgba(255, 255, 255, 0.15);
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 8px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+}
+
+.fee-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Badges & Buttons */
+.tag-verified {
+    -fx-background-color: #D1FAE5;
+    -fx-text-fill: #047857;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-padding: 3px 8px;
+    -fx-background-radius: 4px;
+}
+
+.primary-button {
+    -fx-background-color: #1D4ED8;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-padding: 8px 16px;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+}
+
+.outline-button {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 8px;
+    -fx-text-fill: #334155;
+    -fx-font-size: 11px;
+    -fx-padding: 8px 16px;
+    -fx-cursor: hand;
+}
+
+.table-link {
+    -fx-text-fill: #1D4ED8;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-underline: false;
+}

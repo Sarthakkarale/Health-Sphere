@@ -1,0 +1,213 @@
+/* Core Page Layout */
+.main-container {
+    -fx-background-color: #F8FAFC;
+}
+
+.content-area {
+    -fx-background-color: #F8FAFC;
+}
+
+.custom-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.custom-scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 0 1px 0 0;
+}
+
+.brand-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1E3A8A;
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #64748B;
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-padding: 10px 14px;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+}
+
+.nav-button:hover {
+    -fx-background-color: #F1F5F9;
+    -fx-text-fill: #1E293B;
+}
+
+.nav-button-active {
+    -fx-background-color: #1D4ED8;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-padding: 10px 14px;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+}
+
+/* Top Header Bar */
+.header-app-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1D4ED8;
+}
+
+.search-container {
+    -fx-background-color: #EFF6FF;
+    -fx-border-color: transparent;
+    -fx-border-radius: 20px;
+    -fx-background-radius: 20px;
+}
+
+.search-field-inner {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-size: 12px;
+    -fx-pref-width: 220px;
+}
+
+.icon-button {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 50%;
+    -fx-background-radius: 50%;
+    -fx-padding: 6px;
+    -fx-cursor: hand;
+}
+
+.icon-button-circle {
+    -fx-background-color: #F1F5F9;
+    -fx-border-color: transparent;
+    -fx-border-radius: 50%;
+    -fx-background-radius: 50%;
+    -fx-text-fill: #475569;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-min-width: 24px;
+    -fx-min-height: 24px;
+    -fx-cursor: hand;
+}
+
+.icon-button-subtle {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: #64748B;
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+}
+
+/* Standard Card Styles */
+.card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 8, 0, 0, 2);
+}
+
+.card-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0F172A;
+}
+
+.section-subtitle {
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #94A3B8;
+}
+
+/* Hero Passport Card */
+.passport-card {
+    -fx-background-color: #1D4ED8;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-effect: dropshadow(three-pass-box, rgba(29,78,216,0.25), 10, 0, 0, 4);
+}
+
+/* Badges and Tags */
+.tag-gray {
+    -fx-background-color: #F1F5F9;
+    -fx-text-fill: #475569;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 2px 8px;
+    -fx-background-radius: 4px;
+}
+
+.tag-active {
+    -fx-background-color: #047857;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-padding: 2px 8px;
+    -fx-background-radius: 10px;
+}
+
+.tag-blood {
+    -fx-background-color: #FEE2E2;
+    -fx-text-fill: #DC2626;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 2px 8px;
+    -fx-background-radius: 4px;
+}
+
+.tag-danger {
+    -fx-background-color: #FEE2E2;
+    -fx-text-fill: #DC2626;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 3px 8px;
+    -fx-background-radius: 4px;
+}
+
+/* Notes Box */
+.note-box {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+/* Buttons & Links */
+.primary-button {
+    -fx-background-color: #1D4ED8;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-padding: 8px 16px;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+}
+
+.outline-button {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 8px;
+    -fx-text-fill: #334155;
+    -fx-font-size: 11px;
+    -fx-padding: 6px 12px;
+    -fx-cursor: hand;
+}
+
+.table-link {
+    -fx-text-fill: #1D4ED8;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-underline: false;
+}
+
+.footer-text {
+    -fx-font-size: 11px;
+    -fx-text-fill: #94A3B8;
+}

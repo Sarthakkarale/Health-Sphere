@@ -1,0 +1,183 @@
+/* Core Page Layout */
+.main-container {
+    -fx-background-color: #F8FAFC;
+}
+
+.content-area {
+    -fx-background-color: #F8FAFC;
+}
+
+.custom-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.custom-scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 0 1px 0 0;
+}
+
+.brand-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1D4ED8;
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #64748B;
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-padding: 10px 14px;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+}
+
+.nav-button:hover {
+    -fx-background-color: #F1F5F9;
+    -fx-text-fill: #1E293B;
+}
+
+.nav-button-active {
+    -fx-background-color: #1D4ED8;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-padding: 10px 14px;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+}
+
+.profile-card {
+    -fx-background-color: #F1F5F9;
+    -fx-background-radius: 10px;
+    -fx-padding: 8px 12px;
+}
+
+/* Header Bar Search & Controls */
+.search-container {
+    -fx-background-color: #EFF6FF;
+    -fx-border-radius: 20px;
+    -fx-background-radius: 20px;
+}
+
+.search-field-inner {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-size: 12px;
+    -fx-pref-width: 240px;
+}
+
+.icon-button {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 50%;
+    -fx-background-radius: 50%;
+    -fx-padding: 6px;
+    -fx-cursor: hand;
+}
+
+.icon-button-circle {
+    -fx-background-color: #F1F5F9;
+    -fx-border-color: transparent;
+    -fx-border-radius: 50%;
+    -fx-background-radius: 50%;
+    -fx-text-fill: #475569;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-min-width: 24px;
+    -fx-min-height: 24px;
+    -fx-cursor: hand;
+}
+
+.icon-button-subtle {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: #64748B;
+    -fx-font-size: 11px;
+    -fx-cursor: hand;
+}
+
+/* Card Standard Styling */
+.card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 8, 0, 0, 2);
+}
+
+.card-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0F172A;
+}
+
+.form-label {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #64748B;
+}
+
+/* AI Interaction Callout Box */
+.ai-card {
+    -fx-background-color: #EFF6FF;
+    -fx-border-color: #BFDBFE;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+}
+
+/* Buttons */
+.primary-button {
+    -fx-background-color: #1D4ED8;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-padding: 8px 14px;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+}
+
+.outline-button {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 8px;
+    -fx-text-fill: #334155;
+    -fx-font-size: 11px;
+    -fx-padding: 6px 12px;
+    -fx-cursor: hand;
+}
+
+.teal-button {
+    -fx-background-color: #2DD4BF;
+    -fx-text-fill: #0F172A;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-padding: 6px 14px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+}
+
+/* Text Fields and Selects */
+.search-field {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 6px 10px;
+    -fx-font-size: 11px;
+}
+
+.custom-combo {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-font-size: 11px;
+}

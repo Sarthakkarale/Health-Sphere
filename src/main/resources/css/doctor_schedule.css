@@ -1,0 +1,217 @@
+/* Application Shell Layout */
+.main-container {
+    -fx-background-color: #F8FAFC;
+}
+
+.content-area {
+    -fx-background-color: #F8FAFC;
+}
+
+.custom-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.custom-scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Primary Sidebar Navigation */
+.sidebar {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 0 1px 0 0;
+}
+
+.brand-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1D4ED8;
+}
+
+.brand-subtitle {
+    -fx-font-size: 10px;
+    -fx-text-fill: #64748B;
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #64748B;
+    -fx-font-size: 12px;
+    -fx-font-weight: 500;
+    -fx-padding: 8px 12px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+}
+
+.nav-button:hover {
+    -fx-background-color: #F1F5F9;
+    -fx-text-fill: #0F172A;
+}
+
+.nav-button-active {
+    -fx-background-color: #1D4ED8;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 12px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+}
+
+.primary-button-lg {
+    -fx-background-color: #0F2942;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-padding: 10px 14px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+}
+
+/* Header & Control Actions */
+.search-container {
+    -fx-background-color: #EFF6FF;
+    -fx-border-radius: 20px;
+    -fx-background-radius: 20px;
+}
+
+.search-field-inner {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-size: 11px;
+}
+
+.icon-button {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 50%;
+    -fx-background-radius: 50%;
+    -fx-padding: 6px;
+    -fx-cursor: hand;
+}
+
+.icon-button-sm {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 10px;
+    -fx-padding: 2px 8px;
+    -fx-cursor: hand;
+}
+
+.icon-button-subtle {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+}
+
+.outline-button {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 6px;
+    -fx-text-fill: #334155;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-padding: 6px 14px;
+    -fx-cursor: hand;
+}
+
+.primary-button-action {
+    -fx-background-color: #0F2942;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-padding: 6px 14px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+}
+
+/* Card Containers */
+.card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+}
+
+.emergency-box {
+    -fx-background-color: #FEF2F2;
+    -fx-border-color: #FCA5A5;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+}
+
+.input-box-subtle {
+    -fx-background-color: #EFF6FF;
+    -fx-border-color: #BFDBFE;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+}
+
+/* Segmented Buttons */
+.segmented-container {
+    -fx-background-color: #F1F5F9;
+    -fx-background-radius: 6px;
+    -fx-padding: 2px;
+}
+
+.segmented-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #64748B;
+    -fx-font-size: 11px;
+    -fx-padding: 4px 10px;
+    -fx-cursor: hand;
+}
+
+.segmented-button-active {
+    -fx-background-color: #0F2942;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-padding: 4px 10px;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+/* Interactive Timings and Inputs */
+.time-input-box {
+    -fx-background-color: #EFF6FF;
+    -fx-border-color: #BFDBFE;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+}
+
+.break-chip {
+    -fx-background-color: #CCFBF1;
+    -fx-border-color: #99F6E4;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 4px 8px;
+}
+
+.link-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #1D4ED8;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4px 0;
+    -fx-cursor: hand;
+}
+
+.pill-badge {
+    -fx-border-color: #1D4ED8;
+    -fx-border-radius: 12px;
+    -fx-text-fill: #1D4ED8;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-padding: 2px 8px;
+}
+
+.custom-combo-box {
+    -fx-background-color: #EFF6FF;
+    -fx-border-color: #BFDBFE;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+}

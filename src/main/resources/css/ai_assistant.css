@@ -1,0 +1,246 @@
+/* Core Layout Container */
+.main-container {
+    -fx-background-color: #F8FAFC;
+}
+
+.custom-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.custom-scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Primary Left Sidebar */
+.sidebar-primary {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 0 1px 0 0;
+}
+
+.brand-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1D4ED8;
+}
+
+.brand-subtitle {
+    -fx-font-size: 10px;
+    -fx-text-fill: #64748B;
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #64748B;
+    -fx-font-size: 12px;
+    -fx-font-weight: 500;
+    -fx-padding: 8px 12px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+}
+
+.nav-button:hover {
+    -fx-background-color: #F1F5F9;
+    -fx-text-fill: #0F172A;
+}
+
+.nav-button-active {
+    -fx-background-color: #1D4ED8;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 12px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+}
+
+.primary-button {
+    -fx-background-color: #1D4ED8;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-padding: 8px 12px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+}
+
+/* Secondary Recent Queries Sidebar */
+.sidebar-secondary {
+    -fx-background-color: #FAFAFA;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 0 1px 0 0;
+}
+
+.section-header-title {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #334155;
+}
+
+.recent-card {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+}
+
+.recent-card:hover {
+    -fx-background-color: #F1F5F9;
+    -fx-background-radius: 6px;
+}
+
+.recent-card-active {
+    -fx-background-color: #EFF6FF;
+    -fx-border-color: #BFDBFE;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+}
+
+.recent-title {
+    -fx-font-size: 11px;
+    -fx-font-weight: 500;
+    -fx-text-fill: #334155;
+}
+
+.recent-title-active {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1D4ED8;
+}
+
+.recent-time {
+    -fx-font-size: 9px;
+    -fx-text-fill: #94A3B8;
+}
+
+/* Pro Upgrade Box */
+.upgrade-box {
+    -fx-background-color: #0F2942;
+    -fx-background-radius: 8px;
+}
+
+.upgrade-button {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #0F2942;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 4px 8px;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+/* Header & Controls */
+.search-container {
+    -fx-background-color: #EFF6FF;
+    -fx-border-radius: 20px;
+    -fx-background-radius: 20px;
+}
+
+.search-field-inner {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-size: 11px;
+    -fx-pref-width: 320px;
+}
+
+.icon-button {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 50%;
+    -fx-background-radius: 50%;
+    -fx-padding: 6px;
+    -fx-cursor: hand;
+}
+
+.icon-button-subtle {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 4px;
+    -fx-cursor: hand;
+}
+
+/* Chat Stream Bubbles */
+.user-bubble {
+    -fx-background-color: #0F2942;
+    -fx-background-radius: 12px 12px 2px 12px;
+}
+
+.user-bubble-text {
+    -fx-font-size: 12px;
+    -fx-text-fill: #FFFFFF;
+}
+
+.ai-response-card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+}
+
+.ai-intro-text {
+    -fx-font-size: 12px;
+    -fx-text-fill: #1E293B;
+}
+
+.inner-card {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+.section-subtitle-blue {
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1D4ED8;
+}
+
+.section-subtitle-teal {
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0D9488;
+}
+
+.tag-alert {
+    -fx-background-color: #EFF6FF;
+    -fx-text-fill: #1D4ED8;
+    -fx-font-size: 9px;
+    -fx-padding: 3px 6px;
+    -fx-background-radius: 4px;
+}
+
+/* Quick Chips & Chat Inputs */
+.quick-chip {
+    -fx-background-color: #EFF6FF;
+    -fx-border-color: #BFDBFE;
+    -fx-border-radius: 16px;
+    -fx-background-radius: 16px;
+    -fx-text-fill: #1D4ED8;
+    -fx-font-size: 10px;
+    -fx-padding: 4px 12px;
+    -fx-cursor: hand;
+}
+
+.quick-chip:hover {
+    -fx-background-color: #DBEAFE;
+}
+
+.chat-input-container {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+}
+
+.chat-input-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-size: 12px;
+}
+
+.send-button {
+    -fx-background-color: #0F2942;
+    -fx-background-radius: 6px;
+    -fx-padding: 6px 12px;
+    -fx-cursor: hand;
+}

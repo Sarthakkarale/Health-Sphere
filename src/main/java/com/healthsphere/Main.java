@@ -1,6 +1,6 @@
 package com.healthsphere;
 
-import com.healthsphere.view.authentication.SplashView;
+import com.healthsphere.view.doctor.DoctorDashboardView;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -9,25 +9,18 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        primaryStage.setTitle("Health-Sphere Portal");
 
-        // Create Splash Screen
-        SplashView splashView = new SplashView();
-
-        // Create Scene
-        Scene scene = splashView.getScene();
-
-        // Configure Stage
-        primaryStage.setTitle("Health-Sphere");
-        primaryStage.setScene(scene);
-
-        primaryStage.setWidth(1440);
+        primaryStage.setWidth(1380);
         primaryStage.setHeight(900);
-
-        primaryStage.setMinWidth(1200);
+        primaryStage.setMinWidth(1100);
         primaryStage.setMinHeight(700);
 
-        primaryStage.setMaximized(true);
+        DoctorDashboardView dashboardView = new DoctorDashboardView(primaryStage);
+        Scene initialScene = dashboardView.createScene();
 
+        primaryStage.setScene(initialScene);
+        primaryStage.setMaximized(true);
         primaryStage.show();
     }
 
