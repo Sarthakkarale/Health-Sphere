@@ -1,0 +1,117 @@
+/* Main Page Background */
+.register-root {
+    -fx-background-color: #F8FAFC;
+    -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+.scroll-pane-clean {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-fit-to-width: true;
+}
+
+/* Card Container */
+.register-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 16px;
+    -fx-padding: 36px 44px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 18, 0, 0, 4);
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 16px;
+}
+
+/* Header Text */
+.brand-text {
+    -fx-font-size: 20px;
+    -fx-font-weight: 800;
+    -fx-fill: #0256D0;
+}
+
+.reg-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: 800;
+    -fx-fill: #0F172A;
+}
+
+.reg-subtitle {
+    -fx-font-size: 13px;
+    -fx-fill: #64748B;
+}
+
+/* Step Badge */
+.step-badge {
+    -fx-background-color: #EFF6FF;
+    -fx-background-radius: 20px;
+    -fx-padding: 6px 14px;
+}
+
+.step-badge-text {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0256D0;
+}
+
+/* Form Inputs */
+.input-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #334155;
+}
+
+.text-field-custom {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 10px 14px;
+    -fx-font-size: 13px;
+}
+
+.text-field-custom:focused {
+    -fx-border-color: #0256D0;
+    -fx-background-color: #FFFFFF;
+}
+
+.combo-box-custom {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 2px 4px;
+    -fx-font-size: 13px;
+}
+
+.date-picker-custom {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #CBD5E1;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-font-size: 13px;
+}
+
+/* Submit Button */
+.btn-register-primary {
+    -fx-background-color: #0256D0;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-size: 15px;
+    -fx-background-radius: 8px;
+    -fx-padding: 12px;
+    -fx-cursor: hand;
+}
+
+.btn-register-primary:hover {
+    -fx-background-color: #0143A3;
+}
+
+/* Security Footer Box */
+.security-footer-box {
+    -fx-background-color: #F1F5F9;
+    -fx-background-radius: 8px;
+    -fx-padding: 10px 16px;
+}
+
+.security-footer-text {
+    -fx-font-size: 12px;
+    -fx-fill: #475569;
+}

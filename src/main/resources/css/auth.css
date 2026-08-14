@@ -1,0 +1,446 @@
+/* ==========================================================================
+   ROOT & GENERAL STYLING
+   ========================================================================== */
+.root-container {
+    -fx-background-color: #F3F4F6;
+    -fx-font-family: 'System', 'Segoe UI', sans-serif;
+}
+
+.right-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.right-scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+/* ==========================================================================
+   LEFT MARKETING PANEL
+   ========================================================================== */
+.overlay-rect {
+    -fx-fill: linear-gradient(to bottom right, rgba(15, 23, 42, 0.92), rgba(30, 58, 138, 0.88));
+}
+
+.left-logo-text {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-fill: #FFFFFF;
+}
+
+.glass-feature-card {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-padding: 16px;
+}
+
+.card-icon-circle {
+    -fx-fill: #2563EB;
+}
+
+.feature-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-fill: #FFFFFF;
+}
+
+.feature-description {
+    -fx-font-size: 12px;
+    -fx-text-fill: #94A3B8;
+}
+
+.bottom-caption {
+    -fx-font-size: 12px;
+    -fx-fill: #64748B;
+}
+
+/* ==========================================================================
+   RIGHT REGISTRATION MAIN CARD
+   ========================================================================== */
+.main-white-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 16px;
+    -fx-border-radius: 16px;
+    -fx-padding: 36px 40px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.08), 20, 0, 0, 4);
+}
+
+.heading-text {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-fill: #111827;
+}
+
+.subtitle-text {
+    -fx-font-size: 14px;
+    -fx-fill: #6B7280;
+}
+
+/* ==========================================================================
+   STEP INDICATOR STYLING
+   ========================================================================== */
+.step-circle-active {
+    -fx-fill: #2563EB;
+}
+
+.step-circle-completed {
+    -fx-fill: #10B981;
+}
+
+.step-circle-inactive {
+    -fx-fill: #E5E7EB;
+}
+
+.step-number-active {
+    -fx-fill: #FFFFFF;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.step-number-inactive {
+    -fx-fill: #9CA3AF;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.step-label-active {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2563EB;
+}
+
+.step-label-completed {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #10B981;
+}
+
+.step-label-inactive {
+    -fx-font-size: 13px;
+    -fx-text-fill: #9CA3AF;
+}
+
+.step-line {
+    -fx-stroke: #E5E7EB;
+    -fx-stroke-width: 2px;
+}
+
+/* ==========================================================================
+   ROLE CARDS & BADGES
+   ========================================================================== */
+.role-card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E5E7EB;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-padding: 18px;
+    -fx-cursor: hand;
+}
+
+.role-card-selected {
+    -fx-background-color: #EFF6FF;
+    -fx-border-color: #2563EB;
+    -fx-border-width: 2px;
+}
+
+.role-card-disabled {
+    -fx-background-color: #F9FAFB;
+    -fx-border-color: #F3F4F6;
+    -fx-opacity: 0.65;
+    -fx-cursor: default;
+}
+
+.icon-box-blue {
+    -fx-background-color: #DBEAFE;
+    -fx-background-radius: 8px;
+    -fx-padding: 10px;
+}
+
+/* BADGES */
+.badge-instant-access {
+    -fx-background-color: #D1FAE5;
+    -fx-text-fill: #059669;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 4px 8px;
+    -fx-background-radius: 6px;
+}
+
+.badge-verification-required {
+    -fx-background-color: #DBEAFE;
+    -fx-text-fill: #2563EB;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 4px 8px;
+    -fx-background-radius: 6px;
+}
+
+.badge-invite-only {
+    -fx-background-color: #F3F4F6;
+    -fx-text-fill: #6B7280;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 4px 8px;
+    -fx-background-radius: 6px;
+}
+
+.badge-pending {
+    -fx-background-color: #FEF3C7;
+    -fx-text-fill: #D97706;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 6px 12px;
+    -fx-background-radius: 6px;
+}
+
+.badge-success {
+    -fx-background-color: #D1FAE5;
+    -fx-text-fill: #059669;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 6px 12px;
+    -fx-background-radius: 6px;
+}
+
+.role-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-fill: #111827;
+}
+
+.role-title-disabled {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-fill: #9CA3AF;
+}
+
+.role-description {
+    -fx-font-size: 12px;
+    -fx-text-fill: #6B7280;
+}
+
+/* ==========================================================================
+   FORM CONTROLS & BUTTONS
+   ========================================================================== */
+.form-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #374151;
+}
+
+.text-field-custom, .combo-box-custom {
+    -fx-background-color: #F9FAFB;
+    -fx-border-color: #D1D5DB;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 10px 14px;
+    -fx-font-size: 14px;
+    -fx-text-fill: #111827;
+    -fx-pref-height: 42px;
+}
+
+.text-field-custom:focused, .combo-box-custom:focused {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #2563EB;
+    -fx-border-width: 1.5px;
+}
+
+.upload-stub-box {
+    -fx-background-color: #F9FAFB;
+    -fx-border-color: #D1D5DB;
+    -fx-border-style: segments(4, 4);
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 8px 14px;
+    -fx-pref-height: 42px;
+}
+
+.upload-stub-text {
+    -fx-font-size: 12px;
+    -fx-fill: #6B7280;
+}
+
+.btn-continue {
+    -fx-background-color: #2563EB;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-pref-width: 150px;
+    -fx-pref-height: 44px;
+    -fx-background-radius: 10px;
+    -fx-cursor: hand;
+}
+
+.btn-continue:hover {
+    -fx-background-color: #1D4ED8;
+}
+
+.btn-back {
+    -fx-background-color: #F3F4F6;
+    -fx-text-fill: #374151;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-pref-width: 110px;
+    -fx-pref-height: 44px;
+    -fx-background-radius: 10px;
+    -fx-cursor: hand;
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 10px;
+}
+
+.btn-back:hover {
+    -fx-background-color: #E5E7EB;
+    -fx-text-fill: #111827;
+}
+
+.login-prompt-text {
+    -fx-font-size: 13px;
+    -fx-fill: #6B7280;
+}
+
+.login-link-text {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-fill: #2563EB;
+    -fx-cursor: hand;
+}
+
+/* ==========================================================================
+   FOOTER
+   ========================================================================== */
+.footer-bar {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #E5E7EB;
+    -fx-border-width: 1px 0 0 0;
+    -fx-padding: 14px 32px;
+}
+
+.footer-copyright {
+    -fx-font-size: 12px;
+    -fx-fill: #6B7280;
+}
+
+.footer-hyperlink {
+    -fx-font-size: 12px;
+    -fx-fill: #6B7280;
+    -fx-cursor: hand;
+}
+/* ==========================================================================
+   PATIENT INFORMATION FORM STYLING
+   ========================================================================== */
+.date-picker-custom {
+    -fx-background-color: #F9FAFB;
+    -fx-border-color: #D1D5DB;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-font-size: 14px;
+    -fx-pref-height: 42px;
+}
+
+.date-picker-custom .text-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 10px 14px;
+}
+
+.date-picker-custom:focused, .date-picker-custom:hover {
+    -fx-border-color: #2563EB;
+}
+
+.date-picker-custom .arrow-button {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+}
+
+.date-picker-custom .arrow-button .arrow {
+    -fx-background-color: #6B7280;
+}
+
+/* Text Area Custom Styling */
+.text-area-custom {
+    -fx-background-color: #F9FAFB;
+    -fx-border-color: #D1D5DB;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 8px;
+    -fx-font-size: 14px;
+    -fx-text-fill: #111827;
+}
+
+.text-area-custom .content {
+    -fx-background-color: #F9FAFB;
+    -fx-background-radius: 8px;
+}
+
+.text-area-custom:focused {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #2563EB;
+    -fx-border-width: 1.5px;
+}
+
+/* Badge Header for Step 3 */
+.step-tag-badge {
+    -fx-background-color: #EFF6FF;
+    -fx-text-fill: #2563EB;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 4px 10px;
+    -fx-background-radius: 12px;
+}
+
+/* ==========================================================================
+   STEP 4 - VERIFY ACCOUNT & SECURITY STYLES
+   ========================================================================== */
+
+/* Security Callout Alert Box */
+.security-alert-box {
+    -fx-background-color: #EFF6FF;
+    -fx-border-color: #BFDBFE;
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-padding: 14px 18px;
+}
+
+.security-alert-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1E40AF;
+}
+
+.security-alert-sub {
+    -fx-font-size: 13px;
+    -fx-text-fill: #3B82F6;
+}
+
+/* 2FA Toggle Container Card */
+.toggle-card {
+    -fx-background-color: #F9FAFB;
+    -fx-border-color: #E5E7EB;
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+    -fx-padding: 14px 18px;
+}
+
+.toggle-card:hover {
+    -fx-border-color: #CBD5E1;
+}
+
+/* Step 4 Finish Button */
+.btn-finish {
+    -fx-background-color: #16A34A;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 24px;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+}
+
+.btn-finish:hover {
+    -fx-background-color: #15803D;
+}
