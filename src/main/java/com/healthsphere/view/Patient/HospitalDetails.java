@@ -496,7 +496,7 @@ public class HospitalDetails {
 
         Label brand =
                 new Label(
-                        "✚  MediNexus AI"
+                        "✚  HealthSphere"
                 );
 
         brand.setStyle(

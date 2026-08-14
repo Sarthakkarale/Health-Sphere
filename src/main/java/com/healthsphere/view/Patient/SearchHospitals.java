@@ -9,10 +9,8 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -24,191 +22,221 @@ public class SearchHospitals {
         this.stage = stage;
     }
 
+    // =========================================================
+    // MAIN SCENE
+    // =========================================================
+
     public Scene getScene() {
 
-        BorderPane root = new BorderPane();
+        VBox content =
+                new VBox(20);
 
-        root.setLeft(createSidebar());
-        root.setTop(createHeader());
-
-        VBox content = new VBox(22);
-        content.setPadding(new Insets(28));
-        content.setStyle("-fx-background-color: #f1f5f9;");
-
-        Label title = new Label("Find Healthcare Near You");
-
-        title.setStyle(
-                "-fx-font-size: 30px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: #0f172a;"
+        content.setPadding(
+                new Insets(5)
         );
 
-        Label subtitle = new Label(
-                "Search hospitals, healthcare facilities and specialties."
-        );
-
-        subtitle.setStyle(
-                "-fx-font-size: 15px;" +
-                "-fx-text-fill: #64748b;"
-        );
-
-        VBox heading = new VBox(5, title, subtitle);
-
-        // -------------------------------------------------
+        // =====================================================
         // SEARCH CARD
-        // -------------------------------------------------
+        // =====================================================
 
-        VBox searchCard = card("Search Hospitals");
+        VBox searchCard =
+                PatientUI.card(
+                        "Find a Hospital"
+                );
 
-        TextField search = new TextField();
+        Label instruction =
+                new Label(
+                        "Search for hospitals, clinics and healthcare facilities near you."
+                );
 
-        search.setPromptText(
-                "Search hospital, city or specialty..."
+        instruction.setStyle(
+                "-fx-text-fill: #64748b;" +
+                "-fx-font-size: 14px;"
         );
 
-        search.setPrefHeight(45);
+        HBox searchRow =
+                new HBox(12);
 
-        search.setStyle(
+        searchRow.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        TextField searchField =
+                new TextField();
+
+        searchField.setPromptText(
+                "Enter hospital name, location or speciality"
+        );
+
+        searchField.setPrefHeight(42);
+
+        searchField.setPrefWidth(600);
+
+        searchField.setStyle(
                 "-fx-background-color: #f8fafc;" +
                 "-fx-border-color: #bfdbfe;" +
                 "-fx-border-radius: 8;" +
-                "-fx-background-radius: 8;"
+                "-fx-background-radius: 8;" +
+                "-fx-padding: 10;"
         );
 
         Button searchButton =
-                button("Search", () -> {
+                PatientUI.button(
+                        "Search",
+                        () -> {
 
-                    String value =
-                            search.getText().trim();
-
-                    if (!value.isEmpty()) {
-                        filterHospitals(
-                                value,
-                                hospitalContainer
-                        );
-                    }
-                });
-
-        HBox searchRow = new HBox(12);
-
-        searchRow.setAlignment(Pos.CENTER_LEFT);
+                            System.out.println(
+                                    "Searching hospitals for: "
+                                            + searchField.getText()
+                            );
+                        }
+                );
 
         searchRow.getChildren().addAll(
-                search,
+                searchField,
                 searchButton
         );
 
-        HBox.setHgrow(
-                search,
-                Priority.ALWAYS
+        searchCard.getChildren().addAll(
+                instruction,
+                searchRow
         );
 
-        searchCard.getChildren().add(searchRow);
+        // =====================================================
+        // HOSPITAL RESULTS
+        // =====================================================
 
-        // -------------------------------------------------
-        // HOSPITALS
-        // -------------------------------------------------
+        VBox results =
+                PatientUI.card(
+                        "Nearby Hospitals"
+                );
 
-        hospitalContainer = new VBox(18);
+        results.getChildren().addAll(
 
-        hospitalContainer.getChildren().addAll(
-
-                hospitalCard(
+                hospital(
+                        "/images/hospitals/hospital1.jpg",
                         "Apollo Hospitals",
-                        "Jubilee Hills, Hyderabad",
+                        "Hyderabad",
                         "Multi-Speciality Hospital",
-                        "4.7 ★",
-                        "/images/hospitals/hospital1.jpg"
+                        "4.8"
                 ),
 
-                hospitalCard(
-                        "Fortis Healthcare",
-                        "Bengaluru",
-                        "Multi-Speciality Hospital",
-                        "4.6 ★",
-                        "/images/hospitals/hospital2.jpg"
+                hospital(
+                        "/images/hospitals/hospital2.jpg",
+                        "Care Hospitals",
+                        "Hyderabad",
+                        "General & Specialty Care",
+                        "4.6"
                 ),
 
-                hospitalCard(
-                        "Max Healthcare",
-                        "New Delhi",
-                        "Multi-Speciality Hospital",
-                        "4.5 ★",
-                        "/images/hospitals/hospital3.jpg"
+                hospital(
+                        "/images/hospitals/hospital3.jpg",
+                        "Yashoda Hospitals",
+                        "Hyderabad",
+                        "Advanced Healthcare Centre",
+                        "4.7"
                 ),
 
-                hospitalCard(
-                        "Manipal Hospitals",
-                        "Bengaluru",
-                        "Advanced Healthcare",
-                        "4.6 ★",
-                        "/images/hospitals/hospital4.jpg"
+                hospital(
+                        "/images/hospitals/hospital4.jpg",
+                        "KIMS Hospitals",
+                        "Hyderabad",
+                        "Multi-Speciality Hospital",
+                        "4.5"
                 )
         );
 
+        // =====================================================
+        // ADD CONTENT
+        // =====================================================
+
         content.getChildren().addAll(
-                heading,
                 searchCard,
-                hospitalContainer
+                results
         );
+
+        // =====================================================
+        // SCROLL
+        // =====================================================
 
         ScrollPane scroll =
                 new ScrollPane(content);
 
         scroll.setFitToWidth(true);
+
         scroll.setHbarPolicy(
                 ScrollPane.ScrollBarPolicy.NEVER
         );
 
-        root.setCenter(scroll);
+        scroll.setVbarPolicy(
+                ScrollPane.ScrollBarPolicy.AS_NEEDED
+        );
 
-        return new Scene(
-                root,
-                1440,
-                900
+        scroll.setStyle(
+                "-fx-background-color: transparent;" +
+                "-fx-background: transparent;"
+        );
+
+        VBox wrapper =
+                new VBox(scroll);
+
+        // =====================================================
+        // COMMON PATIENT HEADER
+        // =====================================================
+
+        return PatientUI.createScene(
+                stage,
+                "Search Hospitals",
+                "Search Hospitals",
+                "Find nearby hospitals and healthcare facilities.",
+                wrapper
         );
     }
 
-    private VBox hospitalContainer;
-
-    // =====================================================
+    // =========================================================
     // HOSPITAL CARD
-    // =====================================================
+    // =========================================================
 
-    private VBox hospitalCard(
+    private HBox hospital(
+            String imagePath,
             String name,
             String location,
-            String type,
-            String rating,
-            String imagePath
+            String speciality,
+            String rating
     ) {
 
-        VBox card = new VBox(12);
+        HBox box =
+                new HBox(18);
 
-        card.setPadding(
-                new Insets(16)
+        box.setPadding(
+                new Insets(14)
         );
 
-        card.setStyle(
-                "-fx-background-color: white;" +
-                "-fx-background-radius: 14;" +
-                "-fx-border-color: #bfdbfe;" +
-                "-fx-border-radius: 14;" +
-                "-fx-effect: dropshadow(gaussian, rgba(15,23,42,0.08), 10, 0, 0, 3);"
-        );
-
-        HBox row = new HBox(18);
-
-        row.setAlignment(
+        box.setAlignment(
                 Pos.CENTER_LEFT
         );
 
+        box.setStyle(
+                "-fx-background-color: white;" +
+                "-fx-background-radius: 14;" +
+                "-fx-border-color: #bfdbfe;" +
+                "-fx-border-radius: 14;"
+        );
+
+        // =====================================================
+        // HOSPITAL IMAGE
+        // =====================================================
+
         ImageView image =
-                loadImage(
+                createImage(
                         imagePath,
-                        190,
-                        125
+                        180,
+                        110
                 );
+
+        // =====================================================
+        // HOSPITAL INFORMATION
+        // =====================================================
 
         VBox information =
                 new VBox(7);
@@ -217,28 +245,34 @@ public class SearchHospitals {
                 new Label(name);
 
         nameLabel.setStyle(
-                "-fx-font-size: 20px;" +
+                "-fx-font-size: 18px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #0f172a;"
         );
 
         Label locationLabel =
-                new Label(location);
+                new Label(
+                        "📍 " + location
+                );
 
         locationLabel.setStyle(
                 "-fx-text-fill: #64748b;"
         );
 
-        Label typeLabel =
-                new Label(type);
+        Label specialityLabel =
+                new Label(
+                        speciality
+                );
 
-        typeLabel.setStyle(
+        specialityLabel.setStyle(
                 "-fx-text-fill: #2563eb;" +
                 "-fx-font-weight: bold;"
         );
 
         Label ratingLabel =
-                new Label(rating);
+                new Label(
+                        "★ " + rating + " rating"
+                );
 
         ratingLabel.setStyle(
                 "-fx-text-fill: #16a34a;" +
@@ -248,587 +282,140 @@ public class SearchHospitals {
         information.getChildren().addAll(
                 nameLabel,
                 locationLabel,
-                typeLabel,
+                specialityLabel,
                 ratingLabel
         );
 
-        Region spacer = new Region();
-
         HBox.setHgrow(
-                spacer,
+                information,
                 Priority.ALWAYS
         );
 
-        Button details =
-                button(
-                        "View Details",
+        // =====================================================
+        // VIEW BUTTON
+        // =====================================================
+
+        Button view =
+                PatientUI.secondaryButton(
+                        "View",
                         () -> showHospitalDetails(
                                 name,
                                 location,
-                                type,
-                                rating,
-                                imagePath
+                                speciality,
+                                rating
                         )
                 );
 
-        row.getChildren().addAll(
+        box.getChildren().addAll(
                 image,
                 information,
-                spacer,
-                details
+                view
         );
 
-        card.getChildren().add(row);
-
-        return card;
+        return box;
     }
 
-    // =====================================================
-    // HOSPITAL DETAILS SCREEN
-    // =====================================================
+    // =========================================================
+    // SHOW HOSPITAL DETAILS
+    // =========================================================
 
     private void showHospitalDetails(
             String name,
             String location,
-            String type,
-            String rating,
-            String imagePath
+            String speciality,
+            String rating
     ) {
-
-        BorderPane root =
-                new BorderPane();
-
-        root.setLeft(createSidebar());
-        root.setTop(createHeader());
-
-        VBox content =
-                new VBox(22);
-
-        content.setPadding(
-                new Insets(30)
-        );
-
-        content.setStyle(
-                "-fx-background-color: #f1f5f9;"
-        );
-
-        Button back =
-                button(
-                        "← Back to Hospitals",
-                        this::showSearchHospitals
-                );
-
-        ImageView image =
-                loadImage(
-                        imagePath,
-                        700,
-                        300
-                );
-
-        Label title =
-                new Label(name);
-
-        title.setStyle(
-                "-fx-font-size: 30px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: #0f172a;"
-        );
-
-        Label locationLabel =
-                new Label(location);
-
-        locationLabel.setStyle(
-                "-fx-font-size: 16px;" +
-                "-fx-text-fill: #64748b;"
-        );
-
-        Label typeLabel =
-                new Label(type);
-
-        typeLabel.setStyle(
-                "-fx-font-size: 16px;" +
-                "-fx-text-fill: #2563eb;" +
-                "-fx-font-weight: bold;"
-        );
-
-        Label ratingLabel =
-                new Label("Rating: " + rating);
-
-        ratingLabel.setStyle(
-                "-fx-text-fill: #16a34a;" +
-                "-fx-font-weight: bold;"
-        );
-
-        VBox information =
-                card("Hospital Information");
-
-        information.getChildren().addAll(
-                locationLabel,
-                typeLabel,
-                ratingLabel,
-                new Label(
-                        "24/7 Emergency Services"
-                ),
-                new Label(
-                        "Outpatient and inpatient care available"
-                ),
-                new Label(
-                        "Specialist doctors and diagnostic services"
-                )
-        );
-
-        Button book =
-                button(
-                        "Book Appointment",
-                        this::showBookAppointment
-                );
-
-        HBox actions =
-                new HBox(12);
-
-        actions.getChildren().addAll(
-                book,
-                button(
-                        "Back",
-                        this::showSearchHospitals
-                )
-        );
-
-        content.getChildren().addAll(
-                back,
-                image,
-                title,
-                information,
-                actions
-        );
-
-        ScrollPane scroll =
-                new ScrollPane(content);
-
-        scroll.setFitToWidth(true);
-
-        root.setCenter(scroll);
 
         stage.setScene(
-                new Scene(
-                        root,
-                        1440,
-                        900
-                )
+                new HospitalDetails(
+                        stage,
+                        name,
+                        location,
+                        speciality,
+                        rating,
+                        getSpecialties(name)
+                ).getScene()
         );
+
+        stage.show();
     }
 
-    // =====================================================
-    // SEARCH
-    // =====================================================
+    // =========================================================
+    // HOSPITAL SPECIALITIES
+    // =========================================================
 
-    private void filterHospitals(
-            String searchText,
-            VBox container
+    private String getSpecialties(
+            String hospitalName
     ) {
 
-        String query =
-                searchText.toLowerCase();
+        switch (hospitalName) {
 
-        for (javafx.scene.Node node :
-                container.getChildren()) {
+            case "Apollo Hospitals":
 
-            if (!(node instanceof VBox)) {
-                continue;
-            }
+                return "Cardiology, Neurology, Orthopedics, " +
+                        "Oncology, General Medicine";
 
-            VBox hospital =
-                    (VBox) node;
+            case "Care Hospitals":
 
-            boolean visible =
-                    hospital.getUserData() != null &&
-                    hospital.getUserData()
-                            .toString()
-                            .toLowerCase()
-                            .contains(query);
+                return "Cardiology, Gastroenterology, Pulmonology, " +
+                        "Orthopedics, General Medicine";
 
-            hospital.setVisible(visible);
-            hospital.setManaged(visible);
+            case "Yashoda Hospitals":
+
+                return "Cardiology, Neurology, Oncology, " +
+                        "Nephrology, Gastroenterology";
+
+            case "KIMS Hospitals":
+
+                return "Cardiology, Orthopedics, Neurology, " +
+                        "Urology, General Medicine";
+
+            default:
+
+                return "General Medicine, Cardiology, Orthopedics";
         }
     }
 
-    // =====================================================
-    // CREATE HOSPITAL CARD WITH SEARCH DATA
-    // =====================================================
-
-    private VBox createSearchableHospital(
-            String name
-    ) {
-
-        VBox box = new VBox();
-
-        box.setUserData(name);
-
-        return box;
-    }
-
-    // =====================================================
-    // SIDEBAR
-    // =====================================================
-
-    private VBox createSidebar() {
-
-        VBox sidebar =
-                new VBox(8);
-
-        sidebar.setPrefWidth(255);
-
-        sidebar.setPadding(
-                new Insets(22)
-        );
-
-        sidebar.setStyle(
-                "-fx-background-color: #0f172a;"
-        );
-
-        Label brand =
-                new Label("✚ Health-Sphere");
-
-        brand.setStyle(
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 21px;" +
-                "-fx-font-weight: bold;"
-        );
-
-        Label module =
-                new Label("Patient Module");
-
-        module.setStyle(
-                "-fx-text-fill: #94a3b8;"
-        );
-
-        Region spacer =
-                new Region();
-
-        VBox.setVgrow(
-                spacer,
-                Priority.ALWAYS
-        );
-
-        sidebar.getChildren().addAll(
-                brand,
-                module,
-
-                nav(
-                        "▦",
-                        "Dashboard",
-                        this::showDashboard
-                ),
-
-                nav(
-                        "⊞",
-                        "Search Hospitals",
-                        this::showSearchHospitals
-                ),
-
-                nav(
-                        "▣",
-                        "Appointments",
-                        this::showAppointments
-                ),
-
-                nav(
-                        "▧",
-                        "Health Passport",
-                        this::showHealthPassport
-                ),
-
-                nav(
-                        "▱",
-                        "Medical Records",
-                        this::showMedicalRecords
-                ),
-
-                nav(
-                        "♙",
-                        "AI Health Assistant",
-                        this::showAIHealthAssistant
-                ),
-
-                nav(
-                        "⌖",
-                        "Emergency Assistance",
-                        this::showEmergencyAssistance
-                ),
-
-                spacer,
-
-                nav(
-                        "♧",
-                        "Notifications",
-                        this::showNotifications
-                ),
-
-                nav(
-                        "⚙",
-                        "Profile & Settings",
-                        this::showProfileSettings
-                )
-        );
-
-        return sidebar;
-    }
-
-    private HBox nav(
-            String icon,
-            String text,
-            Runnable action
-    ) {
-
-        HBox item =
-                new HBox(12);
-
-        item.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        item.setPadding(
-                new Insets(12)
-        );
-
-        item.setStyle(
-                "-fx-background-color: transparent;" +
-                "-fx-background-radius: 8;"
-        );
-
-        Label iconLabel =
-                new Label(icon);
-
-        iconLabel.setStyle(
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 17px;"
-        );
-
-        Label textLabel =
-                new Label(text);
-
-        textLabel.setStyle(
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 14px;"
-        );
-
-        item.getChildren().addAll(
-                iconLabel,
-                textLabel
-        );
-
-        item.setOnMouseClicked(
-                e -> action.run()
-        );
-
-        return item;
-    }
-
-    // =====================================================
-    // HEADER
-    // =====================================================
-
-    private HBox createHeader() {
-
-        HBox header =
-                new HBox();
-
-        header.setAlignment(
-                Pos.CENTER_RIGHT
-        );
-
-        header.setPadding(
-                new Insets(16, 28, 16, 28)
-        );
-
-        header.setStyle(
-                "-fx-background-color: white;" +
-                "-fx-border-color: #e2e8f0;"
-        );
-
-        Region spacer =
-                new Region();
-
-        HBox.setHgrow(
-                spacer,
-                Priority.ALWAYS
-        );
-
-        header.getChildren().addAll(
-                spacer,
-
-                button(
-                        "Notifications",
-                        this::showNotifications
-                ),
-
-                button(
-                        "Sarah",
-                        this::showProfileSettings
-                )
-        );
-
-        return header;
-    }
-
-    // =====================================================
-    // COMMON CARD
-    // =====================================================
-
-    private VBox card(String title) {
-
-        VBox box =
-                new VBox(12);
-
-        box.setPadding(
-                new Insets(20)
-        );
-
-        box.setStyle(
-                "-fx-background-color: white;" +
-                "-fx-background-radius: 14;" +
-                "-fx-border-color: #bfdbfe;" +
-                "-fx-border-radius: 14;" +
-                "-fx-effect: dropshadow(gaussian, rgba(15,23,42,0.08), 10, 0, 0, 3);"
-        );
-
-        if (!title.isEmpty()) {
-
-            Label label =
-                    new Label(title);
-
-            label.setStyle(
-                    "-fx-font-size: 18px;" +
-                    "-fx-font-weight: bold;" +
-                    "-fx-text-fill: #0f172a;"
-            );
-
-            box.getChildren().add(label);
-        }
-
-        return box;
-    }
-
-    // =====================================================
-    // BUTTON
-    // =====================================================
-
-    private Button button(
-            String text,
-            Runnable action
-    ) {
-
-        Button button =
-                new Button(text);
-
-        button.setPrefHeight(42);
-
-        button.setPadding(
-                new Insets(8, 18, 8, 18)
-        );
-
-        button.setStyle(
-                "-fx-background-color: #2563eb;" +
-                "-fx-text-fill: white;" +
-                "-fx-font-weight: bold;" +
-                "-fx-background-radius: 8;" +
-                "-fx-cursor: hand;"
-        );
-
-        button.setOnAction(
-                e -> action.run()
-        );
-
-        return button;
-    }
-
-    // =====================================================
-    // IMAGE
-    // =====================================================
-
-    private ImageView loadImage(
+    // =========================================================
+    // IMAGE LOADER
+    // =========================================================
+
+    private ImageView createImage(
             String path,
             double width,
             double height
     ) {
 
+        ImageView view =
+                new ImageView();
+
+        var resource =
+                getClass().getResource(path);
+
+        if (resource == null) {
+
+            System.err.println(
+                    "Hospital image not found: " + path
+            );
+
+            view.setFitWidth(width);
+            view.setFitHeight(height);
+
+            return view;
+        }
+
         Image image =
                 new Image(
-                        getClass()
-                                .getResourceAsStream(path)
+                        resource.toExternalForm()
                 );
 
-        ImageView view =
-                new ImageView(image);
+        view.setImage(image);
 
         view.setFitWidth(width);
         view.setFitHeight(height);
+
         view.setPreserveRatio(false);
 
         return view;
-    }
-
-    // =====================================================
-    // DIRECT NAVIGATION
-    // =====================================================
-
-    private void showDashboard() {
-        stage.setScene(
-                new Dashboard(stage).getScene()
-        );
-    }
-
-    private void showSearchHospitals() {
-        stage.setScene(
-                new SearchHospitals(stage).getScene()
-        );
-    }
-
-    private void showAppointments() {
-        stage.setScene(
-                new Appointments(stage).getScene()
-        );
-    }
-
-    private void showBookAppointment() {
-        stage.setScene(
-                new BookAppointment(stage).getScene()
-        );
-    }
-
-    private void showHealthPassport() {
-        stage.setScene(
-                new HealthPassport(stage).getScene()
-        );
-    }
-
-    private void showMedicalRecords() {
-        stage.setScene(
-                new MedicalRecords(stage).getScene()
-        );
-    }
-
-    private void showAIHealthAssistant() {
-        stage.setScene(
-                new AiHealthAssistant(stage).getScene()
-        );
-    }
-
-    private void showEmergencyAssistance() {
-        stage.setScene(
-                new EmergencyAssistance(stage).getScene()
-        );
-    }
-
-    private void showNotifications() {
-        stage.setScene(
-                new Notifications(stage).getScene()
-        );
-    }
-
-    private void showProfileSettings() {
-        stage.setScene(
-                new ProfileSettings(stage).getScene()
-        );
     }
 }

@@ -1,3 +1,4 @@
+
 package com.healthsphere.view.Patient;
 
 import javafx.geometry.Insets;
@@ -29,7 +30,8 @@ public class PatientUI {
             Node content
     ) {
 
-        BorderPane root = new BorderPane();
+        BorderPane root =
+                new BorderPane();
 
         root.setStyle(
                 "-fx-background-color: #f1f5f9;"
@@ -51,10 +53,27 @@ public class PatientUI {
         // TOP HEADER
         // =====================================================
 
+        /*
+         * The title shown in the top header.
+         *
+         * If pageTitle is empty/null, activePage is used instead.
+         * This prevents the top-left title from disappearing.
+         */
+
+        String headerTitle =
+                pageTitle;
+
+        if (headerTitle == null ||
+                headerTitle.trim().isEmpty()) {
+
+            headerTitle =
+                    activePage;
+        }
+
         HBox header =
                 createHeader(
                         stage,
-                        pageTitle
+                        headerTitle
                 );
 
         root.setTop(header);
@@ -77,7 +96,9 @@ public class PatientUI {
         // =====================================================
 
         Label title =
-                new Label(pageTitle);
+                new Label(
+                        pageTitle
+                );
 
         title.setStyle(
                 "-fx-font-size: 30px;" +
@@ -86,7 +107,9 @@ public class PatientUI {
         );
 
         Label subtitle =
-                new Label(pageSubtitle);
+                new Label(
+                        pageSubtitle
+                );
 
         subtitle.setWrapText(true);
 
@@ -122,9 +145,13 @@ public class PatientUI {
         // =====================================================
 
         ScrollPane scroll =
-                new ScrollPane(page);
+                new ScrollPane(
+                        page
+                );
 
-        scroll.setFitToWidth(true);
+        scroll.setFitToWidth(
+                true
+        );
 
         scroll.setHbarPolicy(
                 ScrollPane.ScrollBarPolicy.NEVER
@@ -139,7 +166,9 @@ public class PatientUI {
                 "-fx-background: #f1f5f9;"
         );
 
-        root.setCenter(scroll);
+        root.setCenter(
+                scroll
+        );
 
         // =====================================================
         // SCENE
@@ -190,7 +219,7 @@ public class PatientUI {
 
         Label logo =
                 new Label(
-                        "✚  MediNexus AI"
+                        "✚  HealthSphere"
                 );
 
         logo.setStyle(
@@ -369,7 +398,9 @@ public class PatientUI {
         );
 
         item.setPrefHeight(46);
+
         item.setMinHeight(46);
+
         item.setMaxWidth(
                 Double.MAX_VALUE
         );
@@ -399,9 +430,13 @@ public class PatientUI {
         // =====================================================
 
         Label iconLabel =
-                new Label(icon);
+                new Label(
+                        icon
+                );
 
-        iconLabel.setPrefWidth(25);
+        iconLabel.setPrefWidth(
+                25
+        );
 
         iconLabel.setAlignment(
                 Pos.CENTER
@@ -417,7 +452,9 @@ public class PatientUI {
         // =====================================================
 
         Label textLabel =
-                new Label(text);
+                new Label(
+                        text
+                );
 
         textLabel.setStyle(
                 "-fx-text-fill: white;" +
@@ -597,7 +634,17 @@ public class PatientUI {
                 )
         );
 
-        header.setPrefHeight(70);
+        header.setPrefHeight(
+                70
+        );
+
+        header.setMinHeight(
+                70
+        );
+
+        header.setMaxHeight(
+                70
+        );
 
         header.setStyle(
                 "-fx-background-color: white;" +
@@ -606,11 +653,13 @@ public class PatientUI {
         );
 
         // =====================================================
-        // PAGE TITLE
+        // CURRENT PAGE TITLE
         // =====================================================
 
         Label currentPage =
-                new Label(pageTitle);
+                new Label(
+                        pageTitle
+                );
 
         currentPage.setStyle(
                 "-fx-font-size: 18px;" +
@@ -631,14 +680,21 @@ public class PatientUI {
         );
 
         // =====================================================
-        // NOTIFICATION
+        // NOTIFICATION BUTTON
         // =====================================================
 
         Button notification =
-                new Button("♧");
+                new Button(
+                        "♧"
+                );
 
-        notification.setPrefWidth(42);
-        notification.setPrefHeight(38);
+        notification.setPrefWidth(
+                48
+        );
+
+        notification.setPrefHeight(
+                42
+        );
 
         notification.setStyle(
                 "-fx-background-color: #eff6ff;" +
@@ -649,20 +705,29 @@ public class PatientUI {
         );
 
         notification.setOnAction(
-                e -> stage.setScene(
-                        new Notifications(stage)
-                                .getScene()
-                )
+                e -> {
+
+                    stage.setScene(
+                            new Notifications(stage)
+                                    .getScene()
+                    );
+
+                    stage.show();
+                }
         );
 
         // =====================================================
-        // PROFILE
+        // PROFILE BUTTON
         // =====================================================
 
         Button profile =
-                new Button("Sarah");
+                new Button(
+                        "Sarah"
+                );
 
-        profile.setPrefHeight(38);
+        profile.setPrefHeight(
+                42
+        );
 
         profile.setStyle(
                 "-fx-background-color: #eff6ff;" +
@@ -674,11 +739,20 @@ public class PatientUI {
         );
 
         profile.setOnAction(
-                e -> stage.setScene(
-                        new ProfileSettings(stage)
-                                .getScene()
-                )
+                e -> {
+
+                    stage.setScene(
+                            new ProfileSettings(stage)
+                                    .getScene()
+                    );
+
+                    stage.show();
+                }
         );
+
+        // =====================================================
+        // HEADER COMPONENTS
+        // =====================================================
 
         header.getChildren().addAll(
                 currentPage,
@@ -717,7 +791,9 @@ public class PatientUI {
                 !title.isEmpty()) {
 
             Label label =
-                    new Label(title);
+                    new Label(
+                            title
+                    );
 
             label.setStyle(
                     "-fx-font-size: 18px;" +
@@ -763,7 +839,9 @@ public class PatientUI {
                 !title.isEmpty()) {
 
             Label label =
-                    new Label(title);
+                    new Label(
+                            title
+                    );
 
             label.setStyle(
                     "-fx-font-size: 18px;" +
@@ -789,9 +867,13 @@ public class PatientUI {
     ) {
 
         Button button =
-                new Button(text);
+                new Button(
+                        text
+                );
 
-        button.setPrefHeight(42);
+        button.setPrefHeight(
+                42
+        );
 
         button.setStyle(
                 "-fx-background-color: #2563eb;" +
@@ -806,6 +888,7 @@ public class PatientUI {
                 e -> {
 
                     if (action != null) {
+
                         action.run();
                     }
                 }
@@ -824,9 +907,13 @@ public class PatientUI {
     ) {
 
         Button button =
-                new Button(text);
+                new Button(
+                        text
+                );
 
-        button.setPrefHeight(42);
+        button.setPrefHeight(
+                42
+        );
 
         button.setStyle(
                 "-fx-background-color: #eff6ff;" +
@@ -844,6 +931,7 @@ public class PatientUI {
                 e -> {
 
                     if (action != null) {
+
                         action.run();
                     }
                 }
@@ -861,7 +949,9 @@ public class PatientUI {
     ) {
 
         Label label =
-                new Label(text);
+                new Label(
+                        text
+                );
 
         label.setStyle(
                 "-fx-text-fill: #64748b;" +
@@ -880,7 +970,9 @@ public class PatientUI {
     ) {
 
         Label label =
-                new Label(text);
+                new Label(
+                        text
+                );
 
         label.setStyle(
                 "-fx-text-fill: #16a34a;" +
@@ -900,7 +992,9 @@ public class PatientUI {
     ) {
 
         Label label =
-                new Label(text);
+                new Label(
+                        text
+                );
 
         label.setStyle(
                 "-fx-text-fill: #2563eb;" +
@@ -920,7 +1014,9 @@ public class PatientUI {
     ) {
 
         Label label =
-                new Label(text);
+                new Label(
+                        text
+                );
 
         label.setStyle(
                 "-fx-text-fill: #dc2626;" +
@@ -940,7 +1036,9 @@ public class PatientUI {
     ) {
 
         Label label =
-                new Label(text);
+                new Label(
+                        text
+                );
 
         label.setStyle(
                 "-fx-text-fill: #ea580c;" +
@@ -951,3 +1049,4 @@ public class PatientUI {
         return label;
     }
 }
+

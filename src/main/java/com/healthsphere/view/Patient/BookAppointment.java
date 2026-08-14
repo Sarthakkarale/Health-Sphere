@@ -12,10 +12,8 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -27,82 +25,70 @@ public class BookAppointment {
         this.stage = stage;
     }
 
+    // =========================================================
+    // MAIN SCENE
+    // =========================================================
+
     public Scene getScene() {
-
-        BorderPane root =
-                new BorderPane();
-
-        root.setLeft(createSidebar());
-        root.setTop(createHeader());
 
         VBox content =
                 new VBox(22);
 
         content.setPadding(
-                new Insets(28)
+                new Insets(5)
         );
 
-        content.setStyle(
-                "-fx-background-color: #f1f5f9;"
-        );
-
-        Label title =
-                new Label("Book an Appointment");
-
-        title.setStyle(
-                "-fx-font-size: 30px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: #0f172a;"
-        );
-
-        Label subtitle =
-                new Label(
-                        "Choose a doctor, hospital, date and convenient time."
-                );
-
-        subtitle.setStyle(
-                "-fx-font-size: 15px;" +
-                "-fx-text-fill: #64748b;"
-        );
-
-        VBox heading =
-                new VBox(
-                        5,
-                        title,
-                        subtitle
-                );
-
-        // -------------------------------------------------
+        // =====================================================
         // IMAGES
-        // -------------------------------------------------
+        // =====================================================
 
         HBox images =
                 new HBox(15);
 
+        images.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
         images.getChildren().addAll(
+
                 imageCard(
                         "/images/appointments/appointment1.jpg"
                 ),
+
                 imageCard(
                         "/images/appointments/appointment2.jpg"
                 ),
+
                 imageCard(
                         "/images/appointments/appointment3.jpg"
                 ),
+
                 imageCard(
                         "/images/appointments/appointment4.jpg"
                 )
         );
 
-        // -------------------------------------------------
+        // =====================================================
         // FORM CARD
-        // -------------------------------------------------
+        // =====================================================
 
         VBox form =
-                card("Appointment Details");
+                PatientUI.card(
+                        "Appointment Details"
+                );
+
+        // =====================================================
+        // PATIENT NAME
+        // =====================================================
 
         TextField patientName =
-                field("Enter patient name");
+                field(
+                        "Enter patient name"
+                );
+
+        // =====================================================
+        // DOCTOR
+        // =====================================================
 
         ComboBox<String> doctor =
                 new ComboBox<>();
@@ -119,7 +105,13 @@ public class BookAppointment {
         );
 
         doctor.setPrefHeight(43);
-        doctor.setMaxWidth(Double.MAX_VALUE);
+        doctor.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        // =====================================================
+        // SPECIALTY
+        // =====================================================
 
         ComboBox<String> specialty =
                 new ComboBox<>();
@@ -138,16 +130,22 @@ public class BookAppointment {
         );
 
         specialty.setPrefHeight(43);
-        specialty.setMaxWidth(Double.MAX_VALUE);
+        specialty.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        // =====================================================
+        // HOSPITAL
+        // =====================================================
 
         ComboBox<String> hospital =
                 new ComboBox<>();
 
         hospital.getItems().addAll(
                 "Apollo Hospitals",
-                "Fortis Healthcare",
-                "Max Healthcare",
-                "Manipal Hospitals"
+                "Care Hospitals",
+                "Yashoda Hospitals",
+                "KIMS Hospitals"
         );
 
         hospital.setPromptText(
@@ -155,7 +153,13 @@ public class BookAppointment {
         );
 
         hospital.setPrefHeight(43);
-        hospital.setMaxWidth(Double.MAX_VALUE);
+        hospital.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        // =====================================================
+        // DATE
+        // =====================================================
 
         DatePicker date =
                 new DatePicker();
@@ -165,7 +169,13 @@ public class BookAppointment {
         );
 
         date.setPrefHeight(43);
-        date.setMaxWidth(Double.MAX_VALUE);
+        date.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        // =====================================================
+        // TIME
+        // =====================================================
 
         ComboBox<String> time =
                 new ComboBox<>();
@@ -189,7 +199,13 @@ public class BookAppointment {
         );
 
         time.setPrefHeight(43);
-        time.setMaxWidth(Double.MAX_VALUE);
+        time.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        // =====================================================
+        // REASON
+        // =====================================================
 
         TextArea reason =
                 new TextArea();
@@ -209,9 +225,14 @@ public class BookAppointment {
                 "-fx-background-radius: 8;"
         );
 
+        // =====================================================
+        // LEFT FORM
+        // =====================================================
+
         VBox left =
                 new VBox(
                         7,
+
                         label("Patient Name"),
                         patientName,
 
@@ -222,9 +243,14 @@ public class BookAppointment {
                         specialty
                 );
 
+        // =====================================================
+        // RIGHT FORM
+        // =====================================================
+
         VBox right =
                 new VBox(
                         7,
+
                         label("Hospital"),
                         hospital,
 
@@ -234,9 +260,6 @@ public class BookAppointment {
                         label("Time"),
                         time
                 );
-
-        HBox row =
-                new HBox(20);
 
         HBox.setHgrow(
                 left,
@@ -248,16 +271,29 @@ public class BookAppointment {
                 Priority.ALWAYS
         );
 
+        HBox row =
+                new HBox(20);
+
         row.getChildren().addAll(
                 left,
                 right
         );
 
+        // =====================================================
+        // REASON LABEL
+        // =====================================================
+
         Label reasonLabel =
-                label("Reason for Visit");
+                label(
+                        "Reason for Visit"
+                );
+
+        // =====================================================
+        // ACTION BUTTONS
+        // =====================================================
 
         Button confirm =
-                button(
+                PatientUI.button(
                         "Confirm Appointment",
                         () -> confirmAppointment(
                                 patientName,
@@ -271,7 +307,7 @@ public class BookAppointment {
                 );
 
         Button cancel =
-                secondaryButton(
+                PatientUI.secondaryButton(
                         "Cancel",
                         this::showAppointments
                 );
@@ -290,11 +326,18 @@ public class BookAppointment {
                 actions
         );
 
+        // =====================================================
+        // ADD CONTENT
+        // =====================================================
+
         content.getChildren().addAll(
-                heading,
                 images,
                 form
         );
+
+        // =====================================================
+        // SCROLL
+        // =====================================================
 
         ScrollPane scroll =
                 new ScrollPane(content);
@@ -305,18 +348,34 @@ public class BookAppointment {
                 ScrollPane.ScrollBarPolicy.NEVER
         );
 
-        root.setCenter(scroll);
+        scroll.setVbarPolicy(
+                ScrollPane.ScrollBarPolicy.AS_NEEDED
+        );
 
-        return new Scene(
-                root,
-                1440,
-                900
+        scroll.setStyle(
+                "-fx-background-color: transparent;" +
+                "-fx-background: transparent;"
+        );
+
+        VBox wrapper =
+                new VBox(scroll);
+
+        // =====================================================
+        // COMMON PATIENT HEADER
+        // =====================================================
+
+        return PatientUI.createScene(
+                stage,
+                "Book Appointment",
+                "Book Appointment",
+                "Choose a doctor, hospital, date and convenient time.",
+                wrapper
         );
     }
 
-    // =====================================================
-    // CONFIRM
-    // =====================================================
+    // =========================================================
+    // CONFIRM APPOINTMENT
+    // =========================================================
 
     private void confirmAppointment(
             TextField patientName,
@@ -354,15 +413,13 @@ public class BookAppointment {
         );
     }
 
+    // =========================================================
+    // SUCCESS SCREEN
+    // =========================================================
+
     private void showMessage(
             String message
     ) {
-
-        BorderPane root =
-                new BorderPane();
-
-        root.setLeft(createSidebar());
-        root.setTop(createHeader());
 
         VBox content =
                 new VBox(20);
@@ -373,10 +430,6 @@ public class BookAppointment {
 
         content.setPadding(
                 new Insets(40)
-        );
-
-        content.setStyle(
-                "-fx-background-color: #f1f5f9;"
         );
 
         Label icon =
@@ -408,7 +461,7 @@ public class BookAppointment {
         );
 
         Button appointments =
-                button(
+                PatientUI.button(
                         "View Appointments",
                         this::showAppointments
                 );
@@ -420,20 +473,29 @@ public class BookAppointment {
                 appointments
         );
 
-        root.setCenter(content);
+        VBox wrapper =
+                new VBox(content);
+
+        wrapper.setAlignment(
+                Pos.CENTER
+        );
 
         stage.setScene(
-                new Scene(
-                        root,
-                        1440,
-                        900
+                PatientUI.createScene(
+                        stage,
+                        "Appointment Confirmed",
+                        "Appointment Confirmed",
+                        "Your healthcare appointment has been successfully booked.",
+                        wrapper
                 )
         );
+
+        stage.show();
     }
 
-    // =====================================================
-    // FORM HELPERS
-    // =====================================================
+    // =========================================================
+    // FORM FIELD
+    // =========================================================
 
     private TextField field(
             String prompt
@@ -458,6 +520,10 @@ public class BookAppointment {
         return field;
     }
 
+    // =========================================================
+    // LABEL
+    // =========================================================
+
     private Label label(
             String text
     ) {
@@ -473,9 +539,9 @@ public class BookAppointment {
         return label;
     }
 
-    // =====================================================
+    // =========================================================
     // IMAGE CARD
-    // =====================================================
+    // =========================================================
 
     private VBox imageCard(
             String path
@@ -505,110 +571,9 @@ public class BookAppointment {
         return box;
     }
 
-    // =====================================================
-    // CARD
-    // =====================================================
-
-    private VBox card(
-            String title
-    ) {
-
-        VBox box =
-                new VBox(14);
-
-        box.setPadding(
-                new Insets(22)
-        );
-
-        box.setStyle(
-                "-fx-background-color: white;" +
-                "-fx-background-radius: 14;" +
-                "-fx-border-color: #bfdbfe;" +
-                "-fx-border-radius: 14;" +
-                "-fx-effect: dropshadow(gaussian, rgba(15,23,42,0.08), 10, 0, 0, 3);"
-        );
-
-        Label heading =
-                new Label(title);
-
-        heading.setStyle(
-                "-fx-font-size: 19px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: #0f172a;"
-        );
-
-        box.getChildren().add(
-                heading
-        );
-
-        return box;
-    }
-
-    // =====================================================
-    // BUTTON
-    // =====================================================
-
-    private Button button(
-            String text,
-            Runnable action
-    ) {
-
-        Button button =
-                new Button(text);
-
-        button.setPrefHeight(42);
-
-        button.setPadding(
-                new Insets(8, 18, 8, 18)
-        );
-
-        button.setStyle(
-                "-fx-background-color: #2563eb;" +
-                "-fx-text-fill: white;" +
-                "-fx-font-weight: bold;" +
-                "-fx-background-radius: 8;" +
-                "-fx-cursor: hand;"
-        );
-
-        button.setOnAction(
-                e -> action.run()
-        );
-
-        return button;
-    }
-
-    private Button secondaryButton(
-            String text,
-            Runnable action
-    ) {
-
-        Button button =
-                new Button(text);
-
-        button.setPrefHeight(42);
-
-        button.setPadding(
-                new Insets(8, 18, 8, 18)
-        );
-
-        button.setStyle(
-                "-fx-background-color: #e2e8f0;" +
-                "-fx-text-fill: #334155;" +
-                "-fx-font-weight: bold;" +
-                "-fx-background-radius: 8;" +
-                "-fx-cursor: hand;"
-        );
-
-        button.setOnAction(
-                e -> action.run()
-        );
-
-        return button;
-    }
-
-    // =====================================================
-    // IMAGE
-    // =====================================================
+    // =========================================================
+    // IMAGE LOADER
+    // =========================================================
 
     private ImageView loadImage(
             String path,
@@ -616,283 +581,50 @@ public class BookAppointment {
             double height
     ) {
 
+        ImageView view =
+                new ImageView();
+
+        var resource =
+                getClass().getResource(path);
+
+        if (resource == null) {
+
+            System.err.println(
+                    "Appointment image not found: "
+                            + path
+            );
+
+            view.setFitWidth(width);
+            view.setFitHeight(height);
+
+            return view;
+        }
+
         Image image =
                 new Image(
-                        getClass()
-                                .getResourceAsStream(path)
+                        resource.toExternalForm()
                 );
 
-        ImageView view =
-                new ImageView(image);
+        view.setImage(image);
 
         view.setFitWidth(width);
         view.setFitHeight(height);
+
         view.setPreserveRatio(false);
 
         return view;
     }
 
-    // =====================================================
-    // SIDEBAR
-    // =====================================================
-
-    private VBox createSidebar() {
-
-        VBox sidebar =
-                new VBox(8);
-
-        sidebar.setPrefWidth(255);
-
-        sidebar.setPadding(
-                new Insets(22)
-        );
-
-        sidebar.setStyle(
-                "-fx-background-color: #0f172a;"
-        );
-
-        Label brand =
-                new Label("✚ Health-Sphere");
-
-        brand.setStyle(
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 21px;" +
-                "-fx-font-weight: bold;"
-        );
-
-        Label module =
-                new Label("Patient Module");
-
-        module.setStyle(
-                "-fx-text-fill: #94a3b8;"
-        );
-
-        Region spacer =
-                new Region();
-
-        VBox.setVgrow(
-                spacer,
-                Priority.ALWAYS
-        );
-
-        sidebar.getChildren().addAll(
-
-                brand,
-                module,
-
-                nav(
-                        "▦",
-                        "Dashboard",
-                        this::showDashboard
-                ),
-
-                nav(
-                        "⊞",
-                        "Search Hospitals",
-                        this::showSearchHospitals
-                ),
-
-                nav(
-                        "▣",
-                        "Appointments",
-                        this::showAppointments
-                ),
-
-                nav(
-                        "▧",
-                        "Health Passport",
-                        this::showHealthPassport
-                ),
-
-                nav(
-                        "▱",
-                        "Medical Records",
-                        this::showMedicalRecords
-                ),
-
-                nav(
-                        "♙",
-                        "AI Health Assistant",
-                        this::showAIHealthAssistant
-                ),
-
-                nav(
-                        "⌖",
-                        "Emergency Assistance",
-                        this::showEmergencyAssistance
-                ),
-
-                spacer,
-
-                nav(
-                        "♧",
-                        "Notifications",
-                        this::showNotifications
-                ),
-
-                nav(
-                        "⚙",
-                        "Profile & Settings",
-                        this::showProfileSettings
-                )
-        );
-
-        return sidebar;
-    }
-
-    private HBox nav(
-            String icon,
-            String text,
-            Runnable action
-    ) {
-
-        HBox item =
-                new HBox(12);
-
-        item.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        item.setPadding(
-                new Insets(12)
-        );
-
-        Label iconLabel =
-                new Label(icon);
-
-        iconLabel.setStyle(
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 17px;"
-        );
-
-        Label textLabel =
-                new Label(text);
-
-        textLabel.setStyle(
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 14px;"
-        );
-
-        item.getChildren().addAll(
-                iconLabel,
-                textLabel
-        );
-
-        item.setOnMouseClicked(
-                e -> action.run()
-        );
-
-        return item;
-    }
-
-    // =====================================================
-    // HEADER
-    // =====================================================
-
-    private HBox createHeader() {
-
-        HBox header =
-                new HBox();
-
-        header.setAlignment(
-                Pos.CENTER_RIGHT
-        );
-
-        header.setPadding(
-                new Insets(16, 28, 16, 28)
-        );
-
-        header.setStyle(
-                "-fx-background-color: white;" +
-                "-fx-border-color: #e2e8f0;"
-        );
-
-        Region spacer =
-                new Region();
-
-        HBox.setHgrow(
-                spacer,
-                Priority.ALWAYS
-        );
-
-        header.getChildren().addAll(
-                spacer,
-
-                button(
-                        "Notifications",
-                        this::showNotifications
-                ),
-
-                button(
-                        "Sarah",
-                        this::showProfileSettings
-                )
-        );
-
-        return header;
-    }
-
-    // =====================================================
-    // DIRECT NAVIGATION
-    // =====================================================
-
-    private void showDashboard() {
-        stage.setScene(
-                new Dashboard(stage).getScene()
-        );
-    }
-
-    private void showSearchHospitals() {
-        stage.setScene(
-                new SearchHospitals(stage).getScene()
-        );
-    }
+    // =========================================================
+    // NAVIGATION
+    // =========================================================
 
     private void showAppointments() {
+
         stage.setScene(
                 new Appointments(stage).getScene()
         );
-    }
 
-    private void showBookAppointment() {
-        stage.setScene(
-                new BookAppointment(stage).getScene()
-        );
-    }
-
-    private void showHealthPassport() {
-        stage.setScene(
-                new HealthPassport(stage).getScene()
-        );
-    }
-
-    private void showMedicalRecords() {
-        stage.setScene(
-                new MedicalRecords(stage).getScene()
-        );
-    }
-
-    private void showAIHealthAssistant() {
-        stage.setScene(
-                new AiHealthAssistant(stage).getScene()
-        );
-    }
-
-    private void showEmergencyAssistance() {
-        stage.setScene(
-                new EmergencyAssistance(stage).getScene()
-        );
-    }
-
-    private void showNotifications() {
-        stage.setScene(
-                new Notifications(stage).getScene()
-        );
-    }
-
-    private void showProfileSettings() {
-        stage.setScene(
-                new ProfileSettings(stage).getScene()
-        );
+        stage.show();
     }
 }
