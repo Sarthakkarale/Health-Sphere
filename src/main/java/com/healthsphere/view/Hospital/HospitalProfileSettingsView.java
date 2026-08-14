@@ -17,7 +17,7 @@ public class HospitalProfileSettingsView {
     // MODERN LIGHT PALETTE (With Dark Sidebar)
     // =========================================================
 
-    private static final String PRIMARY_BLUE = "#2563EB";     // Vibrant Modern Blue
+    private static final String PRIMARY_BLUE = "#170eca";     // Vibrant Modern Blue
     private static final String PRIMARY_LIGHT = "#EFF6FF";    // Light Blue Accent Tint
     private static final String DARK_TEXT = "#0F172A";        // Slate Dark Text
     private static final String SECONDARY_TEXT = "#64748B";   // Slate Muted Text
@@ -181,7 +181,7 @@ public class HospitalProfileSettingsView {
         String baseStyle = "-fx-background-radius: 8; -fx-cursor: hand;";
 
         if (selected) {
-            button.setStyle(baseStyle + "-fx-background-color: " + SIDEBAR_ACTIVE_BG + ";");
+            button.setStyle(baseStyle + "-fx-background-color: " + PRIMARY_BLUE + ";");
         } else {
             button.setStyle(baseStyle + "-fx-background-color: transparent;");
 

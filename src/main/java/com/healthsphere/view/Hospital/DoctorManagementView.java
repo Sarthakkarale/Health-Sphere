@@ -27,7 +27,7 @@ public class DoctorManagementView {
     // COLOR PALETTE (Modern Light Theme with Dark Sidebar)
     // =========================================================
 
-    private static final String PRIMARY_BLUE = "#1E62D0";
+    private static final String PRIMARY_BLUE = "#170eca";
     private static final String PRIMARY_LIGHT = "#EFF5FF";
     private static final String DARK_TEXT = "#0F172A";
     private static final String SECONDARY_TEXT = "#64748B";
@@ -147,7 +147,7 @@ public class DoctorManagementView {
     }
 
     // =========================================================
-    // DARK SIDEBAR
+    // DARK SIDEBAR (Standardized layout across views)
     // =========================================================
 
     private VBox createSidebar(Stage stage) {
@@ -184,7 +184,7 @@ public class DoctorManagementView {
         logoBox.getChildren().addAll(logo, subtitle);
         sidebar.getChildren().add(logoBox);
 
-        // NAVIGATION BUTTONS
+        // NAVIGATION BUTTONS (Doctors Selected)
         Button dashboardButton = createNavigationButton("▦", "Dashboard", false);
         Button doctorButton = createNavigationButton("♙", "Doctors", true);
         Button departmentButton = createNavigationButton("✚", "Departments", false);
@@ -821,67 +821,53 @@ public class DoctorManagementView {
     }
 
     private Button createSmallButton(String text, String color, String bgColor) {
-
-        Button button = new Button(text);
-        button.setPrefHeight(30);
-        button.setPadding(new Insets(0, 12, 0, 12));
-
-        String style = 
+        Button btn = new Button(text);
+        btn.setStyle(
                 "-fx-background-color: " + bgColor + ";" +
                 "-fx-text-fill: " + color + ";" +
-                "-fx-background-radius: 6;" +
                 "-fx-font-size: 11px;" +
                 "-fx-font-weight: bold;" +
-                "-fx-cursor: hand;";
-
-        button.setStyle(style);
-
-        button.setOnMouseEntered(e -> button.setStyle(style.replace(bgColor, color + "25")));
-        button.setOnMouseExited(e -> button.setStyle(style));
-
-        return button;
+                "-fx-background-radius: 6;" +
+                "-fx-cursor: hand;" +
+                "-fx-padding: 4 10;"
+        );
+        return btn;
     }
 
     // =========================================================
-    // DIALOGS AND ACTION IMPLEMENTATIONS
+    // DIALOGS & ACTIONS
     // =========================================================
 
-    private void showAddDoctorDialog(Stage owner) {
-        Stage dialog = new Stage();
-        dialog.initModality(Modality.APPLICATION_MODAL);
-        dialog.initOwner(owner);
-        dialog.setTitle("Add New Doctor");
+    private void showAddDoctorDialog(Stage parentStage) {
+        Stage dialog = createModalDialog(parentStage, "Add New Doctor");
 
-        VBox layout = new VBox(16);
-        layout.setPadding(new Insets(24));
-        layout.setStyle("-fx-background-color: white;");
+        VBox form = new VBox(16);
+        form.setPadding(new Insets(24));
 
-        Label dialogTitle = new Label("Register New Doctor");
-        dialogTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: " + DARK_TEXT + ";");
+        TextField nameInput = createInputField("Full Name (e.g. Dr. John Doe)");
+        ComboBox<String> deptInput = new ComboBox<>(FXCollections.observableArrayList(
+                "Cardiology", "Neurology", "Orthopedics", "Pediatrics", "General Medicine"
+        ));
+        deptInput.setPromptText("Select Department");
+        deptInput.setMaxWidth(Double.MAX_VALUE);
 
-        TextField nameInput = new TextField();
-        nameInput.setPromptText("Dr. John Doe");
-
-        ComboBox<String> deptInput = new ComboBox<>();
-        deptInput.getItems().addAll("Cardiology", "Neurology", "Orthopedics", "Pediatrics", "General Medicine");
-        deptInput.setValue("Cardiology");
-
-        TextField qualInput = new TextField();
-        qualInput.setPromptText("MD, Cardiology");
-
-        ComboBox<String> statusInput = new ComboBox<>();
-        statusInput.getItems().addAll("Active", "Inactive", "On Leave");
+        TextField qualInput = createInputField("Qualification (e.g. MD, Cardiology)");
+        ComboBox<String> statusInput = new ComboBox<>(FXCollections.observableArrayList("Active", "Inactive", "On Leave"));
         statusInput.setValue("Active");
+        statusInput.setMaxWidth(Double.MAX_VALUE);
 
         Button saveBtn = new Button("Add Doctor");
-        saveBtn.setStyle("-fx-background-color: " + PRIMARY_BLUE + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16;");
+        saveBtn.setStyle("-fx-background-color: " + PRIMARY_BLUE + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand;");
+        saveBtn.setMaxWidth(Double.MAX_VALUE);
+        saveBtn.setPrefHeight(40);
+
         saveBtn.setOnAction(e -> {
-            if (nameInput.getText().trim().isEmpty()) {
-                showAlert("Validation Error", "Doctor name cannot be empty.");
+            if (nameInput.getText().trim().isEmpty() || deptInput.getValue() == null) {
+                showAlert("Validation Error", "Please provide at least a name and department.");
                 return;
             }
 
-            String newId = "DOC-" + (1024 + masterDoctorList.size());
+            String newId = "DOC-" + (1024 + masterDoctorList.size() + 1);
             Doctor newDoc = new Doctor(
                     newId,
                     nameInput.getText().trim(),
@@ -893,157 +879,171 @@ public class DoctorManagementView {
             masterDoctorList.add(newDoc);
             applyFiltersAndRefreshUI();
             dialog.close();
+            showAlert("Success", "Doctor added successfully with ID " + newId);
         });
 
-        layout.getChildren().addAll(
-                dialogTitle,
-                new Label("Full Name:"), nameInput,
+        form.getChildren().addAll(
+                new Label("Doctor Name:"), nameInput,
                 new Label("Department:"), deptInput,
                 new Label("Qualification:"), qualInput,
-                new Label("Status:"), statusInput,
-                saveBtn
+                new Label("Initial Status:"), statusInput,
+                new Region(), saveBtn
         );
 
-        Scene scene = new Scene(layout, 400, 420);
-        dialog.setScene(scene);
+        dialog.setScene(new Scene(form, 400, 420));
         dialog.showAndWait();
     }
 
-    private void showViewDoctorDialog(Doctor doc) {
-        Stage dialog = new Stage();
-        dialog.initModality(Modality.APPLICATION_MODAL);
-        dialog.setTitle("Doctor Details - " + doc.getId());
+    private void showEditDoctorDialog(Doctor doctor) {
+        Stage dialog = createModalDialog((Stage) doctorRowsContainer.getScene().getWindow(), "Edit Doctor - " + doctor.getId());
 
-        VBox layout = new VBox(12);
-        layout.setPadding(new Insets(24));
-        layout.setStyle("-fx-background-color: white;");
+        VBox form = new VBox(16);
+        form.setPadding(new Insets(24));
 
-        Label title = new Label(doc.getName());
-        title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: " + PRIMARY_BLUE + ";");
+        TextField nameInput = createInputField("Full Name");
+        nameInput.setText(doctor.getName());
 
-        layout.getChildren().addAll(
-                title,
-                new Label("Doctor ID: " + doc.getId()),
-                new Label("Department: " + doc.getDepartment()),
-                new Label("Qualification: " + doc.getQualification()),
-                new Label("Current Status: " + doc.getStatus())
-        );
+        ComboBox<String> deptInput = new ComboBox<>(FXCollections.observableArrayList(
+                "Cardiology", "Neurology", "Orthopedics", "Pediatrics", "General Medicine"
+        ));
+        deptInput.setValue(doctor.getDepartment());
+        deptInput.setMaxWidth(Double.MAX_VALUE);
 
-        Button closeBtn = new Button("Close");
-        closeBtn.setOnAction(e -> dialog.close());
-        layout.getChildren().add(closeBtn);
+        TextField qualInput = createInputField("Qualification");
+        qualInput.setText(doctor.getQualification());
 
-        dialog.setScene(new Scene(layout, 350, 260));
-        dialog.showAndWait();
-    }
-
-    private void showEditDoctorDialog(Doctor doc) {
-        Stage dialog = new Stage();
-        dialog.initModality(Modality.APPLICATION_MODAL);
-        dialog.setTitle("Edit Doctor - " + doc.getId());
-
-        VBox layout = new VBox(16);
-        layout.setPadding(new Insets(24));
-
-        TextField nameInput = new TextField(doc.getName());
-
-        ComboBox<String> deptInput = new ComboBox<>();
-        deptInput.getItems().addAll("Cardiology", "Neurology", "Orthopedics", "Pediatrics", "General Medicine");
-        deptInput.setValue(doc.getDepartment());
-
-        TextField qualInput = new TextField(doc.getQualification());
-
-        ComboBox<String> statusInput = new ComboBox<>();
-        statusInput.getItems().addAll("Active", "Inactive", "On Leave");
-        statusInput.setValue(doc.getStatus());
+        ComboBox<String> statusInput = new ComboBox<>(FXCollections.observableArrayList("Active", "Inactive", "On Leave"));
+        statusInput.setValue(doctor.getStatus());
+        statusInput.setMaxWidth(Double.MAX_VALUE);
 
         Button saveBtn = new Button("Save Changes");
-        saveBtn.setStyle("-fx-background-color: " + PRIMARY_BLUE + "; -fx-text-fill: white; -fx-font-weight: bold;");
+        saveBtn.setStyle("-fx-background-color: " + PRIMARY_BLUE + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand;");
+        saveBtn.setMaxWidth(Double.MAX_VALUE);
+        saveBtn.setPrefHeight(40);
+
         saveBtn.setOnAction(e -> {
-            doc.setName(nameInput.getText().trim());
-            doc.setDepartment(deptInput.getValue());
-            doc.setQualification(qualInput.getText().trim());
-            doc.setStatus(statusInput.getValue());
+            doctor.setName(nameInput.getText().trim());
+            doctor.setDepartment(deptInput.getValue());
+            doctor.setQualification(qualInput.getText().trim());
+            doctor.setStatus(statusInput.getValue());
 
             applyFiltersAndRefreshUI();
             dialog.close();
+            showAlert("Updated", "Doctor details updated successfully.");
         });
 
-        layout.getChildren().addAll(
-                new Label("Edit Full Name:"), nameInput,
-                new Label("Edit Department:"), deptInput,
-                new Label("Edit Qualification:"), qualInput,
-                new Label("Edit Status:"), statusInput,
-                saveBtn
+        form.getChildren().addAll(
+                new Label("Doctor Name:"), nameInput,
+                new Label("Department:"), deptInput,
+                new Label("Qualification:"), qualInput,
+                new Label("Status:"), statusInput,
+                new Region(), saveBtn
         );
 
-        dialog.setScene(new Scene(layout, 380, 380));
+        dialog.setScene(new Scene(form, 400, 420));
         dialog.showAndWait();
     }
 
-    private void handleDeleteDoctor(Doctor doc) {
+    private void showViewDoctorDialog(Doctor doctor) {
+        Stage dialog = createModalDialog((Stage) doctorRowsContainer.getScene().getWindow(), "Doctor Details");
+
+        VBox content = new VBox(12);
+        content.setPadding(new Insets(24));
+
+        content.getChildren().addAll(
+                new Label("ID: " + doctor.getId()),
+                new Label("Name: " + doctor.getName()),
+                new Label("Department: " + doctor.getDepartment()),
+                new Label("Qualification: " + doctor.getQualification()),
+                new Label("Status: " + doctor.getStatus())
+        );
+
+        for (javafx.scene.Node n : content.getChildren()) {
+            n.setStyle("-fx-font-size: 14px; -fx-text-fill: " + DARK_TEXT + ";");
+        }
+
+        Button closeBtn = new Button("Close");
+        closeBtn.setOnAction(e -> dialog.close());
+        content.getChildren().add(closeBtn);
+
+        dialog.setScene(new Scene(content, 320, 260));
+        dialog.showAndWait();
+    }
+
+    private void handleDeleteDoctor(Doctor doctor) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Confirm Deletion");
-        alert.setHeaderText("Delete " + doc.getName() + "?");
-        alert.setContentText("Are you sure you want to remove this doctor from the hospital system?");
+        alert.setTitle("Delete Doctor");
+        alert.setHeaderText("Remove " + doctor.getName() + "?");
+        alert.setContentText("Are you sure you want to remove this doctor from records?");
 
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            masterDoctorList.remove(doc);
+            masterDoctorList.remove(doctor);
             applyFiltersAndRefreshUI();
+            showAlert("Deleted", doctor.getName() + " has been removed.");
         }
     }
 
     private void exportDoctorDataToCSV(Stage stage) {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Export Doctors Directory");
-        fileChooser.setInitialFileName("Doctors_Report.csv");
+        fileChooser.setTitle("Export Doctor List");
+        fileChooser.setInitialFileName("Doctors_Export.csv");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
 
         File file = fileChooser.showSaveDialog(stage);
         if (file != null) {
             try (PrintWriter writer = new PrintWriter(file)) {
-                writer.println("Doctor ID,Name,Department,Qualification,Status");
-                for (Doctor doc : filteredDoctorList) {
-                    writer.printf("%s,\"%s\",\"%s\",\"%s\",%s%n",
-                            doc.getId(),
-                            doc.getName(),
-                            doc.getDepartment(),
-                            doc.getQualification(),
-                            doc.getStatus()
-                    );
+                writer.println("ID,Name,Department,Qualification,Status");
+                for (Doctor d : filteredDoctorList) {
+                    writer.println(String.format("%s,\"%s\",\"%s\",\"%s\",%s",
+                            d.getId(), d.getName(), d.getDepartment(), d.getQualification(), d.getStatus()));
                 }
-                showAlert("Export Successful", "Doctor directory exported cleanly to: " + file.getAbsolutePath());
+                showAlert("Export Success", "Data exported successfully to " + file.getName());
             } catch (Exception ex) {
-                showAlert("Export Failed", "Could not export data: " + ex.getMessage());
+                showAlert("Export Error", "Failed to export data: " + ex.getMessage());
             }
         }
     }
 
-    private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+    // =========================================================
+    // HELPER METHODS
+    // =========================================================
+
+    private TextField createInputField(String prompt) {
+        TextField tf = new TextField();
+        tf.setPromptText(prompt);
+        tf.setPrefHeight(38);
+        tf.setStyle("-fx-background-color: " + LIGHT_BACKGROUND + "; -fx-border-color: " + BORDER + "; -fx-border-radius: 6; -fx-background-radius: 6;");
+        return tf;
     }
 
-    // =========================================================
-    // HELPER STYLING
-    // =========================================================
+    private Stage createModalDialog(Stage parent, String title) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.WINDOW_MODAL);
+        dialog.initOwner(parent);
+        dialog.setTitle(title);
+        return dialog;
+    }
 
-    private void applyCardStyle(javafx.scene.layout.Pane pane) {
-        pane.setStyle(
+    private void applyCardStyle(Pane card) {
+        card.setStyle(
                 "-fx-background-color: " + CARD_BG + ";" +
                 "-fx-background-radius: 12;" +
                 "-fx-border-color: " + BORDER + ";" +
                 "-fx-border-radius: 12;"
         );
-
         DropShadow shadow = new DropShadow();
         shadow.setColor(Color.rgb(15, 23, 42, 0.04));
-        shadow.setRadius(10);
-        shadow.setOffsetY(3);
-        pane.setEffect(shadow);
+        shadow.setRadius(8);
+        shadow.setOffsetY(2);
+        card.setEffect(shadow);
+    }
+
+    private void showAlert(String title, String content) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
     }
 }

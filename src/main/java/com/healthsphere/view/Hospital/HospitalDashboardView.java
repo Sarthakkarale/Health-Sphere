@@ -49,16 +49,19 @@ public class HospitalDashboardView {
     private static final String DARK_TEXT_MUTED = "#94A3B8";
     private static final String DARK_ACCENT = "#38BDF8";
     private static final String DARK_HOVER_BG = "#1E293B";
-    
+
+    // Selected sidebar item
+    private static final String SIDEBAR_SELECTED = "#170eca";
+
     private static final String SUCCESS_GREEN = "#059669";
     private static final String SUCCESS_LIGHT = "#ECFDF5";
-    
+
     private static final String WARNING_ORANGE = "#D97706";
     private static final String WARNING_LIGHT = "#FFFBEB";
-    
+
     private static final String ERROR_RED = "#DC2626";
     private static final String ERROR_LIGHT = "#FEF2F2";
-    
+
     private static final String PURPLE = "#7C3AED";
     private static final String PURPLE_LIGHT = "#F5F3FF";
 
@@ -97,7 +100,7 @@ public class HospitalDashboardView {
         ScrollPane scrollPane = new ScrollPane(createMainContent(stage));
         scrollPane.setFitToWidth(true);
         scrollPane.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-padding: 0;");
-        
+
         root.setCenter(scrollPane);
 
         return new Scene(root, stage.getWidth(), stage.getHeight());
@@ -220,9 +223,9 @@ public class HospitalDashboardView {
     private Button createNavigationButton(String icon, String text, boolean selected) {
 
         Button button = new Button();
-        
+
         String unselectedColor = DARK_TEXT_MUTED;
-        String selectedColor = DARK_ACCENT;
+        String selectedColor = "#FFFFFF";
 
         Label iconLabel = new Label(icon);
         iconLabel.setStyle(
@@ -247,15 +250,37 @@ public class HospitalDashboardView {
         button.setAlignment(Pos.CENTER_LEFT);
         button.setPadding(new Insets(0, 12, 0, 12));
 
-        String baseStyle = "-fx-background-radius: 8; -fx-cursor: hand;";
-        
+        String baseStyle =
+                "-fx-background-radius: 8;" +
+                "-fx-cursor: hand;";
+
         if (selected) {
-            button.setStyle(baseStyle + "-fx-background-color: " + DARK_HOVER_BG + ";");
+
+            button.setStyle(
+                    baseStyle +
+                    "-fx-background-color: " + SIDEBAR_SELECTED + ";"
+            );
+
         } else {
-            button.setStyle(baseStyle + "-fx-background-color: transparent;");
-            
-            button.setOnMouseEntered(e -> button.setStyle(baseStyle + "-fx-background-color: " + DARK_HOVER_BG + ";"));
-            button.setOnMouseExited(e -> button.setStyle(baseStyle + "-fx-background-color: transparent;"));
+
+            button.setStyle(
+                    baseStyle +
+                    "-fx-background-color: transparent;"
+            );
+
+            button.setOnMouseEntered(e ->
+                    button.setStyle(
+                            baseStyle +
+                            "-fx-background-color: " + DARK_HOVER_BG + ";"
+                    )
+            );
+
+            button.setOnMouseExited(e ->
+                    button.setStyle(
+                            baseStyle +
+                            "-fx-background-color: transparent;"
+                    )
+            );
         }
 
         return button;
@@ -531,10 +556,10 @@ public class HospitalDashboardView {
 
         HBox occHeader = new HBox();
         occHeader.setAlignment(Pos.BASELINE_LEFT);
-        
+
         bedOccupancyLabel = new Label("72%");
         bedOccupancyLabel.setStyle("-fx-font-size: 28px; -fx-font-weight: 800; -fx-text-fill: " + DARK_TEXT + ";");
-        
+
         Label occSub = new Label(" total beds occupied");
         occSub.setStyle("-fx-font-size: 12px; -fx-text-fill: " + SECONDARY_TEXT + ";");
 
@@ -860,51 +885,58 @@ public class HospitalDashboardView {
         menu.show(anchor, javafx.geometry.Side.BOTTOM, 0, 0);
     }
 
-    private void showMoreOptionsMenu(Label anchor, String cardTitle) {
+    private void showMoreOptionsMenu(Label anchor, String sectionTitle) {
         ContextMenu menu = new ContextMenu();
-        MenuItem refreshItem = new MenuItem("Refresh " + cardTitle);
-        MenuItem exportItem = new MenuItem("Export Summary");
+        MenuItem refresh = new MenuItem("Refresh " + sectionTitle);
+        MenuItem export = new MenuItem("Export " + sectionTitle + " Data");
 
-        refreshItem.setOnAction(e -> refreshDashboardData());
-        exportItem.setOnAction(e -> {
+        refresh.setOnAction(e -> refreshDashboardData());
+        export.setOnAction(e -> {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Export");
-            alert.setHeaderText("Export Summary Data");
-            alert.setContentText("Exporting report for " + cardTitle + "...");
+            alert.setTitle("Export Data");
+            alert.setHeaderText(null);
+            alert.setContentText("Exporting " + sectionTitle + " data as CSV...");
             alert.showAndWait();
         });
 
-        menu.getItems().addAll(refreshItem, exportItem);
+        menu.getItems().addAll(refresh, export);
         menu.show(anchor, javafx.geometry.Side.BOTTOM, 0, 0);
     }
 
-    private void recordActivity(String actionText, String color) {
-        String currentTime = LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a"));
-        addActivityItem(actionText, currentTime, color);
+    private void recordActivity(String action, String color) {
+        String timeString = LocalTime.now().format(DateTimeFormatter.ofPattern("hh:mm a"));
+        addActivityItem(action, timeString, color);
     }
 
     private void refreshDashboardData() {
-        recordActivity("Dashboard data updated manually", PRIMARY_BLUE);
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Dashboard Refresh");
-        alert.setHeaderText(null);
-        alert.setContentText("Dashboard view and real-time statistics refreshed successfully.");
-        alert.showAndWait();
+        if (totalDoctorsValue != null) totalDoctorsValue.setText("128");
+        if (todayAppointmentsValue != null) todayAppointmentsValue.setText("86");
+        if (availableBedsValue != null) availableBedsValue.setText("42");
+        if (emergencyCasesValue != null) emergencyCasesValue.setText("07");
+
+        if (completedApptLabel != null) completedApptLabel.setText("42");
+        if (waitingApptLabel != null) waitingApptLabel.setText("18");
+        if (upcomingApptLabel != null) upcomingApptLabel.setText("19");
+        if (cancelledApptLabel != null) cancelledApptLabel.setText("07");
+
+        if (bedOccupancyLabel != null) bedOccupancyLabel.setText("72%");
+
+        recordActivity("Dashboard metrics refreshed", PRIMARY_BLUE);
     }
 
     private void showHelpDialog() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Help Center");
-        alert.setHeaderText("Health-Sphere Support & Assistance");
-        alert.setContentText("For technical support or issues, please contact:\nSupport Desk: support@healthsphere.com\nExt: 1800-456-789");
+        alert.setTitle("Health-Sphere Help Center");
+        alert.setHeaderText("Hospital Administration Help");
+        alert.setContentText("For technical support or issues regarding bed management, doctor rosters, or appointments, contact support@healthsphere.com.");
         alert.showAndWait();
     }
 
     private void handleLogout(Stage stage) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Logout Confirmation");
-        alert.setHeaderText("Sign Out");
-        alert.setContentText("Are you sure you want to log out of Health-Sphere?");
+        alert.setTitle("Confirm Logout");
+        alert.setHeaderText("Log Out of Health-Sphere Admin?");
+        alert.setContentText("Are you sure you want to end your current administrative session?");
 
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {

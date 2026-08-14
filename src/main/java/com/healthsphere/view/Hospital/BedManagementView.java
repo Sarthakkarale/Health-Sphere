@@ -32,7 +32,7 @@ public class BedManagementView {
     // =========================================================
     // COLOR PALETTE
     // =========================================================
-    private static final String PRIMARY_BLUE = "#1E62D0";
+    private static final String PRIMARY_BLUE = "#1920df";
     private static final String PRIMARY_LIGHT = "#EFF5FF";
     private static final String DARK_TEXT = "#0F172A";
     private static final String SECONDARY_TEXT = "#64748B";
@@ -221,7 +221,7 @@ public class BedManagementView {
         String baseStyle = "-fx-background-radius: 8; -fx-cursor: hand;";
 
         if (selected) {
-            button.setStyle(baseStyle + "-fx-background-color: " + DARK_HOVER_BG + ";");
+            button.setStyle(baseStyle + "-fx-background-color: " + PRIMARY_BLUE + ";");
         } else {
             button.setStyle(baseStyle + "-fx-background-color: transparent;");
             button.setOnMouseEntered(e -> button.setStyle(baseStyle + "-fx-background-color: " + DARK_HOVER_BG + ";"));

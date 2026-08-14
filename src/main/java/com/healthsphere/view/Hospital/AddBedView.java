@@ -14,7 +14,7 @@ import javafx.stage.Stage;
 public class AddBedView {
 
     // Color Palette matching BedManagementView
-    private static final String PRIMARY_BLUE = "#1E62D0";
+    private static final String PRIMARY_BLUE = "#170eca";
     private static final String DARK_TEXT = "#0F172A";
     private static final String SECONDARY_TEXT = "#64748B";
     private static final String LIGHT_BACKGROUND = "#F8FAFC";

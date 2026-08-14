@@ -28,7 +28,7 @@ public class AppointmentManagementView {
     // COLOR PALETTE (Clean Light Theme with Dark Sidebar)
     // =========================================================
 
-    private static final String PRIMARY_BLUE = "#1E62D0";
+    private static final String PRIMARY_BLUE = "#102bdb";
     private static final String PRIMARY_LIGHT = "#EFF5FF";
     private static final String DARK_TEXT = "#0F172A";
     private static final String SECONDARY_TEXT = "#64748B";
