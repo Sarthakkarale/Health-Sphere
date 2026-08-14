@@ -75,10 +75,6 @@ public class DoctorManagementView extends ScrollPane {
         return this;
     }
 
-    /**
-     * Renamed from getScene() to createScene() to avoid overriding 
-     * the final method Node#getScene().
-     */
     public Scene createScene() {
         return new Scene(this);
     }
@@ -96,7 +92,7 @@ public class DoctorManagementView extends ScrollPane {
         title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 24));
         title.setTextFill(Color.web("#0F172A"));
 
-        Label subtitle = new Label("Manage medical staff credentials, department allocations, shift schedules, and OPD availability.");
+        Label subtitle = new Label("Manage medical staff credentials, verification approvals, department allocations, and OPD availability.");
         subtitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 13));
         subtitle.setTextFill(Color.web("#64748B"));
 
@@ -140,7 +136,6 @@ public class DoctorManagementView extends ScrollPane {
         HBox section = new HBox(20);
         section.setAlignment(Pos.CENTER);
 
-        // Stats Cards Layout
         GridPane statsGrid = new GridPane();
         statsGrid.setHgap(16);
         statsGrid.setVgap(16);
@@ -167,7 +162,6 @@ public class DoctorManagementView extends ScrollPane {
         statsGrid.add(leaveCard, 0, 1);
         statsGrid.add(surgeryCard, 1, 1);
 
-        // Department Distribution Bar Chart Card
         VBox chartCard = new VBox(12);
         chartCard.setPadding(new Insets(16));
         chartCard.setMinWidth(420);
@@ -236,7 +230,7 @@ public class DoctorManagementView extends ScrollPane {
 
         TextField searchInput = new TextField();
         searchInput.setPromptText("🔍 Search Doctor Name, ID, Specialization, or Email...");
-        searchInput.setPrefWidth(320);
+        searchInput.setPrefWidth(260);
         searchInput.setStyle(
             "-fx-background-color: #F8FAFC; " +
             "-fx-text-fill: #0F172A; " +
@@ -244,6 +238,11 @@ public class DoctorManagementView extends ScrollPane {
             "-fx-border-radius: 6px; " +
             "-fx-padding: 8px 12px;"
         );
+
+        ComboBox<String> verificationFilter = new ComboBox<>();
+        verificationFilter.getItems().addAll("All Approvals", "VERIFIED", "PENDING", "REJECTED");
+        verificationFilter.setValue("All Approvals");
+        verificationFilter.setStyle("-fx-background-color: #F8FAFC; -fx-text-fill: #0F172A; -fx-border-color: #CBD5E1; -fx-border-radius: 6px;");
 
         ComboBox<String> statusFilter = new ComboBox<>();
         statusFilter.getItems().addAll("All Statuses", "ON DUTY", "ON LEAVE", "IN SURGERY");
@@ -257,6 +256,7 @@ public class DoctorManagementView extends ScrollPane {
 
         Runnable applyFilter = () -> {
             String query = searchInput.getText().toLowerCase().trim();
+            String selectedVerification = verificationFilter.getValue();
             String selectedStatus = statusFilter.getValue();
             String selectedDept = deptFilter.getValue();
 
@@ -267,14 +267,16 @@ public class DoctorManagementView extends ScrollPane {
                         doctor.getSpecialization().toLowerCase().contains(query) ||
                         doctor.getEmail().toLowerCase().contains(query);
 
+                boolean matchesVerification = selectedVerification.equals("All Approvals") || doctor.getVerificationStatus().equalsIgnoreCase(selectedVerification);
                 boolean matchesStatus = selectedStatus.equals("All Statuses") || doctor.getStatus().equalsIgnoreCase(selectedStatus);
                 boolean matchesDept = selectedDept.equals("All Departments") || doctor.getDepartment().equalsIgnoreCase(selectedDept);
 
-                return matchesQuery && matchesStatus && matchesDept;
+                return matchesQuery && matchesVerification && matchesStatus && matchesDept;
             });
         };
 
         searchInput.textProperty().addListener((obs, oldVal, newVal) -> applyFilter.run());
+        verificationFilter.valueProperty().addListener((obs, oldVal, newVal) -> applyFilter.run());
         statusFilter.valueProperty().addListener((obs, oldVal, newVal) -> applyFilter.run());
         deptFilter.valueProperty().addListener((obs, oldVal, newVal) -> applyFilter.run());
 
@@ -286,11 +288,12 @@ public class DoctorManagementView extends ScrollPane {
         resetBtn.setStyle("-fx-background-color: #F1F5F9; -fx-text-fill: #475569; -fx-background-radius: 6px; -fx-padding: 8px 14px; -fx-cursor: hand;");
         resetBtn.setOnAction(e -> {
             searchInput.clear();
+            verificationFilter.setValue("All Approvals");
             statusFilter.setValue("All Statuses");
             deptFilter.setValue("All Departments");
         });
 
-        bar.getChildren().addAll(searchInput, statusFilter, deptFilter, spacer, resetBtn);
+        bar.getChildren().addAll(searchInput, verificationFilter, statusFilter, deptFilter, spacer, resetBtn);
         return bar;
     }
 
@@ -395,6 +398,30 @@ public class DoctorManagementView extends ScrollPane {
             }
         });
 
+        // Verification Status Column
+        TableColumn<DoctorModel, String> verificationCol = new TableColumn<>("App Approval");
+        verificationCol.setCellValueFactory(new PropertyValueFactory<>("verificationStatus"));
+        verificationCol.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String status, boolean empty) {
+                super.updateItem(status, empty);
+                if (empty || status == null) {
+                    setGraphic(null);
+                } else {
+                    Label badge = new Label(status.toUpperCase());
+                    badge.setPadding(new Insets(4, 10, 4, 10));
+                    badge.setFont(Font.font("Segoe UI", FontWeight.BOLD, 10));
+
+                    switch (status.toUpperCase()) {
+                        case "VERIFIED" -> badge.setStyle("-fx-background-color: #DCFCE7; -fx-text-fill: #15803D; -fx-background-radius: 20px;");
+                        case "PENDING" -> badge.setStyle("-fx-background-color: #FEF3C7; -fx-text-fill: #D97706; -fx-background-radius: 20px;");
+                        default -> badge.setStyle("-fx-background-color: #FEE2E2; -fx-text-fill: #B91C1C; -fx-background-radius: 20px;");
+                    }
+                    setGraphic(badge);
+                }
+            }
+        });
+
         // Duty Status Badge Column
         TableColumn<DoctorModel, String> statusCol = new TableColumn<>("Availability Status");
         statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
@@ -426,14 +453,14 @@ public class DoctorManagementView extends ScrollPane {
         // Actions Column
         TableColumn<DoctorModel, Void> actionCol = new TableColumn<>("Management");
         actionCol.setCellFactory(col -> new TableCell<>() {
-            private final Button profileBtn = new Button("View Schedule");
-            private final Button toggleStatusBtn = new Button("Toggle Duty");
-            private final HBox btnGroup = new HBox(6, profileBtn, toggleStatusBtn);
+            private final Button profileBtn = new Button("View");
+            private final Button toggleStatusBtn = new Button("Duty");
+            private final HBox btnGroup = new HBox(5, profileBtn, toggleStatusBtn);
 
             {
                 btnGroup.setAlignment(Pos.CENTER);
-                profileBtn.setStyle("-fx-background-color: #EEF2FF; -fx-text-fill: #4338CA; -fx-cursor: hand; -fx-font-size: 11px; -fx-background-radius: 4px;");
-                toggleStatusBtn.setStyle("-fx-background-color: #F1F5F9; -fx-text-fill: #334155; -fx-cursor: hand; -fx-font-size: 11px; -fx-background-radius: 4px;");
+                profileBtn.setStyle("-fx-background-color: #EEF2FF; -fx-text-fill: #4338CA; -fx-cursor: hand; -fx-font-size: 10px; -fx-background-radius: 4px;");
+                toggleStatusBtn.setStyle("-fx-background-color: #F1F5F9; -fx-text-fill: #334155; -fx-cursor: hand; -fx-font-size: 10px; -fx-background-radius: 4px;");
 
                 profileBtn.setOnAction(e -> {
                     DoctorModel doctor = getTableView().getItems().get(getIndex());
@@ -463,7 +490,7 @@ public class DoctorManagementView extends ScrollPane {
             }
         });
 
-        doctorTable.getColumns().addAll(nameCol, deptCol, contactCol, statusCol, shiftCol, actionCol);
+        doctorTable.getColumns().addAll(nameCol, deptCol, contactCol, verificationCol, statusCol, shiftCol, actionCol);
         container.getChildren().addAll(tableTitle, doctorTable);
         return container;
     }
@@ -497,11 +524,11 @@ public class DoctorManagementView extends ScrollPane {
 
     private void loadDoctorData() {
         masterDoctorData = FXCollections.observableArrayList(
-            new DoctorModel("DOC-101", "Dr. Rajesh Sharma", "Cardiology", "Interventional Cardiologist", "+91 98220 12345", "r.sharma@healthsphere.org", "OPD-102", "ON DUTY", "Morning (08:00 - 14:00)", "2021-03-15"),
-            new DoctorModel("DOC-102", "Dr. Ananya Deshmukh", "Neurology", "Neurosurgeon & Specialist", "+91 97650 98765", "a.deshmukh@healthsphere.org", "OPD-204", "IN SURGERY", "Full Day (09:00 - 17:00)", "2019-07-22"),
-            new DoctorModel("DOC-103", "Dr. Vikram Patil", "Orthopedics", "Joint Replacement Surgeon", "+91 94221 45678", "v.patil@healthsphere.org", "OPD-108", "ON DUTY", "Evening (14:00 - 20:00)", "2020-11-01"),
-            new DoctorModel("DOC-104", "Dr. Meera Joshi", "Pediatrics", "Pediatric Intensivist", "+91 98902 34567", "m.joshi@healthsphere.org", "OPD-005", "ON LEAVE", "Night Shift", "2022-01-10"),
-            new DoctorModel("DOC-105", "Dr. Siddharth Rao", "Oncology", "Medical Oncologist", "+91 91582 67890", "s.rao@healthsphere.org", "OPD-301", "ON DUTY", "Morning (08:00 - 14:00)", "2018-05-19")
+            new DoctorModel("DOC-101", "Dr. Rajesh Sharma", "Cardiology", "Interventional Cardiologist", "+91 98220 12345", "r.sharma@healthsphere.org", "OPD-102", "ON DUTY", "Morning (08:00 - 14:00)", "2021-03-15", "VERIFIED"),
+            new DoctorModel("DOC-102", "Dr. Ananya Deshmukh", "Neurology", "Neurosurgeon & Specialist", "+91 97650 98765", "a.deshmukh@healthsphere.org", "OPD-204", "IN SURGERY", "Full Day (09:00 - 17:00)", "2019-07-22", "VERIFIED"),
+            new DoctorModel("DOC-103", "Dr. Vikram Patil", "Orthopedics", "Joint Replacement Surgeon", "+91 94221 45678", "v.patil@healthsphere.org", "OPD-108", "ON DUTY", "Evening (14:00 - 20:00)", "2020-11-01", "PENDING"),
+            new DoctorModel("DOC-104", "Dr. Meera Joshi", "Pediatrics", "Pediatric Intensivist", "+91 98902 34567", "m.joshi@healthsphere.org", "OPD-005", "ON LEAVE", "Night Shift", "2022-01-10", "VERIFIED"),
+            new DoctorModel("DOC-105", "Dr. Siddharth Rao", "Oncology", "Medical Oncologist", "+91 91582 67890", "s.rao@healthsphere.org", "OPD-301", "ON DUTY", "Morning (08:00 - 14:00)", "2018-05-19", "PENDING")
         );
 
         filteredData = new FilteredList<>(masterDoctorData, d -> true);
@@ -521,7 +548,6 @@ public class DoctorManagementView extends ScrollPane {
         leaveCountLabel.setText(String.valueOf(leave));
         surgeryCountLabel.setText(String.valueOf(surgery));
 
-        // Department Bar Chart Calculation
         departmentBarChart.getData().clear();
 
         Map<String, Long> deptCounts = masterDoctorData.stream()
@@ -538,22 +564,70 @@ public class DoctorManagementView extends ScrollPane {
     // ------------------------------------------------------------------------
 
     private void showDoctorProfileModal(DoctorModel doctor) {
-        Alert dialog = new Alert(Alert.AlertType.INFORMATION);
-        dialog.setTitle("Doctor Credentials & Schedule");
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Doctor Credentials & Verification");
         dialog.setHeaderText("Specialist Profile: " + doctor.getName() + " (" + doctor.getDoctorId() + ")");
-        dialog.setContentText(
+
+        VBox content = new VBox(14);
+        content.setPadding(new Insets(15));
+        content.setPrefWidth(420);
+
+        Label details = new Label(
             "🩺 Department: " + doctor.getDepartment() + " | Specialization: " + doctor.getSpecialization() + "\n" +
             "🏢 OPD Location: " + doctor.getOpdRoom() + "\n" +
             "📞 Contact: " + doctor.getContactNo() + "\n" +
             "✉️ Email: " + doctor.getEmail() + "\n" +
             "⏰ Shift Schedule: " + doctor.getShift() + "\n" +
             "📅 Joining Date: " + doctor.getJoiningDate() + "\n" +
-            "🏷️ Current Status: " + doctor.getStatus() + "\n\n" +
+            "🏷️ Current Duty Status: " + doctor.getStatus() + "\n" +
+            "🛡️ Current Approval Status: " + doctor.getVerificationStatus() + "\n\n" +
             "Weekly Consultation Hours:\n" +
             "• Mon - Thu: 09:00 AM - 01:00 PM (OPD)\n" +
-            "• Fri: 02:00 PM - 06:00 PM (Rounds / Consultations)\n" +
-            "• Medical License: Verified & Active."
+            "• Fri: 02:00 PM - 06:00 PM (Rounds / Consultations)"
         );
+        details.setWrapText(true);
+
+        Label actionTitle = new Label("Change Verification Status:");
+        actionTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
+        actionTitle.setTextFill(Color.web("#0F172A"));
+
+        Button verifyBtn = new Button("✓ Verify & Approve");
+        verifyBtn.setMaxWidth(Double.MAX_VALUE);
+        verifyBtn.setStyle("-fx-background-color: #DCFCE7; -fx-text-fill: #15803D; -fx-cursor: hand; -fx-font-weight: bold; -fx-padding: 8px; -fx-background-radius: 6px;");
+
+        Button pendingBtn = new Button("⏳ Set as Pending");
+        pendingBtn.setMaxWidth(Double.MAX_VALUE);
+        pendingBtn.setStyle("-fx-background-color: #FEF3C7; -fx-text-fill: #D97706; -fx-cursor: hand; -fx-font-weight: bold; -fx-padding: 8px; -fx-background-radius: 6px;");
+
+        Button rejectBtn = new Button("✕ Reject Verification");
+        rejectBtn.setMaxWidth(Double.MAX_VALUE);
+        rejectBtn.setStyle("-fx-background-color: #FEE2E2; -fx-text-fill: #B91C1C; -fx-cursor: hand; -fx-font-weight: bold; -fx-padding: 8px; -fx-background-radius: 6px;");
+
+        verifyBtn.setOnAction(e -> {
+            doctor.setVerificationStatus("VERIFIED");
+            doctorTable.refresh();
+            showAlert("Doctor Verified", doctor.getName() + " has been successfully verified and approved.");
+            dialog.close();
+        });
+
+        pendingBtn.setOnAction(e -> {
+            doctor.setVerificationStatus("PENDING");
+            doctorTable.refresh();
+            showAlert("Status Updated", doctor.getName() + " verification status is now set to PENDING.");
+            dialog.close();
+        });
+
+        rejectBtn.setOnAction(e -> {
+            doctor.setVerificationStatus("REJECTED");
+            doctorTable.refresh();
+            showAlert("Verification Rejected", doctor.getName() + " verification has been rejected.");
+            dialog.close();
+        });
+
+        content.getChildren().addAll(details, new Separator(), actionTitle, verifyBtn, pendingBtn, rejectBtn);
+
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
         dialog.showAndWait();
     }
 
@@ -619,7 +693,7 @@ public class DoctorManagementView extends ScrollPane {
                 String email = emailField.getText().trim().isEmpty() ? "doctor@healthsphere.org" : emailField.getText().trim();
                 String room = roomField.getText().trim().isEmpty() ? "OPD-101" : roomField.getText().trim();
 
-                return new DoctorModel(newId, name, deptCombo.getValue(), spec, phone, email, room, "ON DUTY", shiftCombo.getValue(), LocalDate.now().toString());
+                return new DoctorModel(newId, name, deptCombo.getValue(), spec, phone, email, room, "ON DUTY", shiftCombo.getValue(), LocalDate.now().toString(), "PENDING");
             }
             return null;
         });
@@ -628,7 +702,7 @@ public class DoctorManagementView extends ScrollPane {
         result.ifPresent(newDoctor -> {
             masterDoctorData.add(0, newDoctor);
             updateCountersAndChart();
-            showAlert("Doctor Registered", newDoctor.getName() + " has been added to the hospital directory.");
+            showAlert("Doctor Registered", newDoctor.getName() + " has been registered and is pending admin verification.");
         });
     }
 
@@ -655,8 +729,9 @@ public class DoctorManagementView extends ScrollPane {
         private String status;
         private final String shift;
         private final String joiningDate;
+        private String verificationStatus;
 
-        public DoctorModel(String doctorId, String name, String department, String specialization, String contactNo, String email, String opdRoom, String status, String shift, String joiningDate) {
+        public DoctorModel(String doctorId, String name, String department, String specialization, String contactNo, String email, String opdRoom, String status, String shift, String joiningDate, String verificationStatus) {
             this.doctorId = doctorId;
             this.name = name;
             this.department = department;
@@ -667,6 +742,7 @@ public class DoctorManagementView extends ScrollPane {
             this.status = status;
             this.shift = shift;
             this.joiningDate = joiningDate;
+            this.verificationStatus = verificationStatus;
         }
 
         public String getDoctorId() { return doctorId; }
@@ -680,5 +756,7 @@ public class DoctorManagementView extends ScrollPane {
         public void setStatus(String status) { this.status = status; }
         public String getShift() { return shift; }
         public String getJoiningDate() { return joiningDate; }
+        public String getVerificationStatus() { return verificationStatus; }
+        public void setVerificationStatus(String verificationStatus) { this.verificationStatus = verificationStatus; }
     }
 }
