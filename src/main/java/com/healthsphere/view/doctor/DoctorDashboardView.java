@@ -3,580 +3,667 @@ package com.healthsphere.view.doctor;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.chart.CategoryAxis;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.StackedBarChart;
-import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.*;
+import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 
+import java.io.InputStream;
+import java.util.Objects;
+
+/**
+ * DoctorDashboardView represents the main dashboard view for Doctors in Health-Sphere.
+ */
 public class DoctorDashboardView {
 
     private final Stage stage;
+    private final Scene scene;
 
     public DoctorDashboardView(Stage stage) {
         this.stage = stage;
+        this.scene = createScene();
     }
 
-    public Scene createScene() {
-        StackPane rootOverlayPane = new StackPane();
-        BorderPane mainLayout = new BorderPane();
-        mainLayout.getStyleClass().add("main-container");
+    public Scene getScene() {
+        return this.scene;
+    }
 
-        // 1. Left Sidebar
-        mainLayout.setLeft(createSidebar());
+    private Scene createScene() {
+        BorderPane mainRoot = new BorderPane();
+        mainRoot.getStyleClass().add("root-pane");
 
-        // 2. Main Scrollable Content
-        VBox mainContentBox = new VBox(20);
-        mainContentBox.setPadding(new Insets(24, 32, 32, 32));
-        mainContentBox.getStyleClass().add("content-area");
+        // --- Sidebar Navigation (LEFT) ---
+        VBox sidebar = createSidebar();
+        mainRoot.setLeft(sidebar);
 
-        mainContentBox.getChildren().addAll(
-                createHeaderBar(),
-                createHeroSection(),
-                createKpiSection(),
-                createAnalyticsSection(),
-                createBottomSection()
-        );
+        // --- Main Content Area (CENTER) ---
+        VBox mainContent = new VBox(24);
+        mainContent.setPadding(new Insets(24));
+        mainContent.getStyleClass().add("content-area");
 
-        ScrollPane scrollPane = new ScrollPane(mainContentBox);
+        // 1. Top Bar
+        BorderPane topBar = createTopBar();
+        mainContent.getChildren().add(topBar);
+
+        // 2. Welcome Banner
+        HBox welcomeBanner = createWelcomeBanner();
+        mainContent.getChildren().add(welcomeBanner);
+
+        // 3. Stat Cards Row
+        HBox statCardsRow = createStatCardsRow();
+        mainContent.getChildren().add(statCardsRow);
+
+        // 4. Appointments & AI Insights Row
+        HBox appointmentsInsightsRow = createAppointmentsInsightsRow();
+        mainContent.getChildren().add(appointmentsInsightsRow);
+
+        // 5. Recent Patient Activity Table
+        VBox recentActivityTable = createRecentActivityTable();
+        mainContent.getChildren().add(recentActivityTable);
+
+        // Wrap main content inside ScrollPane
+        ScrollPane scrollPane = new ScrollPane(mainContent);
         scrollPane.setFitToWidth(true);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scrollPane.getStyleClass().add("custom-scroll-pane");
+        scrollPane.setFitToHeight(true);
+        scrollPane.getStyleClass().add("content-scrollpane");
+        mainRoot.setCenter(scrollPane);
 
-        mainLayout.setCenter(scrollPane);
-
-        // 3. Floating Action Button (FAB)
-        Button fabButton = new Button();
-        fabButton.getStyleClass().add("fab-button");
-        SVGPath sparkIcon = createSVGPath("M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z", "#FFFFFF", 0.9);
-        fabButton.setGraphic(sparkIcon);
-        fabButton.setOnAction(e -> stage.setScene(new AiAssistantView(stage).createScene()));
-
-        StackPane.setAlignment(fabButton, Pos.BOTTOM_RIGHT);
-        StackPane.setMargin(fabButton, new Insets(0, 32, 32, 0));
-
-        rootOverlayPane.getChildren().addAll(mainLayout, fabButton);
-
-        Scene scene = new Scene(rootOverlayPane, stage.getWidth(), stage.getHeight());
-
+        Scene dashboardScene = new Scene(mainRoot, stage.getWidth(), stage.getHeight());
+        
+        // Add external stylesheet if available
         try {
-            String cssPath = getClass().getResource("/css/dashboard.css").toExternalForm();
-            scene.getStylesheets().add(cssPath);
-        } catch (Exception e) {
-            System.err.println("CSS file /css/dashboard.css not found.");
-        }
+            dashboardScene.getStylesheets().add(
+                Objects.requireNonNull(getClass().getResource("/css/dashboard.css")).toExternalForm()
+            );
+        } catch (Exception ignored) {}
 
-        return scene;
+        return dashboardScene;
     }
 
-    private SVGPath createSVGPath(String d, String fillColor, double scale) {
-        SVGPath path = new SVGPath();
-        path.setContent(d);
-        path.setFill(Color.web(fillColor));
-        path.setScaleX(scale);
-        path.setScaleY(scale);
-        return path;
-    }
-
-    // --- SIDEBAR ---
+    /** Creates the left navigation sidebar. */
     private VBox createSidebar() {
         VBox sidebar = new VBox();
-        sidebar.setPrefWidth(240);
-        sidebar.getStyleClass().add("sidebar");
         sidebar.setPadding(new Insets(24, 16, 24, 16));
+        sidebar.getStyleClass().add("sidebar");
+        sidebar.setMinWidth(260);
+        sidebar.setPrefWidth(260);
 
-        Label brandLabel = new Label("MediNexus AI");
-        brandLabel.getStyleClass().add("brand-title");
+        // Logo Section
+        HBox logoSection = new HBox(12);
+        logoSection.setAlignment(Pos.CENTER_LEFT);
+        logoSection.setPadding(new Insets(0, 0, 32, 0));
 
-        VBox navBox = new VBox(6);
-        navBox.setPadding(new Insets(28, 0, 0, 0));
+        ImageView logoImage = createImageView("/images/doctor/doctor_logo.png", 32, 32);
+        VBox logoText = new VBox(2);
+        Label appName = new Label("Health-Sphere");
+        appName.getStyleClass().add("logo-name");
+        Label doctorSubtext = new Label("Doctor Dashboard");
+        doctorSubtext.getStyleClass().add("logo-subtext");
+        logoText.getChildren().addAll(appName, doctorSubtext);
+
+        if (logoImage != null) {
+            logoSection.getChildren().add(logoImage);
+        }
+        logoSection.getChildren().add(logoText);
 
         // Navigation Items
-        Button btnDashboard = createNavButton("Dashboard", true, "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z");
-        Button btnAppointments = createNavButton("Appointments", false, "M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10z");
-        Button btnPatients = createNavButton("Patients", false, "M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z");
-        Button btnReports = createNavButton("Reports", false, "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z");
-        Button btnRevenue = createNavButton("Revenue", false, "M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z");
-        Button btnSettings = createNavButton("Settings", false, "M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z");
+        VBox navItems = new VBox(6);
+        String[] tabs = {
+            "Dashboard", 
+            "Today's Schedule", 
+            "Appointments", 
+            "Patient Details", 
+            "Medical Reports & Prescription", 
+            "Availability & Schedule", 
+            "Doctor Profile", 
+            "AI Health Assistant"
+        };
+        String[] icons = {
+            "ic_dashboard", 
+            "ic_schedule", 
+            "ic_appointments", 
+            "ic_patient", 
+            "ic_reports", 
+            "ic_availability", 
+            "ic_profile", 
+            "ic_ai"
+        };
 
-        btnDashboard.setOnAction(e -> stage.setScene(new DoctorDashboardView(stage).createScene()));
-        btnAppointments.setOnAction(e -> stage.setScene(new ScheduleView(stage).createScene()));
-        btnPatients.setOnAction(e -> stage.setScene(new PatientQueueView(stage).createScene()));
-        btnReports.setOnAction(e -> stage.setScene(new PrescriptionManagementView(stage).createScene()));
-        btnScheduleNavigation(btnRevenue);
-        btnScheduleNavigation(btnSettings);
+        for (int i = 0; i < tabs.length; i++) {
+            final int tabIndex = i;
+            HBox navTab = new HBox(14);
+            navTab.setAlignment(Pos.CENTER_LEFT);
+            navTab.setPadding(new Insets(10, 14, 10, 14));
+            navTab.getStyleClass().add("nav-tab");
 
-        navBox.getChildren().addAll(btnDashboard, btnAppointments, btnPatients, btnReports, btnRevenue, btnSettings);
+            if (i == 0) {
+                navTab.getStyleClass().add("nav-tab-active");
+            }
 
-        Region spacer = new Region();
-        VBox.setVgrow(spacer, Priority.ALWAYS);
+            ImageView icon = createImageView("/images/icons/" + icons[i] + ".png", 18, 18);
+            Label tabLabel = new Label(tabs[i]);
+            tabLabel.getStyleClass().add("nav-text");
 
-        // Profile Box
-        HBox profileCard = new HBox(12);
-        profileCard.getStyleClass().add("profile-card");
-        profileCard.setAlignment(Pos.CENTER_LEFT);
-        profileCard.setPadding(new Insets(10));
-        profileCard.setOnMouseClicked(e -> stage.setScene(new DoctorProfileView(stage).createScene()));
+            if (icon != null) {
+                navTab.getChildren().add(icon);
+            }
+            navTab.getChildren().add(tabLabel);
 
-        StackPane avatarContainer = new StackPane();
-        Circle avatarBg = new Circle(18, Color.web("#1E56A0"));
-        Label avatarText = new Label("DS");
-        avatarText.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 11px;");
-        avatarContainer.getChildren().addAll(avatarBg, avatarText);
+            // Handle Navigation Click
+            navTab.setOnMouseClicked(event -> handleSidebarTabClick(tabIndex));
+            navItems.getChildren().add(navTab);
+        }
 
-        VBox userDetails = new VBox(1);
-        Label userName = new Label("Dr. Sterling");
-        userName.getStyleClass().add("profile-name");
-        Label userRole = new Label("Cardiologist");
-        userRole.getStyleClass().add("profile-role");
-        userDetails.getChildren().addAll(userName, userRole);
+        // Footer Section (Doctor Profile + Logout)
+        VBox footer = new VBox(12);
+        footer.setAlignment(Pos.BOTTOM_CENTER);
+        VBox.setVgrow(footer, Priority.ALWAYS);
 
-        Region profileSpacer = new Region();
-        HBox.setHgrow(profileSpacer, Priority.ALWAYS);
+        HBox doctorProfile = new HBox(12);
+        doctorProfile.setAlignment(Pos.CENTER_LEFT);
+        doctorProfile.setPadding(new Insets(10, 14, 10, 14));
+        doctorProfile.getStyleClass().add("sidebar-profile");
 
-        Label btnMore = new Label("⋮");
-        btnMore.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 16px; -fx-cursor: hand;");
+        ImageView profileIcon = createImageView("/images/doctor/doctor_profile.png", 32, 32);
+        VBox profileText = new VBox(2);
+        Label doctorName = new Label("Doctor Profile");
+        doctorName.getStyleClass().add("sidebar-profile-role");
+        Label doctorRole = new Label("Dr. Sarah");
+        doctorRole.getStyleClass().add("sidebar-profile-name");
+        profileText.getChildren().addAll(doctorName, doctorRole);
 
-        profileCard.getChildren().addAll(avatarContainer, userDetails, profileSpacer, btnMore);
-        sidebar.getChildren().addAll(brandLabel, navBox, spacer, profileCard);
+        if (profileIcon != null) {
+            doctorProfile.getChildren().add(profileIcon);
+        }
+        doctorProfile.getChildren().add(profileText);
+        doctorProfile.setOnMouseClicked(event -> handleSidebarTabClick(6)); // Doctor Profile
 
+        HBox logout = new HBox(14);
+        logout.setAlignment(Pos.CENTER_LEFT);
+        logout.setPadding(new Insets(10, 14, 10, 14));
+        logout.getStyleClass().add("nav-tab");
+
+        ImageView logoutIcon = createImageView("/images/icons/ic_logout.png", 18, 18);
+        Label logoutLabel = new Label("Logout");
+        logoutLabel.getStyleClass().add("nav-text");
+
+        if (logoutIcon != null) {
+            logout.getChildren().add(logoutIcon);
+        }
+        logout.getChildren().add(logoutLabel);
+
+        logout.setOnMouseClicked(event -> {
+            System.out.println("Logging out...");
+            // Handle Logout action or scene transition here
+        });
+
+        footer.getChildren().addAll(doctorProfile, logout);
+        sidebar.getChildren().addAll(logoSection, navItems, footer);
         return sidebar;
     }
 
-    private void btnScheduleNavigation(Button button) {
-        button.setOnAction(e -> stage.setScene(new DoctorScheduleView(stage).createScene()));
+    /** Navigation routing method */
+    private void handleSidebarTabClick(int index) {
+        switch (index) {
+            case 0:
+                stage.setScene(new DoctorDashboardView(stage).getScene());
+                break;
+            case 1:
+                stage.setScene(new TodaysScheduleView(stage).getScene());
+                break;
+            case 2:
+                stage.setScene(new AppointmentsView(stage).getScene());
+                break;
+            case 3:
+                stage.setScene(new PatientDetailsView(stage).getScene());
+                break;
+            case 4:
+                stage.setScene(new MedicalReportsView(stage).getScene());
+                break;
+            case 5:
+                stage.setScene(new AvailabilityScheduleView(stage).getScene());
+                break;
+            case 6:
+                stage.setScene(new DoctorProfileView(stage).getScene());
+                break;
+            case 7:
+                stage.setScene(new AIHealthAssistantView(stage).getScene());
+                break;
+            default:
+                break;
+        }
     }
 
-    private Button createNavButton(String title, boolean isActive, String iconSvg) {
-        Button button = new Button(title);
-        button.setMaxWidth(Double.MAX_VALUE);
-        button.setAlignment(Pos.CENTER_LEFT);
-        button.getStyleClass().add(isActive ? "nav-button-active" : "nav-button");
+    /** Creates top bar breadcrumb and search bar. */
+    private BorderPane createTopBar() {
+        BorderPane topBar = new BorderPane();
 
-        SVGPath icon = createSVGPath(iconSvg, isActive ? "#FFFFFF" : "#64748B", 0.75);
-        button.setGraphic(icon);
-        button.setGraphicTextGap(12);
-
-        return button;
-    }
-
-    // --- HEADER ---
-    private HBox createHeaderBar() {
-        HBox header = new HBox();
-        header.setAlignment(Pos.CENTER_LEFT);
-
-        VBox titleBox = new VBox(2);
-        Label breadcrumb = new Label("Home  ›  Dashboard");
+        Label breadcrumb = new Label("Dashboard");
         breadcrumb.getStyleClass().add("breadcrumb");
-        Label pageTitle = new Label("Medical Overview");
-        pageTitle.getStyleClass().add("page-title");
-        titleBox.getChildren().addAll(breadcrumb, pageTitle);
+
+        HBox searchBar = new HBox(8);
+        searchBar.setAlignment(Pos.CENTER_LEFT);
+        searchBar.setPadding(new Insets(6, 12, 6, 12));
+        searchBar.getStyleClass().add("search-bar");
+
+        ImageView searchIcon = createImageView("/images/icons/ic_search.png", 16, 16);
+        TextField searchField = new TextField();
+        searchField.setPromptText("Search patients...");
+        searchField.getStyleClass().add("search-field");
+
+        if (searchIcon != null) {
+            searchBar.getChildren().add(searchIcon);
+        }
+        searchBar.getChildren().add(searchField);
+
+        topBar.setLeft(breadcrumb);
+        topBar.setRight(searchBar);
+        return topBar;
+    }
+
+    /** Creates the blue welcome banner. */
+    private HBox createWelcomeBanner() {
+        HBox banner = new HBox(20);
+        banner.getStyleClass().add("welcome-banner");
+        banner.setPadding(new Insets(28));
+        banner.setAlignment(Pos.CENTER_LEFT);
+
+        VBox textSection = new VBox(12);
+        textSection.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(textSection, Priority.ALWAYS);
+
+        Label greeting = new Label("Good morning, Dr. Sarah.");
+        greeting.getStyleClass().add("welcome-greeting");
+
+        Label summary = new Label("You have 12 appointments scheduled for today. The AI assistant has flagged 2\npatient reports requiring your urgent review.");
+        summary.getStyleClass().add("welcome-summary");
+
+        HBox buttonsSection = new HBox(12);
+        Button startConsultBtn = new Button("Start Consultations");
+        startConsultBtn.getStyleClass().add("btn-primary");
+        Button viewScheduleBtn = new Button("View Schedule");
+        viewScheduleBtn.getStyleClass().add("btn-secondary");
+
+        startConsultBtn.setOnAction(event -> handleSidebarTabClick(2)); // Navigates to Appointments
+        viewScheduleBtn.setOnAction(event -> handleSidebarTabClick(1));  // Navigates to Today's Schedule
+
+        buttonsSection.getChildren().addAll(startConsultBtn, viewScheduleBtn);
+        textSection.getChildren().addAll(greeting, summary, buttonsSection);
+
+        ImageView illustration = createImageView("/images/doctor/doctor_welcome.png", 220, 140);
+        banner.getChildren().add(textSection);
+        if (illustration != null) {
+            banner.getChildren().add(illustration);
+        }
+
+        return banner;
+    }
+
+    /** Creates stat cards row. */
+    private HBox createStatCardsRow() {
+        HBox row = new HBox(16);
+        row.getChildren().addAll(
+            createStatCard("TOTAL PATIENTS", "1,432", "ic_total_patients", "+12% vs last month", false),
+            createStatCard("TODAY'S APPTS", "12", "ic_today_appts", "4 completed, 8 remaining", true),
+            createStatCard("PATIENT GROWTH", "+84", "ic_growth", "mock_growth_chart.png", false),
+            createStatCard("REVENUE (MTD)", "$12.4k", "ic_revenue", "mock_revenue_chart.png", false)
+        );
+        return row;
+    }
+
+    /** Helper function to create stat card. */
+    private VBox createStatCard(String title, String value, String iconName, String detail, boolean showProgressBar) {
+        VBox card = new VBox(12);
+        card.getStyleClass().add("stat-card");
+        HBox.setHgrow(card, Priority.ALWAYS);
+        card.setPadding(new Insets(20));
+
+        HBox cardHeader = new HBox(10);
+        cardHeader.setAlignment(Pos.CENTER_LEFT);
+
+        Label titleLabel = new Label(title);
+        titleLabel.getStyleClass().add("stat-title");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        HBox actionsBox = new HBox(12);
-        actionsBox.setAlignment(Pos.CENTER_RIGHT);
+        ImageView icon = createImageView("/images/icons/cards/" + iconName + ".png", 20, 20);
 
-        HBox searchContainer = new HBox(8);
-        searchContainer.setAlignment(Pos.CENTER_LEFT);
-        searchContainer.getStyleClass().add("search-container");
-
-        SVGPath searchIcon = createSVGPath("M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z", "#94A3B8", 0.7);
-        TextField searchField = new TextField();
-        searchField.setPromptText("Search patients, reports...");
-        searchField.getStyleClass().add("search-field-inner");
-
-        searchContainer.getChildren().addAll(searchIcon, searchField);
-
-        Button btnBell = new Button();
-        btnBell.getStyleClass().add("icon-button");
-        SVGPath bellIcon = createSVGPath("M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z", "#64748B", 0.75);
-        btnBell.setGraphic(bellIcon);
-
-        actionsBox.getChildren().addAll(searchContainer, btnBell);
-        header.getChildren().addAll(titleBox, spacer, actionsBox);
-        return header;
-    }
-
-    // --- HERO & AI SECTION ---
-    private HBox createHeroSection() {
-        HBox container = new HBox(16);
-
-        // Gradient Hero Banner
-        HBox heroBanner = new HBox();
-        HBox.setHgrow(heroBanner, Priority.ALWAYS);
-        heroBanner.getStyleClass().add("hero-banner");
-        heroBanner.setPadding(new Insets(24, 28, 24, 28));
-
-        VBox bannerTextGroup = new VBox(12);
-        bannerTextGroup.setAlignment(Pos.CENTER_LEFT);
-        HBox.setHgrow(bannerTextGroup, Priority.ALWAYS);
-
-        Label welcomeTitle = new Label("Welcome back, Dr. Sterling");
-        welcomeTitle.getStyleClass().add("hero-title");
-
-        Label welcomeSub = new Label("You have 18 appointments today and 5 critical consultations pending. Your AI assistant has prepared your morning briefing.");
-        welcomeSub.setWrapText(true);
-        welcomeSub.getStyleClass().add("hero-subtitle");
-
-        Button btnSchedule = new Button("View Schedule");
-        btnSchedule.getStyleClass().add("hero-button");
-        btnSchedule.setOnAction(e -> stage.setScene(new ScheduleView(stage).createScene()));
-
-        bannerTextGroup.getChildren().addAll(welcomeTitle, welcomeSub, btnSchedule);
-
-        // Futuristic Hologram Heart Container
-        StackPane graphicPane = new StackPane();
-        graphicPane.setPrefSize(220, 140);
-        graphicPane.getStyleClass().add("hero-graphic-placeholder");
-
-        SVGPath heartMesh = createSVGPath("M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z", "#38BDF8", 3.0);
-        heartMesh.setOpacity(0.35);
-        graphicPane.getChildren().add(heartMesh);
-
-        heroBanner.getChildren().addAll(bannerTextGroup, graphicPane);
-
-        // AI Briefing Card
-        VBox aiCard = new VBox(12);
-        aiCard.setPrefWidth(320);
-        aiCard.getStyleClass().add("card");
-        aiCard.setPadding(new Insets(20));
-
-        HBox aiHeader = new HBox(6);
-        aiHeader.setAlignment(Pos.CENTER_LEFT);
-
-        SVGPath spark = createSVGPath("M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z", "#2563EB", 0.65);
-        Label aiTitle = new Label("AI Briefing");
-        aiTitle.getStyleClass().add("card-title");
-
-        HBox titleGroup = new HBox(8);
-        titleGroup.setAlignment(Pos.CENTER_LEFT);
-        titleGroup.getChildren().addAll(spark, aiTitle);
-
-        Region aiSpacer = new Region();
-        HBox.setHgrow(aiSpacer, Priority.ALWAYS);
-
-        Label activeBadge = new Label("Active");
-        activeBadge.getStyleClass().add("badge-active");
-
-        aiHeader.getChildren().addAll(titleGroup, aiSpacer, activeBadge);
-
-        VBox briefingList = new VBox(10);
-        briefingList.getChildren().addAll(
-                createBriefingItem("✓", "Lab results for Mr. Grayson are in. Critical potassium levels detected.", "#10B981"),
-                createBriefingItem("ℹ", "New research paper added to your feed: \"Innovations in Cardiology 2024\".", "#3B82F6")
-        );
-
-        Button btnOpenAi = new Button("Open AI Assistant");
-        btnOpenAi.setMaxWidth(Double.MAX_VALUE);
-        btnOpenAi.getStyleClass().add("secondary-button");
-        btnOpenAi.setOnAction(e -> stage.setScene(new AiAssistantView(stage).createScene()));
-
-        aiCard.getChildren().addAll(aiHeader, briefingList, btnOpenAi);
-        container.getChildren().addAll(heroBanner, aiCard);
-        return container;
-    }
-
-    private HBox createBriefingItem(String symbol, String text, String colorHex) {
-        HBox item = new HBox(8);
-        item.setAlignment(Pos.TOP_LEFT);
-
-        Circle iconBg = new Circle(8, Color.web(colorHex, 0.15));
-        Label iconLabel = new Label(symbol);
-        iconLabel.setStyle("-fx-text-fill: " + colorHex + "; -fx-font-weight: bold; -fx-font-size: 10px;");
-        StackPane iconPane = new StackPane(iconBg, iconLabel);
-
-        Label textLabel = new Label(text);
-        textLabel.setWrapText(true);
-        textLabel.getStyleClass().add("briefing-text");
-
-        item.getChildren().addAll(iconPane, textLabel);
-        return item;
-    }
-
-    // --- KPI CARDS ---
-    private HBox createKpiSection() {
-        HBox kpiGrid = new HBox(12);
-        kpiGrid.getChildren().addAll(
-                createKpiCard("M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10z", "Today's Appts", "18", "+3 new", true, "#2563EB"),
-                createKpiCard("M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z", "Total Patients", "1,248", null, false, "#0EA5E9"),
-                createKpiCard("M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z", "Pending Cons.", "5", null, false, "#8B5CF6"),
-                createKpiCard("M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z", "Reports Pending", "12", null, false, "#6366F1"),
-                createKpiCard("M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z", "Today's Revenue", "$1,450", "↑ 12%", true, "#10B981")
-        );
-        return kpiGrid;
-    }
-
-    private VBox createKpiCard(String iconPath, String title, String value, String subValue, boolean isPositive, String iconColor) {
-        VBox card = new VBox(10);
-        card.getStyleClass().add("card");
-        card.setPadding(new Insets(16));
-        HBox.setHgrow(card, Priority.ALWAYS);
-
-        SVGPath icon = createSVGPath(iconPath, iconColor, 0.75);
-
-        Label titleLabel = new Label(title);
-        titleLabel.getStyleClass().add("kpi-title");
-
-        HBox valueBox = new HBox(6);
-        valueBox.setAlignment(Pos.BASELINE_LEFT);
-        Label valueLabel = new Label(value);
-        valueLabel.getStyleClass().add("kpi-value");
-        valueBox.getChildren().add(valueLabel);
-
-        if (subValue != null) {
-            Label subLabel = new Label(subValue);
-            subLabel.getStyleClass().add(isPositive ? "kpi-badge-positive" : "kpi-badge-neutral");
-            valueBox.getChildren().add(subLabel);
+        cardHeader.getChildren().addAll(titleLabel, spacer);
+        if (icon != null) {
+            cardHeader.getChildren().add(icon);
         }
 
-        card.getChildren().addAll(icon, titleLabel, valueBox);
+        Label valueLabel = new Label(value);
+        valueLabel.getStyleClass().add("stat-value");
+
+        VBox footer = new VBox(6);
+        if (showProgressBar) {
+            Label pbDetail = new Label(detail);
+            pbDetail.getStyleClass().add("stat-detail");
+
+            ProgressBar pb = new ProgressBar(0.33);
+            pb.getStyleClass().add("stat-progress");
+            pb.setMaxWidth(Double.MAX_VALUE);
+
+            footer.getChildren().addAll(pbDetail, pb);
+        } else if (detail.endsWith(".png")) {
+            ImageView chart = createImageView("/images/mocks/" + detail, 180, 40);
+            if (chart != null) {
+                footer.getChildren().add(chart);
+            } else {
+                Label detailLabel = new Label(detail);
+                detailLabel.getStyleClass().add("stat-detail");
+                footer.getChildren().add(detailLabel);
+            }
+        } else {
+            Label detailLabel = new Label(detail);
+            detailLabel.getStyleClass().add("stat-detail");
+            footer.getChildren().add(detailLabel);
+        }
+
+        card.getChildren().addAll(cardHeader, valueLabel, footer);
         return card;
     }
 
-    // --- ANALYTICS / CHARTS ---
-    private HBox createAnalyticsSection() {
-        HBox analyticsBox = new HBox(16);
+    /** Creates Appointments and AI Insights row. */
+    private HBox createAppointmentsInsightsRow() {
+        HBox row = new HBox(16);
 
-        // Chart 1: Appointments This Week (Stacked Bar Chart)
-        VBox chart1Card = new VBox(12);
-        chart1Card.getStyleClass().add("card");
-        chart1Card.setPadding(new Insets(20));
-        HBox.setHgrow(chart1Card, Priority.ALWAYS);
+        // Appointments Left Box
+        VBox appointmentsCard = new VBox(16);
+        appointmentsCard.getStyleClass().add("app-card");
+        HBox.setHgrow(appointmentsCard, Priority.ALWAYS);
+        appointmentsCard.setPadding(new Insets(20));
 
-        HBox c1Header = new HBox();
-        Label c1Title = new Label("Appointments This Week");
-        c1Title.getStyleClass().add("card-title");
-        Region r1 = new Region();
-        HBox.setHgrow(r1, Priority.ALWAYS);
-        ComboBox<String> filterBox = new ComboBox<>();
-        filterBox.getItems().addAll("Weekly", "Monthly");
-        filterBox.setValue("Weekly");
-        filterBox.getStyleClass().add("chart-filter");
-        c1Header.getChildren().addAll(c1Title, r1, filterBox);
+        HBox apptsHeader = new HBox(10);
+        apptsHeader.setAlignment(Pos.CENTER_LEFT);
 
-        CategoryAxis xAxis1 = new CategoryAxis();
-        NumberAxis yAxis1 = new NumberAxis(0, 10, 2);
-        yAxis1.setTickLabelsVisible(false);
-        yAxis1.setOpacity(0);
+        Label apptsTitle = new Label("Today's Appointments");
+        apptsTitle.getStyleClass().add("app-card-title");
 
-        StackedBarChart<String, Number> barChart = new StackedBarChart<>(xAxis1, yAxis1);
-        barChart.setPrefHeight(160);
-        barChart.setLegendVisible(false);
-        barChart.setAnimated(false);
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        XYChart.Series<String, Number> series1 = new XYChart.Series<>();
-        series1.getData().add(new XYChart.Data<>("Mon", 4));
-        series1.getData().add(new XYChart.Data<>("Tue", 6));
-        series1.getData().add(new XYChart.Data<>("Wed", 5));
-        series1.getData().add(new XYChart.Data<>("Thu", 7));
-        series1.getData().add(new XYChart.Data<>("Fri", 3));
-        series1.getData().add(new XYChart.Data<>("Sat", 2));
+        Label viewCalendar = new Label("View Full Calendar");
+        viewCalendar.getStyleClass().add("app-card-link");
+        viewCalendar.setOnMouseClicked(e -> handleSidebarTabClick(1)); // TodaysScheduleView
 
-        barChart.getData().add(series1);
-        chart1Card.getChildren().addAll(c1Header, barChart);
+        apptsHeader.getChildren().addAll(apptsTitle, spacer, viewCalendar);
 
-        // Chart 2: Patient Growth (Vector Wave Chart)
-        VBox chart2Card = new VBox(12);
-        chart2Card.getStyleClass().add("card");
-        chart2Card.setPadding(new Insets(20));
-        HBox.setHgrow(chart2Card, Priority.ALWAYS);
+        VBox apptsList = new VBox(12);
+        apptsList.getChildren().addAll(
+            createApptEntry("09:00 AM", "Michael Chang", "General Checkup", "Completed"),
+            createApptEntry("10:30 AM", "Elena Rodriguez", "Follow-up: Hypertension", "In Progress"),
+            createApptEntry("11:15 AM", "David Kim", "New Patient: Consultation", "Waiting")
+        );
 
-        HBox c2Header = new HBox();
-        Label c2Title = new Label("Patient Growth");
-        c2Title.getStyleClass().add("card-title");
-        Region r2 = new Region();
-        HBox.setHgrow(r2, Priority.ALWAYS);
-        Label yearBadge = new Label("● 2024");
-        yearBadge.setStyle("-fx-text-fill: #1E3A8A; -fx-font-weight: bold; -fx-font-size: 11px;");
-        c2Header.getChildren().addAll(c2Title, r2, yearBadge);
+        appointmentsCard.getChildren().addAll(apptsHeader, apptsList);
 
-        StackPane vectorChartPane = createVectorCurveChart();
-        chart2Card.getChildren().addAll(c2Header, vectorChartPane);
+        // AI Insights Right Box
+        VBox aiInsightsCard = new VBox(16);
+        aiInsightsCard.getStyleClass().add("ai-card");
+        aiInsightsCard.setMinWidth(340);
+        aiInsightsCard.setPrefWidth(340);
+        aiInsightsCard.setPadding(new Insets(20));
 
-        analyticsBox.getChildren().addAll(chart1Card, chart2Card);
-        return analyticsBox;
+        HBox aiHeader = new HBox(10);
+        aiHeader.setAlignment(Pos.CENTER_LEFT);
+
+        ImageView aiIcon = createImageView("/images/doctor/ai_assistant.png", 20, 20);
+        Label aiTitle = new Label("AI Insights");
+        aiTitle.getStyleClass().add("ai-card-title");
+
+        if (aiIcon != null) {
+            aiHeader.getChildren().add(aiIcon);
+        }
+        aiHeader.getChildren().add(aiTitle);
+
+        VBox aiInsightsList = new VBox(12);
+        aiInsightsList.getChildren().addAll(
+            createAiInsightEntry("Action Required", "Lab results for Sarah Connor show elevated LDL. Recommend adjusting statin dosage.", "Review Labs", Color.RED),
+            createAiInsightEntry("Clinical Note", "Upcoming patient David Kim has a documented allergy to Penicillin.", "", Color.BLUE)
+        );
+
+        aiInsightsCard.getChildren().addAll(aiHeader, aiInsightsList);
+
+        row.getChildren().addAll(appointmentsCard, aiInsightsCard);
+        return row;
     }
 
-    private StackPane createVectorCurveChart() {
-        StackPane pane = new StackPane();
-        pane.setPrefHeight(160);
+    /** Creates appointment entry item. */
+    private GridPane createApptEntry(String time, String patientName, String purpose, String status) {
+        GridPane entry = new GridPane();
+        entry.getStyleClass().add("appt-entry");
+        if ("In Progress".equals(status)) {
+            entry.getStyleClass().add("appt-entry-highlight");
+        }
+        entry.setHgap(16);
+        entry.setPadding(new Insets(12));
+        entry.setAlignment(Pos.CENTER_LEFT);
 
-        // Smooth Smooth Spline Curve matching exact image design
-        Path areaPath = new Path();
-        areaPath.getElements().addAll(
-                new MoveTo(10, 120),
-                new CubicCurveTo(50, 110, 80, 115, 120, 100),
-                new CubicCurveTo(160, 80, 190, 40, 230, 40),
-                new CubicCurveTo(270, 40, 290, 110, 320, 100),
-                new CubicCurveTo(340, 95, 360, 40, 380, 20),
-                new LineTo(380, 140),
-                new LineTo(10, 140),
-                new ClosePath()
-        );
-        areaPath.setFill(Color.web("#2563EB", 0.12));
-        areaPath.setStroke(Color.TRANSPARENT);
-
-        Path strokePath = new Path();
-        strokePath.getElements().addAll(
-                new MoveTo(10, 120),
-                new CubicCurveTo(50, 110, 80, 115, 120, 100),
-                new CubicCurveTo(160, 80, 190, 40, 230, 40),
-                new CubicCurveTo(270, 40, 290, 110, 320, 100),
-                new CubicCurveTo(340, 95, 360, 40, 380, 20)
-        );
-        strokePath.setStroke(Color.web("#2563EB"));
-        strokePath.setStrokeWidth(2.5);
-        strokePath.setFill(null);
-
-        // Data Points
-        Circle dot1 = new Circle(230, 40, 4, Color.web("#2563EB"));
-        Circle dot2 = new Circle(380, 20, 4, Color.web("#2563EB"));
-
-        Pane canvas = new Pane(areaPath, strokePath, dot1, dot2);
-
-        HBox xLabels = new HBox();
-        xLabels.setAlignment(Pos.BOTTOM_CENTER);
-        xLabels.setSpacing(38);
-        xLabels.setPadding(new Insets(130, 0, 0, 10));
-        xLabels.getChildren().addAll(
-                new Label("Jan"), new Label("Mar"), new Label("May"),
-                new Label("Jul"), new Label("Sep"), new Label("Nov")
-        );
-        xLabels.getChildren().forEach(node -> node.getStyleClass().add("chart-axis-label"));
-
-        pane.getChildren().addAll(canvas, xLabels);
-        return pane;
-    }
-
-    // --- TIMELINE & TABLE SECTION ---
-    private HBox createBottomSection() {
-        HBox container = new HBox(16);
-
-        // Timeline
-        VBox timelineCard = new VBox(16);
-        timelineCard.setPrefWidth(340);
-        timelineCard.getStyleClass().add("card");
-        timelineCard.setPadding(new Insets(20));
-
-        Label timelineTitle = new Label("Upcoming Timeline");
-        timelineTitle.getStyleClass().add("card-title");
-
-        VBox timelineItems = new VBox(16);
-        timelineItems.getChildren().addAll(
-                createTimelineItem("09:30 AM", "Jonathan Doe", "General Checkup - Room 4B", "#2563EB"),
-                createTimelineItem("10:15 AM", "Sarah Jenkins", "Follow-up Cardiology", "#10B981"),
-                createTimelineItem("11:00 AM", "Michael Rossi", "Lab Results Review", "#CBD5E1")
-        );
-
-        Button btnFullDay = new Button("View Full Day");
-        btnFullDay.setMaxWidth(Double.MAX_VALUE);
-        btnFullDay.getStyleClass().add("outline-button");
-        btnFullDay.setOnAction(e -> stage.setScene(new ScheduleView(stage).createScene()));
-
-        timelineCard.getChildren().addAll(timelineTitle, timelineItems, btnFullDay);
-
-        // Recent Patient Activity
-        VBox activityCard = new VBox(16);
-        activityCard.getStyleClass().add("card");
-        activityCard.setPadding(new Insets(20));
-        HBox.setHgrow(activityCard, Priority.ALWAYS);
-
-        HBox actHeader = new HBox();
-        Label activityTitle = new Label("Recent Patient Activity");
-        activityTitle.getStyleClass().add("card-title");
-        Region actSpacer = new Region();
-        HBox.setHgrow(actSpacer, Priority.ALWAYS);
-        Hyperlink seeAllLink = new Hyperlink("See All");
-        seeAllLink.getStyleClass().add("link-button");
-        seeAllLink.setOnAction(e -> stage.setScene(new PatientQueueView(stage).createScene()));
-        actHeader.getChildren().addAll(activityTitle, actSpacer, seeAllLink);
-
-        VBox tableBox = new VBox(12);
-
-        // Table Header
-        HBox tableHeader = new HBox();
-        tableHeader.setPadding(new Insets(0, 0, 8, 0));
-        Label h1 = new Label("Patient Name"); h1.setPrefWidth(160); h1.getStyleClass().add("table-header-cell");
-        Label h2 = new Label("Status"); h2.setPrefWidth(110); h2.getStyleClass().add("table-header-cell");
-        Label h3 = new Label("Action"); h3.setPrefWidth(140); h3.getStyleClass().add("table-header-cell");
-        Label h4 = new Label("Time"); h4.setPrefWidth(90); h4.getStyleClass().add("table-header-cell");
-        tableHeader.getChildren().addAll(h1, h2, h3, h4);
-
-        tableBox.getChildren().addAll(
-                tableHeader,
-                createTableRow("Robert Fox", "Checked In", "badge-green", "Report Update", "2 mins ago", "RF"),
-                createTableRow("Jane Cooper", "Scheduled", "badge-blue", "Lab Ordered", "15 mins ago", "JC"),
-                createTableRow("Guy Hawkins", "Priority", "badge-red", "Urgent Consultation", "1 hour ago", "GH"),
-                createTableRow("Leslie Alexander", "In Consult", "badge-purple", "Profile Updated", "3 hours ago", "LA")
-        );
-
-        activityCard.getChildren().addAll(actHeader, tableBox);
-        container.getChildren().addAll(timelineCard, activityCard);
-        return container;
-    }
-
-    private HBox createTimelineItem(String time, String name, String subtitle, String colorHex) {
-        HBox item = new HBox(12);
-        item.setAlignment(Pos.TOP_LEFT);
-
-        Circle nodeDot = new Circle(5, Color.web(colorHex));
-        HBox.setMargin(nodeDot, new Insets(4, 0, 0, 0));
-
-        VBox details = new VBox(2);
         Label timeLabel = new Label(time);
-        timeLabel.getStyleClass().add("timeline-time");
-        Label nameLabel = new Label(name);
-        nameLabel.getStyleClass().add("timeline-name");
-        Label subtitleLabel = new Label(subtitle);
-        subtitleLabel.getStyleClass().add("timeline-sub");
+        timeLabel.getStyleClass().add("appt-time");
 
-        details.getChildren().addAll(timeLabel, nameLabel, subtitleLabel);
-        item.getChildren().addAll(nodeDot, details);
-        return item;
+        Circle timeline = new Circle(4);
+        if ("In Progress".equals(status)) {
+            timeline.setFill(Color.web("#2563EB"));
+        } else if ("Completed".equals(status)) {
+            timeline.setFill(Color.GRAY);
+        } else {
+            timeline.setFill(Color.WHITE);
+            timeline.setStroke(Color.GRAY);
+        }
+
+        VBox patientDetails = new VBox(2);
+        Label nameLabel = new Label(patientName);
+        nameLabel.getStyleClass().add("appt-name");
+        Label purposeLabel = new Label(purpose);
+        purposeLabel.getStyleClass().add("appt-purpose");
+        patientDetails.getChildren().addAll(nameLabel, purposeLabel);
+
+        HBox statusPill = createPill(status);
+
+        entry.add(timeLabel, 0, 0);
+        entry.add(timeline, 1, 0);
+        entry.add(patientDetails, 2, 0);
+        entry.add(statusPill, 3, 0);
+
+        if ("In Progress".equals(status)) {
+            ImageView actionIcon = createImageView("/images/icons/ic_external_link.png", 16, 16);
+            if (actionIcon != null) {
+                entry.add(actionIcon, 4, 0);
+            }
+        }
+
+        ColumnConstraints col1 = new ColumnConstraints(80);
+        ColumnConstraints col2 = new ColumnConstraints(20);
+        ColumnConstraints col3 = new ColumnConstraints();
+        col3.setHgrow(Priority.ALWAYS);
+        ColumnConstraints col4 = new ColumnConstraints(110);
+
+        entry.getColumnConstraints().addAll(col1, col2, col3, col4);
+
+        entry.setOnMouseClicked(event -> handleSidebarTabClick(3)); // Patient Details
+        return entry;
     }
 
-    private HBox createTableRow(String name, String status, String statusClass, String action, String time, String initials) {
-        HBox row = new HBox();
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.getStyleClass().add("table-row");
-        row.setPadding(new Insets(6, 0, 6, 0));
-        row.setOnMouseClicked(e -> stage.setScene(new PatientDetailView(stage).createScene()));
+    /** Creates AI insight card entry. */
+    private VBox createAiInsightEntry(String alert, String desc, String linkText, Color accentColor) {
+        VBox insight = new VBox(8);
+        insight.getStyleClass().add("ai-entry");
+        insight.setPadding(new Insets(14));
 
-        HBox nameCell = new HBox(8);
-        nameCell.setPrefWidth(160);
-        nameCell.setAlignment(Pos.CENTER_LEFT);
+        if (accentColor == Color.RED) {
+            insight.getStyleClass().add("ai-entry-alert");
+        } else {
+            insight.getStyleClass().add("ai-entry-info");
+        }
 
-        Circle avatarBg = new Circle(12, Color.web("#E2E8F0"));
-        Label avatarText = new Label(initials);
-        avatarText.setStyle("-fx-font-size: 9px; -fx-font-weight: bold; -fx-text-fill: #475569;");
-        StackPane avatarContainer = new StackPane(avatarBg, avatarText);
+        HBox header = new HBox(8);
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        String iconPath = (accentColor == Color.RED) ? "/images/icons/ic_alert.png" : "/images/icons/ic_info.png";
+        ImageView statusIcon = createImageView(iconPath, 16, 16);
+
+        Label alertLabel = new Label(alert);
+        alertLabel.getStyleClass().add("ai-entry-label");
+
+        if (statusIcon != null) {
+            header.getChildren().add(statusIcon);
+        }
+        header.getChildren().add(alertLabel);
+
+        Label descLabel = new Label(desc);
+        descLabel.getStyleClass().add("ai-entry-desc");
+        descLabel.setWrapText(true);
+
+        insight.getChildren().addAll(header, descLabel);
+
+        if (!linkText.isEmpty()) {
+            Label actionLink = new Label(linkText);
+            actionLink.getStyleClass().add("ai-entry-link");
+            actionLink.setOnMouseClicked(event -> handleSidebarTabClick(4)); // Medical Reports
+            insight.getChildren().add(actionLink);
+        }
+
+        return insight;
+    }
+
+    /** Creates Recent Activity table container. */
+    private VBox createRecentActivityTable() {
+        VBox tableContainer = new VBox(16);
+        tableContainer.getStyleClass().add("activity-container");
+        tableContainer.setPadding(new Insets(20));
+
+        HBox header = new HBox(10);
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        Label title = new Label("Recent Patient Activity");
+        title.getStyleClass().add("activity-title");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Label viewAll = new Label("View All Activity");
+        viewAll.getStyleClass().add("activity-link");
+        viewAll.setOnMouseClicked(e -> handleSidebarTabClick(3)); // Patient Details
+
+        header.getChildren().addAll(title, spacer, viewAll);
+
+        GridPane tableHeader = new GridPane();
+        tableHeader.getStyleClass().add("table-header");
+        tableHeader.setHgap(16);
+        tableHeader.setPadding(new Insets(0, 12, 8, 12));
+
+        String[] cols = {"PATIENT", "STATUS", "ACTION", "TIME"};
+        for (int i = 0; i < cols.length; i++) {
+            Label colLabel = new Label(cols[i]);
+            colLabel.getStyleClass().add("table-col-header");
+            tableHeader.add(colLabel, i, 0);
+        }
+
+        setupTableColumns(tableHeader);
+
+        VBox activityList = new VBox(8);
+        activityList.getChildren().addAll(
+            createActivityEntry("James Smith", "JS", "Check-in", "Arrived for annual physical", "12 mins ago"),
+            createActivityEntry("Maria Lopez", "ML", "Lab Results", "Blood panel results uploaded", "45 mins ago"),
+            createActivityEntry("Robert Brown", "RB", "Discharged", "Post-op follow-up completed", "1 hour ago")
+        );
+
+        tableContainer.getChildren().addAll(header, tableHeader, activityList);
+        return tableContainer;
+    }
+
+    /** Creates individual activity row. */
+    private GridPane createActivityEntry(String name, String initials, String status, String action, String time) {
+        GridPane entry = new GridPane();
+        entry.getStyleClass().add("table-row");
+        entry.setHgap(16);
+        entry.setPadding(new Insets(12));
+        entry.setAlignment(Pos.CENTER_LEFT);
+
+        HBox patientCell = new HBox(10);
+        patientCell.setAlignment(Pos.CENTER_LEFT);
+
+        Label avatar = new Label(initials);
+        avatar.getStyleClass().add("table-avatar");
 
         Label nameLabel = new Label(name);
-        nameLabel.getStyleClass().add("table-cell-bold");
-        nameCell.getChildren().addAll(avatarContainer, nameLabel);
+        nameLabel.getStyleClass().add("table-patient-name");
 
-        Label statusBadge = new Label(status);
-        statusBadge.getStyleClass().addAll("status-badge", statusClass);
-        StackPane statusPane = new StackPane(statusBadge);
-        statusPane.setPrefWidth(110);
-        statusPane.setAlignment(Pos.CENTER_LEFT);
+        patientCell.getChildren().addAll(avatar, nameLabel);
+
+        HBox statusCell = createPill(status);
 
         Label actionLabel = new Label(action);
-        actionLabel.setPrefWidth(140);
-        actionLabel.getStyleClass().add("table-cell");
+        actionLabel.getStyleClass().add("table-action");
 
         Label timeLabel = new Label(time);
-        timeLabel.setPrefWidth(90);
-        timeLabel.getStyleClass().add("table-cell-subtle");
+        timeLabel.getStyleClass().add("table-time");
 
-        row.getChildren().addAll(nameCell, statusPane, actionLabel, timeLabel);
-        return row;
+        entry.add(patientCell, 0, 0);
+        entry.add(statusCell, 1, 0);
+        entry.add(actionLabel, 2, 0);
+        entry.add(timeLabel, 3, 0);
+
+        setupTableColumns(entry);
+
+        entry.setOnMouseClicked(event -> handleSidebarTabClick(3)); // Patient Details
+        return entry;
+    }
+
+    /** Configures responsive column constraints for activity table alignment. */
+    private void setupTableColumns(GridPane gridPane) {
+        ColumnConstraints col1 = new ColumnConstraints(220);
+        ColumnConstraints col2 = new ColumnConstraints(130);
+        ColumnConstraints col3 = new ColumnConstraints();
+        col3.setHgrow(Priority.ALWAYS);
+        ColumnConstraints col4 = new ColumnConstraints(140);
+
+        gridPane.getColumnConstraints().addAll(col1, col2, col3, col4);
+    }
+
+    /** Helper function to create status pill. */
+    private HBox createPill(String status) {
+        HBox pill = new HBox();
+        pill.setAlignment(Pos.CENTER);
+        pill.getStyleClass().add("status-pill");
+        pill.setPadding(new Insets(4, 10, 4, 10));
+
+        Label statusLabel = new Label(status);
+
+        if ("Completed".equals(status) || "Check-in".equals(status)) {
+            pill.getStyleClass().add("pill-completed");
+            statusLabel.setTextFill(Color.web("#059669"));
+        } else if ("In Progress".equals(status) || "Waiting".equals(status)) {
+            pill.getStyleClass().add("pill-inprogress");
+            statusLabel.setTextFill(Color.web("#2563EB"));
+        } else {
+            pill.getStyleClass().add("pill-info");
+            statusLabel.setTextFill(Color.web("#6B7280"));
+        }
+
+        pill.getChildren().add(statusLabel);
+        return pill;
+    }
+
+    /** Helper method for loading images without throwing errors if files are missing. */
+    private ImageView createImageView(String resourcePath, double width, double height) {
+        try {
+            InputStream is = getClass().getResourceAsStream(resourcePath);
+            if (is != null) {
+                ImageView imageView = new ImageView(new Image(is));
+                imageView.setFitWidth(width);
+                imageView.setFitHeight(height);
+                imageView.setPreserveRatio(true);
+                return imageView;
+            }
+        } catch (Exception ignored) {}
+        return null;
     }
 }

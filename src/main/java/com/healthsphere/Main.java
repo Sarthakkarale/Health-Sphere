@@ -7,19 +7,30 @@ import javafx.stage.Stage;
 
 public class Main extends Application {
 
-    @Override
-    public void start(Stage primaryStage) {
-        primaryStage.setTitle("Health-Sphere Portal");
+    // One common public static Stage
+    public static Stage primaryStage;
 
-        primaryStage.setWidth(1380);
-        primaryStage.setHeight(900);
-        primaryStage.setMinWidth(1100);
+    @Override
+    public void start(Stage stage) {
+
+        primaryStage = stage;
+
+        // Create Doctor Dashboard
+        DoctorDashboardView dashboardView =
+                new DoctorDashboardView(primaryStage);
+
+        // Get dashboard scene
+        Scene dashboardScene = dashboardView.getScene();
+
+        // Set scene
+        primaryStage.setScene(dashboardScene);
+
+        // Window settings
+        primaryStage.setTitle("Health-Sphere - Doctor Dashboard");
+        primaryStage.setMinWidth(1200);
         primaryStage.setMinHeight(700);
 
-        DoctorDashboardView dashboardView = new DoctorDashboardView(primaryStage);
-        Scene initialScene = dashboardView.createScene();
-
-        primaryStage.setScene(initialScene);
+        // Show application
         primaryStage.setMaximized(true);
         primaryStage.show();
     }

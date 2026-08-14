@@ -8,12 +8,16 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
 
 public class SplashView {
 
     private Scene scene;
 
-    public SplashView() {
+    // Constructor accepting Stage to get actual dimensions
+    public SplashView(Stage stage) {
+        double width = (stage != null && stage.getWidth() > 0) ? stage.getWidth() : 1380;
+        double height = (stage != null && stage.getHeight() > 0) ? stage.getHeight() : 900;
 
         // Application Name
         Text title = new Text("Health-Sphere");
@@ -31,20 +35,21 @@ public class SplashView {
 
         // Layout
         VBox root = new VBox(25);
-
         root.setAlignment(Pos.CENTER);
-
         root.getChildren().addAll(
                 title,
                 tagline,
                 loading
         );
 
-        root.setStyle("""
-                -fx-background-color: white;
-                """);
+        root.setStyle("-fx-background-color: white;");
 
-        scene = new Scene(root, 1440, 900);
+        scene = new Scene(root, width, height);
+    }
+
+    // Default constructor overload
+    public SplashView() {
+        this(null);
     }
 
     public Scene getScene() {
