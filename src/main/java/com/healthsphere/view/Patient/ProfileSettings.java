@@ -1,17 +1,19 @@
+
 package com.healthsphere.view.Patient;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -23,724 +25,791 @@ public class ProfileSettings {
         this.stage = stage;
     }
 
+    // =========================================================
+    // MAIN SCENE
+    // =========================================================
+
     public Scene getScene() {
 
-        BorderPane root = new BorderPane();
+        // =====================================================
+        // MAIN CONTENT
+        // =====================================================
 
-        root.setLeft(createSidebar());
-        root.setTop(createHeader());
-
-        VBox content = new VBox(20);
+        VBox content =
+                new VBox(22);
 
         content.setPadding(
-                new Insets(28)
+                new Insets(5)
         );
 
-        content.setStyle(
-                "-fx-background-color: #f8fafc;"
+        // =====================================================
+        // PROFILE IMAGE
+        // =====================================================
+
+        VBox profileBanner =
+                new VBox();
+
+        profileBanner.setAlignment(
+                Pos.CENTER
         );
 
-        Label title =
-                new Label("Profile & Settings");
-
-        title.setStyle(
-                "-fx-font-size: 30px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: #0f172a;"
+        profileBanner.setPadding(
+                new Insets(20)
         );
 
-        Label subtitle =
-                new Label(
-                        "Manage your personal information, preferences and account settings."
+        profileBanner.setStyle(
+                "-fx-background-color: white;" +
+                "-fx-background-radius: 18;" +
+                "-fx-border-color: #ddd6fe;" +
+                "-fx-border-radius: 18;"
+        );
+
+        ImageView banner =
+                createSquareImage(
+                        "/images/profile/profile1.jpg",
+                        300
                 );
 
-        subtitle.setStyle(
-                "-fx-font-size: 15px;" +
+        profileBanner.getChildren().add(
+                banner
+        );
+
+        // =====================================================
+        // PROFILE CARD
+        // =====================================================
+
+        HBox profileCard =
+                new HBox(20);
+
+        profileCard.setPadding(
+                new Insets(20)
+        );
+
+        profileCard.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        profileCard.setStyle(
+                "-fx-background-color: #f5f3ff;" +
+                "-fx-background-radius: 16;" +
+                "-fx-border-color: #ddd6fe;" +
+                "-fx-border-radius: 16;"
+        );
+
+        ImageView profileImage =
+                createImage(
+                        "/images/profile/profile2.jpg",
+                        120,
+                        120
+                );
+
+        VBox profileInformation =
+                new VBox(7);
+
+        Label name =
+                new Label(
+                        "Sarah Johnson"
+                );
+
+        name.setStyle(
+                "-fx-font-size: 22px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #4c1d95;"
+        );
+
+        Label patientId =
+                new Label(
+                        "Patient ID: HS-2026-001"
+                );
+
+        patientId.setStyle(
                 "-fx-text-fill: #64748b;"
         );
 
-        VBox heading =
-                new VBox(5, title, subtitle);
+        Label status =
+                new Label(
+                        "● Active Patient"
+                );
+
+        status.setStyle(
+                "-fx-text-fill: #16a34a;" +
+                "-fx-font-weight: bold;"
+        );
+
+        profileInformation.getChildren().addAll(
+                name,
+                patientId,
+                status
+        );
+
+        profileCard.getChildren().addAll(
+                profileImage,
+                profileInformation
+        );
 
         // =====================================================
         // PERSONAL INFORMATION
         // =====================================================
 
         VBox personal =
-                coloredCard(
-                        "#eff6ff",
-                        "#2563eb",
-                        "Personal Information"
+                card(
+                        "👤  Personal Information"
                 );
 
-        HBox nameRow =
-                new HBox(15);
+        GridPane personalGrid =
+                new GridPane();
 
-        VBox firstName =
+        personalGrid.setHgap(
+                15
+        );
+
+        personalGrid.setVgap(
+                12
+        );
+
+        TextField nameField =
                 field(
-                        "First Name",
-                        "Sarah"
+                        "Sarah Johnson"
                 );
 
-        VBox lastName =
+        TextField emailField =
                 field(
-                        "Last Name",
-                        "Johnson"
-                );
-
-        HBox.setHgrow(
-                firstName,
-                Priority.ALWAYS
-        );
-
-        HBox.setHgrow(
-                lastName,
-                Priority.ALWAYS
-        );
-
-        nameRow.getChildren().addAll(
-                firstName,
-                lastName
-        );
-
-        VBox email =
-                field(
-                        "Email Address",
                         "sarah.johnson@email.com"
                 );
 
-        VBox phone =
+        TextField phoneField =
                 field(
-                        "Phone Number",
                         "+91 98765 43210"
                 );
 
-        personal.getChildren().addAll(
-                nameRow,
-                email,
-                phone
+        TextField cityField =
+                field(
+                        "Hyderabad"
+                );
+
+        personalGrid.add(
+                label("Full Name"),
+                0,
+                0
+        );
+
+        personalGrid.add(
+                nameField,
+                1,
+                0
+        );
+
+        personalGrid.add(
+                label("Email"),
+                0,
+                1
+        );
+
+        personalGrid.add(
+                emailField,
+                1,
+                1
+        );
+
+        personalGrid.add(
+                label("Phone"),
+                0,
+                2
+        );
+
+        personalGrid.add(
+                phoneField,
+                1,
+                2
+        );
+
+        personalGrid.add(
+                label("City"),
+                0,
+                3
+        );
+
+        personalGrid.add(
+                cityField,
+                1,
+                3
+        );
+
+        personal.getChildren().add(
+                personalGrid
         );
 
         // =====================================================
-        // EMERGENCY CONTACT
+        // HEALTH & WELLNESS
         // =====================================================
 
-        VBox emergency =
-                coloredCard(
-                        "#fef2f2",
-                        "#dc2626",
-                        "Emergency Contact"
+        VBox imageCards =
+                card(
+                        "💜  Health & Wellness"
                 );
 
-        VBox emergencyName =
-                field(
-                        "Emergency Contact Name",
-                        "Michael Johnson"
-                );
+        HBox images =
+                new HBox(18);
 
-        VBox emergencyPhone =
-                field(
-                        "Emergency Contact Phone",
-                        "+91 98765 12345"
-                );
+        images.getChildren().addAll(
 
-        VBox relationship =
-                field(
-                        "Relationship",
-                        "Spouse"
-                );
+                imageCard(
+                        "/images/profile/profile3.jpg",
+                        "Healthy Lifestyle"
+                ),
 
-        emergency.getChildren().addAll(
-                emergencyName,
-                emergencyPhone,
-                relationship
+                imageCard(
+                        "/images/profile/profile4.jpg",
+                        "Personal Health"
+                )
+        );
+
+        imageCards.getChildren().add(
+                images
         );
 
         // =====================================================
-        // HEALTH PREFERENCES
+        // ACCOUNT PREFERENCES
         // =====================================================
 
         VBox preferences =
-                coloredCard(
-                        "#f0fdf4",
-                        "#16a34a",
-                        "Health Preferences"
+                card(
+                        "⚙  Account Preferences"
                 );
-
-        CheckBox appointmentReminder =
-                new CheckBox(
-                        "Receive appointment reminders"
-                );
-
-        appointmentReminder.setSelected(true);
-
-        CheckBox healthNotifications =
-                new CheckBox(
-                        "Receive health notifications"
-                );
-
-        healthNotifications.setSelected(true);
-
-        CheckBox aiInsights =
-                new CheckBox(
-                        "Receive AI health insights"
-                );
-
-        aiInsights.setSelected(true);
-
-        CheckBox emergencyAlerts =
-                new CheckBox(
-                        "Receive emergency alerts"
-                );
-
-        emergencyAlerts.setSelected(true);
 
         preferences.getChildren().addAll(
-                appointmentReminder,
-                healthNotifications,
-                aiInsights,
-                emergencyAlerts
+
+                setting(
+                        "Notifications",
+                        "Receive appointment and health reminders."
+                ),
+
+                setting(
+                        "Health Insights",
+                        "Allow AI-generated health insights."
+                ),
+
+                setting(
+                        "Privacy",
+                        "Manage your healthcare information privacy."
+                )
         );
 
         // =====================================================
-        // SECURITY
+        // BUTTONS
         // =====================================================
 
-        VBox security =
-                coloredCard(
-                        "#f3e8ff",
-                        "#9333ea",
-                        "Security"
+        Button save =
+                new Button(
+                        "Save Changes"
                 );
 
-        Button changePassword =
-                new Button("Change Password");
-
-        changePassword.setStyle(
-                "-fx-background-color: #9333ea;" +
+        save.setStyle(
+                "-fx-background-color: #7c3aed;" +
                 "-fx-text-fill: white;" +
                 "-fx-font-weight: bold;" +
                 "-fx-background-radius: 8;" +
-                "-fx-padding: 10 18 10 18;"
+                "-fx-padding: 11 22;" +
+                "-fx-cursor: hand;"
         );
 
-        Button logout =
-                new Button("Logout");
+        save.setOnAction(
+                e -> {
 
-        logout.setStyle(
-                "-fx-background-color: #dc2626;" +
+                    System.out.println(
+                            "Profile changes saved."
+                    );
+                }
+        );
+
+        Button back =
+                new Button(
+                        "← Back to Dashboard"
+                );
+
+        back.setStyle(
+                "-fx-background-color: #0f172a;" +
                 "-fx-text-fill: white;" +
-                "-fx-font-weight: bold;" +
                 "-fx-background-radius: 8;" +
-                "-fx-padding: 10 18 10 18;"
+                "-fx-padding: 10 18;" +
+                "-fx-cursor: hand;"
         );
 
-        logout.setOnAction(
+        back.setOnAction(
                 e -> showDashboard()
         );
-
-        security.getChildren().addAll(
-                changePassword,
-                logout
-        );
-
-        // =====================================================
-        // SAVE BUTTON
-        // =====================================================
 
         HBox buttons =
                 new HBox(12);
 
         buttons.setAlignment(
-                Pos.CENTER_RIGHT
-        );
-
-        Button save =
-                new Button("Save Changes");
-
-        save.setStyle(
-                "-fx-background-color: #2563eb;" +
-                "-fx-text-fill: white;" +
-                "-fx-font-weight: bold;" +
-                "-fx-background-radius: 8;" +
-                "-fx-padding: 12 24 12 24;"
-        );
-
-        save.setOnAction(
-                e -> showSavedMessage()
-        );
-
-        Button cancel =
-                new Button("Cancel");
-
-        cancel.setStyle(
-                "-fx-background-color: #e2e8f0;" +
-                "-fx-text-fill: #334155;" +
-                "-fx-background-radius: 8;" +
-                "-fx-padding: 12 24 12 24;"
-        );
-
-        cancel.setOnAction(
-                e -> showDashboard()
+                Pos.CENTER_LEFT
         );
 
         buttons.getChildren().addAll(
-                cancel,
-                save
+                save,
+                back
         );
 
+        // =====================================================
+        // ADD EVERYTHING TO CONTENT
+        // =====================================================
+
         content.getChildren().addAll(
-                heading,
+
+                profileBanner,
+
+                profileCard,
+
                 personal,
-                emergency,
+
+                imageCards,
+
                 preferences,
-                security,
+
                 buttons
         );
 
-        ScrollPane scroll =
-                new ScrollPane(content);
+        // =====================================================
+        // SCROLL
+        // =====================================================
 
-        scroll.setFitToWidth(true);
+        ScrollPane scroll =
+                new ScrollPane(
+                        content
+                );
+
+        scroll.setFitToWidth(
+                true
+        );
 
         scroll.setHbarPolicy(
                 ScrollPane.ScrollBarPolicy.NEVER
         );
 
-        root.setCenter(scroll);
+        scroll.setVbarPolicy(
+                ScrollPane.ScrollBarPolicy.AS_NEEDED
+        );
 
-        return new Scene(
-                root,
-                1440,
-                900
+        scroll.setStyle(
+                "-fx-background-color: transparent;" +
+                "-fx-background: transparent;"
+        );
+
+        // =====================================================
+        // WRAPPER
+        //
+        // PatientUI provides:
+        // LEFT SIDEBAR
+        // TOP HEADER
+        // CENTER CONTENT
+        // =====================================================
+
+        VBox wrapper =
+                new VBox(
+                        scroll
+                );
+
+        VBox.setVgrow(
+                scroll,
+                Priority.ALWAYS
+        );
+
+        // =====================================================
+        // RETURN SHARED PATIENT SCENE
+        // =====================================================
+
+        return PatientUI.createScene(
+                stage,
+                "Profile & Settings",
+                "Profile & Settings",
+                "Manage your personal information, preferences and account settings.",
+                wrapper
         );
     }
 
     // =========================================================
-    // FIELD
+    // REUSABLE CARD
     // =========================================================
 
-    private VBox field(
-            String label,
-            String value
+    private VBox card(
+            String title
     ) {
 
-        VBox box = new VBox(6);
+        VBox box =
+                new VBox(15);
 
-        Label fieldLabel =
-                new Label(label);
+        box.setPadding(
+                new Insets(20)
+        );
 
-        fieldLabel.setStyle(
+        box.setStyle(
+                "-fx-background-color: white;" +
+                "-fx-background-radius: 16;" +
+                "-fx-border-color: #ddd6fe;" +
+                "-fx-border-radius: 16;"
+        );
+
+        Label heading =
+                new Label(title);
+
+        heading.setStyle(
+                "-fx-font-size: 19px;" +
                 "-fx-font-weight: bold;" +
-                "-fx-text-fill: #334155;"
+                "-fx-text-fill: #4c1d95;"
         );
 
-        TextField field =
-                new TextField(value);
-
-        field.setPrefHeight(40);
-
-        box.getChildren().addAll(
-                fieldLabel,
-                field
-        );
-
-        VBox.setVgrow(
-                box,
-                Priority.ALWAYS
+        box.getChildren().add(
+                heading
         );
 
         return box;
     }
 
     // =========================================================
-    // COLORED CARD
+    // FORM LABEL
     // =========================================================
 
-    private VBox coloredCard(
-            String background,
-            String accent,
+    private Label label(
+            String text
+    ) {
+
+        Label label =
+                new Label(text);
+
+        label.setStyle(
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #475569;"
+        );
+
+        return label;
+    }
+
+    // =========================================================
+    // TEXT FIELD
+    // =========================================================
+
+    private TextField field(
+            String text
+    ) {
+
+        TextField field =
+                new TextField(text);
+
+        field.setPrefWidth(
+                350
+        );
+
+        field.setStyle(
+                "-fx-background-color: #f8fafc;" +
+                "-fx-border-color: #c4b5fd;" +
+                "-fx-border-radius: 7;" +
+                "-fx-background-radius: 7;" +
+                "-fx-padding: 9;"
+        );
+
+        return field;
+    }
+
+    // =========================================================
+    // HEALTH & WELLNESS IMAGE CARD
+    // =========================================================
+
+    private VBox imageCard(
+            String path,
             String title
     ) {
 
-        VBox card =
-                new VBox(14);
+        VBox box =
+                new VBox();
 
-        card.setPadding(
-                new Insets(20)
+        box.setStyle(
+                "-fx-background-color: #faf5ff;" +
+                "-fx-background-radius: 14;" +
+                "-fx-border-color: #ddd6fe;" +
+                "-fx-border-radius: 14;"
         );
 
-        card.setStyle(
-                "-fx-background-color: " +
-                background +
-                ";" +
+        ImageView image =
+                createImage(
+                        path,
+                        360,
+                        150
+                );
 
-                "-fx-border-color: " +
-                accent +
-                ";" +
+        Label label =
+                new Label(title);
 
-                "-fx-border-width: 0 0 0 5;" +
-
-                "-fx-background-radius: 12;" +
-                "-fx-border-radius: 12;"
+        label.setPadding(
+                new Insets(12)
         );
+
+        label.setStyle(
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #5b21b6;"
+        );
+
+        box.getChildren().addAll(
+                image,
+                label
+        );
+
+        return box;
+    }
+
+    // =========================================================
+    // ACCOUNT SETTING
+    // =========================================================
+
+    private HBox setting(
+            String title,
+            String description
+    ) {
+
+        HBox row =
+                new HBox(15);
+
+        row.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        row.setPadding(
+                new Insets(10)
+        );
+
+        row.setStyle(
+                "-fx-background-color: #faf5ff;" +
+                "-fx-background-radius: 10;" +
+                "-fx-border-color: #ede9fe;" +
+                "-fx-border-radius: 10;"
+        );
+
+        VBox text =
+                new VBox(4);
 
         Label titleLabel =
                 new Label(title);
 
         titleLabel.setStyle(
-                "-fx-font-size: 19px;" +
                 "-fx-font-weight: bold;" +
-                "-fx-text-fill: " +
-                accent +
-                ";"
+                "-fx-text-fill: #0f172a;"
         );
 
-        card.getChildren().add(
-                titleLabel
+        Label descriptionLabel =
+                new Label(description);
+
+        descriptionLabel.setStyle(
+                "-fx-text-fill: #64748b;"
         );
 
-        return card;
-    }
-
-    // =========================================================
-    // HEADER
-    // =========================================================
-
-    private HBox createHeader() {
-
-        HBox header =
-                new HBox();
-
-        header.setAlignment(
-                Pos.CENTER_RIGHT
+        descriptionLabel.setWrapText(
+                true
         );
 
-        header.setPadding(
-                new Insets(
-                        15,
-                        28,
-                        15,
-                        28
-                )
+        text.getChildren().addAll(
+                titleLabel,
+                descriptionLabel
         );
-
-        header.setStyle(
-                "-fx-background-color: white;" +
-                "-fx-border-color: #e2e8f0;"
-        );
-
-        Region spacer =
-                new Region();
 
         HBox.setHgrow(
-                spacer,
+                text,
                 Priority.ALWAYS
         );
 
-        Label icon =
-                new Label("⚙");
+        Button configure =
+                new Button(
+                        "Manage"
+                );
 
-        icon.setStyle(
-                "-fx-font-size: 22px;"
+        configure.setStyle(
+                "-fx-background-color: #ede9fe;" +
+                "-fx-text-fill: #6d28d9;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-radius: 7;" +
+                "-fx-padding: 8 14;" +
+                "-fx-cursor: hand;"
         );
 
-        Button notifications =
-                new Button("Notifications");
-
-        notifications.setOnAction(
-                e -> showNotifications()
+        row.getChildren().addAll(
+                text,
+                configure
         );
 
-        Button dashboard =
-                new Button("Dashboard");
-
-        dashboard.setOnAction(
-                e -> showDashboard()
-        );
-
-        header.getChildren().addAll(
-                spacer,
-                icon,
-                notifications,
-                dashboard
-        );
-
-        return header;
+        return row;
     }
 
     // =========================================================
-    // SIDEBAR
+    // NORMAL IMAGE LOADER
     // =========================================================
 
-    private VBox createSidebar() {
+    private ImageView createImage(
+            String path,
+            double width,
+            double height
+    ) {
 
-        VBox sidebar =
-                new VBox(8);
+        ImageView view =
+                new ImageView();
 
-        sidebar.setPrefWidth(255);
+        var resource =
+                getClass().getResource(path);
 
-        sidebar.setPadding(
-                new Insets(22)
-        );
+        if (resource == null) {
 
-        sidebar.setStyle(
-                "-fx-background-color: #0f172a;"
-        );
+            System.err.println(
+                    "Profile image not found: "
+                            + path
+            );
 
-        Label brand =
-                new Label(
-                        "✚  MediNexus AI"
+            view.setFitWidth(
+                    width
+            );
+
+            view.setFitHeight(
+                    height
+            );
+
+            return view;
+        }
+
+        Image image =
+                new Image(
+                        resource.toExternalForm()
                 );
 
-        brand.setStyle(
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 21px;" +
-                "-fx-font-weight: bold;"
+        view.setImage(
+                image
         );
 
-        Label module =
-                new Label(
-                        "Patient Module"
+        view.setFitWidth(
+                width
+        );
+
+        view.setFitHeight(
+                height
+        );
+
+        view.setPreserveRatio(
+                false
+        );
+
+        return view;
+    }
+
+    // =========================================================
+    // SQUARE IMAGE LOADER
+    //
+    // Used specifically for profile1.jpg.
+    //
+    // It crops the image to a square instead of stretching
+    // the complete image into a wide banner.
+    // =========================================================
+
+    private ImageView createSquareImage(
+            String path,
+            double size
+    ) {
+
+        ImageView view =
+                new ImageView();
+
+        var resource =
+                getClass().getResource(path);
+
+        if (resource == null) {
+
+            System.err.println(
+                    "Profile image not found: "
+                            + path
+            );
+
+            view.setFitWidth(
+                    size
+            );
+
+            view.setFitHeight(
+                    size
+            );
+
+            return view;
+        }
+
+        Image image =
+                new Image(
+                        resource.toExternalForm()
                 );
 
-        module.setStyle(
-                "-fx-text-fill: #94a3b8;"
+        view.setImage(
+                image
         );
 
-        Region spacer =
-                new Region();
+        // -----------------------------------------------------
+        // GET ORIGINAL IMAGE SIZE
+        // -----------------------------------------------------
 
-        VBox.setVgrow(
-                spacer,
-                Priority.ALWAYS
-        );
+        double imageWidth =
+                image.getWidth();
 
-        sidebar.getChildren().addAll(
+        double imageHeight =
+                image.getHeight();
 
-                brand,
-                module,
+        // -----------------------------------------------------
+        // SELECT THE LARGEST POSSIBLE SQUARE
+        // -----------------------------------------------------
 
-                nav(
-                        "▦",
-                        "Dashboard",
-                        false,
-                        this::showDashboard
-                ),
+        double cropSize =
+                Math.min(
+                        imageWidth,
+                        imageHeight
+                );
 
-                nav(
-                        "⊞",
-                        "Search Hospitals",
-                        false,
-                        this::showSearchHospitals
-                ),
+        // -----------------------------------------------------
+        // CENTER THE SQUARE CROP
+        // -----------------------------------------------------
 
-                nav(
-                        "▣",
-                        "Appointments",
-                        false,
-                        this::showAppointments
-                ),
+        double x =
+                (imageWidth - cropSize) / 2;
 
-                nav(
-                        "▧",
-                        "Health Passport",
-                        false,
-                        this::showHealthPassport
-                ),
+        double y =
+                (imageHeight - cropSize) / 2;
 
-                nav(
-                        "▱",
-                        "Medical Records",
-                        false,
-                        this::showMedicalRecords
-                ),
-
-                nav(
-                        "♙",
-                        "AI Health Assistant",
-                        false,
-                        this::showAIHealthAssistant
-                ),
-
-                nav(
-                        "⌖",
-                        "Emergency Assistance",
-                        false,
-                        this::showEmergencyAssistance
-                ),
-
-                spacer,
-
-                nav(
-                        "♧",
-                        "Notifications",
-                        false,
-                        this::showNotifications
-                ),
-
-                nav(
-                        "⚙",
-                        "Profile & Settings",
-                        true,
-                        this::showProfileSettings
+        view.setViewport(
+                new Rectangle2D(
+                        x,
+                        y,
+                        cropSize,
+                        cropSize
                 )
         );
 
-        return sidebar;
-    }
+        // -----------------------------------------------------
+        // DISPLAY AS 300 × 300
+        // -----------------------------------------------------
 
-    private HBox nav(
-            String icon,
-            String text,
-            boolean selected,
-            Runnable action
-    ) {
-
-        HBox item =
-                new HBox(12);
-
-        item.setAlignment(
-                Pos.CENTER_LEFT
+        view.setFitWidth(
+                size
         );
 
-        item.setPadding(
-                new Insets(12)
+        view.setFitHeight(
+                size
         );
 
-        item.setStyle(
-                "-fx-background-color: " +
-                (selected
-                        ? "#2563eb"
-                        : "transparent") +
-                ";" +
-                "-fx-background-radius: 8;"
+        view.setPreserveRatio(
+                false
         );
 
-        Label iconLabel =
-                new Label(icon);
-
-        iconLabel.setStyle(
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 17px;"
-        );
-
-        Label textLabel =
-                new Label(text);
-
-        textLabel.setStyle(
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 14px;"
-        );
-
-        item.getChildren().addAll(
-                iconLabel,
-                textLabel
-        );
-
-        item.setOnMouseClicked(
-                e -> action.run()
-        );
-
-        return item;
+        return view;
     }
 
     // =========================================================
-    // NAVIGATION
+    // DASHBOARD
     // =========================================================
 
     private void showDashboard() {
 
         stage.setScene(
-                new Dashboard(stage).getScene()
-        );
-
-        stage.show();
-    }
-
-    private void showSearchHospitals() {
-
-        stage.setScene(
-                new SearchHospitals(stage).getScene()
-        );
-
-        stage.show();
-    }
-
-    private void showAppointments() {
-
-        stage.setScene(
-                new Appointments(stage).getScene()
-        );
-
-        stage.show();
-    }
-
-    private void showHealthPassport() {
-
-        stage.setScene(
-                new HealthPassport(stage).getScene()
-        );
-
-        stage.show();
-    }
-
-    private void showMedicalRecords() {
-
-        stage.setScene(
-                new MedicalRecords(stage).getScene()
-        );
-
-        stage.show();
-    }
-
-    private void showAIHealthAssistant() {
-
-        stage.setScene(
-                new AiHealthAssistant(stage).getScene()
-        );
-
-        stage.show();
-    }
-
-    private void showEmergencyAssistance() {
-
-        stage.setScene(
-                new EmergencyAssistance(stage).getScene()
-        );
-
-        stage.show();
-    }
-
-    private void showNotifications() {
-
-        stage.setScene(
-                new Notifications(stage).getScene()
-        );
-
-        stage.show();
-    }
-
-    private void showProfileSettings() {
-
-        stage.setScene(
-                new ProfileSettings(stage).getScene()
-        );
-
-        stage.show();
-    }
-
-    // =========================================================
-    // SAVE MESSAGE
-    // =========================================================
-
-    private void showSavedMessage() {
-
-        // For now, return to the profile screen.
-        // Replace this later with database persistence.
-
-        stage.setScene(
-                new ProfileSettings(stage).getScene()
+                new Dashboard(stage)
+                        .getScene()
         );
 
         stage.show();

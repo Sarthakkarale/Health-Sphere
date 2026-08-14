@@ -1,3 +1,4 @@
+
 package com.healthsphere.view.Patient;
 
 import javafx.geometry.Insets;
@@ -6,12 +7,12 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Separator;
 import javafx.scene.control.TextArea;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -25,25 +26,14 @@ public class AiHealthAssistant {
 
     public Scene getScene() {
 
-        BorderPane root =
-                new BorderPane();
+        VBox content = new VBox(22);
+        content.setPadding(new Insets(25));
 
-        root.setStyle(
-                "-fx-background-color: #f1f5f9;"
-        );
+        // =========================================================
+        // PAGE HEADING
+        // =========================================================
 
-        root.setLeft(createSidebar());
-        root.setTop(createHeader());
-
-        VBox content =
-                new VBox(22);
-
-        content.setPadding(
-                new Insets(28)
-        );
-
-        Label title =
-                new Label("AI Health Assistant");
+        Label title = new Label("AI Health Assistant");
 
         title.setStyle(
                 "-fx-font-size: 30px;" +
@@ -51,301 +41,299 @@ public class AiHealthAssistant {
                 "-fx-text-fill: #0f172a;"
         );
 
-        Label subtitle =
-                new Label(
-                        "Get personalized health guidance and answers to your questions."
-                );
+        Label subtitle = new Label(
+                "Get intelligent health guidance and understand your health information."
+        );
 
         subtitle.setStyle(
-                "-fx-text-fill: #64748b;" +
-                "-fx-font-size: 15px;"
+                "-fx-font-size: 15px;" +
+                "-fx-text-fill: #64748b;"
         );
 
-        VBox heading =
-                new VBox(
-                        5,
-                        title,
-                        subtitle
-                );
+        VBox heading = new VBox(
+                5,
+                title,
+                subtitle
+        );
 
-        /*
-         * AI welcome card
-         */
+        // =========================================================
+        // IMAGE GALLERY
+        // =========================================================
 
-        VBox welcome =
-                coloredCard(
-                        "#ede9fe",
-                        "#7c3aed"
-                );
+        HBox gallery = createImageGallery();
 
-        Label welcomeTitle =
-                new Label(
-                        "✦  Hello Sarah!"
-                );
+        // =========================================================
+        // AI ASSISTANT CARD
+        // =========================================================
 
-        welcomeTitle.setStyle(
-                "-fx-font-size: 21px;" +
+        VBox assistantCard = new VBox(15);
+
+        assistantCard.setPadding(
+                new Insets(22)
+        );
+
+        assistantCard.setStyle(
+                "-fx-background-color: #ede9fe;" +
+                "-fx-background-radius: 16;" +
+                "-fx-border-color: #c4b5fd;" +
+                "-fx-border-width: 1;" +
+                "-fx-border-radius: 16;"
+        );
+
+        Label assistantTitle = new Label(
+                "🤖  How can I help you?"
+        );
+
+        assistantTitle.setStyle(
+                "-fx-font-size: 20px;" +
                 "-fx-font-weight: bold;" +
-                "-fx-text-fill: #5b21b6;"
+                "-fx-text-fill: #4c1d95;"
         );
 
-        Label welcomeText =
-                new Label(
-                        "I'm your AI Health Assistant. " +
-                        "I can help you understand your health information, " +
-                        "prepare questions for your doctor and provide general health guidance."
-                );
-
-        welcomeText.setWrapText(true);
-
-        welcomeText.setStyle(
-                "-fx-font-size: 14px;" +
-                "-fx-text-fill: #475569;"
+        Label message = new Label(
+                "Ask me about symptoms, medications, appointments, medical records or general health information."
         );
 
-        welcome.getChildren().addAll(
-                welcomeTitle,
-                welcomeText
+        message.setWrapText(true);
+
+        message.setStyle(
+                "-fx-text-fill: #475569;" +
+                "-fx-font-size: 14px;"
         );
 
-        /*
-         * Chat box
-         */
+        // =========================================================
+        // QUESTION FIELD
+        // =========================================================
 
-        VBox chatCard =
-                coloredCard(
-                        "#ffffff",
-                        "#8b5cf6"
-                );
-
-        Label chatTitle =
-                new Label(
-                        "Ask your health question"
-                );
-
-        chatTitle.setStyle(
-                "-fx-font-size: 19px;" +
-                "-fx-font-weight: bold;"
-        );
-
-        TextArea question =
-                new TextArea();
+        TextField question = new TextField();
 
         question.setPromptText(
-                "Type your health question here..."
+                "Type your health question..."
         );
 
-        question.setWrapText(true);
-
-        question.setPrefRowCount(4);
+        question.setPrefHeight(45);
 
         question.setStyle(
-                "-fx-background-color: #f8fafc;" +
-                "-fx-border-color: #cbd5e1;" +
+                "-fx-background-color: white;" +
+                "-fx-border-color: #c4b5fd;" +
                 "-fx-border-radius: 8;" +
-                "-fx-background-radius: 8;"
+                "-fx-background-radius: 8;" +
+                "-fx-padding: 0 12;"
         );
 
-        Button ask =
-                new Button("Ask AI Assistant");
+        // =========================================================
+        // ASK BUTTON
+        // =========================================================
 
-        ask.setPrefHeight(42);
+        Button ask = new Button("Ask AI");
+
+        ask.setPrefHeight(45);
+        ask.setPrefWidth(110);
 
         ask.setStyle(
                 "-fx-background-color: #7c3aed;" +
                 "-fx-text-fill: white;" +
                 "-fx-font-weight: bold;" +
                 "-fx-background-radius: 8;" +
-                "-fx-padding: 0 20;"
+                "-fx-cursor: hand;"
         );
 
-        VBox response =
-                new VBox(5);
+        // =========================================================
+        // RESPONSE AREA
+        // =========================================================
 
-        response.setPadding(
-                new Insets(14)
+        TextArea response = new TextArea();
+
+        response.setEditable(false);
+        response.setWrapText(true);
+        response.setPrefRowCount(6);
+
+        response.setPromptText(
+                "AI response will appear here..."
         );
 
         response.setStyle(
-                "-fx-background-color: #f5f3ff;" +
-                "-fx-border-color: #ddd6fe;" +
-                "-fx-border-radius: 10;" +
-                "-fx-background-radius: 10;"
+                "-fx-background-color: white;" +
+                "-fx-border-color: #c4b5fd;" +
+                "-fx-border-radius: 8;" +
+                "-fx-background-radius: 8;"
         );
 
-        Label responseTitle =
-                new Label("AI Response");
+        // =========================================================
+        // ASK ACTION
+        // =========================================================
 
-        responseTitle.setStyle(
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: #5b21b6;"
-        );
+        ask.setOnAction(e -> {
 
-        Label responseText =
-                new Label(
-                        "Your AI response will appear here. " +
-                        "For medical emergencies or serious symptoms, " +
-                        "please contact a qualified healthcare professional."
+            String text = question.getText();
+
+            if (text == null ||
+                    text.trim().isEmpty()) {
+
+                response.setText(
+                        "Please enter a health-related question."
                 );
 
-        responseText.setWrapText(true);
+                return;
+            }
 
-        responseText.setStyle(
-                "-fx-text-fill: #475569;"
-        );
+            response.setText(
+                    "AI Health Assistant\n\n" +
+                    "Your question:\n" +
+                    text.trim() +
+                    "\n\n" +
+                    "Thank you for your question. " +
+                    "This demo assistant can help you understand " +
+                    "general health information, appointments, " +
+                    "medical records and medications.\n\n" +
+                    "Please remember that this assistant does not " +
+                    "replace a qualified healthcare professional. " +
+                    "For diagnosis, treatment decisions or urgent " +
+                    "medical concerns, please consult a healthcare professional."
+            );
+        });
 
-        response.getChildren().addAll(
-                responseTitle,
-                responseText
-        );
+        // =========================================================
+        // ENTER KEY SUPPORT
+        // =========================================================
 
-        ask.setOnAction(
-                e -> {
+        question.setOnAction(e -> ask.fire());
 
-                    if (question.getText().trim().isEmpty()) {
+        // =========================================================
+        // INPUT ROW
+        // =========================================================
 
-                        responseText.setText(
-                                "Please enter a health question first."
-                        );
+        HBox inputRow = new HBox(10);
 
-                    } else {
-
-                        responseText.setText(
-                                "Thank you for your question. " +
-                                "This assistant can provide general health information, " +
-                                "but it cannot replace a doctor or medical diagnosis."
-                        );
-                    }
-                }
-        );
-
-        chatCard.getChildren().addAll(
-                chatTitle,
+        HBox.setHgrow(
                 question,
-                ask,
+                Priority.ALWAYS
+        );
+
+        inputRow.getChildren().addAll(
+                question,
+                ask
+        );
+
+        assistantCard.getChildren().addAll(
+                assistantTitle,
+                message,
+                inputRow,
                 response
         );
 
-        /*
-         * Suggested questions
-         */
+        // =========================================================
+        // HEALTH INSIGHTS CARD
+        // =========================================================
 
-        VBox suggestions =
-                coloredCard(
-                        "#dbeafe",
-                        "#2563eb"
-                );
-
-        Label suggestionTitle =
-                new Label(
-                        "Suggested Questions"
-                );
-
-        suggestionTitle.setStyle(
-                "-fx-font-size: 19px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: #1e3a8a;"
-        );
-
-        HBox suggestionButtons =
-                new HBox(10);
-
-        suggestionButtons.getChildren().addAll(
-
-                suggestionButton(
-                        "What does my blood pressure mean?",
-                        question
-                ),
-
-                suggestionButton(
-                        "How can I improve my sleep?",
-                        question
-                ),
-
-                suggestionButton(
-                        "What should I ask my doctor?",
-                        question
-                )
-        );
-
-        suggestions.getChildren().addAll(
-                suggestionTitle,
-                suggestionButtons
-        );
-
-        /*
-         * Health insights
-         */
-
-        VBox insights =
-                coloredCard(
-                        "#dcfce7",
-                        "#16a34a"
-                );
-
-        Label insightsTitle =
-                new Label(
-                        "Your Recent Health Insights"
-                );
-
-        insightsTitle.setStyle(
-                "-fx-font-size: 19px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: #166534;"
+        VBox insights = createCard(
+                "✨  Health Insights",
+                "#dbeafe"
         );
 
         insights.getChildren().addAll(
 
                 insight(
-                        "Blood Pressure",
-                        "Recent reading: 118 / 76 mmHg"
+                        "Daily Health Check",
+                        "Keep track of your vital signs and maintain regular health monitoring."
                 ),
 
-                new Separator(),
-
                 insight(
-                        "Heart Rate",
-                        "Recent reading: 72 BPM"
+                        "Medication Reminder",
+                        "Review your active medications and follow your prescribed schedule."
                 ),
 
-                new Separator(),
-
                 insight(
-                        "Upcoming Appointment",
-                        "Cardiology consultation tomorrow at 10:00 AM"
+                        "Wellness Recommendation",
+                        "Maintain a balanced diet, regular physical activity and adequate sleep."
                 )
         );
 
-        Button back =
-                new Button("Back to Dashboard");
+        // =========================================================
+        // QUICK QUESTIONS
+        // =========================================================
 
-        back.setPrefHeight(42);
-
-        back.setStyle(
-                "-fx-background-color: #e2e8f0;" +
-                "-fx-text-fill: #0f172a;" +
-                "-fx-font-weight: bold;" +
-                "-fx-background-radius: 8;" +
-                "-fx-padding: 0 20;"
+        VBox quickQuestions = createCard(
+                "💡  Quick Questions",
+                "#dcfce7"
         );
 
-        back.setOnAction(
-                e -> stage.setScene(
-                        new Dashboard(stage).getScene()
-                )
+        HBox quickRow = new HBox(10);
+
+        Button symptomsButton = quickButton(
+                "Understand symptoms"
         );
+
+        Button medicationButton = quickButton(
+                "Medication information"
+        );
+
+        Button appointmentButton = quickButton(
+                "Prepare for appointment"
+        );
+
+        Button recordsButton = quickButton(
+                "Understand medical records"
+        );
+
+        symptomsButton.setOnAction(e -> {
+            question.setText(
+                    "Can you help me understand my symptoms?"
+            );
+            ask.fire();
+        });
+
+        medicationButton.setOnAction(e -> {
+            question.setText(
+                    "Can you explain general medication safety?"
+            );
+            ask.fire();
+        });
+
+        appointmentButton.setOnAction(e -> {
+            question.setText(
+                    "How should I prepare for my appointment?"
+            );
+            ask.fire();
+        });
+
+        recordsButton.setOnAction(e -> {
+            question.setText(
+                    "Can you help me understand my medical records?"
+            );
+            ask.fire();
+        });
+
+        quickRow.getChildren().addAll(
+                symptomsButton,
+                medicationButton,
+                appointmentButton,
+                recordsButton
+        );
+
+        quickQuestions.getChildren().add(
+                quickRow
+        );
+
+        // =========================================================
+        // ADD CONTENT
+        // =========================================================
 
         content.getChildren().addAll(
                 heading,
-                welcome,
-                chatCard,
-                suggestions,
+                gallery,
+                assistantCard,
                 insights,
-                back
+                quickQuestions
         );
 
-        ScrollPane scroll =
-                new ScrollPane(content);
+        // =========================================================
+        // SCROLL
+        // =========================================================
+
+        ScrollPane scroll = new ScrollPane(
+                content
+        );
 
         scroll.setFitToWidth(true);
 
@@ -354,44 +342,180 @@ public class AiHealthAssistant {
         );
 
         scroll.setStyle(
-                "-fx-background-color: transparent;"
+                "-fx-background-color: #f1f5f9;"
         );
 
-        root.setCenter(scroll);
+        // =========================================================
+        // USE COMMON PATIENT UI
+        //
+        // IMPORTANT:
+        // PatientUI must contain the left sidebar.
+        // =========================================================
 
-        return new Scene(
-                root,
-                1440,
-                900
+        return PatientUI.createScene(
+                stage,
+                "AI Assistant",
+                "AI Health Assistant",
+                "Get intelligent health guidance and understand your health information.",
+                content
         );
     }
 
-    private Button suggestionButton(
-            String text,
-            TextArea question
+    // =============================================================
+    // IMAGE GALLERY
+    // =============================================================
+
+    private HBox createImageGallery() {
+
+        HBox gallery = new HBox(15);
+
+        gallery.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        gallery.getChildren().addAll(
+
+                imageCard(
+                        "/images/ai/ai1.jpg"
+                ),
+
+                imageCard(
+                        "/images/ai/ai2.jpg"
+                ),
+
+                imageCard(
+                        "/images/ai/ai3.jpg"
+                ),
+
+                imageCard(
+                        "/images/ai/ai4.jpg"
+                )
+        );
+
+        return gallery;
+    }
+
+    // =============================================================
+    // IMAGE CARD
+    // =============================================================
+
+    private VBox imageCard(String path) {
+
+        VBox box = new VBox();
+
+        box.setPrefWidth(260);
+        box.setPrefHeight(145);
+
+        box.setAlignment(
+                Pos.CENTER
+        );
+
+        box.setStyle(
+                "-fx-background-color: white;" +
+                "-fx-background-radius: 14;" +
+                "-fx-border-color: #cbd5e1;" +
+                "-fx-border-width: 1;" +
+                "-fx-border-radius: 14;"
+        );
+
+        try {
+
+            var stream =
+                    getClass()
+                            .getResourceAsStream(path);
+
+            if (stream == null) {
+
+                Label error =
+                        new Label(
+                                "Image unavailable"
+                        );
+
+                error.setStyle(
+                        "-fx-text-fill: #64748b;"
+                );
+
+                box.getChildren().add(error);
+
+                return box;
+            }
+
+            Image image =
+                    new Image(stream);
+
+            ImageView imageView =
+                    new ImageView(image);
+
+            imageView.setFitWidth(260);
+            imageView.setFitHeight(145);
+
+            imageView.setPreserveRatio(false);
+
+            box.getChildren().add(
+                    imageView
+            );
+
+        } catch (Exception e) {
+
+            Label error =
+                    new Label(
+                            "Image unavailable"
+                    );
+
+            error.setStyle(
+                    "-fx-text-fill: #64748b;"
+            );
+
+            box.getChildren().add(error);
+        }
+
+        return box;
+    }
+
+    // =============================================================
+    // COLORED CARD
+    // =============================================================
+
+    private VBox createCard(
+            String title,
+            String color
     ) {
 
-        Button button =
-                new Button(text);
+        VBox card = new VBox(14);
 
-        button.setWrapText(true);
-
-        button.setPrefHeight(42);
-
-        button.setStyle(
-                "-fx-background-color: white;" +
-                "-fx-text-fill: #1e3a8a;" +
-                "-fx-border-color: #93c5fd;" +
-                "-fx-border-radius: 8;" +
-                "-fx-background-radius: 8;"
+        card.setPadding(
+                new Insets(20)
         );
 
-        button.setOnAction(
-                e -> question.setText(text)
+        card.setStyle(
+                "-fx-background-color: " +
+                color +
+                ";" +
+                "-fx-background-radius: 14;" +
+                "-fx-border-color: #cbd5e1;" +
+                "-fx-border-width: 1;" +
+                "-fx-border-radius: 14;"
         );
 
-        return button;
+        Label label =
+                new Label(title);
+
+        label.setStyle(
+                "-fx-font-size: 18px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #0f172a;"
+        );
+
+        card.getChildren().add(
+                label
+        );
+
+        return card;
     }
+
+    // =============================================================
+    // INSIGHT
+    // =============================================================
 
     private VBox insight(
             String title,
@@ -399,20 +523,35 @@ public class AiHealthAssistant {
     ) {
 
         VBox box =
-                new VBox(4);
+                new VBox(5);
+
+        box.setPadding(
+                new Insets(12)
+        );
+
+        box.setStyle(
+                "-fx-background-color: white;" +
+                "-fx-background-radius: 10;" +
+                "-fx-border-color: #bfdbfe;" +
+                "-fx-border-width: 1;" +
+                "-fx-border-radius: 10;"
+        );
 
         Label titleLabel =
                 new Label(title);
 
         titleLabel.setStyle(
-                "-fx-font-weight: bold;"
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #0f172a;"
         );
 
         Label descriptionLabel =
                 new Label(description);
 
+        descriptionLabel.setWrapText(true);
+
         descriptionLabel.setStyle(
-                "-fx-text-fill: #475569;"
+                "-fx-text-fill: #64748b;"
         );
 
         box.getChildren().addAll(
@@ -423,307 +562,32 @@ public class AiHealthAssistant {
         return box;
     }
 
-    private VBox coloredCard(
-            String background,
-            String border
+    // =============================================================
+    // QUICK QUESTION BUTTON
+    // =============================================================
+
+    private Button quickButton(
+            String text
     ) {
 
-        VBox box =
-                new VBox(14);
+        Button button =
+                new Button(text);
 
-        box.setPadding(
-                new Insets(20)
-        );
+        button.setPrefHeight(42);
 
-        box.setStyle(
-                "-fx-background-color: " +
-                        background + ";" +
-                "-fx-border-color: " +
-                        border + ";" +
-                "-fx-border-width: 1.5;" +
-                "-fx-background-radius: 14;" +
-                "-fx-border-radius: 14;"
-        );
-
-        return box;
-    }
-
-    private HBox createHeader() {
-
-        HBox header =
-                new HBox();
-
-        header.setAlignment(
-                Pos.CENTER_RIGHT
-        );
-
-        header.setPadding(
-                new Insets(
-                        16,
-                        28,
-                        16,
-                        28
-                )
-        );
-
-        header.setStyle(
+        button.setStyle(
                 "-fx-background-color: white;" +
-                "-fx-border-color: #e2e8f0;"
+                "-fx-text-fill: #166534;" +
+                "-fx-font-weight: bold;" +
+                "-fx-border-color: #86efac;" +
+                "-fx-border-width: 1;" +
+                "-fx-background-radius: 8;" +
+                "-fx-border-radius: 8;" +
+                "-fx-padding: 8 14;" +
+                "-fx-cursor: hand;"
         );
 
-        Region spacer =
-                new Region();
-
-        HBox.setHgrow(
-                spacer,
-                Priority.ALWAYS
-        );
-
-        Button notification =
-                new Button("Notifications");
-
-        notification.setOnAction(
-                e -> stage.setScene(
-                        new Notifications(stage).getScene()
-                )
-        );
-
-        Button profile =
-                new Button("Sarah");
-
-        profile.setOnAction(
-                e -> stage.setScene(
-                        new ProfileSettings(stage).getScene()
-                )
-        );
-
-        header.getChildren().addAll(
-                spacer,
-                notification,
-                profile
-        );
-
-        return header;
-    }
-
-    private VBox createSidebar() {
-
-        VBox sidebar =
-                new VBox(8);
-
-        sidebar.setPrefWidth(255);
-
-        sidebar.setPadding(
-                new Insets(22)
-        );
-
-        sidebar.setStyle(
-                "-fx-background-color: #0f172a;"
-        );
-
-        Label brand =
-                new Label("✚  MediNexus AI");
-
-        brand.setStyle(
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 21px;" +
-                "-fx-font-weight: bold;"
-        );
-
-        Label module =
-                new Label("Patient Module");
-
-        module.setStyle(
-                "-fx-text-fill: #94a3b8;"
-        );
-
-        Region spacer =
-                new Region();
-
-        VBox.setVgrow(
-                spacer,
-                Priority.ALWAYS
-        );
-
-        sidebar.getChildren().addAll(
-
-                brand,
-                module,
-                new Separator(),
-
-                nav(
-                        "▦",
-                        "Dashboard",
-                        false,
-                        () -> showDashboard()
-                ),
-
-                nav(
-                        "⊞",
-                        "Search Hospitals",
-                        false,
-                        () -> showSearchHospitals()
-                ),
-
-                nav(
-                        "▣",
-                        "Appointments",
-                        false,
-                        () -> showAppointments()
-                ),
-
-                nav(
-                        "▧",
-                        "Health Passport",
-                        false,
-                        () -> showHealthPassport()
-                ),
-
-                nav(
-                        "▱",
-                        "Medical Records",
-                        false,
-                        () -> showMedicalRecords()
-                ),
-
-                nav(
-                        "♙",
-                        "AI Health Assistant",
-                        true,
-                        () -> showAIHealthAssistant()
-                ),
-
-                nav(
-                        "⌖",
-                        "Emergency Assistance",
-                        false,
-                        () -> showEmergencyAssistance()
-                ),
-
-                spacer,
-
-                nav(
-                        "♧",
-                        "Notifications",
-                        false,
-                        () -> showNotifications()
-                ),
-
-                nav(
-                        "⚙",
-                        "Profile & Settings",
-                        false,
-                        () -> showProfileSettings()
-                )
-        );
-
-        return sidebar;
-    }
-
-    private HBox nav(
-            String icon,
-            String text,
-            boolean selected,
-            Runnable action
-    ) {
-
-        HBox item =
-                new HBox(12);
-
-        item.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        item.setPadding(
-                new Insets(12)
-        );
-
-        item.setStyle(
-                "-fx-background-color: " +
-                        (selected
-                                ? "#2563eb;"
-                                : "transparent;") +
-                "-fx-background-radius: 8;"
-        );
-
-        Label iconLabel =
-                new Label(icon);
-
-        iconLabel.setStyle(
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 17px;"
-        );
-
-        Label textLabel =
-                new Label(text);
-
-        textLabel.setStyle(
-                "-fx-text-fill: white;"
-        );
-
-        item.getChildren().addAll(
-                iconLabel,
-                textLabel
-        );
-
-        item.setOnMouseClicked(
-                e -> action.run()
-        );
-
-        return item;
-    }
-
-    private void showDashboard() {
-        stage.setScene(
-                new Dashboard(stage).getScene()
-        );
-    }
-
-    private void showSearchHospitals() {
-        stage.setScene(
-                new SearchHospitals(stage).getScene()
-        );
-    }
-
-    private void showAppointments() {
-        stage.setScene(
-                new Appointments(stage).getScene()
-        );
-    }
-
-    private void showHealthPassport() {
-        stage.setScene(
-                new HealthPassport(stage).getScene()
-        );
-    }
-
-    private void showMedicalRecords() {
-        stage.setScene(
-                new MedicalRecords(stage).getScene()
-        );
-    }
-
-    private void showAIHealthAssistant() {
-        stage.setScene(
-                new AiHealthAssistant(stage).getScene()
-        );
-    }
-
-    private void showEmergencyAssistance() {
-        stage.setScene(
-                new EmergencyAssistance(stage).getScene()
-        );
-    }
-
-    private void showNotifications() {
-        stage.setScene(
-                new Notifications(stage).getScene()
-        );
-    }
-
-    private void showProfileSettings() {
-        stage.setScene(
-                new ProfileSettings(stage).getScene()
-        );
+        return button;
     }
 }
+

@@ -10,14 +10,17 @@ public class Main extends Application {
     @Override
     public void start(Stage stage) {
 
-        stage.setTitle("Health-Sphere | Patient Portal");
+        stage.setTitle("Health-Sphere");
 
-        stage.setScene(
-                new Dashboard(stage).getScene()
-        );
+        // Direct navigation:
+        // Main -> Dashboard
+        Dashboard dashboard = new Dashboard(stage);
 
-        stage.setMinWidth(1200);
-        stage.setMinHeight(750);
+        stage.setScene(dashboard.getScene());
+        stage.setWidth(1440);
+        stage.setHeight(900);
+        stage.setMinWidth(1100);
+        stage.setMinHeight(700);
 
         stage.show();
     }

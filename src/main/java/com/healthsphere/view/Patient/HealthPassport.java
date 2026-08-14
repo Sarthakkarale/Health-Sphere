@@ -1,3 +1,4 @@
+
 package com.healthsphere.view.Patient;
 
 import javafx.geometry.Insets;
@@ -6,14 +7,15 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Separator;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+
+import java.net.URL;
 
 public class HealthPassport {
 
@@ -25,696 +27,546 @@ public class HealthPassport {
 
     public Scene getScene() {
 
-        BorderPane root = new BorderPane();
-
-        root.setStyle(
-                "-fx-background-color: #f1f5f9;"
-        );
-
-        root.setLeft(createSidebar());
-        root.setTop(createHeader());
-
-        VBox content = new VBox(22);
-        content.setPadding(new Insets(28));
-
-        Label title = new Label("Health Passport");
-        title.setStyle(
-                "-fx-font-size: 30px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: #0f172a;"
-        );
-
-        Label subtitle = new Label(
-                "Your complete health profile and important medical information."
-        );
-
-        subtitle.setStyle(
-                "-fx-font-size: 15px;" +
-                "-fx-text-fill: #64748b;"
-        );
-
-        VBox heading = new VBox(5, title, subtitle);
+        VBox content = new VBox(20);
+        content.setPadding(new Insets(5));
 
         /*
-         * Patient Summary
+         * ============================================================
+         * IMAGE GALLERY
+         * ============================================================
          */
-        VBox patientCard = coloredCard(
-                "#dbeafe",
-                "#2563eb"
+
+        HBox images = createImageGallery();
+
+        /*
+         * ============================================================
+         * PERSONAL INFORMATION CARD
+         * ============================================================
+         */
+
+        VBox personalCard = PatientUI.coloredCard(
+                "👤  Personal Information",
+                "#dbeafe"
         );
 
-        Label patientTitle = new Label("Patient Information");
-        patientTitle.setStyle(
-                "-fx-font-size: 19px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: #1e3a8a;"
-        );
+        personalCard.getChildren().addAll(
 
-        GridPane patientGrid = new GridPane();
+                information(
+                        "Full Name",
+                        "Sarah Williams"
+                ),
 
-        patientGrid.setHgap(50);
-        patientGrid.setVgap(15);
+                information(
+                        "Date of Birth",
+                        "15 March 1995"
+                ),
 
-        patientGrid.add(
-                information("Patient Name", "Sarah Johnson"),
-                0,
-                0
-        );
+                information(
+                        "Blood Group",
+                        "O+"
+                ),
 
-        patientGrid.add(
-                information("Date of Birth", "14 March 1998"),
-                1,
-                0
-        );
-
-        patientGrid.add(
-                information("Blood Group", "O+"),
-                0,
-                1
-        );
-
-        patientGrid.add(
-                information("Gender", "Female"),
-                1,
-                1
-        );
-
-        patientCard.getChildren().addAll(
-                patientTitle,
-                patientGrid
+                information(
+                        "Gender",
+                        "Female"
+                )
         );
 
         /*
-         * Medical Information
+         * ============================================================
+         * MEDICAL INFORMATION CARD
+         * ============================================================
          */
-        HBox medicalRow = new HBox(18);
 
-        VBox allergies = coloredCard(
-                "#fee2e2",
-                "#dc2626"
+        VBox medicalCard = PatientUI.coloredCard(
+                "🏥  Medical Information",
+                "#dcfce7"
         );
 
-        allergies.getChildren().addAll(
-                cardTitle(
+        medicalCard.getChildren().addAll(
+
+                information(
                         "Allergies",
-                        "#991b1b"
+                        "No known allergies"
                 ),
-                item(
-                        "Penicillin",
-                        "Medication allergy"
+
+                information(
+                        "Emergency Contact",
+                        "+91 98765 43210"
                 ),
-                item(
-                        "Dust",
-                        "Environmental allergy"
-                )
-        );
 
-        VBox conditions = coloredCard(
-                "#fef3c7",
-                "#d97706"
-        );
-
-        conditions.getChildren().addAll(
-                cardTitle(
-                        "Medical Conditions",
-                        "#92400e"
+                information(
+                        "Primary Physician",
+                        "Dr. Sarah Jenkins"
                 ),
-                item(
-                        "Hypertension",
-                        "Under monitoring"
-                ),
-                item(
-                        "Seasonal Asthma",
-                        "Mild condition"
-                )
-        );
 
-        VBox medications = coloredCard(
-                "#dcfce7",
-                "#16a34a"
-        );
-
-        medications.getChildren().addAll(
-                cardTitle(
-                        "Current Medications",
-                        "#166534"
-                ),
-                item(
-                        "Amlodipine",
-                        "5 mg • Once daily"
-                ),
-                item(
-                        "Vitamin D3",
-                        "Once weekly"
-                )
-        );
-
-        HBox.setHgrow(
-                allergies,
-                Priority.ALWAYS
-        );
-
-        HBox.setHgrow(
-                conditions,
-                Priority.ALWAYS
-        );
-
-        HBox.setHgrow(
-                medications,
-                Priority.ALWAYS
-        );
-
-        medicalRow.getChildren().addAll(
-                allergies,
-                conditions,
-                medications
-        );
-
-        /*
-         * Emergency Information
-         */
-        VBox emergencyCard = coloredCard(
-                "#fce7f3",
-                "#db2777"
-        );
-
-        Label emergencyTitle = new Label(
-                "Emergency Information"
-        );
-
-        emergencyTitle.setStyle(
-                "-fx-font-size: 19px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: #9d174d;"
-        );
-
-        Label emergencyContact = new Label(
-                "Emergency Contact: Robert Johnson"
-        );
-
-        Label relationship = new Label(
-                "Relationship: Spouse"
-        );
-
-        Label phone = new Label(
-                "Phone: +91 98765 43210"
-        );
-
-        emergencyContact.setStyle(
-                "-fx-font-size: 15px;" +
-                "-fx-font-weight: bold;"
-        );
-
-        relationship.setStyle(
-                "-fx-text-fill: #64748b;"
-        );
-
-        phone.setStyle(
-                "-fx-text-fill: #64748b;"
-        );
-
-        emergencyCard.getChildren().addAll(
-                emergencyTitle,
-                emergencyContact,
-                relationship,
-                phone
-        );
-
-        /*
-         * Recent Health Activity
-         */
-        VBox activityCard = coloredCard(
-                "#ede9fe",
-                "#7c3aed"
-        );
-
-        Label activityTitle = new Label(
-                "Recent Health Activity"
-        );
-
-        activityTitle.setStyle(
-                "-fx-font-size: 19px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: #5b21b6;"
-        );
-
-        activityCard.getChildren().addAll(
-                activityTitle,
-                activity(
-                        "Blood Pressure Check",
-                        "118 / 76 mmHg",
-                        "2 days ago"
-                ),
-                new Separator(),
-                activity(
-                        "Heart Rate",
-                        "72 BPM",
-                        "2 days ago"
-                ),
-                new Separator(),
-                activity(
-                        "Medical Consultation",
-                        "Cardiology",
-                        "1 week ago"
+                information(
+                        "Insurance",
+                        "HealthSecure Plus"
                 )
         );
 
         /*
-         * Buttons
+         * ============================================================
+         * INFORMATION ROW
+         * ============================================================
          */
-        HBox buttons = new HBox(12);
 
-        Button recordsButton = new Button(
-                "View Medical Records"
+        HBox informationRow = new HBox(18);
+
+        HBox.setHgrow(
+                personalCard,
+                Priority.ALWAYS
         );
 
-        recordsButton.setPrefHeight(42);
-
-        recordsButton.setStyle(
-                "-fx-background-color: #2563eb;" +
-                "-fx-text-fill: white;" +
-                "-fx-font-weight: bold;" +
-                "-fx-background-radius: 8;" +
-                "-fx-padding: 0 20;"
+        HBox.setHgrow(
+                medicalCard,
+                Priority.ALWAYS
         );
 
-        recordsButton.setOnAction(
-                e -> stage.setScene(
+        personalCard.setMaxWidth(Double.MAX_VALUE);
+        medicalCard.setMaxWidth(Double.MAX_VALUE);
+
+        informationRow.getChildren().addAll(
+                personalCard,
+                medicalCard
+        );
+
+        /*
+         * ============================================================
+         * HEALTH SUMMARY CARD
+         * ============================================================
+         */
+
+        VBox recordsCard = PatientUI.coloredCard(
+                "📋  Health Summary",
+                "#fef3c7"
+        );
+
+        recordsCard.getChildren().addAll(
+
+                summary(
+                        "Medical Records",
+                        "12 records available"
+                ),
+
+                summary(
+                        "Prescriptions",
+                        "5 active prescriptions"
+                ),
+
+                summary(
+                        "Appointments",
+                        "3 upcoming appointments"
+                ),
+
+                summary(
+                        "Lab Reports",
+                        "8 reports available"
+                )
+        );
+
+        /*
+         * ============================================================
+         * VIEW MEDICAL RECORDS BUTTON
+         * ============================================================
+         */
+
+        Button recordsButton = PatientUI.button(
+                "View Medical Records",
+                () -> stage.setScene(
                         new MedicalRecords(stage).getScene()
                 )
         );
 
-        Button backButton = new Button("Back");
-
-        backButton.setPrefHeight(42);
-
-        backButton.setStyle(
-                "-fx-background-color: #e2e8f0;" +
-                "-fx-text-fill: #0f172a;" +
-                "-fx-font-weight: bold;" +
-                "-fx-background-radius: 8;" +
-                "-fx-padding: 0 20;"
+        recordsCard.getChildren().add(
+                recordsButton
         );
 
-        backButton.setOnAction(
-                e -> stage.setScene(
-                        new Dashboard(stage).getScene()
+        /*
+         * ============================================================
+         * QUICK ACTIONS
+         * ============================================================
+         */
+
+        VBox actionsCard = PatientUI.coloredCard(
+                "⚡  Quick Actions",
+                "#ede9fe"
+        );
+
+        HBox actions = new HBox(12);
+        actions.setAlignment(Pos.CENTER_LEFT);
+
+        Button appointments = PatientUI.button(
+                "Appointments",
+                () -> stage.setScene(
+                        new Appointments(stage).getScene()
                 )
         );
 
-        buttons.getChildren().addAll(
-                recordsButton,
-                backButton
-        );
-
-        content.getChildren().addAll(
-                heading,
-                patientCard,
-                medicalRow,
-                emergencyCard,
-                activityCard,
-                buttons
-        );
-
-        ScrollPane scrollPane =
-                new ScrollPane(content);
-
-        scrollPane.setFitToWidth(true);
-
-        scrollPane.setHbarPolicy(
-                ScrollPane.ScrollBarPolicy.NEVER
-        );
-
-        scrollPane.setStyle(
-                "-fx-background-color: transparent;"
-        );
-
-        root.setCenter(scrollPane);
-
-        return new Scene(
-                root,
-                1440,
-                900
-        );
-    }
-
-    /*
-     * SIDEBAR
-     */
-    private VBox createSidebar() {
-
-        VBox sidebar = new VBox(8);
-
-        sidebar.setPrefWidth(255);
-
-        sidebar.setPadding(
-                new Insets(22)
-        );
-
-        sidebar.setStyle(
-                "-fx-background-color: #0f172a;"
-        );
-
-        Label brand = new Label(
-                "✚  MediNexus AI"
-        );
-
-        brand.setStyle(
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 21px;" +
-                "-fx-font-weight: bold;"
-        );
-
-        Label module = new Label(
-                "Patient Module"
-        );
-
-        module.setStyle(
-                "-fx-text-fill: #94a3b8;" +
-                "-fx-font-size: 13px;"
-        );
-
-        Separator separator = new Separator();
-
-        Region spacer = new Region();
-
-        VBox.setVgrow(
-                spacer,
-                Priority.ALWAYS
-        );
-
-        sidebar.getChildren().addAll(
-                brand,
-                module,
-                separator,
-
-                navButton(
-                        "▦",
-                        "Dashboard",
-                        false,
-                        () -> showDashboard()
-                ),
-
-                navButton(
-                        "⊞",
-                        "Search Hospitals",
-                        false,
-                        () -> showSearchHospitals()
-                ),
-
-                navButton(
-                        "▣",
-                        "Appointments",
-                        false,
-                        () -> showAppointments()
-                ),
-
-                navButton(
-                        "▧",
-                        "Health Passport",
-                        true,
-                        () -> showHealthPassport()
-                ),
-
-                navButton(
-                        "▱",
-                        "Medical Records",
-                        false,
-                        () -> showMedicalRecords()
-                ),
-
-                navButton(
-                        "♙",
-                        "AI Health Assistant",
-                        false,
-                        () -> showAIHealthAssistant()
-                ),
-
-                navButton(
-                        "⌖",
-                        "Emergency Assistance",
-                        false,
-                        () -> showEmergencyAssistance()
-                ),
-
-                spacer,
-
-                navButton(
-                        "♧",
-                        "Notifications",
-                        false,
-                        () -> showNotifications()
-                ),
-
-                navButton(
-                        "⚙",
-                        "Profile & Settings",
-                        false,
-                        () -> showProfileSettings()
+        Button records = PatientUI.button(
+                "Medical Records",
+                () -> stage.setScene(
+                        new MedicalRecords(stage).getScene()
                 )
         );
 
-        return sidebar;
-    }
-
-    private HBox navButton(
-            String icon,
-            String text,
-            boolean selected,
-            Runnable action
-    ) {
-
-        HBox item = new HBox(12);
-
-        item.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        item.setPadding(
-                new Insets(12)
-        );
-
-        item.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        item.setStyle(
-                "-fx-background-color: " +
-                        (selected
-                                ? "#2563eb;"
-                                : "transparent;") +
-                        "-fx-background-radius: 8;"
-        );
-
-        Label iconLabel =
-                new Label(icon);
-
-        iconLabel.setStyle(
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 17px;"
-        );
-
-        Label textLabel =
-                new Label(text);
-
-        textLabel.setStyle(
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 14px;"
-        );
-
-        item.getChildren().addAll(
-                iconLabel,
-                textLabel
-        );
-
-        item.setOnMouseClicked(
-                e -> action.run()
-        );
-
-        return item;
-    }
-
-    /*
-     * HEADER
-     */
-    private HBox createHeader() {
-
-        HBox header = new HBox();
-
-        header.setAlignment(
-                Pos.CENTER_RIGHT
-        );
-
-        header.setPadding(
-                new Insets(
-                        16,
-                        28,
-                        16,
-                        28
+        Button aiAssistant = PatientUI.button(
+                "AI Assistant",
+                () -> stage.setScene(
+                        new AiHealthAssistant(stage).getScene()
                 )
         );
 
-        header.setStyle(
-                "-fx-background-color: white;" +
-                "-fx-border-color: #e2e8f0;"
+        Button emergency = createEmergencyButton();
+
+        Button profile = PatientUI.button(
+                "Profile & Settings",
+                () -> stage.setScene(
+                        new ProfileSettings(stage).getScene()
+                )
         );
 
-        Region spacer = new Region();
-
-        HBox.setHgrow(
-                spacer,
-                Priority.ALWAYS
-        );
-
-        Button notifications =
-                new Button("Notifications");
-
-        notifications.setOnAction(
-                e -> showNotifications()
-        );
-
-        Button profile =
-                new Button("Sarah");
-
-        profile.setOnAction(
-                e -> showProfileSettings()
-        );
-
-        header.getChildren().addAll(
-                spacer,
-                notifications,
+        actions.getChildren().addAll(
+                appointments,
+                records,
+                aiAssistant,
+                emergency,
                 profile
         );
 
-        return header;
+        actionsCard.getChildren().add(
+                actions
+        );
+
+        /*
+         * ============================================================
+         * EXTRA HEALTH CARD
+         * ============================================================
+         */
+
+        VBox statusCard = PatientUI.coloredCard(
+                "💚  Health Status",
+                "#ccfbf1"
+        );
+
+        statusCard.getChildren().addAll(
+
+                status(
+                        "Heart Rate",
+                        "72 BPM",
+                        "Normal"
+                ),
+
+                status(
+                        "Blood Pressure",
+                        "118 / 76 mmHg",
+                        "Healthy"
+                ),
+
+                status(
+                        "Oxygen Level",
+                        "98%",
+                        "Normal"
+                ),
+
+                status(
+                        "Last Health Check",
+                        "10 August 2026",
+                        "Up to date"
+                )
+        );
+
+        /*
+         * ============================================================
+         * ADD CONTENT
+         * ============================================================
+         */
+
+        content.getChildren().addAll(
+                images,
+                informationRow,
+                recordsCard,
+                statusCard,
+                actionsCard
+        );
+
+        /*
+         * ============================================================
+         * SCROLL PANE
+         * ============================================================
+         */
+
+        ScrollPane scroll = new ScrollPane(
+                content
+        );
+
+        scroll.setFitToWidth(true);
+
+        scroll.setHbarPolicy(
+                ScrollPane.ScrollBarPolicy.NEVER
+        );
+
+        scroll.setVbarPolicy(
+                ScrollPane.ScrollBarPolicy.AS_NEEDED
+        );
+
+        scroll.setStyle(
+                "-fx-background-color: transparent;" +
+                "-fx-background: transparent;"
+        );
+
+        /*
+         * ============================================================
+         * IMPORTANT
+         *
+         * PatientUI.createScene() creates:
+         *
+         * LEFT SIDEBAR
+         * TOP HEADER
+         * CENTER CONTENT
+         *
+         * Therefore DO NOT create another BorderPane here.
+         * ============================================================
+         */
+
+        return PatientUI.createScene(
+                stage,
+                "Health Passport",
+                "My Health Passport",
+                "Your complete digital health identity and important medical information.",
+                scroll
+        );
     }
 
     /*
-     * COLORED CARD
+     * ================================================================
+     * IMAGE GALLERY
+     * ================================================================
      */
-    private VBox coloredCard(
-            String background,
-            String borderColor
-    ) {
 
-        VBox box = new VBox(12);
+    private HBox createImageGallery() {
 
-        box.setPadding(
-                new Insets(20)
+        HBox gallery = new HBox(15);
+
+        gallery.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        gallery.getChildren().addAll(
+
+                imageCard(
+                        "/images/healthpassport/healthpassport1.jpg"
+                ),
+
+                imageCard(
+                        "/images/healthpassport/healthpassport2.jpg"
+                ),
+
+                imageCard(
+                        "/images/healthpassport/healthpassport3.jpg"
+                ),
+
+                imageCard(
+                        "/images/healthpassport/healthpassport4.jpg"
+                )
+        );
+
+        return gallery;
+    }
+
+    /*
+     * ================================================================
+     * IMAGE CARD
+     * ================================================================
+     */
+
+    private VBox imageCard(String path) {
+
+        VBox box = new VBox();
+
+        box.setAlignment(
+                Pos.CENTER
+        );
+
+        box.setPrefWidth(
+                240
+        );
+
+        box.setPrefHeight(
+                140
+        );
+
+        box.setMinWidth(
+                220
         );
 
         box.setStyle(
-                "-fx-background-color: " +
-                        background + ";" +
-                "-fx-border-color: " +
-                        borderColor + ";" +
-                "-fx-border-width: 1.5;" +
+                "-fx-background-color: white;" +
                 "-fx-background-radius: 14;" +
+                "-fx-border-color: #cbd5e1;" +
                 "-fx-border-radius: 14;"
+        );
+
+        URL resource =
+                getClass().getResource(path);
+
+        /*
+         * Safe image loading.
+         *
+         * This prevents:
+         *
+         * Input stream must not be null
+         */
+
+        if (resource == null) {
+
+            Label unavailable =
+                    new Label(
+                            "Image unavailable"
+                    );
+
+            unavailable.setStyle(
+                    "-fx-text-fill: #64748b;" +
+                    "-fx-font-size: 13px;"
+            );
+
+            box.getChildren().add(
+                    unavailable
+            );
+
+            System.err.println(
+                    "Health Passport image not found: "
+                            + path
+            );
+
+            return box;
+        }
+
+        Image image =
+                new Image(
+                        resource.toExternalForm()
+                );
+
+        ImageView imageView =
+                new ImageView(
+                        image
+                );
+
+        imageView.setFitWidth(
+                240
+        );
+
+        imageView.setFitHeight(
+                140
+        );
+
+        imageView.setPreserveRatio(
+                false
+        );
+
+        box.getChildren().add(
+                imageView
         );
 
         return box;
     }
 
-    private Label cardTitle(
-            String text,
-            String color
-    ) {
+    /*
+     * ================================================================
+     * INFORMATION ROW
+     * ================================================================
+     */
 
-        Label label =
-                new Label(text);
-
-        label.setStyle(
-                "-fx-font-size: 19px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: " +
-                color + ";"
-        );
-
-        return label;
-    }
-
-    private VBox information(
+    private HBox information(
             String title,
             String value
     ) {
 
-        VBox box = new VBox(3);
+        HBox row = new HBox(12);
+
+        row.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        row.setPadding(
+                new Insets(10)
+        );
+
+        row.setStyle(
+                "-fx-background-color: rgba(255,255,255,0.85);" +
+                "-fx-background-radius: 9;" +
+                "-fx-border-color: #cbd5e1;" +
+                "-fx-border-radius: 9;"
+        );
 
         Label titleLabel =
                 new Label(title);
 
         titleLabel.setStyle(
-                "-fx-font-size: 12px;" +
-                "-fx-text-fill: #64748b;"
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #475569;"
         );
 
         Label valueLabel =
                 new Label(value);
 
         valueLabel.setStyle(
-                "-fx-font-size: 15px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #0f172a;"
         );
 
-        box.getChildren().addAll(
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        row.getChildren().addAll(
                 titleLabel,
+                spacer,
                 valueLabel
         );
 
-        return box;
+        return row;
     }
 
-    private VBox item(
+    /*
+     * ================================================================
+     * SUMMARY ROW
+     * ================================================================
+     */
+
+    private HBox summary(
             String title,
-            String description
+            String value
     ) {
 
-        VBox box = new VBox(3);
-
-        Label titleLabel =
-                new Label(title);
-
-        titleLabel.setStyle(
-                "-fx-font-weight: bold;"
-        );
-
-        Label descriptionLabel =
-                new Label(description);
-
-        descriptionLabel.setStyle(
-                "-fx-text-fill: #64748b;"
-        );
-
-        box.getChildren().addAll(
-                titleLabel,
-                descriptionLabel
-        );
-
-        return box;
-    }
-
-    private HBox activity(
-            String title,
-            String value,
-            String date
-    ) {
-
-        HBox row = new HBox(15);
+        HBox row = new HBox(12);
 
         row.setAlignment(
                 Pos.CENTER_LEFT
         );
 
-        VBox details =
-                new VBox(3);
+        row.setPadding(
+                new Insets(10)
+        );
+
+        row.setStyle(
+                "-fx-background-color: rgba(255,255,255,0.85);" +
+                "-fx-background-radius: 9;" +
+                "-fx-border-color: #fde68a;" +
+                "-fx-border-radius: 9;"
+        );
 
         Label titleLabel =
                 new Label(title);
 
         titleLabel.setStyle(
-                "-fx-font-weight: bold;"
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #0f172a;"
         );
 
         Label valueLabel =
@@ -724,115 +576,142 @@ public class HealthPassport {
                 "-fx-text-fill: #475569;"
         );
 
-        details.getChildren().addAll(
-                titleLabel,
-                valueLabel
-        );
-
-        Region spacer = new Region();
+        Region spacer =
+                new Region();
 
         HBox.setHgrow(
                 spacer,
                 Priority.ALWAYS
         );
 
-        Label dateLabel =
-                new Label(date);
-
-        dateLabel.setStyle(
-                "-fx-text-fill: #64748b;"
-        );
-
         row.getChildren().addAll(
-                details,
+                titleLabel,
                 spacer,
-                dateLabel
+                valueLabel
         );
 
         return row;
     }
 
     /*
-     * DIRECT NAVIGATION
+     * ================================================================
+     * HEALTH STATUS ROW
+     * ================================================================
      */
-    private void showDashboard() {
 
-        stage.setScene(
-                new Dashboard(stage).getScene()
+    private HBox status(
+            String title,
+            String value,
+            String condition
+    ) {
+
+        HBox row = new HBox(12);
+
+        row.setAlignment(
+                Pos.CENTER_LEFT
         );
 
-        stage.show();
+        row.setPadding(
+                new Insets(10)
+        );
+
+        row.setStyle(
+                "-fx-background-color: rgba(255,255,255,0.85);" +
+                "-fx-background-radius: 9;" +
+                "-fx-border-color: #99f6e4;" +
+                "-fx-border-radius: 9;"
+        );
+
+        Label titleLabel =
+                new Label(title);
+
+        titleLabel.setStyle(
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #134e4a;"
+        );
+
+        Label valueLabel =
+                new Label(value);
+
+        valueLabel.setStyle(
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #0f172a;"
+        );
+
+        Label conditionLabel =
+                new Label(condition);
+
+        conditionLabel.setStyle(
+                "-fx-background-color: #dcfce7;" +
+                "-fx-text-fill: #166534;" +
+                "-fx-font-weight: bold;" +
+                "-fx-padding: 5 9;" +
+                "-fx-background-radius: 8;"
+        );
+
+        Region spacer1 =
+                new Region();
+
+        Region spacer2 =
+                new Region();
+
+        HBox.setHgrow(
+                spacer1,
+                Priority.ALWAYS
+        );
+
+        HBox.setHgrow(
+                spacer2,
+                Priority.ALWAYS
+        );
+
+        row.getChildren().addAll(
+                titleLabel,
+                spacer1,
+                valueLabel,
+                spacer2,
+                conditionLabel
+        );
+
+        return row;
     }
 
-    private void showSearchHospitals() {
+    /*
+     * ================================================================
+     * EMERGENCY BUTTON
+     *
+     * We create it locally because PatientUI.redButton()
+     * does not exist in your current PatientUI.
+     * ================================================================
+     */
 
-        stage.setScene(
-                new SearchHospitals(stage).getScene()
+    private Button createEmergencyButton() {
+
+        Button button =
+                new Button(
+                        "Emergency"
+                );
+
+        button.setPrefHeight(
+                38
         );
 
-        stage.show();
-    }
-
-    private void showAppointments() {
-
-        stage.setScene(
-                new Appointments(stage).getScene()
+        button.setStyle(
+                "-fx-background-color: #dc2626;" +
+                "-fx-text-fill: white;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-radius: 8;" +
+                "-fx-padding: 8 14;"
         );
 
-        stage.show();
-    }
-
-    private void showHealthPassport() {
-
-        stage.setScene(
-                new HealthPassport(stage).getScene()
+        button.setOnAction(
+                e -> stage.setScene(
+                        new EmergencyAssistance(stage)
+                                .getScene()
+                )
         );
 
-        stage.show();
-    }
-
-    private void showMedicalRecords() {
-
-        stage.setScene(
-                new MedicalRecords(stage).getScene()
-        );
-
-        stage.show();
-    }
-
-    private void showAIHealthAssistant() {
-
-        stage.setScene(
-                new AiHealthAssistant(stage).getScene()
-        );
-
-        stage.show();
-    }
-
-    private void showEmergencyAssistance() {
-
-        stage.setScene(
-                new EmergencyAssistance(stage).getScene()
-        );
-
-        stage.show();
-    }
-
-    private void showNotifications() {
-
-        stage.setScene(
-                new Notifications(stage).getScene()
-        );
-
-        stage.show();
-    }
-
-    private void showProfileSettings() {
-
-        stage.setScene(
-                new ProfileSettings(stage).getScene()
-        );
-
-        stage.show();
+        return button;
     }
 }
+
