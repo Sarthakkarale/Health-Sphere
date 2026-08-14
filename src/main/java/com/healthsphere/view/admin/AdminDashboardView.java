@@ -19,6 +19,7 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.net.URL;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
@@ -63,6 +64,9 @@ public class AdminDashboardView {
         // 1. Mission Control Header Bar
         HBox header = createCommandHeader();
 
+        // 1.5. Clean Background Image Banner Section
+        StackPane bannerSection = createDashboardBanner();
+
         // 2. Crisp Light KPI Cards
         HBox statsSection = createStatsSection();
 
@@ -72,7 +76,7 @@ public class AdminDashboardView {
         // 4. Lower Section: Activity Grid & Live Log Console
         GridPane bottomGrid = createBottomGrid();
 
-        mainContainer.getChildren().addAll(header, statsSection, middleSection, bottomGrid);
+        mainContainer.getChildren().addAll(header, bannerSection, statsSection, middleSection, bottomGrid);
         rootPane.setContent(mainContainer);
 
         // Start Live Telemetry Updates
@@ -149,6 +153,50 @@ public class AdminDashboardView {
 
         header.getChildren().addAll(titleBox, spacer, flushCacheBtn, lockBtn, alertBtn);
         return header;
+    }
+
+    // इमेज बॅकग्राउंड म्हणून सेट करणारी मेथड
+    private StackPane createDashboardBanner() {
+        StackPane bannerPane = new StackPane();
+        bannerPane.setPrefHeight(160);
+        bannerPane.setMaxWidth(Double.MAX_VALUE);
+
+        String imageUrl = "";
+        try {
+            URL resource = getClass().getResource("/images/dashboard_banner.png");
+            if (resource != null) {
+                imageUrl = resource.toExternalForm();
+                logCommand("SUCCESS: Dashboard background banner loaded cleanly.");
+            } else {
+                logCommand("WARNING: Banner image not found at /images/dashboard_banner.png");
+            }
+        } catch (Exception e) {
+            logCommand("ERROR: Failed to load banner image.");
+        }
+
+        if (!imageUrl.isEmpty()) {
+            // CSS द्वारे इमेज बॅकग्राउंड सेट करणे (विकृत होणार नाही)
+            bannerPane.setStyle(
+                "-fx-background-image: url('" + imageUrl + "'); " +
+                "-fx-background-size: cover; " +
+                "-fx-background-repeat: no-repeat; " +
+                "-fx-background-position: center; " +
+                "-fx-background-radius: 12px; " +
+                "-fx-border-color: #CBD5E1; " +
+                "-fx-border-radius: 12px; " +
+                "-fx-effect: dropshadow(three-pass-box, rgba(15,23,42,0.05), 10, 0, 0, 4);"
+            );
+        } else {
+            // इमेज न मिळाल्यास डीफॉल्ट डार्क थीम बॅकग्राउंड
+            bannerPane.setStyle(
+                "-fx-background-color: #0F172A; " +
+                "-fx-background-radius: 12px; " +
+                "-fx-border-color: #334155; " +
+                "-fx-border-radius: 12px;"
+            );
+        }
+
+        return bannerPane;
     }
 
     private HBox createStatsSection() {
