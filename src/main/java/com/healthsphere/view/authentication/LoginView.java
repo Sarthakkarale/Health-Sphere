@@ -1,17 +1,16 @@
 package com.healthsphere.view.authentication;
 
-import com.healthsphere.view.patient.PatientDashboardView;
-import com.healthsphere.view.doctor.DoctorDashboardView;
-import com.healthsphere.view.hospital.HospitalDashboardView;
-import com.healthsphere.view.admin.AdminDashboardView;
-import com.healthsphere.view.authentication.*;
-
+//import com.healthsphere.view.patient.PatientDashboardView;
 import com.healthsphere.controller.authentication.LoginController;
 import com.healthsphere.exceptions.AuthenticationException;
 import com.healthsphere.exceptions.DatabaseException;
 import com.healthsphere.model.LoginDestination;
 import com.healthsphere.model.Role;
 import com.healthsphere.model.UserProfile;
+import com.healthsphere.view.Patient.Dashboard;
+import com.healthsphere.view.admin.AdminDashboardView;
+import com.healthsphere.view.doctor.DoctorDashboardView;
+import com.healthsphere.view.hospital.HospitalDashboardView;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -23,7 +22,6 @@ import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -391,7 +389,7 @@ public class LoginView {
     private void handleLoginDestination(LoginDestination destination) {
         switch (destination) {
             case PATIENT_DASHBOARD -> {
-                stage.setScene(new PatientDashboardView(stage).getScene());
+                stage.setScene(new Dashboard(stage).getScene());
             }
             case DOCTOR_DASHBOARD -> {
                 stage.setScene(new DoctorDashboardView(stage).getScene());

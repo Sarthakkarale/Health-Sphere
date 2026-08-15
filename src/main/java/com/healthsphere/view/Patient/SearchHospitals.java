@@ -28,8 +28,7 @@ public class SearchHospitals {
 
     public Scene getScene() {
 
-        VBox content =
-                new VBox(20);
+        VBox content = new VBox(20);
 
         content.setPadding(
                 new Insets(5)
@@ -48,6 +47,8 @@ public class SearchHospitals {
                 new Label(
                         "Search for hospitals, clinics and healthcare facilities near you."
                 );
+
+        instruction.setWrapText(true);
 
         instruction.setStyle(
                 "-fx-text-fill: #64748b;" +
@@ -70,7 +71,10 @@ public class SearchHospitals {
 
         searchField.setPrefHeight(42);
 
-        searchField.setPrefWidth(600);
+        HBox.setHgrow(
+                searchField,
+                Priority.ALWAYS
+        );
 
         searchField.setStyle(
                 "-fx-background-color: #f8fafc;" +
@@ -83,13 +87,9 @@ public class SearchHospitals {
         Button searchButton =
                 PatientUI.button(
                         "Search",
-                        () -> {
-
-                            System.out.println(
-                                    "Searching hospitals for: "
-                                            + searchField.getText()
-                            );
-                        }
+                        () -> filterHospitals(
+                                searchField.getText()
+                        )
                 );
 
         searchRow.getChildren().addAll(
@@ -111,39 +111,63 @@ public class SearchHospitals {
                         "Nearby Hospitals"
                 );
 
-        results.getChildren().addAll(
+        // =====================================================
+        // HOSPITAL 1
+        // =====================================================
 
+        HBox hospital1 =
                 hospital(
                         "/images/hospitals/hospital1.jpg",
                         "Apollo Hospitals",
                         "Hyderabad",
                         "Multi-Speciality Hospital",
                         "4.8"
-                ),
+                );
 
+        // =====================================================
+        // HOSPITAL 2
+        // =====================================================
+
+        HBox hospital2 =
                 hospital(
                         "/images/hospitals/hospital2.jpg",
                         "Care Hospitals",
                         "Hyderabad",
                         "General & Specialty Care",
                         "4.6"
-                ),
+                );
 
+        // =====================================================
+        // HOSPITAL 3
+        // =====================================================
+
+        HBox hospital3 =
                 hospital(
                         "/images/hospitals/hospital3.jpg",
                         "Yashoda Hospitals",
                         "Hyderabad",
                         "Advanced Healthcare Centre",
                         "4.7"
-                ),
+                );
 
+        // =====================================================
+        // HOSPITAL 4
+        // =====================================================
+
+        HBox hospital4 =
                 hospital(
                         "/images/hospitals/hospital4.jpg",
                         "KIMS Hospitals",
                         "Hyderabad",
                         "Multi-Speciality Hospital",
                         "4.5"
-                )
+                );
+
+        results.getChildren().addAll(
+                hospital1,
+                hospital2,
+                hospital3,
+                hospital4
         );
 
         // =====================================================
@@ -160,7 +184,9 @@ public class SearchHospitals {
         // =====================================================
 
         ScrollPane scroll =
-                new ScrollPane(content);
+                new ScrollPane(
+                        content
+                );
 
         scroll.setFitToWidth(true);
 
@@ -177,11 +203,8 @@ public class SearchHospitals {
                 "-fx-background: transparent;"
         );
 
-        VBox wrapper =
-                new VBox(scroll);
-
         // =====================================================
-        // COMMON PATIENT HEADER
+        // COMMON PATIENT UI
         // =====================================================
 
         return PatientUI.createScene(
@@ -189,8 +212,44 @@ public class SearchHospitals {
                 "Search Hospitals",
                 "Search Hospitals",
                 "Find nearby hospitals and healthcare facilities.",
-                wrapper
+                scroll
         );
+    }
+
+    // =========================================================
+    // SEARCH / FILTER
+    // =========================================================
+
+    private void filterHospitals(
+            String searchText
+    ) {
+
+        if (searchText == null ||
+                searchText.trim().isEmpty()) {
+
+            System.out.println(
+                    "Please enter a hospital, location or speciality."
+            );
+
+            return;
+        }
+
+        System.out.println(
+                "Searching hospitals for: "
+                        + searchText.trim()
+        );
+
+        /*
+         * Backend hospital search can be connected here later.
+         *
+         * Example:
+         *
+         * HospitalController
+         *      -> HospitalDAO
+         *      -> Firebase
+         *
+         * For now this is only UI/demo functionality.
+         */
     }
 
     // =========================================================
@@ -214,6 +273,10 @@ public class SearchHospitals {
 
         box.setAlignment(
                 Pos.CENTER_LEFT
+        );
+
+        box.setMaxWidth(
+                Double.MAX_VALUE
         );
 
         box.setStyle(
@@ -241,8 +304,15 @@ public class SearchHospitals {
         VBox information =
                 new VBox(7);
 
+        HBox.setHgrow(
+                information,
+                Priority.ALWAYS
+        );
+
         Label nameLabel =
-                new Label(name);
+                new Label(
+                        name
+                );
 
         nameLabel.setStyle(
                 "-fx-font-size: 18px;" +
@@ -284,11 +354,6 @@ public class SearchHospitals {
                 locationLabel,
                 specialityLabel,
                 ratingLabel
-        );
-
-        HBox.setHgrow(
-                information,
-                Priority.ALWAYS
         );
 
         // =====================================================
@@ -389,17 +454,29 @@ public class SearchHospitals {
         ImageView view =
                 new ImageView();
 
+        view.setFitWidth(
+                width
+        );
+
+        view.setFitHeight(
+                height
+        );
+
+        view.setPreserveRatio(
+                false
+        );
+
         var resource =
-                getClass().getResource(path);
+                getClass().getResource(
+                        path
+                );
 
         if (resource == null) {
 
             System.err.println(
-                    "Hospital image not found: " + path
+                    "Hospital image not found: "
+                            + path
             );
-
-            view.setFitWidth(width);
-            view.setFitHeight(height);
 
             return view;
         }
@@ -409,12 +486,9 @@ public class SearchHospitals {
                         resource.toExternalForm()
                 );
 
-        view.setImage(image);
-
-        view.setFitWidth(width);
-        view.setFitHeight(height);
-
-        view.setPreserveRatio(false);
+        view.setImage(
+                image
+        );
 
         return view;
     }

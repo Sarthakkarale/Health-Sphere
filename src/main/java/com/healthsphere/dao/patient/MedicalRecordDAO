@@ -1,0 +1,305 @@
+package com.healthsphere.dao.patient;
+
+import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.Firestore;
+import com.healthsphere.config.FirebaseConfig;
+import com.healthsphere.exceptions.DatabaseException;
+import com.healthsphere.model.MedicalRecord;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+public class MedicalRecordDAO {
+
+    private final Firestore db;
+
+    public MedicalRecordDAO() {
+        this.db = FirebaseConfig.getFirestore();
+    }
+
+    // ============================================================
+    // CREATE MEDICAL RECORD
+    // ============================================================
+
+    public void createMedicalRecord(
+            MedicalRecord medicalRecord) {
+
+        try {
+
+            if (medicalRecord == null) {
+                throw new DatabaseException(
+                        "Medical record cannot be null."
+                );
+            }
+
+            // Generate ID if one does not exist
+            if (medicalRecord.getRecordId() == null ||
+                    medicalRecord.getRecordId().isBlank()) {
+
+                medicalRecord.setRecordId(
+                        UUID.randomUUID().toString()
+                );
+            }
+
+            db.collection("medicalRecords")
+                    .document(medicalRecord.getRecordId())
+                    .set(medicalRecord)
+                    .get();
+
+            System.out.println(
+                    "Medical record created successfully."
+            );
+
+        } catch (DatabaseException e) {
+
+            throw e;
+
+        } catch (Exception e) {
+
+            throw new DatabaseException(
+                    "Unable to create medical record.",
+                    e
+            );
+        }
+    }
+
+    // ============================================================
+    // GET ALL MEDICAL RECORDS FOR PATIENT
+    // ============================================================
+
+    public List<MedicalRecord> getMedicalRecords(
+            String patientUid) {
+
+        try {
+
+            if (patientUid == null ||
+                    patientUid.isBlank()) {
+
+                throw new DatabaseException(
+                        "Patient UID is missing."
+                );
+            }
+
+            List<MedicalRecord> records =
+                    new ArrayList<>();
+
+            var documents =
+                    db.collection("medicalRecords")
+                            .whereEqualTo(
+                                    "patientUid",
+                                    patientUid
+                            )
+                            .get()
+                            .get()
+                            .getDocuments();
+
+            for (DocumentSnapshot document : documents) {
+
+                MedicalRecord record =
+                        document.toObject(
+                                MedicalRecord.class
+                        );
+
+                if (record != null) {
+
+                    // Make sure the ID is available
+                    if (record.getRecordId() == null ||
+                            record.getRecordId().isBlank()) {
+
+                        record.setRecordId(
+                                document.getId()
+                        );
+                    }
+
+                    records.add(record);
+                }
+            }
+
+            return records;
+
+        } catch (DatabaseException e) {
+
+            throw e;
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            throw new DatabaseException(
+                    "Unable to retrieve medical records.",
+                    e
+            );
+        }
+    }
+
+    // ============================================================
+    // GET SINGLE MEDICAL RECORD
+    // ============================================================
+
+    public MedicalRecord getMedicalRecord(
+            String patientUid,
+            String recordId) {
+
+        try {
+
+            if (patientUid == null ||
+                    patientUid.isBlank()) {
+
+                throw new DatabaseException(
+                        "Patient UID is missing."
+                );
+            }
+
+            if (recordId == null ||
+                    recordId.isBlank()) {
+
+                throw new DatabaseException(
+                        "Medical record ID is missing."
+                );
+            }
+
+            DocumentSnapshot document =
+                    db.collection("medicalRecords")
+                            .document(recordId)
+                            .get()
+                            .get();
+
+            if (!document.exists()) {
+
+                throw new DatabaseException(
+                        "Medical record not found."
+                );
+            }
+
+            MedicalRecord record =
+                    document.toObject(
+                            MedicalRecord.class
+                    );
+
+            if (record == null) {
+
+                throw new DatabaseException(
+                        "Unable to read medical record."
+                );
+            }
+
+            // Security check:
+            // make sure this record belongs to this patient
+            if (record.getPatientUid() == null ||
+                    !record.getPatientUid().equals(patientUid)) {
+
+                throw new DatabaseException(
+                        "Medical record does not belong to the current patient."
+                );
+            }
+
+            if (record.getRecordId() == null ||
+                    record.getRecordId().isBlank()) {
+
+                record.setRecordId(
+                        document.getId()
+                );
+            }
+
+            return record;
+
+        } catch (DatabaseException e) {
+
+            throw e;
+
+        } catch (Exception e) {
+
+            throw new DatabaseException(
+                    "Unable to retrieve medical record.",
+                    e
+            );
+        }
+    }
+
+    // ============================================================
+    // UPDATE MEDICAL RECORD
+    // ============================================================
+
+    public void updateMedicalRecord(
+            MedicalRecord medicalRecord) {
+
+        try {
+
+            if (medicalRecord == null) {
+
+                throw new DatabaseException(
+                        "Medical record cannot be null."
+                );
+            }
+
+            if (medicalRecord.getRecordId() == null ||
+                    medicalRecord.getRecordId().isBlank()) {
+
+                throw new DatabaseException(
+                        "Medical record ID is missing."
+                );
+            }
+
+            db.collection("medicalRecords")
+                    .document(
+                            medicalRecord.getRecordId()
+                    )
+                    .set(medicalRecord)
+                    .get();
+
+            System.out.println(
+                    "Medical record updated successfully."
+            );
+
+        } catch (DatabaseException e) {
+
+            throw e;
+
+        } catch (Exception e) {
+
+            throw new DatabaseException(
+                    "Unable to update medical record.",
+                    e
+            );
+        }
+    }
+
+    // ============================================================
+    // DELETE MEDICAL RECORD
+    // ============================================================
+
+    public void deleteMedicalRecord(
+            String patientUid,
+            String recordId) {
+
+        try {
+
+            // First verify ownership
+            getMedicalRecord(
+                    patientUid,
+                    recordId
+            );
+
+            db.collection("medicalRecords")
+                    .document(recordId)
+                    .delete()
+                    .get();
+
+            System.out.println(
+                    "Medical record deleted successfully."
+            );
+
+        } catch (DatabaseException e) {
+
+            throw e;
+
+        } catch (Exception e) {
+
+            throw new DatabaseException(
+                    "Unable to delete medical record.",
+                    e
+            );
+        }
+    }
+}

@@ -1,0 +1,183 @@
+package com.healthsphere.dao.patient;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import com.google.api.core.ApiFuture;
+import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.QuerySnapshot;
+import com.healthsphere.config.FirebaseConfig;
+import com.healthsphere.exceptions.DatabaseException;
+import com.healthsphere.model.Appointment;
+
+public class AppointmentDAO {
+
+    private final Firestore db;
+
+    public AppointmentDAO() {
+        this.db = FirebaseConfig.getFirestore();
+    }
+
+    // ============================================================
+    // CREATE APPOINTMENT
+    // ============================================================
+
+    public Appointment createAppointment(
+            Appointment appointment) {
+
+        try {
+
+            String appointmentId =
+                    appointment.getAppointmentId();
+
+            if (appointmentId == null ||
+                    appointmentId.isBlank()) {
+
+                appointmentId =
+                        UUID.randomUUID().toString();
+
+                appointment.setAppointmentId(
+                        appointmentId
+                );
+            }
+
+            db.collection("appointments")
+                    .document(appointmentId)
+                    .set(appointment)
+                    .get();
+
+            System.out.println(
+                    "Appointment created successfully."
+            );
+
+            return appointment;
+
+        } catch (Exception e) {
+
+            throw new DatabaseException(
+                    "Unable to create appointment.",
+                    e
+            );
+        }
+    }
+
+    // ============================================================
+    // GET PATIENT APPOINTMENTS
+    // ============================================================
+
+    public List<Appointment> getPatientAppointments(
+            String patientUid) {
+
+        try {
+
+            ApiFuture<QuerySnapshot> future =
+                    db.collection("appointments")
+                            .whereEqualTo(
+                                    "patientUid",
+                                    patientUid
+                            )
+                            .get();
+
+            QuerySnapshot snapshot =
+                    future.get();
+
+            List<Appointment> appointments =
+                    new ArrayList<>();
+
+            for (DocumentSnapshot document :
+                    snapshot.getDocuments()) {
+
+                Appointment appointment =
+                        document.toObject(
+                                Appointment.class
+                        );
+
+                if (appointment != null) {
+
+                    appointments.add(
+                            appointment
+                    );
+                }
+            }
+
+            return appointments;
+
+        } catch (Exception e) {
+
+            throw new DatabaseException(
+                    "Unable to retrieve patient appointments.",
+                    e
+            );
+        }
+    }
+
+    // ============================================================
+    // GET SINGLE APPOINTMENT
+    // ============================================================
+
+    public Appointment getAppointment(
+            String appointmentId) {
+
+        try {
+
+            DocumentSnapshot document =
+                    db.collection("appointments")
+                            .document(appointmentId)
+                            .get()
+                            .get();
+
+            if (!document.exists()) {
+
+                throw new DatabaseException(
+                        "Appointment not found."
+                );
+            }
+
+            return document.toObject(
+                    Appointment.class
+            );
+
+        } catch (DatabaseException e) {
+
+            throw e;
+
+        } catch (Exception e) {
+
+            throw new DatabaseException(
+                    "Unable to retrieve appointment.",
+                    e
+            );
+        }
+    }
+
+    // ============================================================
+    // UPDATE APPOINTMENT
+    // ============================================================
+
+    public void updateAppointment(
+            Appointment appointment) {
+
+        try {
+
+            db.collection("appointments")
+                    .document(
+                            appointment.getAppointmentId()
+                    )
+                    .set(appointment)
+                    .get();
+
+            System.out.println(
+                    "Appointment updated successfully."
+            );
+
+        } catch (Exception e) {
+
+            throw new DatabaseException(
+                    "Unable to update appointment.",
+                    e
+            );
+        }
+    }
+}

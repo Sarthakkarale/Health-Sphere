@@ -1,5 +1,13 @@
 package com.healthsphere.view.Patient;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+import com.healthsphere.controller.patient.AppointmentController;
+import com.healthsphere.model.Appointment;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -17,8 +25,14 @@ public class Appointments {
 
     private final Stage stage;
 
+    private final AppointmentController appointmentController;
+
     public Appointments(Stage stage) {
+
         this.stage = stage;
+
+        this.appointmentController =
+                new AppointmentController();
     }
 
     // =========================================================
@@ -100,9 +114,36 @@ public class Appointments {
                 );
 
         booking.getChildren().addAll(
+
                 bookingText,
                 book
         );
+
+        // =====================================================
+        // APPOINTMENT DATA
+        // =====================================================
+
+        List<Appointment> appointments =
+                new ArrayList<>();
+
+        String errorMessage = null;
+
+        try {
+
+            appointments =
+                    appointmentController
+                            .getCurrentPatientAppointments();
+
+        } catch (Exception e) {
+
+            errorMessage =
+                    e.getMessage();
+
+            System.err.println(
+                    "Unable to load appointments: "
+                            + errorMessage
+            );
+        }
 
         // =====================================================
         // UPCOMING APPOINTMENT
@@ -113,18 +154,43 @@ public class Appointments {
                         "Upcoming Appointment"
                 );
 
-        HBox appointment =
-                appointmentCard(
-                        "/images/appointments/appointment1.jpg",
-                        "Dr. Sarah Jenkins",
-                        "Cardiology",
-                        "Tomorrow • 10:00 AM",
-                        "Apollo Hospitals"
+        if (errorMessage != null) {
+
+            upcoming.getChildren().add(
+                    errorLabel(
+                            "Unable to load appointments: "
+                                    + errorMessage
+                    )
+            );
+
+        } else {
+
+            List<Appointment> upcomingAppointments =
+                    getUpcomingAppointments(
+                            appointments
+                    );
+
+            if (upcomingAppointments.isEmpty()) {
+
+                upcoming.getChildren().add(
+                        emptyLabel(
+                                "You have no upcoming appointments."
+                        )
                 );
 
-        upcoming.getChildren().add(
-                appointment
-        );
+            } else {
+
+                for (Appointment appointment :
+                        upcomingAppointments) {
+
+                    upcoming.getChildren().add(
+                            appointmentCard(
+                                    appointment
+                            )
+                    );
+                }
+            }
+        }
 
         // =====================================================
         // PREVIOUS APPOINTMENTS
@@ -135,38 +201,49 @@ public class Appointments {
                         "Previous Appointments"
                 );
 
-        previous.getChildren().addAll(
+        if (errorMessage != null) {
 
-                previousAppointment(
-                        "/images/appointments/appointment2.jpg",
-                        "Dr. Michael Brown",
-                        "General Medicine",
-                        "10 August 2026",
-                        "Completed"
-                ),
+            previous.getChildren().add(
+                    errorLabel(
+                            "Unable to load previous appointments."
+                    )
+            );
 
-                previousAppointment(
-                        "/images/appointments/appointment3.jpg",
-                        "Dr. Emily Carter",
-                        "Dermatology",
-                        "28 July 2026",
-                        "Completed"
-                ),
+        } else {
 
-                previousAppointment(
-                        "/images/appointments/appointment4.jpg",
-                        "Dr. Robert Wilson",
-                        "Orthopedics",
-                        "15 July 2026",
-                        "Completed"
-                )
-        );
+            List<Appointment> previousAppointments =
+                    getPreviousAppointments(
+                            appointments
+                    );
+
+            if (previousAppointments.isEmpty()) {
+
+                previous.getChildren().add(
+                        emptyLabel(
+                                "You have no previous appointments."
+                        )
+                );
+
+            } else {
+
+                for (Appointment appointment :
+                        previousAppointments) {
+
+                    previous.getChildren().add(
+                            previousAppointment(
+                                    appointment
+                            )
+                    );
+                }
+            }
+        }
 
         // =====================================================
         // ADD CONTENT
         // =====================================================
 
         content.getChildren().addAll(
+
                 imageRow,
                 booking,
                 upcoming,
@@ -203,12 +280,147 @@ public class Appointments {
         // =====================================================
 
         return PatientUI.createScene(
+
                 stage,
+
                 "Appointments",
+
                 "Appointments",
+
                 "Manage your upcoming and previous healthcare appointments.",
+
                 wrapper
         );
+    }
+
+    // =========================================================
+    // GET UPCOMING APPOINTMENTS
+    // =========================================================
+
+    private List<Appointment> getUpcomingAppointments(
+            List<Appointment> appointments
+    ) {
+
+        List<Appointment> result =
+                new ArrayList<>();
+
+        LocalDate today =
+                LocalDate.now();
+
+        for (Appointment appointment :
+                appointments) {
+
+            if (appointment == null) {
+                continue;
+            }
+
+            LocalDate appointmentDate =
+                    parseDate(
+                            appointment
+                                    .getAppointmentDate()
+                    );
+
+            if (appointmentDate != null &&
+                    !appointmentDate.isBefore(today)) {
+
+                result.add(
+                        appointment
+                );
+            }
+        }
+
+        result.sort(
+                Comparator.comparing(
+                        appointment ->
+                                parseDate(
+                                        appointment
+                                                .getAppointmentDate()
+                                ),
+                        Comparator.nullsLast(
+                                Comparator.naturalOrder()
+                        )
+                )
+        );
+
+        return result;
+    }
+
+    // =========================================================
+    // GET PREVIOUS APPOINTMENTS
+    // =========================================================
+
+    private List<Appointment> getPreviousAppointments(
+            List<Appointment> appointments
+    ) {
+
+        List<Appointment> result =
+                new ArrayList<>();
+
+        LocalDate today =
+                LocalDate.now();
+
+        for (Appointment appointment :
+                appointments) {
+
+            if (appointment == null) {
+                continue;
+            }
+
+            LocalDate appointmentDate =
+                    parseDate(
+                            appointment
+                                    .getAppointmentDate()
+                    );
+
+            if (appointmentDate != null &&
+                    appointmentDate.isBefore(today)) {
+
+                result.add(
+                        appointment
+                );
+            }
+        }
+
+        result.sort(
+                Comparator.comparing(
+                        appointment ->
+                                parseDate(
+                                        appointment
+                                                .getAppointmentDate()
+                                ),
+                        Comparator.nullsLast(
+                                Comparator.reverseOrder()
+                        )
+                )
+        );
+
+        return result;
+    }
+
+    // =========================================================
+    // PARSE DATE
+    // =========================================================
+
+    private LocalDate parseDate(
+            String date
+    ) {
+
+        if (date == null ||
+                date.isBlank()) {
+
+            return null;
+        }
+
+        try {
+
+            return LocalDate.parse(
+                    date
+            );
+
+        } catch (Exception e) {
+
+            return null;
+        }
     }
 
     // =========================================================
@@ -216,11 +428,7 @@ public class Appointments {
     // =========================================================
 
     private HBox appointmentCard(
-            String imagePath,
-            String doctorName,
-            String speciality,
-            String date,
-            String hospital
+            Appointment appointment
     ) {
 
         HBox box =
@@ -243,7 +451,7 @@ public class Appointments {
 
         ImageView image =
                 createImage(
-                        imagePath,
+                        "/images/appointments/appointment1.jpg",
                         165,
                         110
                 );
@@ -253,7 +461,10 @@ public class Appointments {
 
         Label doctor =
                 new Label(
-                        doctorName
+                        safe(
+                                appointment.getDoctorName(),
+                                "Doctor"
+                        )
                 );
 
         doctor.setStyle(
@@ -262,39 +473,67 @@ public class Appointments {
                 "-fx-text-fill: #0f172a;"
         );
 
-        Label specialityLabel =
+        Label speciality =
                 new Label(
-                        speciality
+                        safe(
+                                appointment.getSpecialty(),
+                                "Specialty"
+                        )
                 );
 
-        specialityLabel.setStyle(
+        speciality.setStyle(
                 "-fx-text-fill: #2563eb;" +
                 "-fx-font-weight: bold;"
         );
 
-        Label dateLabel =
+        Label date =
                 new Label(
-                        date
+                        formatDate(
+                                appointment.getAppointmentDate()
+                        )
+                        + " • "
+                        + safe(
+                                appointment.getAppointmentTime(),
+                                "Time"
+                        )
                 );
 
-        dateLabel.setStyle(
+        date.setStyle(
                 "-fx-text-fill: #475569;"
         );
 
-        Label hospitalLabel =
+        Label hospital =
                 new Label(
-                        hospital
+                        safe(
+                                appointment.getHospital(),
+                                "Hospital"
+                        )
                 );
 
-        hospitalLabel.setStyle(
+        hospital.setStyle(
                 "-fx-text-fill: #64748b;"
         );
 
+        Label status =
+                new Label(
+                        safe(
+                                appointment.getStatus(),
+                                "Upcoming"
+                        )
+                );
+
+        status.setStyle(
+                "-fx-text-fill: #16a34a;" +
+                "-fx-font-weight: bold;"
+        );
+
         information.getChildren().addAll(
+
                 doctor,
-                specialityLabel,
-                dateLabel,
-                hospitalLabel
+                speciality,
+                date,
+                hospital,
+                status
         );
 
         HBox.setHgrow(
@@ -305,16 +544,13 @@ public class Appointments {
         Button view =
                 PatientUI.button(
                         "View",
-                        () -> {
-
-                            System.out.println(
-                                    "Viewing appointment with "
-                                            + doctorName
-                            );
-                        }
+                        () -> showAppointmentDetails(
+                                appointment
+                        )
                 );
 
         box.getChildren().addAll(
+
                 image,
                 information,
                 view
@@ -328,11 +564,7 @@ public class Appointments {
     // =========================================================
 
     private HBox previousAppointment(
-            String imagePath,
-            String doctorName,
-            String speciality,
-            String date,
-            String status
+            Appointment appointment
     ) {
 
         HBox box =
@@ -355,7 +587,7 @@ public class Appointments {
 
         ImageView image =
                 createImage(
-                        imagePath,
+                        "/images/appointments/appointment2.jpg",
                         120,
                         80
                 );
@@ -365,7 +597,10 @@ public class Appointments {
 
         Label doctor =
                 new Label(
-                        doctorName
+                        safe(
+                                appointment.getDoctorName(),
+                                "Doctor"
+                        )
                 );
 
         doctor.setStyle(
@@ -374,28 +609,34 @@ public class Appointments {
                 "-fx-text-fill: #0f172a;"
         );
 
-        Label specialityLabel =
+        Label speciality =
                 new Label(
-                        speciality
+                        safe(
+                                appointment.getSpecialty(),
+                                "Specialty"
+                        )
                 );
 
-        specialityLabel.setStyle(
+        speciality.setStyle(
                 "-fx-text-fill: #2563eb;"
         );
 
-        Label dateLabel =
+        Label date =
                 new Label(
-                        date
+                        formatDate(
+                                appointment.getAppointmentDate()
+                        )
                 );
 
-        dateLabel.setStyle(
+        date.setStyle(
                 "-fx-text-fill: #64748b;"
         );
 
         information.getChildren().addAll(
+
                 doctor,
-                specialityLabel,
-                dateLabel
+                speciality,
+                date
         );
 
         HBox.setHgrow(
@@ -403,23 +644,271 @@ public class Appointments {
                 Priority.ALWAYS
         );
 
-        Label statusLabel =
+        Label status =
                 new Label(
-                        status
+                        safe(
+                                appointment.getStatus(),
+                                "Completed"
+                        )
                 );
 
-        statusLabel.setStyle(
+        status.setStyle(
                 "-fx-text-fill: #16a34a;" +
                 "-fx-font-weight: bold;"
         );
 
         box.getChildren().addAll(
+
                 image,
                 information,
-                statusLabel
+                status
         );
 
         return box;
+    }
+
+    // =========================================================
+    // APPOINTMENT DETAILS
+    // =========================================================
+
+    private void showAppointmentDetails(
+            Appointment appointment
+    ) {
+
+        VBox content =
+                new VBox(15);
+
+        content.setPadding(
+                new Insets(30)
+        );
+
+        content.setAlignment(
+                Pos.TOP_LEFT
+        );
+
+        Label title =
+                new Label(
+                        "Appointment Details"
+                );
+
+        title.setStyle(
+                "-fx-font-size: 26px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #0f172a;"
+        );
+
+        Label doctor =
+                detailLabel(
+                        "Doctor",
+                        appointment.getDoctorName()
+                );
+
+        Label specialty =
+                detailLabel(
+                        "Specialty",
+                        appointment.getSpecialty()
+                );
+
+        Label hospital =
+                detailLabel(
+                        "Hospital",
+                        appointment.getHospital()
+                );
+
+        Label date =
+                detailLabel(
+                        "Date",
+                        formatDate(
+                                appointment.getAppointmentDate()
+                        )
+                );
+
+        Label time =
+                detailLabel(
+                        "Time",
+                        appointment.getAppointmentTime()
+                );
+
+        Label reason =
+                detailLabel(
+                        "Reason",
+                        appointment.getReason()
+                );
+
+        Label status =
+                detailLabel(
+                        "Status",
+                        appointment.getStatus()
+                );
+
+        Button back =
+                PatientUI.secondaryButton(
+                        "Back to Appointments",
+                        this::showAppointments
+                );
+
+        content.getChildren().addAll(
+
+                title,
+                doctor,
+                specialty,
+                hospital,
+                date,
+                time,
+                reason,
+                status,
+                back
+        );
+
+        VBox wrapper =
+                new VBox(content);
+
+        wrapper.setPadding(
+                new Insets(20)
+        );
+
+        ScrollPane scroll =
+                new ScrollPane(wrapper);
+
+        scroll.setFitToWidth(true);
+
+        stage.setScene(
+
+                PatientUI.createScene(
+
+                        stage,
+
+                        "Appointment Details",
+
+                        "Appointment Details",
+
+                        "View your appointment information.",
+
+                        scroll
+                )
+        );
+
+        stage.show();
+    }
+
+    // =========================================================
+    // DETAIL LABEL
+    // =========================================================
+
+    private Label detailLabel(
+            String title,
+            String value
+    ) {
+
+        Label label =
+                new Label(
+                        title + ": "
+                                + safe(value, "Not available")
+                );
+
+        label.setWrapText(true);
+
+        label.setStyle(
+                "-fx-font-size: 15px;" +
+                "-fx-text-fill: #334155;"
+        );
+
+        return label;
+    }
+
+    // =========================================================
+    // EMPTY MESSAGE
+    // =========================================================
+
+    private Label emptyLabel(
+            String message
+    ) {
+
+        Label label =
+                new Label(message);
+
+        label.setStyle(
+                "-fx-text-fill: #64748b;" +
+                "-fx-font-size: 14px;"
+        );
+
+        return label;
+    }
+
+    // =========================================================
+    // ERROR MESSAGE
+    // =========================================================
+
+    private Label errorLabel(
+            String message
+    ) {
+
+        Label label =
+                new Label(message);
+
+        label.setWrapText(true);
+
+        label.setStyle(
+                "-fx-text-fill: #dc2626;" +
+                "-fx-font-size: 14px;"
+        );
+
+        return label;
+    }
+
+    // =========================================================
+    // SAFE STRING
+    // =========================================================
+
+    private String safe(
+            String value,
+            String fallback
+    ) {
+
+        if (value == null ||
+                value.isBlank()) {
+
+            return fallback;
+        }
+
+        return value;
+    }
+
+    // =========================================================
+    // FORMAT DATE
+    // =========================================================
+
+    private String formatDate(
+            String date
+    ) {
+
+        if (date == null ||
+                date.isBlank()) {
+
+            return "Date not available";
+        }
+
+        try {
+
+            LocalDate localDate =
+                    LocalDate.parse(date);
+
+            return localDate.getDayOfMonth()
+                    + " "
+                    + localDate.getMonth()
+                            .toString()
+                            .charAt(0)
+                    + localDate.getMonth()
+                            .toString()
+                            .substring(1)
+                            .toLowerCase()
+                    + " "
+                    + localDate.getYear();
+
+        } catch (Exception e) {
+
+            return date;
+        }
     }
 
     // =========================================================
@@ -473,76 +962,20 @@ public class Appointments {
     private void showBookAppointment() {
 
         stage.setScene(
-                new BookAppointment(stage).getScene()
+                new BookAppointment(stage)
+                        .getScene()
         );
 
         stage.show();
     }
 
-    // =========================================================
-    // SIDEBAR NAVIGATION
-    // =========================================================
-
-    private void showDashboard() {
-
-        stage.setScene(
-                new Dashboard(stage).getScene()
-        );
-    }
-
-    private void showSearchHospitals() {
-
-        stage.setScene(
-                new SearchHospitals(stage).getScene()
-        );
-    }
-
     private void showAppointments() {
 
         stage.setScene(
-                new Appointments(stage).getScene()
+                new Appointments(stage)
+                        .getScene()
         );
-    }
 
-    private void showHealthPassport() {
-
-        stage.setScene(
-                new HealthPassport(stage).getScene()
-        );
-    }
-
-    private void showMedicalRecords() {
-
-        stage.setScene(
-                new MedicalRecords(stage).getScene()
-        );
-    }
-
-    private void showAIHealthAssistant() {
-
-        stage.setScene(
-                new AiHealthAssistant(stage).getScene()
-        );
-    }
-
-    private void showEmergencyAssistance() {
-
-        stage.setScene(
-                new EmergencyAssistance(stage).getScene()
-        );
-    }
-
-    private void showNotifications() {
-
-        stage.setScene(
-                new Notifications(stage).getScene()
-        );
-    }
-
-    private void showProfileSettings() {
-
-        stage.setScene(
-                new ProfileSettings(stage).getScene()
-        );
+        stage.show();
     }
 }

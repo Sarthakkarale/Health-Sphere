@@ -1,5 +1,8 @@
 package com.healthsphere.view.Patient;
 
+import com.healthsphere.controller.patient.PatientController;
+import com.healthsphere.model.PatientProfile;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -19,9 +22,12 @@ import javafx.stage.Stage;
 public class Dashboard {
 
     private final Stage stage;
+    private final PatientController patientController;
 
     public Dashboard(Stage stage) {
+
         this.stage = stage;
+        this.patientController = new PatientController();
     }
 
     public Scene getScene() {
@@ -35,43 +41,106 @@ public class Dashboard {
         content.setPadding(new Insets(28));
         content.setStyle("-fx-background-color: #f1f5f9;");
 
-        Label title = new Label("Good evening, Sarah");
+        // =========================================================
+        // LOAD CURRENT PATIENT
+        // =========================================================
+
+        String patientName = "Patient";
+
+        try {
+
+            PatientProfile profile =
+                    patientController.getCurrentPatientProfile();
+
+            if (profile != null &&
+                    profile.getFirstName() != null &&
+                    !profile.getFirstName().isBlank()) {
+
+                patientName =
+                        profile.getFirstName().trim();
+            }
+
+        } catch (Exception e) {
+
+            System.err.println(
+                    "Unable to load patient profile: "
+                            + e.getMessage()
+            );
+        }
+
+        // =========================================================
+        // HEADING
+        // =========================================================
+
+        Label title =
+                new Label(
+                        "Good evening, " + patientName
+                );
+
         title.setStyle(
                 "-fx-font-size: 30px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #0f172a;"
         );
 
-        Label subtitle = new Label(
-                "Here is your health overview and today's important updates."
-        );
+        Label subtitle =
+                new Label(
+                        "Here is your health overview and today's important updates."
+                );
 
         subtitle.setStyle(
                 "-fx-font-size: 15px;" +
                 "-fx-text-fill: #64748b;"
         );
 
-        VBox heading = new VBox(5, title, subtitle);
+        VBox heading =
+                new VBox(
+                        5,
+                        title,
+                        subtitle
+                );
 
-        /*
-         * DASHBOARD IMAGES
-         */
-        HBox imageRow = new HBox(15);
+        // =========================================================
+        // DASHBOARD IMAGES
+        // =========================================================
+
+        HBox imageRow =
+                new HBox(15);
+
         imageRow.setPrefHeight(180);
 
         imageRow.getChildren().addAll(
-                imageCard("/images/dashboard/dashboard1.jpg", "Your Health"),
-                imageCard("/images/dashboard/dashboard2.jpg", "Healthy Lifestyle"),
-                imageCard("/images/dashboard/dashboard3.jpg", "Medical Care"),
-                imageCard("/images/dashboard/dashboard4.jpg", "Wellness")
+
+                imageCard(
+                        "/images/dashboard/dashboard1.jpg",
+                        "Your Health"
+                ),
+
+                imageCard(
+                        "/images/dashboard/dashboard2.jpg",
+                        "Healthy Lifestyle"
+                ),
+
+                imageCard(
+                        "/images/dashboard/dashboard3.jpg",
+                        "Medical Care"
+                ),
+
+                imageCard(
+                        "/images/dashboard/dashboard4.jpg",
+                        "Wellness"
+                )
         );
 
-        /*
-         * STAT CARDS
-         */
-        HBox stats = new HBox(18);
+        // =========================================================
+        // STAT CARDS
+        // =========================================================
+
+        HBox stats =
+                new HBox(18);
 
         stats.getChildren().addAll(
+
                 statCard(
                         "♥",
                         "Heart Rate",
@@ -101,14 +170,20 @@ public class Dashboard {
                 )
         );
 
-        /*
-         * UPCOMING APPOINTMENT
-         */
-        HBox middle = new HBox(18);
+        // =========================================================
+        // UPCOMING APPOINTMENT
+        // =========================================================
 
-        VBox appointment = card("Upcoming Appointment");
+        HBox middle =
+                new HBox(18);
 
-        Label doctor = new Label("Dr. Sarah Jenkins");
+        VBox appointment =
+                card("Upcoming Appointment");
+
+        Label doctor =
+                new Label(
+                        "Dr. Sarah Jenkins"
+                );
 
         doctor.setStyle(
                 "-fx-font-size: 19px;" +
@@ -116,9 +191,13 @@ public class Dashboard {
                 "-fx-text-fill: #0f172a;"
         );
 
-        Label specialty = muted("Cardiology");
+        Label specialty =
+                muted("Cardiology");
 
-        Label time = new Label("Tomorrow • 10:00 AM");
+        Label time =
+                new Label(
+                        "Tomorrow • 10:00 AM"
+                );
 
         time.setStyle(
                 "-fx-font-size: 16px;" +
@@ -132,6 +211,7 @@ public class Dashboard {
                 );
 
         appointment.getChildren().addAll(
+
                 doctor,
                 specialty,
                 new Separator(),
@@ -139,12 +219,15 @@ public class Dashboard {
                 appointmentButton
         );
 
-        /*
-         * AI INSIGHTS
-         */
-        VBox insights = card("AI Health Insights");
+        // =========================================================
+        // AI INSIGHTS
+        // =========================================================
+
+        VBox insights =
+                card("AI Health Insights");
 
         insights.getChildren().addAll(
+
                 insight(
                         "Elevated Blood Pressure Trend",
                         "A slight upward trend has been detected in your recent readings."
@@ -161,20 +244,30 @@ public class Dashboard {
                 )
         );
 
-        HBox.setHgrow(appointment, Priority.ALWAYS);
-        HBox.setHgrow(insights, Priority.ALWAYS);
+        HBox.setHgrow(
+                appointment,
+                Priority.ALWAYS
+        );
+
+        HBox.setHgrow(
+                insights,
+                Priority.ALWAYS
+        );
 
         middle.getChildren().addAll(
                 appointment,
                 insights
         );
 
-        /*
-         * QUICK ACTIONS
-         */
-        VBox quickActions = card("Quick Actions");
+        // =========================================================
+        // QUICK ACTIONS
+        // =========================================================
 
-        HBox actions = new HBox(12);
+        VBox quickActions =
+                card("Quick Actions");
+
+        HBox actions =
+                new HBox(12);
 
         actions.getChildren().addAll(
 
@@ -204,9 +297,16 @@ public class Dashboard {
                 )
         );
 
-        quickActions.getChildren().add(actions);
+        quickActions
+                .getChildren()
+                .add(actions);
+
+        // =========================================================
+        // ADD CONTENT
+        // =========================================================
 
         content.getChildren().addAll(
+
                 heading,
                 imageRow,
                 stats,
@@ -214,15 +314,26 @@ public class Dashboard {
                 quickActions
         );
 
-        ScrollPane scroll = new ScrollPane(content);
+        // =========================================================
+        // SCROLL
+        // =========================================================
+
+        ScrollPane scroll =
+                new ScrollPane(content);
+
         scroll.setFitToWidth(true);
+
         scroll.setHbarPolicy(
                 ScrollPane.ScrollBarPolicy.NEVER
         );
 
         root.setCenter(scroll);
 
-        return new Scene(root, 1440, 900);
+        return new Scene(
+                root,
+                1440,
+                900
+        );
     }
 
     // =========================================================
@@ -234,12 +345,15 @@ public class Dashboard {
             String text
     ) {
 
-        VBox box = new VBox();
+        VBox box =
+                new VBox();
 
         box.setPrefWidth(260);
         box.setPrefHeight(180);
 
-        box.setAlignment(Pos.BOTTOM_LEFT);
+        box.setAlignment(
+                Pos.BOTTOM_LEFT
+        );
 
         box.setStyle(
                 "-fx-background-color: white;" +
@@ -248,18 +362,25 @@ public class Dashboard {
                 "-fx-border-radius: 14;"
         );
 
-        Image image;
+        Image image = null;
 
         try {
 
-            image = new Image(
-                    getClass()
-                            .getResourceAsStream(imagePath)
-            );
+            if (getClass().getResourceAsStream(imagePath) != null) {
+
+                image =
+                        new Image(
+                                getClass()
+                                        .getResourceAsStream(imagePath)
+                        );
+            }
 
         } catch (Exception e) {
 
-            image = null;
+            System.err.println(
+                    "Unable to load dashboard image: "
+                            + imagePath
+            );
         }
 
         if (image != null) {
@@ -269,15 +390,23 @@ public class Dashboard {
 
             imageView.setFitWidth(260);
             imageView.setFitHeight(180);
+
             imageView.setPreserveRatio(false);
 
-            box.getChildren().add(imageView);
+            box.getChildren()
+                    .add(imageView);
         }
 
-        Label label = new Label(text);
+        Label label =
+                new Label(text);
 
         label.setPadding(
-                new Insets(8, 12, 8, 12)
+                new Insets(
+                        8,
+                        12,
+                        8,
+                        12
+                )
         );
 
         label.setStyle(
@@ -299,17 +428,23 @@ public class Dashboard {
 
     private VBox createSidebar() {
 
-        VBox sidebar = new VBox(8);
+        VBox sidebar =
+                new VBox(8);
 
         sidebar.setPrefWidth(255);
-        sidebar.setPadding(new Insets(22));
+
+        sidebar.setPadding(
+                new Insets(22)
+        );
 
         sidebar.setStyle(
                 "-fx-background-color: #0f172a;"
         );
 
         Label brand =
-                new Label("✚  Health-Sphere");
+                new Label(
+                        "✚  Health-Sphere"
+                );
 
         brand.setStyle(
                 "-fx-text-fill: white;" +
@@ -318,13 +453,16 @@ public class Dashboard {
         );
 
         Label module =
-                new Label("Patient Module");
+                new Label(
+                        "Patient Module"
+                );
 
         module.setStyle(
                 "-fx-text-fill: #94a3b8;"
         );
 
-        Region spacer = new Region();
+        Region spacer =
+                new Region();
 
         VBox.setVgrow(
                 spacer,
@@ -412,14 +550,20 @@ public class Dashboard {
 
     private HBox createHeader() {
 
-        HBox header = new HBox();
+        HBox header =
+                new HBox();
 
         header.setAlignment(
                 Pos.CENTER_RIGHT
         );
 
         header.setPadding(
-                new Insets(16, 28, 16, 28)
+                new Insets(
+                        16,
+                        28,
+                        16,
+                        28
+                )
         );
 
         header.setStyle(
@@ -427,7 +571,8 @@ public class Dashboard {
                 "-fx-border-color: #e2e8f0;"
         );
 
-        Region spacer = new Region();
+        Region spacer =
+                new Region();
 
         HBox.setHgrow(
                 spacer,
@@ -440,13 +585,43 @@ public class Dashboard {
                         this::showNotifications
                 );
 
+        // =====================================================
+        // GET PATIENT NAME FOR HEADER
+        // =====================================================
+
+        String patientName =
+                "Patient";
+
+        try {
+
+            PatientProfile profile =
+                    patientController
+                            .getCurrentPatientProfile();
+
+            if (profile != null &&
+                    profile.getFirstName() != null &&
+                    !profile.getFirstName().isBlank()) {
+
+                patientName =
+                        profile.getFirstName().trim();
+            }
+
+        } catch (Exception e) {
+
+            System.err.println(
+                    "Unable to load patient name for header: "
+                            + e.getMessage()
+            );
+        }
+
         Button profile =
                 button(
-                        "Sarah",
+                        patientName,
                         this::showProfileSettings
                 );
 
         header.getChildren().addAll(
+
                 spacer,
                 notifications,
                 profile
@@ -466,7 +641,8 @@ public class Dashboard {
             Runnable action
     ) {
 
-        HBox item = new HBox(12);
+        HBox item =
+                new HBox(12);
 
         item.setAlignment(
                 Pos.CENTER_LEFT
@@ -527,7 +703,8 @@ public class Dashboard {
             String status
     ) {
 
-        VBox box = card("");
+        VBox box =
+                card("");
 
         Label iconLabel =
                 new Label(icon);
@@ -553,6 +730,7 @@ public class Dashboard {
                 green(status);
 
         box.getChildren().addAll(
+
                 iconLabel,
                 titleLabel,
                 valueLabel,
@@ -573,7 +751,8 @@ public class Dashboard {
 
     private VBox card(String title) {
 
-        VBox box = new VBox(12);
+        VBox box =
+                new VBox(12);
 
         box.setPadding(
                 new Insets(20)
@@ -598,7 +777,8 @@ public class Dashboard {
                     "-fx-text-fill: #0f172a;"
             );
 
-            box.getChildren().add(label);
+            box.getChildren()
+                    .add(label);
         }
 
         return box;
@@ -613,7 +793,8 @@ public class Dashboard {
             String description
     ) {
 
-        VBox box = new VBox(5);
+        VBox box =
+                new VBox(5);
 
         Label titleLabel =
                 new Label(title);
@@ -633,6 +814,7 @@ public class Dashboard {
         );
 
         box.getChildren().addAll(
+
                 titleLabel,
                 descriptionLabel
         );
@@ -655,7 +837,12 @@ public class Dashboard {
         button.setPrefHeight(42);
 
         button.setPadding(
-                new Insets(8, 18, 8, 18)
+                new Insets(
+                        8,
+                        18,
+                        8,
+                        18
+                )
         );
 
         button.setStyle(
@@ -673,6 +860,10 @@ public class Dashboard {
         return button;
     }
 
+    // =========================================================
+    // MUTED LABEL
+    // =========================================================
+
     private Label muted(String text) {
 
         Label label =
@@ -684,6 +875,10 @@ public class Dashboard {
 
         return label;
     }
+
+    // =========================================================
+    // GREEN LABEL
+    // =========================================================
 
     private Label green(String text) {
 
@@ -699,60 +894,78 @@ public class Dashboard {
     }
 
     // =========================================================
-    // DIRECT STAGE NAVIGATION
+    // NAVIGATION
     // =========================================================
 
     private void showDashboard() {
+
         stage.setScene(
-                new Dashboard(stage).getScene()
+                new Dashboard(stage)
+                        .getScene()
         );
     }
 
     private void showSearchHospitals() {
+
         stage.setScene(
-                new SearchHospitals(stage).getScene()
+                new SearchHospitals(stage)
+                        .getScene()
         );
     }
 
     private void showAppointments() {
+
         stage.setScene(
-                new Appointments(stage).getScene()
+                new Appointments(stage)
+                        .getScene()
         );
     }
 
     private void showHealthPassport() {
+
         stage.setScene(
-                new HealthPassport(stage).getScene()
+                new HealthPassport(stage)
+                        .getScene()
         );
     }
 
     private void showMedicalRecords() {
+
         stage.setScene(
-                new MedicalRecords(stage).getScene()
+                new MedicalRecords(stage)
+                        .getScene()
         );
     }
 
     private void showAIHealthAssistant() {
+
         stage.setScene(
-                new AiHealthAssistant(stage).getScene()
+                new AiHealthAssistant(stage)
+                        .getScene()
         );
     }
 
     private void showEmergencyAssistance() {
+
         stage.setScene(
-                new EmergencyAssistance(stage).getScene()
+                new EmergencyAssistance(stage)
+                        .getScene()
         );
     }
 
     private void showNotifications() {
+
         stage.setScene(
-                new Notifications(stage).getScene()
+                new Notifications(stage)
+                        .getScene()
         );
     }
 
     private void showProfileSettings() {
+
         stage.setScene(
-                new ProfileSettings(stage).getScene()
+                new ProfileSettings(stage)
+                        .getScene()
         );
     }
 }

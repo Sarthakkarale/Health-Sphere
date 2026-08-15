@@ -1,10 +1,16 @@
-
 package com.healthsphere.view.Patient;
+
+import com.healthsphere.controller.patient.PatientController;
+import com.healthsphere.exceptions.DatabaseException;
+import com.healthsphere.model.PatientProfile;
+import com.healthsphere.util.SessionManager;
+import com.healthsphere.view.authentication.LoginView;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -20,9 +26,11 @@ import javafx.stage.Stage;
 public class ProfileSettings {
 
     private final Stage stage;
+    private final PatientController patientController;
 
     public ProfileSettings(Stage stage) {
         this.stage = stage;
+        this.patientController = new PatientController();
     }
 
     // =========================================================
@@ -30,6 +38,41 @@ public class ProfileSettings {
     // =========================================================
 
     public Scene getScene() {
+
+        // =====================================================
+        // LOAD CURRENT PATIENT PROFILE
+        // =====================================================
+
+        PatientProfile patientProfile;
+
+        try {
+
+            patientProfile =
+                    patientController
+                            .getCurrentPatientProfile();
+
+        } catch (IllegalStateException e) {
+
+            return createErrorScene(
+                    "Your session has expired. Please login again."
+            );
+
+        } catch (DatabaseException e) {
+
+            e.printStackTrace();
+
+            return createErrorScene(
+                    "Unable to load your patient profile."
+            );
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            return createErrorScene(
+                    "An unexpected error occurred while loading your profile."
+            );
+        }
 
         // =====================================================
         // MAIN CONTENT
@@ -75,6 +118,16 @@ public class ProfileSettings {
         );
 
         // =====================================================
+        // PATIENT NAME
+        // =====================================================
+
+        String fullName =
+                buildFullName(
+                        patientProfile.getFirstName(),
+                        patientProfile.getLastName()
+                );
+
+        // =====================================================
         // PROFILE CARD
         // =====================================================
 
@@ -108,7 +161,9 @@ public class ProfileSettings {
 
         Label name =
                 new Label(
-                        "Sarah Johnson"
+                        fullName.isBlank()
+                                ? "Patient"
+                                : fullName
                 );
 
         name.setStyle(
@@ -117,9 +172,17 @@ public class ProfileSettings {
                 "-fx-text-fill: #4c1d95;"
         );
 
+        String patientUid =
+                patientProfile.getUid();
+
         Label patientId =
                 new Label(
-                        "Patient ID: HS-2026-001"
+                        "Patient ID: "
+                                + (
+                                patientUid == null
+                                        ? "N/A"
+                                        : patientUid
+                        )
                 );
 
         patientId.setStyle(
@@ -167,25 +230,39 @@ public class ProfileSettings {
                 12
         );
 
+        // =====================================================
+        // FORM FIELDS
+        // =====================================================
+
         TextField nameField =
                 field(
-                        "Sarah Johnson"
+                        fullName
                 );
 
         TextField emailField =
                 field(
-                        "sarah.johnson@email.com"
+                        safeValue(
+                                patientProfile.getEmail()
+                        )
                 );
 
         TextField phoneField =
                 field(
-                        "+91 98765 43210"
+                        safeValue(
+                                patientProfile.getPhone()
+                        )
                 );
 
         TextField cityField =
                 field(
-                        "Hyderabad"
+                        safeValue(
+                                patientProfile.getAddress()
+                        )
                 );
+
+        // =====================================================
+        // NAME
+        // =====================================================
 
         personalGrid.add(
                 label("Full Name"),
@@ -199,6 +276,10 @@ public class ProfileSettings {
                 0
         );
 
+        // =====================================================
+        // EMAIL
+        // =====================================================
+
         personalGrid.add(
                 label("Email"),
                 0,
@@ -211,6 +292,10 @@ public class ProfileSettings {
                 1
         );
 
+        // =====================================================
+        // PHONE
+        // =====================================================
+
         personalGrid.add(
                 label("Phone"),
                 0,
@@ -222,6 +307,10 @@ public class ProfileSettings {
                 1,
                 2
         );
+
+        // =====================================================
+        // ADDRESS / CITY
+        // =====================================================
 
         personalGrid.add(
                 label("City"),
@@ -296,7 +385,7 @@ public class ProfileSettings {
         );
 
         // =====================================================
-        // BUTTONS
+        // SAVE BUTTON
         // =====================================================
 
         Button save =
@@ -313,14 +402,108 @@ public class ProfileSettings {
                 "-fx-cursor: hand;"
         );
 
-        save.setOnAction(
-                e -> {
+        save.setOnAction(e -> {
 
-                    System.out.println(
-                            "Profile changes saved."
-                    );
-                }
-        );
+            try {
+
+                PatientProfile updatedProfile =
+                        patientController
+                                .updateCurrentPatientProfile(
+                                        nameField.getText(),
+                                        emailField.getText(),
+                                        phoneField.getText(),
+                                        cityField.getText()
+                                );
+
+                // -------------------------------------------------
+                // Update the profile card immediately
+                // -------------------------------------------------
+
+                String updatedName =
+                        buildFullName(
+                                updatedProfile.getFirstName(),
+                                updatedProfile.getLastName()
+                        );
+
+                name.setText(
+                        updatedName.isBlank()
+                                ? "Patient"
+                                : updatedName
+                );
+
+                patientId.setText(
+                        "Patient ID: "
+                                + safeValue(
+                                updatedProfile.getUid()
+                        )
+                );
+
+                // -------------------------------------------------
+                // Update form fields
+                // -------------------------------------------------
+
+                nameField.setText(
+                        updatedName
+                );
+
+                emailField.setText(
+                        safeValue(
+                                updatedProfile.getEmail()
+                        )
+                );
+
+                phoneField.setText(
+                        safeValue(
+                                updatedProfile.getPhone()
+                        )
+                );
+
+                cityField.setText(
+                        safeValue(
+                                updatedProfile.getAddress()
+                        )
+                );
+
+                showSuccessMessage(
+                        "Profile updated successfully."
+                );
+
+            } catch (IllegalArgumentException ex) {
+
+                showErrorMessage(
+                        ex.getMessage()
+                );
+
+            } catch (DatabaseException ex) {
+
+                ex.printStackTrace();
+
+                showErrorMessage(
+                        "Unable to update your profile. "
+                                + "Please try again."
+                );
+
+            } catch (IllegalStateException ex) {
+
+                showErrorMessage(
+                        "Your session has expired. "
+                                + "Please login again."
+                );
+
+            } catch (Exception ex) {
+
+                ex.printStackTrace();
+
+                showErrorMessage(
+                        "An unexpected error occurred "
+                                + "while updating your profile."
+                );
+            }
+        });
+
+        // =====================================================
+        // BACK BUTTON
+        // =====================================================
 
         Button back =
                 new Button(
@@ -339,6 +522,39 @@ public class ProfileSettings {
                 e -> showDashboard()
         );
 
+        // =====================================================
+        // LOGOUT BUTTON
+        // =====================================================
+
+        Button logout =
+                new Button(
+                        "Logout"
+                );
+
+        logout.setStyle(
+                "-fx-background-color: #dc2626;" +
+                "-fx-text-fill: white;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-radius: 8;" +
+                "-fx-padding: 10 22;" +
+                "-fx-cursor: hand;"
+        );
+
+        logout.setOnAction(e -> {
+
+            // -------------------------------------------------
+            // Clear the shared application session
+            // -------------------------------------------------
+
+            SessionManager.clearSession();
+
+            showLogin();
+        });
+
+        // =====================================================
+        // BUTTON ROW
+        // =====================================================
+
         HBox buttons =
                 new HBox(12);
 
@@ -348,7 +564,8 @@ public class ProfileSettings {
 
         buttons.getChildren().addAll(
                 save,
-                back
+                back,
+                logout
         );
 
         // =====================================================
@@ -398,11 +615,6 @@ public class ProfileSettings {
 
         // =====================================================
         // WRAPPER
-        //
-        // PatientUI provides:
-        // LEFT SIDEBAR
-        // TOP HEADER
-        // CENTER CONTENT
         // =====================================================
 
         VBox wrapper =
@@ -429,6 +641,161 @@ public class ProfileSettings {
     }
 
     // =========================================================
+    // BUILD FULL NAME
+    // =========================================================
+
+    private String buildFullName(
+            String firstName,
+            String lastName
+    ) {
+
+        String first =
+                firstName == null
+                        ? ""
+                        : firstName.trim();
+
+        String last =
+                lastName == null
+                        ? ""
+                        : lastName.trim();
+
+        return (first + " " + last).trim();
+    }
+
+    // =========================================================
+    // SAFE STRING VALUE
+    // =========================================================
+
+    private String safeValue(
+            String value
+    ) {
+
+        return value == null
+                ? ""
+                : value;
+    }
+
+    // =========================================================
+    // SUCCESS MESSAGE
+    // =========================================================
+
+    private void showSuccessMessage(
+            String message
+    ) {
+
+        Alert alert =
+                new Alert(
+                        Alert.AlertType.INFORMATION
+                );
+
+        alert.setTitle(
+                "HealthSphere"
+        );
+
+        alert.setHeaderText(
+                "Success"
+        );
+
+        alert.setContentText(
+                message
+        );
+
+        alert.showAndWait();
+    }
+
+    // =========================================================
+    // ERROR MESSAGE
+    // =========================================================
+
+    private void showErrorMessage(
+            String message
+    ) {
+
+        Alert alert =
+                new Alert(
+                        Alert.AlertType.ERROR
+                );
+
+        alert.setTitle(
+                "HealthSphere"
+        );
+
+        alert.setHeaderText(
+                "Unable to complete operation"
+        );
+
+        alert.setContentText(
+                message == null || message.isBlank()
+                        ? "An unexpected error occurred."
+                        : message
+        );
+
+        alert.showAndWait();
+    }
+
+    // =========================================================
+    // ERROR SCENE
+    // =========================================================
+
+    private Scene createErrorScene(
+            String message
+    ) {
+
+        VBox root =
+                new VBox(20);
+
+        root.setAlignment(
+                Pos.CENTER
+        );
+
+        root.setPadding(
+                new Insets(30)
+        );
+
+        Label error =
+                new Label(
+                        message
+                );
+
+        error.setWrapText(
+                true
+        );
+
+        error.setStyle(
+                "-fx-font-size: 16px;" +
+                "-fx-text-fill: #dc2626;"
+        );
+
+        Button back =
+                new Button(
+                        "← Back to Dashboard"
+                );
+
+        back.setStyle(
+                "-fx-background-color: #0f172a;" +
+                "-fx-text-fill: white;" +
+                "-fx-background-radius: 8;" +
+                "-fx-padding: 10 18;" +
+                "-fx-cursor: hand;"
+        );
+
+        back.setOnAction(
+                e -> showDashboard()
+        );
+
+        root.getChildren().addAll(
+                error,
+                back
+        );
+
+        return new Scene(
+                root,
+                1440,
+                900
+        );
+    }
+
+    // =========================================================
     // REUSABLE CARD
     // =========================================================
 
@@ -451,7 +818,9 @@ public class ProfileSettings {
         );
 
         Label heading =
-                new Label(title);
+                new Label(
+                        title
+                );
 
         heading.setStyle(
                 "-fx-font-size: 19px;" +
@@ -475,7 +844,9 @@ public class ProfileSettings {
     ) {
 
         Label label =
-                new Label(text);
+                new Label(
+                        text
+                );
 
         label.setStyle(
                 "-fx-font-weight: bold;" +
@@ -494,7 +865,9 @@ public class ProfileSettings {
     ) {
 
         TextField field =
-                new TextField(text);
+                new TextField(
+                        text
+                );
 
         field.setPrefWidth(
                 350
@@ -538,7 +911,9 @@ public class ProfileSettings {
                 );
 
         Label label =
-                new Label(title);
+                new Label(
+                        title
+                );
 
         label.setPadding(
                 new Insets(12)
@@ -588,7 +963,9 @@ public class ProfileSettings {
                 new VBox(4);
 
         Label titleLabel =
-                new Label(title);
+                new Label(
+                        title
+                );
 
         titleLabel.setStyle(
                 "-fx-font-weight: bold;" +
@@ -596,7 +973,9 @@ public class ProfileSettings {
         );
 
         Label descriptionLabel =
-                new Label(description);
+                new Label(
+                        description
+                );
 
         descriptionLabel.setStyle(
                 "-fx-text-fill: #64748b;"
@@ -652,7 +1031,9 @@ public class ProfileSettings {
                 new ImageView();
 
         var resource =
-                getClass().getResource(path);
+                getClass().getResource(
+                        path
+                );
 
         if (resource == null) {
 
@@ -714,7 +1095,9 @@ public class ProfileSettings {
                 new ImageView();
 
         var resource =
-                getClass().getResource(path);
+                getClass().getResource(
+                        path
+                );
 
         if (resource == null) {
 
@@ -809,6 +1192,20 @@ public class ProfileSettings {
 
         stage.setScene(
                 new Dashboard(stage)
+                        .getScene()
+        );
+
+        stage.show();
+    }
+
+    // =========================================================
+    // LOGOUT
+    // =========================================================
+
+    private void showLogin() {
+
+        stage.setScene(
+                new LoginView(stage)
                         .getScene()
         );
 

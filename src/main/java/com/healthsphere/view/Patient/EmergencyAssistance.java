@@ -1,4 +1,3 @@
-
 package com.healthsphere.view.Patient;
 
 import javafx.geometry.Insets;
@@ -13,7 +12,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -27,23 +25,15 @@ public class EmergencyAssistance {
 
     public Scene getScene() {
 
-        /*
-         * ============================================================
-         * MAIN CONTENT
-         * ============================================================
-         */
-
         VBox content = new VBox(22);
 
         content.setPadding(
                 new Insets(25)
         );
 
-        /*
-         * ============================================================
-         * EMERGENCY BANNER
-         * ============================================================
-         */
+        // =========================================================
+        // EMERGENCY BANNER
+        // =========================================================
 
         VBox emergencyBanner = new VBox(15);
 
@@ -62,9 +52,10 @@ public class EmergencyAssistance {
                 "-fx-border-radius: 18;"
         );
 
-        Label emergencyTitle = new Label(
-                "🚨 Need Emergency Help?"
-        );
+        Label emergencyTitle =
+                new Label(
+                        "🚨 Need Emergency Help?"
+                );
 
         emergencyTitle.setStyle(
                 "-fx-font-size: 24px;" +
@@ -72,10 +63,11 @@ public class EmergencyAssistance {
                 "-fx-text-fill: #991b1b;"
         );
 
-        Label emergencyText = new Label(
-                "If you are experiencing a life-threatening emergency, " +
-                "contact emergency services immediately."
-        );
+        Label emergencyText =
+                new Label(
+                        "If you are experiencing a life-threatening emergency, " +
+                        "contact emergency services immediately."
+                );
 
         emergencyText.setWrapText(true);
 
@@ -109,20 +101,16 @@ public class EmergencyAssistance {
                 emergencyButton
         );
 
-        /*
-         * ============================================================
-         * IMAGE GALLERY
-         * ============================================================
-         */
+        // =========================================================
+        // IMAGE GALLERY
+        // =========================================================
 
         GridPane imageGrid =
                 createImageGallery();
 
-        /*
-         * ============================================================
-         * EMERGENCY SERVICES
-         * ============================================================
-         */
+        // =========================================================
+        // EMERGENCY SERVICES
+        // =========================================================
 
         VBox servicesCard =
                 PatientUI.coloredCard(
@@ -135,33 +123,39 @@ public class EmergencyAssistance {
                 emergencyService(
                         "🚑",
                         "Ambulance",
-                        "Request emergency medical transportation."
+                        "Request emergency medical transportation.",
+                        "Ambulance Assistance",
+                        "Request emergency ambulance support and prepare important medical information for the emergency team."
                 ),
 
                 emergencyService(
                         "🏥",
                         "Nearest Hospital",
-                        "Find immediate hospital and emergency department care."
+                        "Find immediate hospital and emergency department care.",
+                        "Hospital Emergency Assistance",
+                        "Find immediate hospital care and access important emergency department information."
                 ),
 
                 emergencyService(
                         "👨‍⚕",
                         "Doctor Support",
-                        "Contact your healthcare provider for medical assistance."
+                        "Contact your healthcare provider for medical assistance.",
+                        "Doctor Support",
+                        "Get guidance about contacting your healthcare provider and preparing important medical information."
                 ),
 
                 emergencyService(
                         "💊",
                         "Medication Information",
-                        "Access important medication and allergy information."
+                        "Access important medication and allergy information.",
+                        "Medication & Allergy Information",
+                        "Keep your current medications, allergies and important medical information available for emergency healthcare professionals."
                 )
         );
 
-        /*
-         * ============================================================
-         * EMERGENCY INFORMATION
-         * ============================================================
-         */
+        // =========================================================
+        // EMERGENCY INFORMATION
+        // =========================================================
 
         VBox informationCard =
                 PatientUI.coloredCard(
@@ -173,30 +167,36 @@ public class EmergencyAssistance {
 
                 emergencyInfo(
                         "Stay Calm",
-                        "Try to remain calm and clearly communicate your condition."
+                        "Try to remain calm and clearly communicate your condition.",
+                        "Stay Calm During an Emergency",
+                        "Remain as calm as possible. Clearly explain what happened, your symptoms and any immediate concerns to emergency responders."
                 ),
 
                 emergencyInfo(
                         "Share Your Location",
-                        "Provide your current location to emergency responders."
+                        "Provide your current location to emergency responders.",
+                        "Share Your Location",
+                        "Tell emergency responders your current location, nearby landmarks and any useful directions that can help them reach you quickly."
                 ),
 
                 emergencyInfo(
                         "Medical Information",
-                        "Keep your medical records, allergies and medications available."
+                        "Keep your medical records, allergies and medications available.",
+                        "Important Medical Information",
+                        "Keep information about your medical records, allergies, medications and existing healthcare details available for emergency professionals."
                 ),
 
                 emergencyInfo(
                         "Do Not Delay",
-                        "For serious or life-threatening symptoms, seek professional emergency care immediately."
+                        "For serious or life-threatening symptoms, seek professional emergency care immediately.",
+                        "Do Not Delay Emergency Care",
+                        "Do not delay professional emergency treatment when symptoms are serious or potentially life-threatening. Contact emergency services immediately."
                 )
         );
 
-        /*
-         * ============================================================
-         * QUICK ACTIONS
-         * ============================================================
-         */
+        // =========================================================
+        // QUICK ACTIONS
+        // =========================================================
 
         VBox actionsCard =
                 PatientUI.coloredCard(
@@ -206,6 +206,10 @@ public class EmergencyAssistance {
 
         HBox actions =
                 new HBox(12);
+
+        actions.setAlignment(
+                Pos.CENTER_LEFT
+        );
 
         Button hospitals =
                 PatientUI.button(
@@ -254,11 +258,9 @@ public class EmergencyAssistance {
                 actions
         );
 
-        /*
-         * ============================================================
-         * ADD EVERYTHING TO CONTENT
-         * ============================================================
-         */
+        // =========================================================
+        // ADD CONTENT
+        // =========================================================
 
         content.getChildren().addAll(
 
@@ -273,11 +275,9 @@ public class EmergencyAssistance {
                 actionsCard
         );
 
-        /*
-         * ============================================================
-         * SCROLL PANE
-         * ============================================================
-         */
+        // =========================================================
+        // SCROLL
+        // =========================================================
 
         ScrollPane scroll =
                 new ScrollPane(
@@ -292,28 +292,18 @@ public class EmergencyAssistance {
                 ScrollPane.ScrollBarPolicy.NEVER
         );
 
+        scroll.setVbarPolicy(
+                ScrollPane.ScrollBarPolicy.AS_NEEDED
+        );
+
         scroll.setStyle(
                 "-fx-background-color: transparent;" +
                 "-fx-background: transparent;"
         );
 
-        /*
-         * ============================================================
-         * IMPORTANT
-         *
-         * DO NOT CREATE A BorderPane HERE.
-         *
-         * PatientUI.createScene() creates:
-         *
-         * LEFT SIDEBAR
-         * TOP HEADER
-         * PAGE HEADING
-         * CENTER CONTENT
-         *
-         * This is what makes EmergencyAssistance look like
-         * Dashboard, Search Hospitals, Appointments, etc.
-         * ============================================================
-         */
+        // =========================================================
+        // COMMON PATIENT UI
+        // =========================================================
 
         return PatientUI.createScene(
                 stage,
@@ -324,11 +314,9 @@ public class EmergencyAssistance {
         );
     }
 
-    /*
-     * ================================================================
-     * IMAGE GALLERY
-     * ================================================================
-     */
+    // =============================================================
+    // IMAGE GALLERY
+    // =============================================================
 
     private GridPane createImageGallery() {
 
@@ -377,11 +365,9 @@ public class EmergencyAssistance {
         return grid;
     }
 
-    /*
-     * ================================================================
-     * IMAGE CARD
-     * ================================================================
-     */
+    // =============================================================
+    // IMAGE CARD
+    // =============================================================
 
     private VBox imageCard(
             String imagePath,
@@ -406,19 +392,6 @@ public class EmergencyAssistance {
                 "-fx-border-radius: 16;"
         );
 
-        ImageView imageView =
-                new ImageView();
-
-        /*
-         * Safe resource loading.
-         *
-         * This prevents:
-         *
-         * Input stream must not be null
-         *
-         * if an image is missing.
-         */
-
         var resource =
                 getClass().getResource(
                         imagePath
@@ -431,8 +404,25 @@ public class EmergencyAssistance {
                             resource.toExternalForm()
                     );
 
-            imageView.setImage(
-                    image
+            ImageView imageView =
+                    new ImageView(
+                            image
+                    );
+
+            imageView.setFitWidth(
+                    430
+            );
+
+            imageView.setFitHeight(
+                    175
+            );
+
+            imageView.setPreserveRatio(
+                    false
+            );
+
+            card.getChildren().add(
+                    imageView
             );
 
         } else {
@@ -470,18 +460,6 @@ public class EmergencyAssistance {
             );
         }
 
-        imageView.setFitWidth(
-                430
-        );
-
-        imageView.setFitHeight(
-                175
-        );
-
-        imageView.setPreserveRatio(
-                false
-        );
-
         Label titleLabel =
                 new Label(
                         title
@@ -497,13 +475,6 @@ public class EmergencyAssistance {
                 "-fx-text-fill: #991b1b;"
         );
 
-        if (resource != null) {
-
-            card.getChildren().add(
-                    imageView
-            );
-        }
-
         card.getChildren().add(
                 titleLabel
         );
@@ -511,16 +482,16 @@ public class EmergencyAssistance {
         return card;
     }
 
-    /*
-     * ================================================================
-     * EMERGENCY SERVICE ROW
-     * ================================================================
-     */
+    // =============================================================
+    // EMERGENCY SERVICE ROW
+    // =============================================================
 
     private HBox emergencyService(
             String icon,
             String title,
-            String description
+            String description,
+            String screenTitle,
+            String screenDescription
     ) {
 
         HBox row =
@@ -553,6 +524,11 @@ public class EmergencyAssistance {
         VBox information =
                 new VBox(4);
 
+        HBox.setHgrow(
+                information,
+                Priority.ALWAYS
+        );
+
         Label titleLabel =
                 new Label(
                         title
@@ -582,14 +558,6 @@ public class EmergencyAssistance {
                 descriptionLabel
         );
 
-        Region spacer =
-                new Region();
-
-        HBox.setHgrow(
-                spacer,
-                Priority.ALWAYS
-        );
-
         Button action =
                 new Button(
                         "Help"
@@ -605,28 +573,31 @@ public class EmergencyAssistance {
         );
 
         action.setOnAction(
-                e -> showEmergencyAlert()
+                e -> openEmergencyScreen(
+                        screenTitle,
+                        screenDescription,
+                        icon
+                )
         );
 
         row.getChildren().addAll(
                 iconLabel,
                 information,
-                spacer,
                 action
         );
 
         return row;
     }
 
-    /*
-     * ================================================================
-     * EMERGENCY INFORMATION
-     * ================================================================
-     */
+    // =============================================================
+    // EMERGENCY INFORMATION ROW
+    // =============================================================
 
     private HBox emergencyInfo(
             String title,
-            String description
+            String description,
+            String screenTitle,
+            String screenDescription
     ) {
 
         HBox row =
@@ -660,6 +631,11 @@ public class EmergencyAssistance {
         VBox text =
                 new VBox(3);
 
+        HBox.setHgrow(
+                text,
+                Priority.ALWAYS
+        );
+
         Label titleLabel =
                 new Label(
                         title
@@ -688,19 +664,62 @@ public class EmergencyAssistance {
                 descriptionLabel
         );
 
+        Button view =
+                new Button(
+                        "View"
+                );
+
+        view.setStyle(
+                "-fx-background-color: #d97706;" +
+                "-fx-text-fill: white;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-radius: 8;" +
+                "-fx-padding: 7 14;" +
+                "-fx-cursor: hand;"
+        );
+
+        view.setOnAction(
+                e -> openEmergencyScreen(
+                        screenTitle,
+                        screenDescription,
+                        "⚠"
+                )
+        );
+
         row.getChildren().addAll(
                 bullet,
-                text
+                text,
+                view
         );
 
         return row;
     }
 
-    /*
-     * ================================================================
-     * EMERGENCY ALERT
-     * ================================================================
-     */
+    // =============================================================
+    // OPEN EMERGENCY DETAIL SCREEN
+    // =============================================================
+
+    private void openEmergencyScreen(
+            String title,
+            String description,
+            String icon
+    ) {
+
+        stage.setScene(
+                new EmergencyDetailScreen(
+                        stage,
+                        title,
+                        description,
+                        icon
+                ).getScene()
+        );
+
+        stage.show();
+    }
+
+    // =============================================================
+    // EMERGENCY ALERT
+    // =============================================================
 
     private void showEmergencyAlert() {
 
@@ -714,7 +733,7 @@ public class EmergencyAssistance {
         );
 
         alert.setHeaderText(
-                "Emergency Service"
+                "🚨 Emergency Service"
         );
 
         alert.setContentText(
@@ -724,5 +743,287 @@ public class EmergencyAssistance {
 
         alert.showAndWait();
     }
-}
 
+    // =============================================================
+    // EMERGENCY DETAIL SCREEN
+    //
+    // This is kept inside this file so you do NOT need to create
+    // another Java file.
+    // =============================================================
+
+    private static class EmergencyDetailScreen {
+
+        private final Stage stage;
+        private final String title;
+        private final String description;
+        private final String icon;
+
+        EmergencyDetailScreen(
+                Stage stage,
+                String title,
+                String description,
+                String icon
+        ) {
+
+            this.stage = stage;
+            this.title = title;
+            this.description = description;
+            this.icon = icon;
+        }
+
+        Scene getScene() {
+
+            VBox content =
+                    new VBox(22);
+
+            content.setPadding(
+                    new Insets(25)
+            );
+
+            // =====================================================
+            // MAIN DETAIL CARD
+            // =====================================================
+
+            VBox card =
+                    new VBox(18);
+
+            card.setPadding(
+                    new Insets(30)
+            );
+
+            card.setStyle(
+                    "-fx-background-color: #fee2e2;" +
+                    "-fx-background-radius: 18;" +
+                    "-fx-border-color: #fca5a5;" +
+                    "-fx-border-radius: 18;"
+            );
+
+            Label iconLabel =
+                    new Label(
+                            icon
+                    );
+
+            iconLabel.setStyle(
+                    "-fx-font-size: 46px;"
+            );
+
+            Label titleLabel =
+                    new Label(
+                            title
+                    );
+
+            titleLabel.setStyle(
+                    "-fx-font-size: 28px;" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-text-fill: #991b1b;"
+            );
+
+            Label descriptionLabel =
+                    new Label(
+                            description
+                    );
+
+            descriptionLabel.setWrapText(
+                    true
+            );
+
+            descriptionLabel.setStyle(
+                    "-fx-font-size: 16px;" +
+                    "-fx-text-fill: #7f1d1d;"
+            );
+
+            card.getChildren().addAll(
+                    iconLabel,
+                    titleLabel,
+                    descriptionLabel
+            );
+
+            // =====================================================
+            // ACTION INFORMATION
+            // =====================================================
+
+            VBox actionCard =
+                    PatientUI.coloredCard(
+                            "⚡ Recommended Actions",
+                            "#dbeafe"
+                    );
+
+            actionCard.getChildren().addAll(
+
+                    information(
+                            "Stay Calm",
+                            "Remain calm and clearly communicate your situation."
+                    ),
+
+                    information(
+                            "Keep Medical Information Ready",
+                            "Keep your medications, allergies and medical records available."
+                    ),
+
+                    information(
+                            "Seek Professional Help",
+                            "For serious or life-threatening situations, contact emergency services immediately."
+                    )
+            );
+
+            // =====================================================
+            // BUTTONS
+            // =====================================================
+
+            HBox buttons =
+                    new HBox(12);
+
+            buttons.setAlignment(
+                    Pos.CENTER_LEFT
+            );
+
+            Button emergency =
+                    PatientUI.button(
+                            "🚨 Emergency Services",
+                            () -> {
+
+                                Alert alert =
+                                        new Alert(
+                                                Alert.AlertType.INFORMATION
+                                        );
+
+                                alert.setTitle(
+                                        "Emergency Services"
+                                );
+
+                                alert.setHeaderText(
+                                        "🚨 Emergency Assistance"
+                                );
+
+                                alert.setContentText(
+                                        "For a life-threatening emergency, " +
+                                        "please contact your local emergency service immediately."
+                                );
+
+                                alert.showAndWait();
+                            }
+                    );
+
+            Button back =
+                    PatientUI.secondaryButton(
+                            "← Back",
+                            () -> stage.setScene(
+                                    new EmergencyAssistance(stage)
+                                            .getScene()
+                            )
+                    );
+
+            buttons.getChildren().addAll(
+                    emergency,
+                    back
+            );
+
+            content.getChildren().addAll(
+                    card,
+                    actionCard,
+                    buttons
+            );
+
+            ScrollPane scroll =
+                    new ScrollPane(
+                            content
+                    );
+
+            scroll.setFitToWidth(
+                    true
+            );
+
+            scroll.setHbarPolicy(
+                    ScrollPane.ScrollBarPolicy.NEVER
+            );
+
+            scroll.setStyle(
+                    "-fx-background-color: transparent;" +
+                    "-fx-background: transparent;"
+            );
+
+            return PatientUI.createScene(
+                    stage,
+                    title,
+                    title,
+                    "Emergency assistance and important information.",
+                    scroll
+            );
+        }
+
+        // =========================================================
+        // INFORMATION ROW
+        // =========================================================
+
+        private HBox information(
+                String title,
+                String description
+        ) {
+
+            HBox row =
+                    new HBox(10);
+
+            row.setPadding(
+                    new Insets(12)
+            );
+
+            row.setAlignment(
+                    Pos.TOP_LEFT
+            );
+
+            row.setStyle(
+                    "-fx-background-color: white;" +
+                    "-fx-background-radius: 10;" +
+                    "-fx-border-color: #bfdbfe;" +
+                    "-fx-border-radius: 10;"
+            );
+
+            Label bullet =
+                    new Label(
+                            "●"
+                    );
+
+            bullet.setStyle(
+                    "-fx-text-fill: #2563eb;"
+            );
+
+            VBox text =
+                    new VBox(3);
+
+            Label titleLabel =
+                    new Label(
+                            title
+                    );
+
+            titleLabel.setStyle(
+                    "-fx-font-weight: bold;" +
+                    "-fx-text-fill: #0f172a;"
+            );
+
+            Label descriptionLabel =
+                    new Label(
+                            description
+                    );
+
+            descriptionLabel.setWrapText(
+                    true
+            );
+
+            descriptionLabel.setStyle(
+                    "-fx-text-fill: #64748b;"
+            );
+
+            text.getChildren().addAll(
+                    titleLabel,
+                    descriptionLabel
+            );
+
+            row.getChildren().addAll(
+                    bullet,
+                    text
+            );
+
+            return row;
+        }
+    }
+}

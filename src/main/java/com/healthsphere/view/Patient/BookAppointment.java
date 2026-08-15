@@ -1,5 +1,11 @@
 package com.healthsphere.view.Patient;
 
+import java.time.LocalDate;
+
+import com.healthsphere.controller.patient.AppointmentController;
+import com.healthsphere.controller.patient.PatientController;
+import com.healthsphere.model.PatientProfile;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -21,8 +27,18 @@ public class BookAppointment {
 
     private final Stage stage;
 
+    private final AppointmentController appointmentController;
+    private final PatientController patientController;
+
     public BookAppointment(Stage stage) {
+
         this.stage = stage;
+
+        this.appointmentController =
+                new AppointmentController();
+
+        this.patientController =
+                new PatientController();
     }
 
     // =========================================================
@@ -83,8 +99,26 @@ public class BookAppointment {
 
         TextField patientName =
                 field(
-                        "Enter patient name"
+                        "Patient name"
                 );
+
+        loadPatientName(
+                patientName
+        );
+
+        /*
+         * Patient name comes from the logged-in user's
+         * PatientProfile and must not be manually changed.
+         */
+        patientName.setEditable(false);
+
+        patientName.setStyle(
+                "-fx-background-color: #e2e8f0;" +
+                "-fx-border-color: #bfdbfe;" +
+                "-fx-border-radius: 8;" +
+                "-fx-background-radius: 8;" +
+                "-fx-text-fill: #334155;"
+        );
 
         // =====================================================
         // DOCTOR
@@ -94,6 +128,7 @@ public class BookAppointment {
                 new ComboBox<>();
 
         doctor.getItems().addAll(
+
                 "Dr. Sarah Jenkins",
                 "Dr. Michael Brown",
                 "Dr. Emily Wilson",
@@ -105,6 +140,7 @@ public class BookAppointment {
         );
 
         doctor.setPrefHeight(43);
+
         doctor.setMaxWidth(
                 Double.MAX_VALUE
         );
@@ -117,6 +153,7 @@ public class BookAppointment {
                 new ComboBox<>();
 
         specialty.getItems().addAll(
+
                 "Cardiology",
                 "General Medicine",
                 "Dermatology",
@@ -130,6 +167,7 @@ public class BookAppointment {
         );
 
         specialty.setPrefHeight(43);
+
         specialty.setMaxWidth(
                 Double.MAX_VALUE
         );
@@ -142,6 +180,7 @@ public class BookAppointment {
                 new ComboBox<>();
 
         hospital.getItems().addAll(
+
                 "Apollo Hospitals",
                 "Care Hospitals",
                 "Yashoda Hospitals",
@@ -153,6 +192,7 @@ public class BookAppointment {
         );
 
         hospital.setPrefHeight(43);
+
         hospital.setMaxWidth(
                 Double.MAX_VALUE
         );
@@ -169,8 +209,36 @@ public class BookAppointment {
         );
 
         date.setPrefHeight(43);
+
         date.setMaxWidth(
                 Double.MAX_VALUE
+        );
+
+        /*
+         * Prevent selecting a date in the past.
+         */
+        date.setDayCellFactory(
+                picker -> new javafx.scene.control.DateCell() {
+
+                    @Override
+                    public void updateItem(
+                            LocalDate item,
+                            boolean empty) {
+
+                        super.updateItem(
+                                item,
+                                empty
+                        );
+
+                        if (!empty &&
+                                item.isBefore(
+                                        LocalDate.now()
+                                )) {
+
+                            setDisable(true);
+                        }
+                    }
+                }
         );
 
         // =====================================================
@@ -181,6 +249,7 @@ public class BookAppointment {
                 new ComboBox<>();
 
         time.getItems().addAll(
+
                 "09:00 AM",
                 "09:30 AM",
                 "10:00 AM",
@@ -199,6 +268,7 @@ public class BookAppointment {
         );
 
         time.setPrefHeight(43);
+
         time.setMaxWidth(
                 Double.MAX_VALUE
         );
@@ -296,6 +366,7 @@ public class BookAppointment {
                 PatientUI.button(
                         "Confirm Appointment",
                         () -> confirmAppointment(
+
                                 patientName,
                                 doctor,
                                 specialty,
@@ -320,6 +391,7 @@ public class BookAppointment {
                 );
 
         form.getChildren().addAll(
+
                 row,
                 reasonLabel,
                 reason,
@@ -331,6 +403,7 @@ public class BookAppointment {
         // =====================================================
 
         content.getChildren().addAll(
+
                 images,
                 form
         );
@@ -365,12 +438,80 @@ public class BookAppointment {
         // =====================================================
 
         return PatientUI.createScene(
+
                 stage,
+
                 "Book Appointment",
+
                 "Book Appointment",
+
                 "Choose a doctor, hospital, date and convenient time.",
+
                 wrapper
         );
+    }
+
+    // =========================================================
+    // LOAD LOGGED-IN PATIENT NAME
+    // =========================================================
+
+    private void loadPatientName(
+            TextField patientName
+    ) {
+
+        try {
+
+            PatientProfile profile =
+                    patientController
+                            .getCurrentPatientProfile();
+
+            if (profile == null) {
+
+                patientName.setText(
+                        "Patient"
+                );
+
+                return;
+            }
+
+            String firstName =
+                    profile.getFirstName() == null
+                            ? ""
+                            : profile.getFirstName().trim();
+
+            String lastName =
+                    profile.getLastName() == null
+                            ? ""
+                            : profile.getLastName().trim();
+
+            String fullName =
+                    (firstName + " " + lastName)
+                            .trim();
+
+            if (fullName.isBlank()) {
+
+                patientName.setText(
+                        "Patient"
+                );
+
+            } else {
+
+                patientName.setText(
+                        fullName
+                );
+            }
+
+        } catch (Exception e) {
+
+            System.err.println(
+                    "Unable to load patient name: "
+                            + e.getMessage()
+            );
+
+            patientName.setText(
+                    "Patient"
+            );
+        }
     }
 
     // =========================================================
@@ -378,48 +519,123 @@ public class BookAppointment {
     // =========================================================
 
     private void confirmAppointment(
+
             TextField patientName,
+
             ComboBox<String> doctor,
+
             ComboBox<String> specialty,
+
             ComboBox<String> hospital,
+
             DatePicker date,
+
             ComboBox<String> time,
+
             TextArea reason
     ) {
 
-        if (
-                patientName.getText().trim().isEmpty()
-                        ||
-                doctor.getValue() == null
-                        ||
-                specialty.getValue() == null
-                        ||
-                hospital.getValue() == null
-                        ||
-                date.getValue() == null
-                        ||
-                time.getValue() == null
-        ) {
+        // =====================================================
+        // VALIDATION
+        // =====================================================
 
-            showMessage(
-                    "Please complete all required appointment details."
+        if (doctor.getValue() == null) {
+
+            showError(
+                    "Please select a doctor."
             );
 
             return;
         }
 
-        showMessage(
-                "Appointment confirmed successfully!"
-        );
+        if (specialty.getValue() == null) {
+
+            showError(
+                    "Please select a specialty."
+            );
+
+            return;
+        }
+
+        if (hospital.getValue() == null) {
+
+            showError(
+                    "Please select a hospital."
+            );
+
+            return;
+        }
+
+        if (date.getValue() == null) {
+
+            showError(
+                    "Please select an appointment date."
+            );
+
+            return;
+        }
+
+        if (date.getValue().isBefore(
+                LocalDate.now())) {
+
+            showError(
+                    "Appointment date cannot be in the past."
+            );
+
+            return;
+        }
+
+        if (time.getValue() == null) {
+
+            showError(
+                    "Please select an appointment time."
+            );
+
+            return;
+        }
+
+        // =====================================================
+        // SAVE TO FIREBASE
+        // =====================================================
+
+        try {
+
+            appointmentController.createAppointment(
+
+                    doctor.getValue(),
+
+                    specialty.getValue(),
+
+                    hospital.getValue(),
+
+                    date.getValue().toString(),
+
+                    time.getValue(),
+
+                    reason.getText()
+            );
+
+            showSuccess();
+
+        } catch (Exception e) {
+
+            System.err.println(
+                    "Unable to create appointment: "
+                            + e.getMessage()
+            );
+
+            showError(
+                    "Unable to book the appointment.\n\n"
+                            + e.getMessage()
+            );
+        }
     }
 
     // =========================================================
     // SUCCESS SCREEN
     // =========================================================
 
-    private void showMessage(
-            String message
-    ) {
+    private void showSuccess() {
 
         VBox content =
                 new VBox(20);
@@ -453,7 +669,9 @@ public class BookAppointment {
         );
 
         Label description =
-                new Label(message);
+                new Label(
+                        "Your appointment has been successfully saved."
+                );
 
         description.setStyle(
                 "-fx-font-size: 16px;" +
@@ -467,6 +685,7 @@ public class BookAppointment {
                 );
 
         content.getChildren().addAll(
+
                 icon,
                 title,
                 description,
@@ -481,11 +700,108 @@ public class BookAppointment {
         );
 
         stage.setScene(
+
                 PatientUI.createScene(
+
                         stage,
+
                         "Appointment Confirmed",
+
                         "Appointment Confirmed",
+
                         "Your healthcare appointment has been successfully booked.",
+
+                        wrapper
+                )
+        );
+
+        stage.show();
+    }
+
+    // =========================================================
+    // ERROR MESSAGE
+    // =========================================================
+
+    private void showError(
+            String message
+    ) {
+
+        VBox content =
+                new VBox(18);
+
+        content.setAlignment(
+                Pos.CENTER
+        );
+
+        content.setPadding(
+                new Insets(40)
+        );
+
+        Label icon =
+                new Label("!");
+
+        icon.setStyle(
+                "-fx-font-size: 50px;" +
+                "-fx-text-fill: #dc2626;" +
+                "-fx-font-weight: bold;"
+        );
+
+        Label title =
+                new Label(
+                        "Appointment Not Booked"
+                );
+
+        title.setStyle(
+                "-fx-font-size: 26px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #0f172a;"
+        );
+
+        Label description =
+                new Label(message);
+
+        description.setWrapText(true);
+
+        description.setMaxWidth(600);
+
+        description.setStyle(
+                "-fx-font-size: 15px;" +
+                "-fx-text-fill: #64748b;"
+        );
+
+        Button back =
+                PatientUI.secondaryButton(
+                        "Back",
+                        this::showBookAppointment
+                );
+
+        content.getChildren().addAll(
+
+                icon,
+                title,
+                description,
+                back
+        );
+
+        VBox wrapper =
+                new VBox(content);
+
+        wrapper.setAlignment(
+                Pos.CENTER
+        );
+
+        stage.setScene(
+
+                PatientUI.createScene(
+
+                        stage,
+
+                        "Appointment Error",
+
+                        "Appointment Error",
+
+                        "Please review the appointment details and try again.",
+
                         wrapper
                 )
         );
@@ -622,7 +938,18 @@ public class BookAppointment {
     private void showAppointments() {
 
         stage.setScene(
-                new Appointments(stage).getScene()
+                new Appointments(stage)
+                        .getScene()
+        );
+
+        stage.show();
+    }
+
+    private void showBookAppointment() {
+
+        stage.setScene(
+                new BookAppointment(stage)
+                        .getScene()
         );
 
         stage.show();

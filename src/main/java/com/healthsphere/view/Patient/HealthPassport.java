@@ -1,5 +1,9 @@
-
 package com.healthsphere.view.Patient;
+
+import java.net.URL;
+
+import com.healthsphere.controller.patient.PatientController;
+import com.healthsphere.model.PatientProfile;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -15,104 +19,177 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-import java.net.URL;
-
 public class HealthPassport {
 
     private final Stage stage;
 
+    /*
+     * ============================================================
+     * PATIENT CONTROLLER
+     * ============================================================
+     */
+
+    private final PatientController patientController;
+
     public HealthPassport(Stage stage) {
+
         this.stage = stage;
+
+        this.patientController =
+                new PatientController();
     }
+
+    // =========================================================
+    // MAIN SCENE
+    // =========================================================
 
     public Scene getScene() {
 
-        VBox content = new VBox(20);
-        content.setPadding(new Insets(5));
-
         /*
-         * ============================================================
-         * IMAGE GALLERY
-         * ============================================================
+         * ========================================================
+         * LOAD CURRENT PATIENT PROFILE
+         *
+         * One Firebase read is performed when the page is opened.
+         * The returned profile is then reused throughout the page.
+         * ========================================================
          */
 
-        HBox images = createImageGallery();
+        PatientProfile patientProfile;
 
-        /*
-         * ============================================================
-         * PERSONAL INFORMATION CARD
-         * ============================================================
-         */
+        try {
 
-        VBox personalCard = PatientUI.coloredCard(
-                "👤  Personal Information",
-                "#dbeafe"
+            patientProfile =
+                    patientController
+                            .getCurrentPatientProfile();
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            return createErrorScene(
+                    "Unable to load your health profile."
+            );
+        }
+
+        // =========================================================
+        // MAIN CONTENT
+        // =========================================================
+
+        VBox content =
+                new VBox(20);
+
+        content.setPadding(
+                new Insets(5)
         );
+
+        // =========================================================
+        // IMAGE GALLERY
+        // =========================================================
+
+        HBox images =
+                createImageGallery();
+
+        // =========================================================
+        // PERSONAL INFORMATION
+        // =========================================================
+
+        VBox personalCard =
+                PatientUI.coloredCard(
+                        "👤  Personal Information",
+                        "#dbeafe"
+                );
 
         personalCard.getChildren().addAll(
 
                 information(
                         "Full Name",
-                        "Sarah Williams"
+                        getFullName(patientProfile)
                 ),
 
                 information(
                         "Date of Birth",
-                        "15 March 1995"
+                        safeValue(
+                                patientProfile.getDateOfBirth(),
+                                "Not provided"
+                        )
                 ),
 
                 information(
                         "Blood Group",
-                        "O+"
+                        safeValue(
+                                patientProfile.getBloodGroup(),
+                                "Not provided"
+                        )
                 ),
 
                 information(
                         "Gender",
-                        "Female"
+                        safeValue(
+                                patientProfile.getGender(),
+                                "Not provided"
+                        )
                 )
         );
 
-        /*
-         * ============================================================
-         * MEDICAL INFORMATION CARD
-         * ============================================================
-         */
+        // =========================================================
+        // CONTACT INFORMATION
+        // =========================================================
 
-        VBox medicalCard = PatientUI.coloredCard(
-                "🏥  Medical Information",
-                "#dcfce7"
-        );
+        VBox contactCard =
+                PatientUI.coloredCard(
+                        "📞  Contact Information",
+                        "#e0f2fe"
+                );
 
-        medicalCard.getChildren().addAll(
+        contactCard.getChildren().addAll(
 
                 information(
-                        "Allergies",
-                        "No known allergies"
+                        "Email",
+                        safeValue(
+                                patientProfile.getEmail(),
+                                "Not provided"
+                        )
+                ),
+
+                information(
+                        "Phone",
+                        safeValue(
+                                patientProfile.getPhone(),
+                                "Not provided"
+                        )
+                ),
+
+                information(
+                        "Address",
+                        safeValue(
+                                patientProfile.getAddress(),
+                                "Not provided"
+                        )
                 ),
 
                 information(
                         "Emergency Contact",
-                        "+91 98765 43210"
-                ),
-
-                information(
-                        "Primary Physician",
-                        "Dr. Sarah Jenkins"
-                ),
-
-                information(
-                        "Insurance",
-                        "HealthSecure Plus"
+                        safeValue(
+                                patientProfile.getEmergencyContact(),
+                                "Not provided"
+                        )
                 )
         );
 
-        /*
-         * ============================================================
-         * INFORMATION ROW
-         * ============================================================
-         */
+        // =========================================================
+        // PERSONAL + CONTACT ROW
+        // =========================================================
 
-        HBox informationRow = new HBox(18);
+        HBox informationRow =
+                new HBox(18);
+
+        personalCard.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        contactCard.setMaxWidth(
+                Double.MAX_VALUE
+        );
 
         HBox.setHgrow(
                 personalCard,
@@ -120,28 +197,69 @@ public class HealthPassport {
         );
 
         HBox.setHgrow(
-                medicalCard,
+                contactCard,
                 Priority.ALWAYS
         );
-
-        personalCard.setMaxWidth(Double.MAX_VALUE);
-        medicalCard.setMaxWidth(Double.MAX_VALUE);
 
         informationRow.getChildren().addAll(
                 personalCard,
-                medicalCard
+                contactCard
         );
 
-        /*
-         * ============================================================
-         * HEALTH SUMMARY CARD
-         * ============================================================
-         */
+        // =========================================================
+        // MEDICAL INFORMATION
+        // =========================================================
 
-        VBox recordsCard = PatientUI.coloredCard(
-                "📋  Health Summary",
-                "#fef3c7"
+        VBox medicalCard =
+                PatientUI.coloredCard(
+                        "🏥  Medical Information",
+                        "#dcfce7"
+                );
+
+        medicalCard.getChildren().addAll(
+
+                information(
+                        "Blood Group",
+                        safeValue(
+                                patientProfile.getBloodGroup(),
+                                "Not provided"
+                        )
+                ),
+
+                information(
+                        "Gender",
+                        safeValue(
+                                patientProfile.getGender(),
+                                "Not provided"
+                        )
+                ),
+
+                information(
+                        "Emergency Contact",
+                        safeValue(
+                                patientProfile.getEmergencyContact(),
+                                "Not provided"
+                        )
+                ),
+
+                information(
+                        "Patient ID",
+                        safeValue(
+                                patientProfile.getUid(),
+                                "Not available"
+                        )
+                )
         );
+
+        // =========================================================
+        // HEALTH SUMMARY
+        // =========================================================
+
+        VBox recordsCard =
+                PatientUI.coloredCard(
+                        "📋  Health Summary",
+                        "#fef3c7"
+                );
 
         recordsCard.getChildren().addAll(
 
@@ -166,89 +284,28 @@ public class HealthPassport {
                 )
         );
 
-        /*
-         * ============================================================
-         * VIEW MEDICAL RECORDS BUTTON
-         * ============================================================
-         */
-
-        Button recordsButton = PatientUI.button(
-                "View Medical Records",
-                () -> stage.setScene(
-                        new MedicalRecords(stage).getScene()
-                )
-        );
+        Button recordsButton =
+                PatientUI.button(
+                        "View Medical Records",
+                        () -> stage.setScene(
+                                new MedicalRecords(stage)
+                                        .getScene()
+                        )
+                );
 
         recordsCard.getChildren().add(
                 recordsButton
         );
 
-        /*
-         * ============================================================
-         * QUICK ACTIONS
-         * ============================================================
-         */
+        // =========================================================
+        // HEALTH STATUS
+        // =========================================================
 
-        VBox actionsCard = PatientUI.coloredCard(
-                "⚡  Quick Actions",
-                "#ede9fe"
-        );
-
-        HBox actions = new HBox(12);
-        actions.setAlignment(Pos.CENTER_LEFT);
-
-        Button appointments = PatientUI.button(
-                "Appointments",
-                () -> stage.setScene(
-                        new Appointments(stage).getScene()
-                )
-        );
-
-        Button records = PatientUI.button(
-                "Medical Records",
-                () -> stage.setScene(
-                        new MedicalRecords(stage).getScene()
-                )
-        );
-
-        Button aiAssistant = PatientUI.button(
-                "AI Assistant",
-                () -> stage.setScene(
-                        new AiHealthAssistant(stage).getScene()
-                )
-        );
-
-        Button emergency = createEmergencyButton();
-
-        Button profile = PatientUI.button(
-                "Profile & Settings",
-                () -> stage.setScene(
-                        new ProfileSettings(stage).getScene()
-                )
-        );
-
-        actions.getChildren().addAll(
-                appointments,
-                records,
-                aiAssistant,
-                emergency,
-                profile
-        );
-
-        actionsCard.getChildren().add(
-                actions
-        );
-
-        /*
-         * ============================================================
-         * EXTRA HEALTH CARD
-         * ============================================================
-         */
-
-        VBox statusCard = PatientUI.coloredCard(
-                "💚  Health Status",
-                "#ccfbf1"
-        );
+        VBox statusCard =
+                PatientUI.coloredCard(
+                        "💚  Health Status",
+                        "#ccfbf1"
+                );
 
         statusCard.getChildren().addAll(
 
@@ -277,29 +334,99 @@ public class HealthPassport {
                 )
         );
 
-        /*
-         * ============================================================
-         * ADD CONTENT
-         * ============================================================
-         */
+        // =========================================================
+        // QUICK ACTIONS
+        // =========================================================
+
+        VBox actionsCard =
+                PatientUI.coloredCard(
+                        "⚡  Quick Actions",
+                        "#ede9fe"
+                );
+
+        HBox actions =
+                new HBox(12);
+
+        actions.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        Button appointments =
+                PatientUI.button(
+                        "Appointments",
+                        () -> stage.setScene(
+                                new Appointments(stage)
+                                        .getScene()
+                        )
+                );
+
+        Button records =
+                PatientUI.button(
+                        "Medical Records",
+                        () -> stage.setScene(
+                                new MedicalRecords(stage)
+                                        .getScene()
+                        )
+                );
+
+        Button aiAssistant =
+                PatientUI.button(
+                        "AI Assistant",
+                        () -> stage.setScene(
+                                new AiHealthAssistant(stage)
+                                        .getScene()
+                        )
+                );
+
+        Button emergency =
+                createEmergencyButton();
+
+        Button profile =
+                PatientUI.button(
+                        "Profile & Settings",
+                        () -> stage.setScene(
+                                new ProfileSettings(stage)
+                                        .getScene()
+                        )
+                );
+
+        actions.getChildren().addAll(
+                appointments,
+                records,
+                aiAssistant,
+                emergency,
+                profile
+        );
+
+        actionsCard.getChildren().add(
+                actions
+        );
+
+        // =========================================================
+        // ADD CONTENT
+        // =========================================================
 
         content.getChildren().addAll(
+
                 images,
+
                 informationRow,
+
+                medicalCard,
+
                 recordsCard,
+
                 statusCard,
+
                 actionsCard
         );
 
-        /*
-         * ============================================================
-         * SCROLL PANE
-         * ============================================================
-         */
+        // =========================================================
+        // SCROLL
+        // =========================================================
 
-        ScrollPane scroll = new ScrollPane(
-                content
-        );
+        ScrollPane scroll =
+                new ScrollPane(content);
 
         scroll.setFitToWidth(true);
 
@@ -316,19 +443,9 @@ public class HealthPassport {
                 "-fx-background: transparent;"
         );
 
-        /*
-         * ============================================================
-         * IMPORTANT
-         *
-         * PatientUI.createScene() creates:
-         *
-         * LEFT SIDEBAR
-         * TOP HEADER
-         * CENTER CONTENT
-         *
-         * Therefore DO NOT create another BorderPane here.
-         * ============================================================
-         */
+        // =========================================================
+        // COMMON PATIENT UI
+        // =========================================================
 
         return PatientUI.createScene(
                 stage,
@@ -339,15 +456,64 @@ public class HealthPassport {
         );
     }
 
-    /*
-     * ================================================================
-     * IMAGE GALLERY
-     * ================================================================
-     */
+    // =========================================================
+    // GET FULL NAME
+    // =========================================================
+
+    private String getFullName(
+            PatientProfile profile
+    ) {
+
+        String firstName =
+                safeValue(
+                        profile.getFirstName(),
+                        ""
+                );
+
+        String lastName =
+                safeValue(
+                        profile.getLastName(),
+                        ""
+                );
+
+        String fullName =
+                (firstName + " " + lastName)
+                        .trim();
+
+        if (fullName.isEmpty()) {
+
+            return "Not provided";
+        }
+
+        return fullName;
+    }
+
+    // =========================================================
+    // SAFE VALUE
+    // =========================================================
+
+    private String safeValue(
+            String value,
+            String fallback
+    ) {
+
+        if (value == null ||
+                value.trim().isEmpty()) {
+
+            return fallback;
+        }
+
+        return value.trim();
+    }
+
+    // =========================================================
+    // IMAGE GALLERY
+    // =========================================================
 
     private HBox createImageGallery() {
 
-        HBox gallery = new HBox(15);
+        HBox gallery =
+                new HBox(15);
 
         gallery.setAlignment(
                 Pos.CENTER_LEFT
@@ -375,15 +541,16 @@ public class HealthPassport {
         return gallery;
     }
 
-    /*
-     * ================================================================
-     * IMAGE CARD
-     * ================================================================
-     */
+    // =========================================================
+    // IMAGE CARD
+    // =========================================================
 
-    private VBox imageCard(String path) {
+    private VBox imageCard(
+            String path
+    ) {
 
-        VBox box = new VBox();
+        VBox box =
+                new VBox();
 
         box.setAlignment(
                 Pos.CENTER
@@ -410,14 +577,6 @@ public class HealthPassport {
 
         URL resource =
                 getClass().getResource(path);
-
-        /*
-         * Safe image loading.
-         *
-         * This prevents:
-         *
-         * Input stream must not be null
-         */
 
         if (resource == null) {
 
@@ -449,9 +608,7 @@ public class HealthPassport {
                 );
 
         ImageView imageView =
-                new ImageView(
-                        image
-                );
+                new ImageView(image);
 
         imageView.setFitWidth(
                 240
@@ -472,18 +629,17 @@ public class HealthPassport {
         return box;
     }
 
-    /*
-     * ================================================================
-     * INFORMATION ROW
-     * ================================================================
-     */
+    // =========================================================
+    // INFORMATION ROW
+    // =========================================================
 
     private HBox information(
             String title,
             String value
     ) {
 
-        HBox row = new HBox(12);
+        HBox row =
+                new HBox(12);
 
         row.setAlignment(
                 Pos.CENTER_LEFT
@@ -511,6 +667,8 @@ public class HealthPassport {
         Label valueLabel =
                 new Label(value);
 
+        valueLabel.setWrapText(true);
+
         valueLabel.setStyle(
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #0f172a;"
@@ -533,18 +691,17 @@ public class HealthPassport {
         return row;
     }
 
-    /*
-     * ================================================================
-     * SUMMARY ROW
-     * ================================================================
-     */
+    // =========================================================
+    // SUMMARY ROW
+    // =========================================================
 
     private HBox summary(
             String title,
             String value
     ) {
 
-        HBox row = new HBox(12);
+        HBox row =
+                new HBox(12);
 
         row.setAlignment(
                 Pos.CENTER_LEFT
@@ -593,11 +750,9 @@ public class HealthPassport {
         return row;
     }
 
-    /*
-     * ================================================================
-     * HEALTH STATUS ROW
-     * ================================================================
-     */
+    // =========================================================
+    // HEALTH STATUS ROW
+    // =========================================================
 
     private HBox status(
             String title,
@@ -605,7 +760,8 @@ public class HealthPassport {
             String condition
     ) {
 
-        HBox row = new HBox(12);
+        HBox row =
+                new HBox(12);
 
         row.setAlignment(
                 Pos.CENTER_LEFT
@@ -676,14 +832,9 @@ public class HealthPassport {
         return row;
     }
 
-    /*
-     * ================================================================
-     * EMERGENCY BUTTON
-     *
-     * We create it locally because PatientUI.redButton()
-     * does not exist in your current PatientUI.
-     * ================================================================
-     */
+    // =========================================================
+    // EMERGENCY BUTTON
+    // =========================================================
 
     private Button createEmergencyButton() {
 
@@ -701,7 +852,8 @@ public class HealthPassport {
                 "-fx-text-fill: white;" +
                 "-fx-font-weight: bold;" +
                 "-fx-background-radius: 8;" +
-                "-fx-padding: 8 14;"
+                "-fx-padding: 8 14;" +
+                "-fx-cursor: hand;"
         );
 
         button.setOnAction(
@@ -713,5 +865,77 @@ public class HealthPassport {
 
         return button;
     }
-}
 
+    // =========================================================
+    // ERROR SCENE
+    // =========================================================
+
+    private Scene createErrorScene(
+            String message
+    ) {
+
+        VBox content =
+                new VBox(20);
+
+        content.setAlignment(
+                Pos.CENTER
+        );
+
+        content.setPadding(
+                new Insets(40)
+        );
+
+        Label icon =
+                new Label("⚠");
+
+        icon.setStyle(
+                "-fx-font-size: 50px;" +
+                "-fx-text-fill: #dc2626;"
+        );
+
+        Label title =
+                new Label(
+                        "Unable to Load Health Passport"
+                );
+
+        title.setStyle(
+                "-fx-font-size: 26px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #0f172a;"
+        );
+
+        Label description =
+                new Label(message);
+
+        description.setWrapText(true);
+
+        description.setStyle(
+                "-fx-font-size: 15px;" +
+                "-fx-text-fill: #64748b;"
+        );
+
+        Button back =
+                PatientUI.button(
+                        "Back to Dashboard",
+                        () -> stage.setScene(
+                                new Dashboard(stage)
+                                        .getScene()
+                        )
+                );
+
+        content.getChildren().addAll(
+                icon,
+                title,
+                description,
+                back
+        );
+
+        return PatientUI.createScene(
+                stage,
+                "Health Passport",
+                "Health Passport",
+                "Unable to load patient information.",
+                content
+        );
+    }
+}

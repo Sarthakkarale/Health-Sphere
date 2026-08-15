@@ -1,9 +1,14 @@
-
 package com.healthsphere.view.Patient;
+
+import java.util.List;
+
+import com.healthsphere.controller.patient.MedicalRecordController;
+import com.healthsphere.model.MedicalRecord;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -17,38 +22,40 @@ public class MedicalRecords {
 
     private final Stage stage;
 
+    private final MedicalRecordController
+            medicalRecordController;
+
     public MedicalRecords(Stage stage) {
+
         this.stage = stage;
+
+        this.medicalRecordController =
+                new MedicalRecordController();
     }
+
+    // =========================================================
+    // MAIN SCENE
+    // =========================================================
 
     public Scene getScene() {
 
-        // =========================================================
-        // MAIN CONTENT
-        // PatientUI will provide:
-        //
-        // LEFT SIDEBAR
-        // TOP HEADER
-        // PAGE TITLE
-        // PAGE SUBTITLE
-        //
-        // =========================================================
-
-        VBox content = new VBox(22);
+        VBox content =
+                new VBox(22);
 
         content.setPadding(
                 new Insets(0)
         );
 
-        // =========================================================
+        // =====================================================
         // IMAGE GALLERY
-        // =========================================================
+        // =====================================================
 
-        HBox gallery = createImageGallery();
+        HBox gallery =
+                createImageGallery();
 
-        // =========================================================
+        // =====================================================
         // RECENT MEDICAL RECORDS
-        // =========================================================
+        // =====================================================
 
         VBox records =
                 PatientUI.coloredCard(
@@ -56,36 +63,14 @@ public class MedicalRecords {
                         "#dbeafe"
                 );
 
-        records.getChildren().addAll(
+        loadMedicalRecords(records);
 
-                record(
-                        "Complete Blood Count",
-                        "Laboratory Report",
-                        "12 August 2026"
-                ),
-
-                record(
-                        "Cardiology Consultation",
-                        "Doctor Consultation",
-                        "05 August 2026"
-                ),
-
-                record(
-                        "Blood Pressure Monitoring",
-                        "Diagnostic Report",
-                        "29 July 2026"
-                ),
-
-                record(
-                        "Annual Health Checkup",
-                        "Health Examination",
-                        "15 July 2026"
-                )
-        );
-
-        // =========================================================
+        // =====================================================
         // PRESCRIPTIONS
-        // =========================================================
+        //
+        // These remain UI placeholders for now because
+        // prescriptions will be integrated separately.
+        // =====================================================
 
         VBox prescriptions =
                 PatientUI.coloredCard(
@@ -111,9 +96,9 @@ public class MedicalRecords {
                 )
         );
 
-        // =========================================================
-        // LOWER CONTENT ROW
-        // =========================================================
+        // =====================================================
+        // LOWER CONTENT
+        // =====================================================
 
         HBox lower =
                 new HBox(18);
@@ -145,9 +130,9 @@ public class MedicalRecords {
                 prescriptions
         );
 
-        // =========================================================
+        // =====================================================
         // QUICK ACTIONS
-        // =========================================================
+        // =====================================================
 
         VBox quickActions =
                 PatientUI.coloredCard(
@@ -199,9 +184,9 @@ public class MedicalRecords {
                 actions
         );
 
-        // =========================================================
+        // =====================================================
         // ADD CONTENT
-        // =========================================================
+        // =====================================================
 
         content.getChildren().addAll(
                 gallery,
@@ -209,13 +194,9 @@ public class MedicalRecords {
                 quickActions
         );
 
-        // =========================================================
-        // SCROLL CONTENT
-        //
-        // IMPORTANT:
-        // PatientUI creates the main ScrollPane.
-        // Therefore we DO NOT create another ScrollPane here.
-        // =========================================================
+        // =====================================================
+        // PATIENT UI
+        // =====================================================
 
         return PatientUI.createScene(
                 stage,
@@ -226,144 +207,75 @@ public class MedicalRecords {
         );
     }
 
-    // =============================================================
-    // IMAGE GALLERY
-    // =============================================================
+    // =========================================================
+    // LOAD MEDICAL RECORDS FROM FIREBASE
+    // =========================================================
 
-    private HBox createImageGallery() {
+    private void loadMedicalRecords(
+            VBox recordsCard) {
 
-        HBox gallery =
-                new HBox(15);
+        try {
 
-        gallery.setAlignment(
-                Pos.CENTER_LEFT
-        );
+            List<MedicalRecord> records =
+                    medicalRecordController
+                            .getCurrentPatientRecords();
 
-        gallery.getChildren().addAll(
+            if (records.isEmpty()) {
 
-                imageCard(
-                        "/images/medicalrecords/medicalrecord1.jpg"
-                ),
+                Label empty =
+                        new Label(
+                                "No medical records available."
+                        );
 
-                imageCard(
-                        "/images/medicalrecords/medicalrecord2.jpg"
-                ),
+                empty.setStyle(
+                        "-fx-text-fill: #64748b;" +
+                        "-fx-font-size: 14px;"
+                );
 
-                imageCard(
-                        "/images/medicalrecords/medicalrecord3.jpg"
-                ),
+                recordsCard.getChildren().add(
+                        empty
+                );
 
-                imageCard(
-                        "/images/medicalrecords/medicalrecord4.jpg"
-                )
-        );
+                return;
+            }
 
-        return gallery;
-    }
+            for (MedicalRecord record :
+                    records) {
 
-    // =============================================================
-    // IMAGE CARD
-    // =============================================================
+                recordsCard.getChildren().add(
+                        recordCard(record)
+                );
+            }
 
-    private VBox imageCard(
-            String path
-    ) {
-
-        VBox box =
-                new VBox();
-
-        box.setAlignment(
-                Pos.CENTER
-        );
-
-        box.setPrefWidth(
-                260
-        );
-
-        box.setPrefHeight(
-                145
-        );
-
-        box.setMinWidth(
-                260
-        );
-
-        box.setStyle(
-                "-fx-background-color: white;" +
-                "-fx-background-radius: 14;" +
-                "-fx-border-color: #e2e8f0;" +
-                "-fx-border-radius: 14;"
-        );
-
-        // ---------------------------------------------------------
-        // SAFE IMAGE LOADING
-        // ---------------------------------------------------------
-
-        var resource =
-                getClass().getResource(path);
-
-        if (resource == null) {
+        } catch (Exception e) {
 
             Label error =
                     new Label(
-                            "Image unavailable"
+                            "Unable to load medical records."
                     );
 
             error.setStyle(
-                    "-fx-text-fill: #64748b;" +
-                    "-fx-font-size: 13px;"
+                    "-fx-text-fill: #dc2626;" +
+                    "-fx-font-weight: bold;"
             );
 
-            box.getChildren().add(
+            recordsCard.getChildren().add(
                     error
             );
 
             System.err.println(
-                    "Medical Records image not found: "
-                            + path
+                    "Medical Records error: "
+                            + e.getMessage()
             );
-
-            return box;
         }
-
-        Image image =
-                new Image(
-                        resource.toExternalForm()
-                );
-
-        ImageView imageView =
-                new ImageView(
-                        image
-                );
-
-        imageView.setFitWidth(
-                260
-        );
-
-        imageView.setFitHeight(
-                145
-        );
-
-        imageView.setPreserveRatio(
-                false
-        );
-
-        box.getChildren().add(
-                imageView
-        );
-
-        return box;
     }
 
-    // =============================================================
-    // MEDICAL RECORD
-    // =============================================================
+    // =========================================================
+    // MEDICAL RECORD CARD
+    // =========================================================
 
-    private VBox record(
-            String title,
-            String type,
-            String date
-    ) {
+    private VBox recordCard(
+            MedicalRecord record) {
 
         VBox box =
                 new VBox(7);
@@ -380,7 +292,9 @@ public class MedicalRecords {
         );
 
         Label name =
-                new Label(title);
+                new Label(
+                        safe(record.getTitle())
+                );
 
         name.setStyle(
                 "-fx-font-size: 16px;" +
@@ -388,18 +302,22 @@ public class MedicalRecords {
                 "-fx-text-fill: #0f172a;"
         );
 
-        Label typeLabel =
-                new Label(type);
+        Label type =
+                new Label(
+                        safe(record.getType())
+                );
 
-        typeLabel.setStyle(
+        type.setStyle(
                 "-fx-text-fill: #64748b;" +
                 "-fx-font-size: 13px;"
         );
 
-        Label dateLabel =
-                new Label(date);
+        Label date =
+                new Label(
+                        safe(record.getDate())
+                );
 
-        dateLabel.setStyle(
+        date.setStyle(
                 "-fx-text-fill: #2563eb;" +
                 "-fx-font-weight: bold;" +
                 "-fx-font-size: 13px;"
@@ -408,36 +326,29 @@ public class MedicalRecords {
         Button view =
                 PatientUI.secondaryButton(
                         "View Record",
-                        () -> showRecord(
-                                title,
-                                type,
-                                date
-                        )
+                        () -> showRecord(record)
                 );
 
         box.getChildren().addAll(
                 name,
-                typeLabel,
-                dateLabel,
+                type,
+                date,
                 view
         );
 
         return box;
     }
 
-    // =============================================================
-    // RECORD INFORMATION
-    // =============================================================
+    // =========================================================
+    // SHOW RECORD
+    // =========================================================
 
     private void showRecord(
-            String title,
-            String type,
-            String date
-    ) {
+            MedicalRecord record) {
 
-        javafx.scene.control.Alert alert =
-                new javafx.scene.control.Alert(
-                        javafx.scene.control.Alert.AlertType.INFORMATION
+        Alert alert =
+                new Alert(
+                        Alert.AlertType.INFORMATION
                 );
 
         alert.setTitle(
@@ -445,26 +356,38 @@ public class MedicalRecords {
         );
 
         alert.setHeaderText(
-                title
+                safe(record.getTitle())
         );
 
+        String description =
+                record.getDescription();
+
+        if (description == null ||
+                description.isBlank()) {
+
+            description =
+                    "No additional description available.";
+        }
+
         alert.setContentText(
-                "Record Type: " + type +
-                "\nDate: " + date +
-                "\n\nThis medical record is available in your HealthSphere patient profile."
+                "Record Type: "
+                        + safe(record.getType())
+                        + "\nDate: "
+                        + safe(record.getDate())
+                        + "\n\n"
+                        + description
         );
 
         alert.showAndWait();
     }
 
-    // =============================================================
+    // =========================================================
     // PRESCRIPTION
-    // =============================================================
+    // =========================================================
 
     private HBox prescription(
             String medicine,
-            String dosage
-    ) {
+            String dosage) {
 
         HBox row =
                 new HBox(12);
@@ -523,5 +446,126 @@ public class MedicalRecords {
 
         return row;
     }
-}
 
+    // =========================================================
+    // IMAGE GALLERY
+    // =========================================================
+
+    private HBox createImageGallery() {
+
+        HBox gallery =
+                new HBox(15);
+
+        gallery.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        gallery.getChildren().addAll(
+
+                imageCard(
+                        "/images/medicalrecords/medicalrecord1.jpg"
+                ),
+
+                imageCard(
+                        "/images/medicalrecords/medicalrecord2.jpg"
+                ),
+
+                imageCard(
+                        "/images/medicalrecords/medicalrecord3.jpg"
+                ),
+
+                imageCard(
+                        "/images/medicalrecords/medicalrecord4.jpg"
+                )
+        );
+
+        return gallery;
+    }
+
+    // =========================================================
+    // IMAGE CARD
+    // =========================================================
+
+    private VBox imageCard(
+            String path) {
+
+        VBox box =
+                new VBox();
+
+        box.setAlignment(
+                Pos.CENTER
+        );
+
+        box.setPrefWidth(260);
+        box.setPrefHeight(145);
+        box.setMinWidth(260);
+
+        box.setStyle(
+                "-fx-background-color: white;" +
+                "-fx-background-radius: 14;" +
+                "-fx-border-color: #e2e8f0;" +
+                "-fx-border-radius: 14;"
+        );
+
+        var resource =
+                getClass().getResource(path);
+
+        if (resource == null) {
+
+            Label error =
+                    new Label(
+                            "Image unavailable"
+                    );
+
+            error.setStyle(
+                    "-fx-text-fill: #64748b;" +
+                    "-fx-font-size: 13px;"
+            );
+
+            box.getChildren().add(
+                    error
+            );
+
+            System.err.println(
+                    "Medical Records image not found: "
+                            + path
+            );
+
+            return box;
+        }
+
+        Image image =
+                new Image(
+                        resource.toExternalForm()
+                );
+
+        ImageView imageView =
+                new ImageView(image);
+
+        imageView.setFitWidth(260);
+        imageView.setFitHeight(145);
+
+        imageView.setPreserveRatio(false);
+
+        box.getChildren().add(
+                imageView
+        );
+
+        return box;
+    }
+
+    // =========================================================
+    // SAFE STRING
+    // =========================================================
+
+    private String safe(String value) {
+
+        if (value == null ||
+                value.isBlank()) {
+
+            return "Not available";
+        }
+
+        return value;
+    }
+}
