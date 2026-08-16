@@ -1,4 +1,3 @@
-
 package com.healthsphere.view.Patient;
 
 import javafx.geometry.Insets;
@@ -52,13 +51,6 @@ public class PatientUI {
         // =====================================================
         // TOP HEADER
         // =====================================================
-
-        /*
-         * The title shown in the top header.
-         *
-         * If pageTitle is empty/null, activePage is used instead.
-         * This prevents the top-left title from disappearing.
-         */
 
         String headerTitle =
                 pageTitle;
@@ -172,6 +164,9 @@ public class PatientUI {
 
         // =====================================================
         // SCENE
+        //
+        // Keep the original 1440 x 900 size.
+        // The Stage itself can be maximized from View.java.
         // =====================================================
 
         Scene scene =
@@ -1049,4 +1044,3 @@ public class PatientUI {
         return label;
     }
 }
-

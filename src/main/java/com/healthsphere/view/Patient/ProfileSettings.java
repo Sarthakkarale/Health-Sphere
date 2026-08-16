@@ -9,6 +9,7 @@ import com.healthsphere.view.authentication.LoginView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -178,11 +179,12 @@ public class ProfileSettings {
         Label patientId =
                 new Label(
                         "Patient ID: "
-                                + (
-                                patientUid == null
-                                        ? "N/A"
-                                        : patientUid
-                        )
+                                +
+                                (
+                                        patientUid == null
+                                                ? "N/A"
+                                                : patientUid
+                                )
                 );
 
         patientId.setStyle(
@@ -340,6 +342,10 @@ public class ProfileSettings {
         HBox images =
                 new HBox(18);
 
+        images.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
         images.getChildren().addAll(
 
                 imageCard(
@@ -366,23 +372,39 @@ public class ProfileSettings {
                         "⚙  Account Preferences"
                 );
 
-        preferences.getChildren().addAll(
-
+        /*
+         * Notifications:
+         * Clicking Manage opens Notifications.java
+         */
+        preferences.getChildren().add(
                 setting(
                         "Notifications",
-                        "Receive appointment and health reminders."
-                ),
-
-                setting(
-                        "Health Insights",
-                        "Allow AI-generated health insights."
-                ),
-
-                setting(
-                        "Privacy",
-                        "Manage your healthcare information privacy."
+                        "Receive appointment and health reminders.",
+                        () -> stage.setScene(
+                                new Notifications(stage)
+                                        .getScene()
+                        )
                 )
         );
+
+        /*
+         * Health Insights:
+         * Clicking Manage opens HealthPassport.java
+         */
+        preferences.getChildren().add(
+                setting(
+                        "Health Insights",
+                        "Allow AI-generated health insights.",
+                        () -> stage.setScene(
+                                new HealthPassport(stage)
+                                        .getScene()
+                        )
+                )
+        );
+
+        /*
+         * Privacy option intentionally removed.
+         */
 
         // =====================================================
         // SAVE BUTTON
@@ -433,9 +455,10 @@ public class ProfileSettings {
 
                 patientId.setText(
                         "Patient ID: "
-                                + safeValue(
-                                updatedProfile.getUid()
-                        )
+                                +
+                                safeValue(
+                                        updatedProfile.getUid()
+                                )
                 );
 
                 // -------------------------------------------------
@@ -541,10 +564,6 @@ public class ProfileSettings {
         );
 
         logout.setOnAction(e -> {
-
-            // -------------------------------------------------
-            // Clear the shared application session
-            // -------------------------------------------------
 
             SessionManager.clearSession();
 
@@ -896,11 +915,24 @@ public class ProfileSettings {
         VBox box =
                 new VBox();
 
+        box.setPrefWidth(
+                360
+        );
+
+        box.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        box.setCursor(
+                Cursor.HAND
+        );
+
         box.setStyle(
                 "-fx-background-color: #faf5ff;" +
-                "-fx-background-radius: 14;" +
+                "-fx-background-radius: 16;" +
                 "-fx-border-color: #ddd6fe;" +
-                "-fx-border-radius: 14;"
+                "-fx-border-radius: 16;" +
+                "-fx-effect: dropshadow(gaussian, rgba(91,33,182,0.10), 12, 0, 0, 4);"
         );
 
         ImageView image =
@@ -910,24 +942,82 @@ public class ProfileSettings {
                         150
                 );
 
-        Label label =
+        Label titleLabel =
                 new Label(
                         title
                 );
 
-        label.setPadding(
-                new Insets(12)
+        titleLabel.setMaxWidth(
+                Double.MAX_VALUE
         );
 
-        label.setStyle(
+        titleLabel.setAlignment(
+                Pos.CENTER
+        );
+
+        titleLabel.setPadding(
+                new Insets(14)
+        );
+
+        titleLabel.setStyle(
+                "-fx-font-size: 16px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #5b21b6;"
         );
 
         box.getChildren().addAll(
                 image,
-                label
+                titleLabel
         );
+
+        // =====================================================
+        // HOVER EFFECT
+        // =====================================================
+
+        box.setOnMouseEntered(e -> {
+
+            box.setStyle(
+                    "-fx-background-color: #f3e8ff;" +
+                    "-fx-background-radius: 16;" +
+                    "-fx-border-color: #8b5cf6;" +
+                    "-fx-border-radius: 16;" +
+                    "-fx-effect: dropshadow(gaussian, rgba(91,33,182,0.25), 18, 0, 0, 6);"
+            );
+        });
+
+        box.setOnMouseExited(e -> {
+
+            box.setStyle(
+                    "-fx-background-color: #faf5ff;" +
+                    "-fx-background-radius: 16;" +
+                    "-fx-border-color: #ddd6fe;" +
+                    "-fx-border-radius: 16;" +
+                    "-fx-effect: dropshadow(gaussian, rgba(91,33,182,0.10), 12, 0, 0, 4);"
+            );
+        });
+
+        // =====================================================
+        // NAVIGATION
+        // =====================================================
+
+        if ("Healthy Lifestyle".equals(title)) {
+
+            box.setOnMouseClicked(
+                    e -> stage.setScene(
+                            new HealthyLifestyle(stage)
+                                    .getScene()
+                    )
+            );
+
+        } else if ("Personal Health".equals(title)) {
+
+            box.setOnMouseClicked(
+                    e -> stage.setScene(
+                            new PersonalHealth(stage)
+                                    .getScene()
+                    )
+            );
+        }
 
         return box;
     }
@@ -938,7 +1028,8 @@ public class ProfileSettings {
 
     private HBox setting(
             String title,
-            String description
+            String description,
+            Runnable action
     ) {
 
         HBox row =
@@ -1007,6 +1098,14 @@ public class ProfileSettings {
                 "-fx-background-radius: 7;" +
                 "-fx-padding: 8 14;" +
                 "-fx-cursor: hand;"
+        );
+
+        // =====================================================
+        // NAVIGATION ACTION
+        // =====================================================
+
+        configure.setOnAction(
+                e -> action.run()
         );
 
         row.getChildren().addAll(
@@ -1079,11 +1178,6 @@ public class ProfileSettings {
 
     // =========================================================
     // SQUARE IMAGE LOADER
-    //
-    // Used specifically for profile1.jpg.
-    //
-    // It crops the image to a square instead of stretching
-    // the complete image into a wide banner.
     // =========================================================
 
     private ImageView createSquareImage(
@@ -1126,29 +1220,17 @@ public class ProfileSettings {
                 image
         );
 
-        // -----------------------------------------------------
-        // GET ORIGINAL IMAGE SIZE
-        // -----------------------------------------------------
-
         double imageWidth =
                 image.getWidth();
 
         double imageHeight =
                 image.getHeight();
 
-        // -----------------------------------------------------
-        // SELECT THE LARGEST POSSIBLE SQUARE
-        // -----------------------------------------------------
-
         double cropSize =
                 Math.min(
                         imageWidth,
                         imageHeight
                 );
-
-        // -----------------------------------------------------
-        // CENTER THE SQUARE CROP
-        // -----------------------------------------------------
 
         double x =
                 (imageWidth - cropSize) / 2;
@@ -1164,10 +1246,6 @@ public class ProfileSettings {
                         cropSize
                 )
         );
-
-        // -----------------------------------------------------
-        // DISPLAY AS 300 × 300
-        // -----------------------------------------------------
 
         view.setFitWidth(
                 size
@@ -1199,7 +1277,7 @@ public class ProfileSettings {
     }
 
     // =========================================================
-    // LOGOUT
+    // LOGIN
     // =========================================================
 
     private void showLogin() {

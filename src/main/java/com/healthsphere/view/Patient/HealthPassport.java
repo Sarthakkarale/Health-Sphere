@@ -8,11 +8,18 @@ import com.healthsphere.model.PatientProfile;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -22,12 +29,6 @@ import javafx.stage.Stage;
 public class HealthPassport {
 
     private final Stage stage;
-
-    /*
-     * ============================================================
-     * PATIENT CONTROLLER
-     * ============================================================
-     */
 
     private final PatientController patientController;
 
@@ -45,15 +46,6 @@ public class HealthPassport {
 
     public Scene getScene() {
 
-        /*
-         * ========================================================
-         * LOAD CURRENT PATIENT PROFILE
-         *
-         * One Firebase read is performed when the page is opened.
-         * The returned profile is then reused throughout the page.
-         * ========================================================
-         */
-
         PatientProfile patientProfile;
 
         try {
@@ -70,10 +62,6 @@ public class HealthPassport {
                     "Unable to load your health profile."
             );
         }
-
-        // =========================================================
-        // MAIN CONTENT
-        // =========================================================
 
         VBox content =
                 new VBox(20);
@@ -122,13 +110,20 @@ public class HealthPassport {
                         )
                 ),
 
-                information(
-                        "Gender",
-                        safeValue(
-                                patientProfile.getGender(),
-                                "Not provided"
-                        )
-                )
+              information(
+        "Gender",
+        safeValue(
+                patientProfile.getGender(),
+                "Not provided"
+        )
+),
+
+PatientUI.button(
+        "✏ Edit Personal Information",
+        () -> showPersonalEditDialog(
+                patientProfile
+        )
+)
         );
 
         // =========================================================
@@ -172,6 +167,13 @@ public class HealthPassport {
                         safeValue(
                                 patientProfile.getEmergencyContact(),
                                 "Not provided"
+                        )
+                ),
+
+                PatientUI.button(
+                        "✏ Edit Contact Information",
+                        () -> showContactEditDialog(
+                                patientProfile
                         )
                 )
         );
@@ -247,6 +249,13 @@ public class HealthPassport {
                         safeValue(
                                 patientProfile.getUid(),
                                 "Not available"
+                        )
+                ),
+
+                PatientUI.button(
+                        "✏ Edit Medical Information",
+                        () -> showMedicalEditDialog(
+                                patientProfile
                         )
                 )
         );
@@ -443,10 +452,6 @@ public class HealthPassport {
                 "-fx-background: transparent;"
         );
 
-        // =========================================================
-        // COMMON PATIENT UI
-        // =========================================================
-
         return PatientUI.createScene(
                 stage,
                 "Health Passport",
@@ -457,53 +462,679 @@ public class HealthPassport {
     }
 
     // =========================================================
-    // GET FULL NAME
+    // PERSONAL INFORMATION EDIT
     // =========================================================
 
-    private String getFullName(
-            PatientProfile profile
-    ) {
+    private void showPersonalEditDialog(
+            PatientProfile profile) {
 
-        String firstName =
-                safeValue(
-                        profile.getFirstName(),
-                        ""
+        Dialog<ButtonType> dialog =
+                new Dialog<>();
+
+        dialog.setTitle(
+                "Edit Personal Information"
+        );
+
+        dialog.setHeaderText(
+                "Update your personal information"
+        );
+
+        GridPane grid =
+                createFormGrid();
+
+        TextField fullName =
+                createTextField(
+                        getFullName(profile)
                 );
 
-        String lastName =
-                safeValue(
-                        profile.getLastName(),
-                        ""
+        TextField dateOfBirth =
+                createTextField(
+                        profile.getDateOfBirth()
                 );
 
-        String fullName =
-                (firstName + " " + lastName)
-                        .trim();
+        ComboBox<String> bloodGroup =
+                createBloodGroupCombo(
+                        profile.getBloodGroup()
+                );
 
-        if (fullName.isEmpty()) {
+        ComboBox<String> gender =
+                createGenderCombo(
+                        profile.getGender()
+                );
 
-            return "Not provided";
+        grid.add(
+                new Label("Full Name"),
+                0,
+                0
+        );
+
+        grid.add(
+                fullName,
+                1,
+                0
+        );
+
+        grid.add(
+                new Label("Date of Birth"),
+                0,
+                1
+        );
+
+        grid.add(
+                dateOfBirth,
+                1,
+                1
+        );
+
+        grid.add(
+                new Label("Blood Group"),
+                0,
+                2
+        );
+
+        grid.add(
+                bloodGroup,
+                1,
+                2
+        );
+
+        grid.add(
+                new Label("Gender"),
+                0,
+                3
+        );
+
+        grid.add(
+                gender,
+                1,
+                3
+        );
+
+        dialog.getDialogPane()
+                .setContent(grid);
+
+        dialog.getDialogPane()
+                .getButtonTypes()
+                .addAll(
+                        new ButtonType(
+                                "Save",
+                                ButtonBar.ButtonData.OK_DONE
+                        ),
+                        new ButtonType(
+                                "Cancel",
+                                ButtonBar.ButtonData.CANCEL_CLOSE
+                        )
+                );
+
+        ButtonType result =
+                dialog.showAndWait()
+                        .orElse(
+                                ButtonType.CANCEL
+                        );
+
+        if (result.getButtonData() ==
+                ButtonBar.ButtonData.OK_DONE) {
+
+            try {
+
+                patientController
+                        .updateHealthPassportProfile(
+
+                                fullName.getText(),
+
+                                safeText(
+                                        profile.getEmail()
+                                ),
+
+                                safeText(
+                                        profile.getPhone()
+                                ),
+
+                                safeText(
+                                        profile.getAddress()
+                                ),
+
+                                dateOfBirth.getText(),
+
+                                gender.getValue(),
+
+                                bloodGroup.getValue(),
+
+                                safeText(
+                                        profile.getEmergencyContact()
+                                )
+                        );
+
+                showSuccess(
+                        "Personal information updated successfully."
+                );
+
+                refreshHealthPassport();
+
+            } catch (Exception e) {
+
+                showError(
+                        "Unable to update personal information.",
+                        e
+                );
+            }
         }
-
-        return fullName;
     }
 
     // =========================================================
-    // SAFE VALUE
+    // CONTACT INFORMATION EDIT
     // =========================================================
 
-    private String safeValue(
-            String value,
-            String fallback
-    ) {
+    private void showContactEditDialog(
+            PatientProfile profile) {
 
-        if (value == null ||
-                value.trim().isEmpty()) {
+        Dialog<ButtonType> dialog =
+                new Dialog<>();
 
-            return fallback;
+        dialog.setTitle(
+                "Edit Contact Information"
+        );
+
+        dialog.setHeaderText(
+                "Update your contact information"
+        );
+
+        GridPane grid =
+                createFormGrid();
+
+        TextField email =
+                createTextField(
+                        profile.getEmail()
+                );
+
+        TextField phone =
+                createTextField(
+                        profile.getPhone()
+                );
+
+        TextField address =
+                createTextField(
+                        profile.getAddress()
+                );
+
+        TextField emergency =
+                createTextField(
+                        profile.getEmergencyContact()
+                );
+
+        grid.add(
+                new Label("Email"),
+                0,
+                0
+        );
+
+        grid.add(
+                email,
+                1,
+                0
+        );
+
+        grid.add(
+                new Label("Phone"),
+                0,
+                1
+        );
+
+        grid.add(
+                phone,
+                1,
+                1
+        );
+
+        grid.add(
+                new Label("Address"),
+                0,
+                2
+        );
+
+        grid.add(
+                address,
+                1,
+                2
+        );
+
+        grid.add(
+                new Label("Emergency Contact"),
+                0,
+                3
+        );
+
+        grid.add(
+                emergency,
+                1,
+                3
+        );
+
+        dialog.getDialogPane()
+                .setContent(grid);
+
+        dialog.getDialogPane()
+                .getButtonTypes()
+                .addAll(
+                        new ButtonType(
+                                "Save",
+                                ButtonBar.ButtonData.OK_DONE
+                        ),
+                        new ButtonType(
+                                "Cancel",
+                                ButtonBar.ButtonData.CANCEL_CLOSE
+                        )
+                );
+
+        ButtonType result =
+                dialog.showAndWait()
+                        .orElse(
+                                ButtonType.CANCEL
+                        );
+
+        if (result.getButtonData() ==
+                ButtonBar.ButtonData.OK_DONE) {
+
+            try {
+
+                patientController
+                        .updateHealthPassportProfile(
+
+                                getFullName(profile),
+
+                                email.getText(),
+
+                                phone.getText(),
+
+                                address.getText(),
+
+                                safeText(
+                                        profile.getDateOfBirth()
+                                ),
+
+                                safeText(
+                                        profile.getGender()
+                                ),
+
+                                safeText(
+                                        profile.getBloodGroup()
+                                ),
+
+                                emergency.getText()
+                        );
+
+                showSuccess(
+                        "Contact information updated successfully."
+                );
+
+                refreshHealthPassport();
+
+            } catch (Exception e) {
+
+                showError(
+                        "Unable to update contact information.",
+                        e
+                );
+            }
+        }
+    }
+
+    // =========================================================
+    // MEDICAL INFORMATION EDIT
+    // =========================================================
+
+    private void showMedicalEditDialog(
+            PatientProfile profile) {
+
+        Dialog<ButtonType> dialog =
+                new Dialog<>();
+
+        dialog.setTitle(
+                "Edit Medical Information"
+        );
+
+        dialog.setHeaderText(
+                "Update your medical information"
+        );
+
+        GridPane grid =
+                createFormGrid();
+
+        ComboBox<String> bloodGroup =
+                createBloodGroupCombo(
+                        profile.getBloodGroup()
+                );
+
+        ComboBox<String> gender =
+                createGenderCombo(
+                        profile.getGender()
+                );
+
+        TextField emergency =
+                createTextField(
+                        profile.getEmergencyContact()
+                );
+
+        grid.add(
+                new Label("Blood Group"),
+                0,
+                0
+        );
+
+        grid.add(
+                bloodGroup,
+                1,
+                0
+        );
+
+        grid.add(
+                new Label("Gender"),
+                0,
+                1
+        );
+
+        grid.add(
+                gender,
+                1,
+                1
+        );
+
+        grid.add(
+                new Label("Emergency Contact"),
+                0,
+                2
+        );
+
+        grid.add(
+                emergency,
+                1,
+                2
+        );
+
+        grid.add(
+                new Label("Patient ID"),
+                0,
+                3
+        );
+
+        Label patientId =
+                new Label(
+                        safeValue(
+                                profile.getUid(),
+                                "Not available"
+                        )
+                );
+
+        patientId.setStyle(
+                "-fx-text-fill: #64748b;" +
+                "-fx-font-weight: bold;"
+        );
+
+        grid.add(
+                patientId,
+                1,
+                3
+        );
+
+        dialog.getDialogPane()
+                .setContent(grid);
+
+        dialog.getDialogPane()
+                .getButtonTypes()
+                .addAll(
+                        new ButtonType(
+                                "Save",
+                                ButtonBar.ButtonData.OK_DONE
+                        ),
+                        new ButtonType(
+                                "Cancel",
+                                ButtonBar.ButtonData.CANCEL_CLOSE
+                        )
+                );
+
+        ButtonType result =
+                dialog.showAndWait()
+                        .orElse(
+                                ButtonType.CANCEL
+                        );
+
+        if (result.getButtonData() ==
+                ButtonBar.ButtonData.OK_DONE) {
+
+            try {
+
+                patientController
+                        .updateHealthPassportProfile(
+
+                                getFullName(profile),
+
+                                safeText(
+                                        profile.getEmail()
+                                ),
+
+                                safeText(
+                                        profile.getPhone()
+                                ),
+
+                                safeText(
+                                        profile.getAddress()
+                                ),
+
+                                safeText(
+                                        profile.getDateOfBirth()
+                                ),
+
+                                gender.getValue(),
+
+                                bloodGroup.getValue(),
+
+                                emergency.getText()
+                        );
+
+                showSuccess(
+                        "Medical information updated successfully."
+                );
+
+                refreshHealthPassport();
+
+            } catch (Exception e) {
+
+                showError(
+                        "Unable to update medical information.",
+                        e
+                );
+            }
+        }
+    }
+
+    // =========================================================
+    // FORM GRID
+    // =========================================================
+
+    private GridPane createFormGrid() {
+
+        GridPane grid =
+                new GridPane();
+
+        grid.setHgap(15);
+
+        grid.setVgap(15);
+
+        grid.setPadding(
+                new Insets(15)
+        );
+
+        return grid;
+    }
+
+    // =========================================================
+    // TEXT FIELD
+    // =========================================================
+
+    private TextField createTextField(
+            String value) {
+
+        TextField field =
+                new TextField();
+
+        field.setText(
+                safeText(value)
+        );
+
+        field.setPrefWidth(
+                300
+        );
+
+        return field;
+    }
+
+    // =========================================================
+    // BLOOD GROUP
+    // =========================================================
+
+    private ComboBox<String> createBloodGroupCombo(
+            String currentValue) {
+
+        ComboBox<String> combo =
+                new ComboBox<>();
+
+        combo.getItems().addAll(
+                "A+",
+                "A-",
+                "B+",
+                "B-",
+                "AB+",
+                "AB-",
+                "O+",
+                "O-"
+        );
+
+        if (currentValue != null &&
+                !currentValue.isBlank()) {
+
+            combo.setValue(
+                    currentValue
+            );
         }
 
-        return value.trim();
+        combo.setPrefWidth(
+                300
+        );
+
+        return combo;
+    }
+
+    // =========================================================
+    // GENDER
+    // =========================================================
+
+    private ComboBox<String> createGenderCombo(
+            String currentValue) {
+
+        ComboBox<String> combo =
+                new ComboBox<>();
+
+        combo.getItems().addAll(
+                "Male",
+                "Female",
+                "Other",
+                "Prefer not to say"
+        );
+
+        if (currentValue != null &&
+                !currentValue.isBlank()) {
+
+            combo.setValue(
+                    currentValue
+            );
+        }
+
+        combo.setPrefWidth(
+                300
+        );
+
+        return combo;
+    }
+
+    // =========================================================
+    // REFRESH PAGE
+    // =========================================================
+
+    private void refreshHealthPassport() {
+
+        stage.setScene(
+                new HealthPassport(stage)
+                        .getScene()
+        );
+    }
+
+    // =========================================================
+    // SUCCESS ALERT
+    // =========================================================
+
+    private void showSuccess(
+            String message) {
+
+        Alert alert =
+                new Alert(
+                        Alert.AlertType.INFORMATION
+                );
+
+        alert.setTitle(
+                "Health Passport"
+        );
+
+        alert.setHeaderText(
+                "Update Successful"
+        );
+
+        alert.setContentText(
+                message
+        );
+
+        alert.showAndWait();
+    }
+
+    // =========================================================
+    // ERROR ALERT
+    // =========================================================
+
+    private void showError(
+            String message,
+            Exception exception) {
+
+        exception.printStackTrace();
+
+        Alert alert =
+                new Alert(
+                        Alert.AlertType.ERROR
+                );
+
+        alert.setTitle(
+                "Health Passport"
+        );
+
+        alert.setHeaderText(
+                "Update Failed"
+        );
+
+        String errorMessage =
+                exception.getMessage();
+
+        if (errorMessage == null ||
+                errorMessage.isBlank()) {
+
+            errorMessage =
+                    "Please try again.";
+        }
+
+        alert.setContentText(
+                message +
+                "\n\n" +
+                errorMessage
+        );
+
+        alert.showAndWait();
     }
 
     // =========================================================
@@ -546,8 +1177,7 @@ public class HealthPassport {
     // =========================================================
 
     private VBox imageCard(
-            String path
-    ) {
+            String path) {
 
         VBox box =
                 new VBox();
@@ -635,8 +1265,7 @@ public class HealthPassport {
 
     private HBox information(
             String title,
-            String value
-    ) {
+            String value) {
 
         HBox row =
                 new HBox(12);
@@ -697,8 +1326,7 @@ public class HealthPassport {
 
     private HBox summary(
             String title,
-            String value
-    ) {
+            String value) {
 
         HBox row =
                 new HBox(12);
@@ -757,8 +1385,7 @@ public class HealthPassport {
     private HBox status(
             String title,
             String value,
-            String condition
-    ) {
+            String condition) {
 
         HBox row =
                 new HBox(12);
@@ -867,12 +1494,73 @@ public class HealthPassport {
     }
 
     // =========================================================
+    // FULL NAME
+    // =========================================================
+
+    private String getFullName(
+            PatientProfile profile) {
+
+        String firstName =
+                safeValue(
+                        profile.getFirstName(),
+                        ""
+                );
+
+        String lastName =
+                safeValue(
+                        profile.getLastName(),
+                        ""
+                );
+
+        String fullName =
+                (firstName + " " + lastName)
+                        .trim();
+
+        if (fullName.isEmpty()) {
+
+            return "Not provided";
+        }
+
+        return fullName;
+    }
+
+    // =========================================================
+    // SAFE VALUE
+    // =========================================================
+
+    private String safeValue(
+            String value,
+            String fallback) {
+
+        if (value == null ||
+                value.trim().isEmpty()) {
+
+            return fallback;
+        }
+
+        return value.trim();
+    }
+
+    // =========================================================
+    // SAFE TEXT
+    // =========================================================
+
+    private String safeText(
+            String value) {
+
+        if (value == null) {
+            return "";
+        }
+
+        return value.trim();
+    }
+
+    // =========================================================
     // ERROR SCENE
     // =========================================================
 
     private Scene createErrorScene(
-            String message
-    ) {
+            String message) {
 
         VBox content =
                 new VBox(20);
