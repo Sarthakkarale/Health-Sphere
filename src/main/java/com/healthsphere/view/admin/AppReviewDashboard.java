@@ -198,7 +198,7 @@ public class AppReviewDashboard {
     private TableView<Review> createReviewTable() {
         TableView<Review> table = new TableView<>();
         table.setItems(filteredData);
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         table.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 12; -fx-border-color: #E2E8F0; -fx-border-radius: 12;");
 
         TableColumn<Review, String> userCol = new TableColumn<>("User Name");

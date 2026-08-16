@@ -1,5 +1,7 @@
 package com.healthsphere.view.admin;
 
+import com.healthsphere.controller.admin.AdminDashboardController;
+
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.geometry.Insets;
@@ -10,8 +12,19 @@ import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextInputDialog;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
@@ -25,457 +38,1473 @@ import java.time.format.DateTimeFormatter;
 
 public class AdminDashboardView {
 
+    // ============================================================
+    // STAGE / ROOT
+    // ============================================================
+
     private Stage primaryStage;
+
     private final ScrollPane rootPane;
 
-    // Dynamic Live KPI Labels
+    // ============================================================
+    // CONTROLLER
+    // ============================================================
+
+    private final AdminDashboardController
+            adminDashboardController;
+
+    // ============================================================
+    // DYNAMIC KPI LABELS
+    // ============================================================
+
     private Label totalHospitalsVal;
+
     private Label activeDoctorsVal;
+
     private Label pendingVerificationsVal;
+
     private Label activeIncidentsVal;
 
-    // Real-Time Telemetry & Console
+    // ============================================================
+    // REAL-TIME TELEMETRY
+    // ============================================================
+
     private Label cpuUsageLabel;
+
     private Label activeSessionsLabel;
+
     private TextArea liveConsoleLog;
+
     private LineChart<String, Number> loadChart;
+
     private XYChart.Series<String, Number> loadSeries;
 
-    // Default Constructor
+    // ============================================================
+    // TELEMETRY TIMELINE
+    // ============================================================
+
+    private Timeline telemetryTimeline;
+
+    // ============================================================
+    // DEFAULT CONSTRUCTOR
+    // ============================================================
+
     public AdminDashboardView() {
+
         this(null);
     }
 
-    // Constructor with Stage
+    // ============================================================
+    // CONSTRUCTOR WITH STAGE
+    // ============================================================
+
     public AdminDashboardView(Stage stage) {
+
         this.primaryStage = stage;
-        this.rootPane = new ScrollPane();
+
+        this.adminDashboardController =
+                new AdminDashboardController();
+
+        this.rootPane =
+                new ScrollPane();
 
         rootPane.setFitToWidth(true);
-        rootPane.setStyle("-fx-background-color: #F8FAFC; -fx-background: #F8FAFC;");
 
-        // Embed Modern Light Theme CSS
-        rootPane.getStylesheets().add("data:text/css," + getLightThemeCSS());
+        rootPane.setStyle(
+                "-fx-background-color: #F8FAFC; " +
+                "-fx-background: #F8FAFC;"
+        );
 
-        VBox mainContainer = new VBox(25);
-        mainContainer.setPadding(new Insets(30));
-        mainContainer.setStyle("-fx-background-color: #F8FAFC;");
+        // ========================================================
+        // LIGHT THEME
+        // ========================================================
 
-        // 1. Mission Control Header Bar
-        HBox header = createCommandHeader();
+        rootPane.getStylesheets().add(
+                "data:text/css,"
+                        + getLightThemeCSS()
+        );
 
-        // 1.5. Clean Background Image Banner Section
-        StackPane bannerSection = createDashboardBanner();
+        // ========================================================
+        // MAIN CONTAINER
+        // ========================================================
 
-        // 2. Crisp Light KPI Cards
-        HBox statsSection = createStatsSection();
+        VBox mainContainer =
+                new VBox(25);
 
-        // 3. Middle Section: Dynamic Telemetry Chart + Interactive System Switches
-        HBox middleSection = createMiddleTelemetrySection();
+        mainContainer.setPadding(
+                new Insets(30)
+        );
 
-        // 4. Lower Section: Activity Grid & Live Log Console
-        GridPane bottomGrid = createBottomGrid();
+        mainContainer.setStyle(
+                "-fx-background-color: #F8FAFC;"
+        );
 
-        mainContainer.getChildren().addAll(header, bannerSection, statsSection, middleSection, bottomGrid);
-        rootPane.setContent(mainContainer);
+        // ========================================================
+        // COMMAND HEADER
+        // ========================================================
 
-        // Start Live Telemetry Updates
+        HBox header =
+                createCommandHeader();
+
+        // ========================================================
+        // DASHBOARD BANNER
+        // ========================================================
+
+        StackPane bannerSection =
+                createDashboardBanner();
+
+        // ========================================================
+        // KPI STATISTICS
+        // ========================================================
+
+        HBox statsSection =
+                createStatsSection();
+
+        // ========================================================
+        // TELEMETRY SECTION
+        // ========================================================
+
+        HBox middleSection =
+                createMiddleTelemetrySection();
+
+        // ========================================================
+        // BOTTOM GRID
+        // ========================================================
+
+        GridPane bottomGrid =
+                createBottomGrid();
+
+        // ========================================================
+        // ADD EVERYTHING
+        // ========================================================
+
+        mainContainer.getChildren().addAll(
+                header,
+                bannerSection,
+                statsSection,
+                middleSection,
+                bottomGrid
+        );
+
+        rootPane.setContent(
+                mainContainer
+        );
+
+        // ========================================================
+        // START TELEMETRY
+        // ========================================================
+
         initLiveTelemetryEngine();
+
+        // ========================================================
+        // LOAD FIRESTORE DATA
+        // ========================================================
+
+        loadDashboardData();
     }
 
+    // ============================================================
+    // PUBLIC VIEW
+    // ============================================================
+
     public Parent getView() {
+
         return rootPane;
     }
 
+    // ============================================================
+    // SCENE
+    // ============================================================
+
     public Scene getScene() {
+
         return new Scene(rootPane);
     }
 
+    // ============================================================
+    // COMMAND HEADER
+    // ============================================================
+
     private HBox createCommandHeader() {
-        HBox header = new HBox(20);
-        header.setAlignment(Pos.CENTER_LEFT);
 
-        VBox titleBox = new VBox(4);
-        Label title = new Label("HealthSphere Command Center");
-        title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 26));
-        title.setTextFill(Color.web("#0F172A")); // Deep Slate Text
+        HBox header =
+                new HBox(20);
 
-        HBox statusBox = new HBox(8);
-        statusBox.setAlignment(Pos.CENTER_LEFT);
-        Circle liveDot = new Circle(5, Color.web("#059669"));
-        Label statusText = new Label("SYSTEM STATUS: ONLINE • NODE AP-SOUTH-1 (MUMBAI)");
-        statusText.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
-        statusText.setTextFill(Color.web("#059669"));
-        statusBox.getChildren().addAll(liveDot, statusText);
+        header.setAlignment(
+                Pos.CENTER_LEFT
+        );
 
-        titleBox.getChildren().addAll(title, statusBox);
+        // ========================================================
+        // TITLE
+        // ========================================================
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        VBox titleBox =
+                new VBox(4);
 
-        // Action Buttons with Light Palette
-        Button flushCacheBtn = new Button("⚡ Flush Cache");
+        Label title =
+                new Label(
+                        "HealthSphere Command Center"
+                );
+
+        title.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        26
+                )
+        );
+
+        title.setTextFill(
+                Color.web("#0F172A")
+        );
+
+        // ========================================================
+        // SYSTEM STATUS
+        // ========================================================
+
+        HBox statusBox =
+                new HBox(8);
+
+        statusBox.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        Circle liveDot =
+                new Circle(
+                        5,
+                        Color.web("#059669")
+                );
+
+        Label statusText =
+                new Label(
+                        "SYSTEM STATUS: ONLINE • "
+                                + "NODE AP-SOUTH-1 (MUMBAI)"
+                );
+
+        statusText.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        12
+                )
+        );
+
+        statusText.setTextFill(
+                Color.web("#059669")
+        );
+
+        statusBox.getChildren().addAll(
+                liveDot,
+                statusText
+        );
+
+        titleBox.getChildren().addAll(
+                title,
+                statusBox
+        );
+
+        // ========================================================
+        // SPACER
+        // ========================================================
+
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        // ========================================================
+        // FLUSH CACHE
+        // ========================================================
+
+        Button flushCacheBtn =
+                new Button(
+                        "⚡ Flush Cache"
+                );
+
         flushCacheBtn.setStyle(
-            "-fx-background-color: #FFFFFF; " +
-            "-fx-text-fill: #2563EB; " +
-            "-fx-border-color: #CBD5E1; " +
-            "-fx-border-radius: 8px; " +
-            "-fx-font-weight: bold; " +
-            "-fx-padding: 8px 16px; " +
-            "-fx-background-radius: 8px; " +
-            "-fx-cursor: hand;"
+                "-fx-background-color: #FFFFFF; " +
+                "-fx-text-fill: #2563EB; " +
+                "-fx-border-color: #CBD5E1; " +
+                "-fx-border-radius: 8px; " +
+                "-fx-font-weight: bold; " +
+                "-fx-padding: 8px 16px; " +
+                "-fx-background-radius: 8px; " +
+                "-fx-cursor: hand;"
         );
-        flushCacheBtn.setOnAction(e -> logCommand("EXEC: Redis L2 Cache Purged successfully."));
 
-        Button lockBtn = new Button("🔒 Lockdown");
+        flushCacheBtn.setOnAction(
+                e -> logCommand(
+                        "EXEC: Redis L2 Cache Purged successfully."
+                )
+        );
+
+        // ========================================================
+        // LOCKDOWN
+        // ========================================================
+
+        Button lockBtn =
+                new Button(
+                        "🔒 Lockdown"
+                );
+
         lockBtn.setStyle(
-            "-fx-background-color: #FEF2F2; " +
-            "-fx-text-fill: #DC2626; " +
-            "-fx-border-color: #FCA5A5; " +
-            "-fx-border-radius: 8px; " +
-            "-fx-font-weight: bold; " +
-            "-fx-padding: 8px 16px; " +
-            "-fx-background-radius: 8px; " +
-            "-fx-cursor: hand;"
+                "-fx-background-color: #FEF2F2; " +
+                "-fx-text-fill: #DC2626; " +
+                "-fx-border-color: #FCA5A5; " +
+                "-fx-border-radius: 8px; " +
+                "-fx-font-weight: bold; " +
+                "-fx-padding: 8px 16px; " +
+                "-fx-background-radius: 8px; " +
+                "-fx-cursor: hand;"
         );
-        lockBtn.setOnAction(e -> logCommand("CRITICAL: Emergency System Lockdown Triggered by Admin!"));
 
-        Button alertBtn = new Button("📢 Broadcast Alert");
+        lockBtn.setOnAction(
+                e -> logCommand(
+                        "CRITICAL: Emergency System "
+                                + "Lockdown Triggered by Admin!"
+                )
+        );
+
+        // ========================================================
+        // BROADCAST
+        // ========================================================
+
+        Button alertBtn =
+                new Button(
+                        "📢 Broadcast Alert"
+                );
+
         alertBtn.setStyle(
-            "-fx-background-color: #4F46E5; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-weight: bold; " +
-            "-fx-padding: 9px 16px; " +
-            "-fx-background-radius: 8px; " +
-            "-fx-cursor: hand;"
+                "-fx-background-color: #4F46E5; " +
+                "-fx-text-fill: white; " +
+                "-fx-font-weight: bold; " +
+                "-fx-padding: 9px 16px; " +
+                "-fx-background-radius: 8px; " +
+                "-fx-cursor: hand;"
         );
-        alertBtn.setOnAction(e -> showBroadcastDialog());
 
-        header.getChildren().addAll(titleBox, spacer, flushCacheBtn, lockBtn, alertBtn);
+        alertBtn.setOnAction(
+                e -> showBroadcastDialog()
+        );
+
+        header.getChildren().addAll(
+                titleBox,
+                spacer,
+                flushCacheBtn,
+                lockBtn,
+                alertBtn
+        );
+
         return header;
     }
 
-    // इमेज बॅकग्राउंड म्हणून सेट करणारी मेथड
+    // ============================================================
+    // DASHBOARD BANNER
+    // ============================================================
+
     private StackPane createDashboardBanner() {
-        StackPane bannerPane = new StackPane();
+
+        StackPane bannerPane =
+                new StackPane();
+
         bannerPane.setPrefHeight(160);
-        bannerPane.setMaxWidth(Double.MAX_VALUE);
+
+        bannerPane.setMaxWidth(
+                Double.MAX_VALUE
+        );
 
         String imageUrl = "";
+
         try {
-            URL resource = getClass().getResource("/images/dashboard_banner.png");
+
+            URL resource =
+                    getClass().getResource(
+                            "/images/dashboard_banner.png"
+                    );
+
             if (resource != null) {
-                imageUrl = resource.toExternalForm();
-                logCommand("SUCCESS: Dashboard background banner loaded cleanly.");
+
+                imageUrl =
+                        resource.toExternalForm();
+
             } else {
-                logCommand("WARNING: Banner image not found at /images/dashboard_banner.png");
+
+                logCommand(
+                        "WARNING: Banner image not found at "
+                                + "/images/dashboard_banner.png"
+                );
             }
+
         } catch (Exception e) {
-            logCommand("ERROR: Failed to load banner image.");
+
+            logCommand(
+                    "ERROR: Failed to load banner image."
+            );
         }
 
         if (!imageUrl.isEmpty()) {
-            // CSS द्वारे इमेज बॅकग्राउंड सेट करणे (विकृत होणार नाही)
+
             bannerPane.setStyle(
-                "-fx-background-image: url('" + imageUrl + "'); " +
-                "-fx-background-size: cover; " +
-                "-fx-background-repeat: no-repeat; " +
-                "-fx-background-position: center; " +
-                "-fx-background-radius: 12px; " +
-                "-fx-border-color: #CBD5E1; " +
-                "-fx-border-radius: 12px; " +
-                "-fx-effect: dropshadow(three-pass-box, rgba(15,23,42,0.05), 10, 0, 0, 4);"
+                    "-fx-background-image: url('"
+                            + imageUrl
+                            + "'); "
+                            + "-fx-background-size: cover; "
+                            + "-fx-background-repeat: no-repeat; "
+                            + "-fx-background-position: center; "
+                            + "-fx-background-radius: 12px; "
+                            + "-fx-border-color: #CBD5E1; "
+                            + "-fx-border-radius: 12px; "
+                            + "-fx-effect: dropshadow("
+                            + "three-pass-box, "
+                            + "rgba(15,23,42,0.05), "
+                            + "10, 0, 0, 4);"
             );
+
         } else {
-            // इमेज न मिळाल्यास डीफॉल्ट डार्क थीम बॅकग्राउंड
+
             bannerPane.setStyle(
-                "-fx-background-color: #0F172A; " +
-                "-fx-background-radius: 12px; " +
-                "-fx-border-color: #334155; " +
-                "-fx-border-radius: 12px;"
+                    "-fx-background-color: #0F172A; "
+                            + "-fx-background-radius: 12px; "
+                            + "-fx-border-color: #334155; "
+                            + "-fx-border-radius: 12px;"
             );
         }
 
         return bannerPane;
     }
 
+    // ============================================================
+    // KPI SECTION
+    // ============================================================
+
     private HBox createStatsSection() {
-        HBox statsLayout = new HBox(20);
-        statsLayout.setAlignment(Pos.CENTER);
 
-        totalHospitalsVal = new Label("124");
-        activeDoctorsVal = new Label("1,480");
-        pendingVerificationsVal = new Label("18");
-        activeIncidentsVal = new Label("05");
+        HBox statsLayout =
+                new HBox(20);
 
-        VBox card1 = createLightStatCard("Registered Hospitals", totalHospitalsVal, "🏢 +12% this month", "#4F46E5", "#EEF2FF");
-        VBox card2 = createLightStatCard("Active Doctors", activeDoctorsVal, "👨‍⚕️ +5% this month", "#059669", "#ECFDF5");
-        VBox card3 = createLightStatCard("Pending Verifications", pendingVerificationsVal, "⚠️ Requires Action", "#D97706", "#FFFBEB");
-        VBox card4 = createLightStatCard("Active Incidents", activeIncidentsVal, "⚡ 2 High Priority", "#DC2626", "#FEF2F2");
+        statsLayout.setAlignment(
+                Pos.CENTER
+        );
 
-        HBox.setHgrow(card1, Priority.ALWAYS);
-        HBox.setHgrow(card2, Priority.ALWAYS);
-        HBox.setHgrow(card3, Priority.ALWAYS);
-        HBox.setHgrow(card4, Priority.ALWAYS);
+        // ========================================================
+        // INITIAL VALUES
+        // ========================================================
 
-        statsLayout.getChildren().addAll(card1, card2, card3, card4);
+        totalHospitalsVal =
+                new Label("Loading...");
+
+        activeDoctorsVal =
+                new Label("Loading...");
+
+        pendingVerificationsVal =
+                new Label("Loading...");
+
+        activeIncidentsVal =
+                new Label("05");
+
+        // ========================================================
+        // CARDS
+        // ========================================================
+
+        VBox card1 =
+                createLightStatCard(
+                        "Registered Hospitals",
+                        totalHospitalsVal,
+                        "🏢 Live from Firestore",
+                        "#4F46E5",
+                        "#EEF2FF"
+                );
+
+        VBox card2 =
+                createLightStatCard(
+                        "Active Doctors",
+                        activeDoctorsVal,
+                        "👨‍⚕️ Live from Firestore",
+                        "#059669",
+                        "#ECFDF5"
+                );
+
+        VBox card3 =
+                createLightStatCard(
+                        "Pending Verifications",
+                        pendingVerificationsVal,
+                        "⚠️ Requires Action",
+                        "#D97706",
+                        "#FFFBEB"
+                );
+
+        VBox card4 =
+                createLightStatCard(
+                        "Active Incidents",
+                        activeIncidentsVal,
+                        "⚡ 2 High Priority",
+                        "#DC2626",
+                        "#FEF2F2"
+                );
+
+        HBox.setHgrow(
+                card1,
+                Priority.ALWAYS
+        );
+
+        HBox.setHgrow(
+                card2,
+                Priority.ALWAYS
+        );
+
+        HBox.setHgrow(
+                card3,
+                Priority.ALWAYS
+        );
+
+        HBox.setHgrow(
+                card4,
+                Priority.ALWAYS
+        );
+
+        statsLayout.getChildren().addAll(
+                card1,
+                card2,
+                card3,
+                card4
+        );
+
         return statsLayout;
     }
 
-    private VBox createLightStatCard(String title, Label valueLabel, String subtext, String accentHex, String softBgHex) {
-        VBox card = new VBox(8);
-        card.setPadding(new Insets(18));
-        card.setStyle(
-            "-fx-background-color: #FFFFFF; " +
-            "-fx-background-radius: 12px; " +
-            "-fx-border-color: #E2E8F0; " +
-            "-fx-border-radius: 12px; " +
-            "-fx-border-width: 1px; " +
-            "-fx-effect: dropshadow(three-pass-box, rgba(15,23,42,0.03), 8, 0, 0, 2);"
+    // ============================================================
+    // STAT CARD
+    // ============================================================
+
+    private VBox createLightStatCard(
+            String title,
+            Label valueLabel,
+            String subtext,
+            String accentHex,
+            String softBgHex) {
+
+        VBox card =
+                new VBox(8);
+
+        card.setPadding(
+                new Insets(18)
         );
 
-        Label titleLabel = new Label(title);
-        titleLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
-        titleLabel.setTextFill(Color.web("#64748B"));
+        card.setStyle(
+                "-fx-background-color: #FFFFFF; "
+                        + "-fx-background-radius: 12px; "
+                        + "-fx-border-color: #E2E8F0; "
+                        + "-fx-border-radius: 12px; "
+                        + "-fx-border-width: 1px; "
+                        + "-fx-effect: dropshadow("
+                        + "three-pass-box, "
+                        + "rgba(15,23,42,0.03), "
+                        + "8, 0, 0, 2);"
+        );
 
-        valueLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 28));
-        valueLabel.setTextFill(Color.web("#0F172A"));
+        Label titleLabel =
+                new Label(title);
 
-        HBox badge = new HBox();
-        badge.setAlignment(Pos.CENTER_LEFT);
-        badge.setPadding(new Insets(4, 8, 4, 8));
-        badge.setStyle("-fx-background-color: " + softBgHex + "; -fx-background-radius: 6px;");
+        titleLabel.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        12
+                )
+        );
 
-        Label subLabel = new Label(subtext);
-        subLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
-        subLabel.setTextFill(Color.web(accentHex));
-        badge.getChildren().add(subLabel);
+        titleLabel.setTextFill(
+                Color.web("#64748B")
+        );
 
-        card.getChildren().addAll(titleLabel, valueLabel, badge);
+        valueLabel.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        28
+                )
+        );
+
+        valueLabel.setTextFill(
+                Color.web("#0F172A")
+        );
+
+        HBox badge =
+                new HBox();
+
+        badge.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        badge.setPadding(
+                new Insets(
+                        4,
+                        8,
+                        4,
+                        8
+                )
+        );
+
+        badge.setStyle(
+                "-fx-background-color: "
+                        + softBgHex
+                        + "; "
+                        + "-fx-background-radius: 6px;"
+        );
+
+        Label subLabel =
+                new Label(subtext);
+
+        subLabel.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        11
+                )
+        );
+
+        subLabel.setTextFill(
+                Color.web(accentHex)
+        );
+
+        badge.getChildren().add(
+                subLabel
+        );
+
+        card.getChildren().addAll(
+                titleLabel,
+                valueLabel,
+                badge
+        );
+
         return card;
     }
 
+    // ============================================================
+    // MIDDLE TELEMETRY SECTION
+    // ============================================================
+
     private HBox createMiddleTelemetrySection() {
-        HBox section = new HBox(20);
 
-        // 1. Telemetry Chart Card
-        VBox chartCard = createCardContainer("Live Server Telemetry (req/sec)", "Real-time load balancing on AP-SOUTH-1 cluster.");
-        HBox.setHgrow(chartCard, Priority.ALWAYS);
+        HBox section =
+                new HBox(20);
 
-        CategoryAxis xAxis = new CategoryAxis();
-        NumberAxis yAxis = new NumberAxis(0, 500, 100);
-        xAxis.setTickLabelFill(Color.web("#64748B"));
-        yAxis.setTickLabelFill(Color.web("#64748B"));
+        // ========================================================
+        // CHART CARD
+        // ========================================================
 
-        loadChart = new LineChart<>(xAxis, yAxis);
-        loadChart.setPrefHeight(210);
-        loadChart.setLegendVisible(false);
-        loadChart.setAnimated(false);
+        VBox chartCard =
+                createCardContainer(
+                        "Live Server Telemetry (req/sec)",
+                        "Real-time load balancing on "
+                                + "AP-SOUTH-1 cluster."
+                );
 
-        loadSeries = new XYChart.Series<>();
-        loadChart.getData().add(loadSeries);
-
-        chartCard.getChildren().add(loadChart);
-
-        // 2. Feature Switch Panel
-        VBox switchPanel = createCardContainer("System Command Switches", "Toggle microservices and platform state.");
-        switchPanel.setMinWidth(320);
-
-        VBox switchesBox = new VBox(10);
-        switchesBox.setPadding(new Insets(10, 0, 0, 0));
-        switchesBox.getChildren().addAll(
-            createToggleRow("Maintenance Mode", false),
-            createToggleRow("AI Fraud Engine", true),
-            createToggleRow("Payment Webhooks", true),
-            createToggleRow("Doctor Live API", true)
+        HBox.setHgrow(
+                chartCard,
+                Priority.ALWAYS
         );
 
-        switchPanel.getChildren().add(switchesBox);
+        CategoryAxis xAxis =
+                new CategoryAxis();
 
-        section.getChildren().addAll(chartCard, switchPanel);
+        NumberAxis yAxis =
+                new NumberAxis(
+                        0,
+                        500,
+                        100
+                );
+
+        xAxis.setTickLabelFill(
+                Color.web("#64748B")
+        );
+
+        yAxis.setTickLabelFill(
+                Color.web("#64748B")
+        );
+
+        loadChart =
+                new LineChart<>(
+                        xAxis,
+                        yAxis
+                );
+
+        loadChart.setPrefHeight(
+                210
+        );
+
+        loadChart.setLegendVisible(
+                false
+        );
+
+        loadChart.setAnimated(
+                false
+        );
+
+        loadSeries =
+                new XYChart.Series<>();
+
+        loadChart.getData().add(
+                loadSeries
+        );
+
+        chartCard.getChildren().add(
+                loadChart
+        );
+
+        // ========================================================
+        // SWITCH PANEL
+        // ========================================================
+
+        VBox switchPanel =
+                createCardContainer(
+                        "System Command Switches",
+                        "Toggle microservices and platform state."
+                );
+
+        switchPanel.setMinWidth(
+                320
+        );
+
+        VBox switchesBox =
+                new VBox(10);
+
+        switchesBox.setPadding(
+                new Insets(
+                        10,
+                        0,
+                        0,
+                        0
+                )
+        );
+
+        switchesBox.getChildren().addAll(
+
+                createToggleRow(
+                        "Maintenance Mode",
+                        false
+                ),
+
+                createToggleRow(
+                        "AI Fraud Engine",
+                        true
+                ),
+
+                createToggleRow(
+                        "Payment Webhooks",
+                        true
+                ),
+
+                createToggleRow(
+                        "Doctor Live API",
+                        true
+                )
+        );
+
+        switchPanel.getChildren().add(
+                switchesBox
+        );
+
+        section.getChildren().addAll(
+                chartCard,
+                switchPanel
+        );
+
         return section;
     }
 
-    private HBox createToggleRow(String labelText, boolean initialValue) {
-        HBox row = new HBox(10);
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.setPadding(new Insets(8, 12, 8, 12));
-        row.setStyle("-fx-background-color: #F1F5F9; -fx-background-radius: 8px;");
+    // ============================================================
+    // TOGGLE ROW
+    // ============================================================
 
-        Label lbl = new Label(labelText);
-        lbl.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
-        lbl.setTextFill(Color.web("#334155"));
+    private HBox createToggleRow(
+            String labelText,
+            boolean initialValue) {
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        HBox row =
+                new HBox(10);
 
-        CheckBox toggle = new CheckBox();
-        toggle.setSelected(initialValue);
-        toggle.setOnAction(e -> {
-            String state = toggle.isSelected() ? "ENABLED" : "DISABLED";
-            logCommand("CONFIG CHANGE: " + labelText + " set to " + state);
-        });
+        row.setAlignment(
+                Pos.CENTER_LEFT
+        );
 
-        row.getChildren().addAll(lbl, spacer, toggle);
+        row.setPadding(
+                new Insets(
+                        8,
+                        12,
+                        8,
+                        12
+                )
+        );
+
+        row.setStyle(
+                "-fx-background-color: #F1F5F9; "
+                        + "-fx-background-radius: 8px;"
+        );
+
+        Label lbl =
+                new Label(labelText);
+
+        lbl.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.SEMI_BOLD,
+                        12
+                )
+        );
+
+        lbl.setTextFill(
+                Color.web("#334155")
+        );
+
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        CheckBox toggle =
+                new CheckBox();
+
+        toggle.setSelected(
+                initialValue
+        );
+
+        toggle.setOnAction(
+                e -> {
+
+                    String state =
+                            toggle.isSelected()
+                                    ? "ENABLED"
+                                    : "DISABLED";
+
+                    logCommand(
+                            "CONFIG CHANGE: "
+                                    + labelText
+                                    + " set to "
+                                    + state
+                    );
+                }
+        );
+
+        row.getChildren().addAll(
+                lbl,
+                spacer,
+                toggle
+        );
+
         return row;
     }
 
+    // ============================================================
+    // BOTTOM GRID
+    // ============================================================
+
     private GridPane createBottomGrid() {
-        GridPane grid = new GridPane();
+
+        GridPane grid =
+                new GridPane();
+
         grid.setHgap(20);
+
         grid.setVgap(20);
 
-        // Column 1: Live Audit Console
-        VBox consoleCard = createCardContainer("Live Terminal Log Stream", "Automated system events, auth triggers, and API logs.");
-        liveConsoleLog = new TextArea();
-        liveConsoleLog.setEditable(false);
-        liveConsoleLog.setPrefHeight(160);
-        liveConsoleLog.setStyle(
-            "-fx-control-inner-background: #0F172A; " +
-            "-fx-text-fill: #38BDF8; " +
-            "-fx-font-family: 'Consolas', 'Courier New', monospace; " +
-            "-fx-font-size: 12px;"
+        // ========================================================
+        // LIVE CONSOLE
+        // ========================================================
+
+        VBox consoleCard =
+                createCardContainer(
+                        "Live Terminal Log Stream",
+                        "Automated system events, auth triggers, "
+                                + "and API logs."
+                );
+
+        liveConsoleLog =
+                new TextArea();
+
+        liveConsoleLog.setEditable(
+                false
         );
 
-        logCommand("System Engine Initialized. Spring Boot Backend Port 8080 Active.");
-        logCommand("JWT Public Key Loaded. Redis Cache Connected.");
+        liveConsoleLog.setPrefHeight(
+                160
+        );
 
-        consoleCard.getChildren().add(liveConsoleLog);
+        liveConsoleLog.setStyle(
+                "-fx-control-inner-background: #0F172A; "
+                        + "-fx-text-fill: #38BDF8; "
+                        + "-fx-font-family: 'Consolas', "
+                        + "'Courier New', monospace; "
+                        + "-fx-font-size: 12px;"
+        );
 
-        // Column 2: System Health Telemetry
-        VBox healthCard = createCardContainer("Service Telemetry", "Real-time microservice status.");
-        VBox statusList = new VBox(12);
-        statusList.setPadding(new Insets(10, 0, 0, 0));
+        consoleCard.getChildren().add(
+                liveConsoleLog
+        );
 
-        cpuUsageLabel = new Label("28.4 %");
-        activeSessionsLabel = new Label("1,429");
+        logCommand(
+                "System Engine Initialized."
+        );
+
+        logCommand(
+                "HealthSphere Admin Dashboard Loaded."
+        );
+
+        logCommand(
+                "Firestore integration initialized."
+        );
+
+        // ========================================================
+        // HEALTH CARD
+        // ========================================================
+
+        VBox healthCard =
+                createCardContainer(
+                        "Service Telemetry",
+                        "Real-time microservice status."
+                );
+
+        VBox statusList =
+                new VBox(12);
+
+        statusList.setPadding(
+                new Insets(
+                        10,
+                        0,
+                        0,
+                        0
+                )
+        );
+
+        cpuUsageLabel =
+                new Label("28.4 %");
+
+        activeSessionsLabel =
+                new Label("1,429");
 
         statusList.getChildren().addAll(
-            createStatusItem("Database Cluster (PostgreSQL)", "Operational", "#059669"),
-            createStatusItem("Auth API Service", "Operational", "#059669"),
-            createStatusItem("CPU Load (4 Cores)", cpuUsageLabel.getText(), "#2563EB"),
-            createStatusItem("Active Patient Sessions", activeSessionsLabel.getText(), "#D97706")
+
+                createStatusItem(
+                        "Firestore Database",
+                        new Label("Operational"),
+                        "#059669"
+                ),
+
+                createStatusItem(
+                        "Auth API Service",
+                        new Label("Operational"),
+                        "#059669"
+                ),
+
+                createStatusItem(
+                        "CPU Load (4 Cores)",
+                        cpuUsageLabel,
+                        "#2563EB"
+                ),
+
+                createStatusItem(
+                        "Active Patient Sessions",
+                        activeSessionsLabel,
+                        "#D97706"
+                )
         );
 
-        healthCard.getChildren().add(statusList);
+        healthCard.getChildren().add(
+                statusList
+        );
 
-        ColumnConstraints col1 = new ColumnConstraints();
+        // ========================================================
+        // GRID COLUMNS
+        // ========================================================
+
+        ColumnConstraints col1 =
+                new ColumnConstraints();
+
         col1.setPercentWidth(60);
-        ColumnConstraints col2 = new ColumnConstraints();
-        col2.setPercentWidth(40);
-        grid.getColumnConstraints().addAll(col1, col2);
 
-        grid.add(consoleCard, 0, 0);
-        grid.add(healthCard, 1, 0);
+        ColumnConstraints col2 =
+                new ColumnConstraints();
+
+        col2.setPercentWidth(40);
+
+        grid.getColumnConstraints().addAll(
+                col1,
+                col2
+        );
+
+        grid.add(
+                consoleCard,
+                0,
+                0
+        );
+
+        grid.add(
+                healthCard,
+                1,
+                0
+        );
 
         return grid;
     }
 
-    private VBox createCardContainer(String titleText, String subtitleText) {
-        VBox card = new VBox(8);
-        card.setPadding(new Insets(18));
-        card.setStyle(
-            "-fx-background-color: #FFFFFF; " +
-            "-fx-background-radius: 12px; " +
-            "-fx-border-color: #E2E8F0; " +
-            "-fx-border-radius: 12px; " +
-            "-fx-effect: dropshadow(three-pass-box, rgba(15,23,42,0.03), 8, 0, 0, 2);"
+    // ============================================================
+    // CARD CONTAINER
+    // ============================================================
+
+    private VBox createCardContainer(
+            String titleText,
+            String subtitleText) {
+
+        VBox card =
+                new VBox(8);
+
+        card.setPadding(
+                new Insets(18)
         );
 
-        Label title = new Label(titleText);
-        title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 16));
-        title.setTextFill(Color.web("#0F172A"));
+        card.setStyle(
+                "-fx-background-color: #FFFFFF; "
+                        + "-fx-background-radius: 12px; "
+                        + "-fx-border-color: #E2E8F0; "
+                        + "-fx-border-radius: 12px; "
+                        + "-fx-effect: dropshadow("
+                        + "three-pass-box, "
+                        + "rgba(15,23,42,0.03), "
+                        + "8, 0, 0, 2);"
+        );
 
-        Label subtitle = new Label(subtitleText);
-        subtitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 12));
-        subtitle.setTextFill(Color.web("#64748B"));
+        Label title =
+                new Label(titleText);
 
-        card.getChildren().addAll(title, subtitle);
+        title.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        16
+                )
+        );
+
+        title.setTextFill(
+                Color.web("#0F172A")
+        );
+
+        Label subtitle =
+                new Label(subtitleText);
+
+        subtitle.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.NORMAL,
+                        12
+                )
+        );
+
+        subtitle.setTextFill(
+                Color.web("#64748B")
+        );
+
+        card.getChildren().addAll(
+                title,
+                subtitle
+        );
+
         return card;
     }
 
-    private HBox createStatusItem(String serviceName, String status, String statusColor) {
-        HBox row = new HBox();
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.setPadding(new Insets(10));
-        row.setStyle("-fx-background-color: #F8FAFC; -fx-background-radius: 8px; -fx-border-color: #E2E8F0; -fx-border-radius: 8px;");
+    // ============================================================
+    // STATUS ITEM
+    // ============================================================
 
-        Label nameLabel = new Label(serviceName);
-        nameLabel.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
-        nameLabel.setTextFill(Color.web("#1E293B"));
+    private HBox createStatusItem(
+            String serviceName,
+            Label statusLabel,
+            String statusColor) {
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        HBox row =
+                new HBox();
 
-        Label statusLabel = new Label(status);
-        statusLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
-        statusLabel.setTextFill(Color.web(statusColor));
+        row.setAlignment(
+                Pos.CENTER_LEFT
+        );
 
-        row.getChildren().addAll(nameLabel, spacer, statusLabel);
+        row.setPadding(
+                new Insets(10)
+        );
+
+        row.setStyle(
+                "-fx-background-color: #F8FAFC; "
+                        + "-fx-background-radius: 8px; "
+                        + "-fx-border-color: #E2E8F0; "
+                        + "-fx-border-radius: 8px;"
+        );
+
+        Label nameLabel =
+                new Label(serviceName);
+
+        nameLabel.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.SEMI_BOLD,
+                        12
+                )
+        );
+
+        nameLabel.setTextFill(
+                Color.web("#1E293B")
+        );
+
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        statusLabel.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        12
+                )
+        );
+
+        statusLabel.setTextFill(
+                Color.web(statusColor)
+        );
+
+        row.getChildren().addAll(
+                nameLabel,
+                spacer,
+                statusLabel
+        );
+
         return row;
     }
 
-    private void logCommand(String message) {
+    // ============================================================
+    // FIRESTORE DASHBOARD DATA
+    // ============================================================
+
+    private void loadDashboardData() {
+
+        if (totalHospitalsVal == null
+                || activeDoctorsVal == null
+                || pendingVerificationsVal == null) {
+
+            return;
+        }
+
+        totalHospitalsVal.setText(
+                "Loading..."
+        );
+
+        activeDoctorsVal.setText(
+                "Loading..."
+        );
+
+        pendingVerificationsVal.setText(
+                "Loading..."
+        );
+
+        logCommand(
+                "Firestore: Loading dashboard statistics..."
+        );
+
+        adminDashboardController
+                .loadDashboardStats()
+                .thenAccept(stats -> {
+
+                    javafx.application.Platform
+                            .runLater(() -> {
+
+                                totalHospitalsVal.setText(
+                                        String.valueOf(
+                                                stats
+                                                        .getRegisteredHospitals()
+                                        )
+                                );
+
+                                activeDoctorsVal.setText(
+                                        String.valueOf(
+                                                stats
+                                                        .getActiveDoctors()
+                                        )
+                                );
+
+                                pendingVerificationsVal.setText(
+                                        String.valueOf(
+                                                stats
+                                                        .getPendingVerifications()
+                                        )
+                                );
+
+                                logCommand(
+                                        "Firestore: Dashboard "
+                                                + "statistics loaded successfully."
+                                );
+                            });
+
+                })
+                .exceptionally(error -> {
+
+                    javafx.application.Platform
+                            .runLater(() -> {
+
+                                totalHospitalsVal.setText(
+                                        "N/A"
+                                );
+
+                                activeDoctorsVal.setText(
+                                        "N/A"
+                                );
+
+                                pendingVerificationsVal.setText(
+                                        "N/A"
+                                );
+
+                                Throwable cause =
+                                        error.getCause() != null
+                                                ? error.getCause()
+                                                : error;
+
+                                String message =
+                                        cause.getMessage() != null
+                                                ? cause.getMessage()
+                                                : "Unknown Firestore error";
+
+                                logCommand(
+                                        "ERROR: Failed to load "
+                                                + "dashboard statistics. "
+                                                + message
+                                );
+                            });
+
+                    return null;
+                });
+    }
+
+    // ============================================================
+    // LOG COMMAND
+    // ============================================================
+
+    private void logCommand(
+            String message) {
+
         if (liveConsoleLog != null) {
-            String timestamp = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-            liveConsoleLog.appendText("[" + timestamp + "] " + message + "\n");
+
+            String timestamp =
+                    LocalTime.now().format(
+                            DateTimeFormatter.ofPattern(
+                                    "HH:mm:ss"
+                            )
+                    );
+
+            liveConsoleLog.appendText(
+                    "["
+                            + timestamp
+                            + "] "
+                            + message
+                            + "\n"
+            );
         }
     }
 
+    // ============================================================
+    // BROADCAST DIALOG
+    // ============================================================
+
     private void showBroadcastDialog() {
-        TextInputDialog textInput = new TextInputDialog("Scheduled maintenance in 30 minutes.");
-        textInput.setTitle("Broadcast Alert");
-        textInput.setHeaderText("Enter System-Wide Notification Message:");
-        textInput.showAndWait().ifPresent(msg -> {
-            logCommand("BROADCAST SENT: \"" + msg + "\" to all active nodes.");
-        });
+
+        TextInputDialog textInput =
+                new TextInputDialog(
+                        "Scheduled maintenance in 30 minutes."
+                );
+
+        textInput.setTitle(
+                "Broadcast Alert"
+        );
+
+        textInput.setHeaderText(
+                "Enter System-Wide Notification Message:"
+        );
+
+        textInput.showAndWait()
+                .ifPresent(
+                        msg -> {
+
+                            if (msg == null
+                                    || msg.isBlank()) {
+
+                                logCommand(
+                                        "WARNING: Empty broadcast message."
+                                );
+
+                                return;
+                            }
+
+                            logCommand(
+                                    "BROADCAST SENT: \""
+                                            + msg
+                                            + "\" to all active nodes."
+                            );
+                        }
+                );
     }
+
+    // ============================================================
+    // LIVE TELEMETRY ENGINE
+    // ============================================================
 
     private void initLiveTelemetryEngine() {
-        Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(2), e -> {
-            double cpuVal = 22.0 + Math.random() * 15.0;
-            int loadVal = 180 + (int) (Math.random() * 140);
-            int activeUsers = 1420 + (int) (Math.random() * 30);
 
-            if (cpuUsageLabel != null) {
-                cpuUsageLabel.setText(String.format("%.1f %%", cpuVal));
-            }
+        telemetryTimeline =
+                new Timeline(
+                        new KeyFrame(
+                                Duration.seconds(2),
+                                e -> {
 
-            if (activeSessionsLabel != null) {
-                activeSessionsLabel.setText(String.format("%,d", activeUsers));
-            }
+                                    double cpuVal =
+                                            22.0
+                                                    + Math.random()
+                                                    * 15.0;
 
-            String currentTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-            if (loadSeries != null) {
-                loadSeries.getData().add(new XYChart.Data<>(currentTime, loadVal));
-                if (loadSeries.getData().size() > 8) {
-                    loadSeries.getData().remove(0);
-                }
-            }
-        }));
+                                    int loadVal =
+                                            180
+                                                    + (int)
+                                                    (
+                                                            Math.random()
+                                                                    * 140
+                                                    );
 
-        timeline.setCycleCount(Timeline.INDEFINITE);
-        timeline.play();
+                                    int activeUsers =
+                                            1420
+                                                    + (int)
+                                                    (
+                                                            Math.random()
+                                                                    * 30
+                                                    );
+
+                                    // ====================================
+                                    // CPU
+                                    // ====================================
+
+                                    if (cpuUsageLabel != null) {
+
+                                        cpuUsageLabel.setText(
+                                                String.format(
+                                                        "%.1f %%",
+                                                        cpuVal
+                                                )
+                                        );
+                                    }
+
+                                    // ====================================
+                                    // ACTIVE USERS
+                                    // ====================================
+
+                                    if (activeSessionsLabel != null) {
+
+                                        activeSessionsLabel.setText(
+                                                String.format(
+                                                        "%,d",
+                                                        activeUsers
+                                                )
+                                        );
+                                    }
+
+                                    // ====================================
+                                    // CHART
+                                    // ====================================
+
+                                    String currentTime =
+                                            LocalTime.now()
+                                                    .format(
+                                                            DateTimeFormatter
+                                                                    .ofPattern(
+                                                                            "HH:mm:ss"
+                                                                    )
+                                                    );
+
+                                    if (loadSeries != null) {
+
+                                        loadSeries
+                                                .getData()
+                                                .add(
+                                                        new XYChart.Data<>(
+                                                                currentTime,
+                                                                loadVal
+                                                        )
+                                                );
+
+                                        if (loadSeries
+                                                .getData()
+                                                .size() > 8) {
+
+                                            loadSeries
+                                                    .getData()
+                                                    .remove(0);
+                                        }
+                                    }
+                                }
+                        )
+                );
+
+        telemetryTimeline.setCycleCount(
+                Timeline.INDEFINITE
+        );
+
+        telemetryTimeline.play();
     }
 
+    // ============================================================
+    // STOP TELEMETRY
+    // ============================================================
+
+    public void stopTelemetry() {
+
+        if (telemetryTimeline != null) {
+
+            telemetryTimeline.stop();
+        }
+    }
+
+    // ============================================================
+    // LIGHT THEME CSS
+    // ============================================================
+
     private String getLightThemeCSS() {
+
         return """
-            .scroll-bar:vertical, .scroll-bar:horizontal {
+            .scroll-bar:vertical,
+            .scroll-bar:horizontal {
                 -fx-background-color: #F8FAFC;
             }
-            .scroll-bar:vertical .thumb, .scroll-bar:horizontal .thumb {
+
+            .scroll-bar:vertical .thumb,
+            .scroll-bar:horizontal .thumb {
                 -fx-background-color: #CBD5E1;
                 -fx-background-radius: 4px;
             }
+
             .text-area {
                 -fx-background-color: #0F172A;
             }
+
             .text-area .content {
                 -fx-background-color: #0F172A;
             }
+
             .chart-line-symbol {
                 -fx-background-color: #2563EB, #FFFFFF;
             }
+
             .default-color0.chart-series-line {
                 -fx-stroke: #2563EB;
                 -fx-stroke-width: 2.5px;

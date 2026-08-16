@@ -278,7 +278,7 @@ public class ReportsAnalyticsView extends ScrollPane {
         container.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 12px; -fx-border-color: #E2E8F0; -fx-border-radius: 12px;");
 
         reportTable = new TableView<>();
-        reportTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        reportTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         reportTable.setPrefHeight(420);
 
         // Column 1: Ticket & Reporter
