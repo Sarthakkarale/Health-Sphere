@@ -17,6 +17,8 @@ import java.util.Objects;
 
 /**
  * AIHealthAssistantView presents the Clinical Decision Support AI Chat interface.
+ * Updated layout hierarchy to enable smooth vertical scrolling down to bottom elements,
+ * added sidebar footer controls (Doctor Profile & Logout), and matched sidebar tab styles.
  */
 public class AIHealthAssistantView {
 
@@ -42,7 +44,7 @@ public class AIHealthAssistantView {
 
         // --- Main Content Area ---
         VBox contentArea = new VBox(20);
-        contentArea.setPadding(new Insets(20, 30, 20, 30));
+        contentArea.setPadding(new Insets(20, 30, 30, 30));
         contentArea.getStyleClass().add("content-area");
 
         // Top Navigation Header
@@ -54,26 +56,33 @@ public class AIHealthAssistantView {
         VBox.setVgrow(bodyLayout, Priority.ALWAYS);
         contentArea.getChildren().add(bodyLayout);
 
-        // ScrollPane Container
-        ScrollPane scrollPane = new ScrollPane(contentArea);
+        mainRoot.setCenter(contentArea);
+
+        // ScrollPane Container wrapping root layout to scroll down to bottom fully
+        ScrollPane scrollPane = new ScrollPane(mainRoot);
         scrollPane.setFitToWidth(true);
         scrollPane.setFitToHeight(true);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.getStyleClass().add("content-scrollpane");
-        mainRoot.setCenter(scrollPane);
 
-        Scene aiScene = new Scene(mainRoot, stage.getWidth(), stage.getHeight());
-        aiScene.getStylesheets().add(Objects.requireNonNull(
-                getClass().getResource("/css/ai_health_assistant.css")).toExternalForm());
+        Scene aiScene = new Scene(scrollPane, stage.getWidth(), stage.getHeight());
+        
+        try {
+            aiScene.getStylesheets().add(Objects.requireNonNull(
+                    getClass().getResource("/css/ai_health_assistant.css")).toExternalForm());
+        } catch (Exception ignored) {}
 
         return aiScene;
     }
 
-    /** Creates Sidebar Navigation with active state on AI Health Assistant tab */
+    /** Creates Sidebar Navigation with Doctor Profile & Logout buttons at the bottom */
     private VBox createSidebar() {
         VBox sidebar = new VBox();
         sidebar.setPadding(new Insets(25, 15, 25, 15));
         sidebar.getStyleClass().add("sidebar");
         sidebar.setMinWidth(240);
+        sidebar.setPrefWidth(240);
 
         // Logo Section
         HBox logoSection = new HBox(10);
@@ -108,6 +117,8 @@ public class AIHealthAssistantView {
         for (int i = 0; i < tabs.length; i++) {
             HBox navTab = new HBox(12);
             navTab.getStyleClass().add("nav-tab");
+            navTab.setAlignment(Pos.CENTER_LEFT);
+            navTab.setPadding(new Insets(8, 12, 8, 12));
 
             if (i == 7) { // Active Highlight: AI Health Assistant
                 navTab.getStyleClass().add("nav-tab-active");
@@ -126,7 +137,46 @@ public class AIHealthAssistantView {
             navTab.setOnMouseClicked(e -> handleSidebarTabClick(index));
         }
 
-        sidebar.getChildren().addAll(logoSection, navItems);
+        // Sidebar Footer Controls (Doctor Profile & Logout Button)
+        VBox footer = new VBox(8);
+        footer.setAlignment(Pos.BOTTOM_LEFT);
+        footer.setPadding(new Insets(16, 0, 0, 0));
+        VBox.setVgrow(footer, Priority.ALWAYS);
+
+        Separator lineDivider = new Separator();
+        lineDivider.getStyleClass().add("sidebar-divider");
+
+        HBox docProfile = new HBox(12);
+        docProfile.setAlignment(Pos.CENTER_LEFT);
+        docProfile.getStyleClass().add("sidebar-profile");
+        docProfile.setPadding(new Insets(6, 12, 6, 12));
+
+        ImageView profileIcon = new ImageView(ResourceImage.load("/images/icons/ic_doctor_profile_small.png"));
+        profileIcon.setFitWidth(18);
+        profileIcon.setFitHeight(18);
+
+        Label docLabel = new Label("Doctor Profile");
+        docLabel.getStyleClass().add("sidebar-profile-name");
+        docProfile.getChildren().addAll(profileIcon, docLabel);
+        docProfile.setOnMouseClicked(e ->
+                Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()));
+
+        HBox logout = new HBox(12);
+        logout.setAlignment(Pos.CENTER_LEFT);
+        logout.getStyleClass().add("nav-tab-logout");
+        logout.setPadding(new Insets(6, 12, 6, 12));
+
+        ImageView logoutIcon = new ImageView(ResourceImage.load("/images/icons/ic_logout.png"));
+        logoutIcon.setFitWidth(18);
+        logoutIcon.setFitHeight(18);
+
+        Label logoutLabel = new Label("Logout");
+        logoutLabel.getStyleClass().add("nav-text-logout");
+        logout.getChildren().addAll(logoutIcon, logoutLabel);
+        logout.setOnMouseClicked(e -> System.out.println("Logging out..."));
+
+        footer.getChildren().addAll(lineDivider, docProfile, logout);
+        sidebar.getChildren().addAll(logoSection, navItems, footer);
         return sidebar;
     }
 
@@ -177,6 +227,8 @@ public class AIHealthAssistantView {
 
         Label docProfileLink = new Label("Doctor Profile");
         docProfileLink.getStyleClass().add("header-profile-link");
+        docProfileLink.setOnMouseClicked(e -> 
+                Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()));
 
         ImageView bellIcon = new ImageView(ResourceImage.load("/images/doctor/bell.png"));
         bellIcon.setFitWidth(18); 

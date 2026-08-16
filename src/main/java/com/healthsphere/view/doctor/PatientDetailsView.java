@@ -1,6 +1,5 @@
 package com.healthsphere.view.doctor;
 
-import com.healthsphere.model.Patient;
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ResourceImage;
 
@@ -12,39 +11,94 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Random;
 
+/**
+ * PatientDetailsView displays detailed patient information.
+ * Features dynamic patient selection, adding new patients via a dialog, 
+ * full page vertical scrolling, and sidebar navigation.
+ */
 public class PatientDetailsView {
 
     private final Stage stage;
     private final Scene scene;
 
-    // Containers to dynamically update when switching patients
-    private VBox dynamicContentArea;
-    private HBox otherPatientsBarContainer;
+    // Dynamic UI Component References for Patient Switching
+    private Label nameLbl;
+    private Label metaLbl;
+    private Label idLbl;
+    private ImageView profileImg;
+    private VBox vitalsContent;
+    private Label historyText;
+    private HBox patientSelectorBar;
+    private final List<Button> patientTabButtons = new ArrayList<>();
 
-    // Sample list of patients
-    private final List<Patient> patientList = new ArrayList<>();
-    private Patient currentPatient;
+    // Mock Data Representation
+    private static class PatientData {
+        String name;
+        String meta;
+        String id;
+        String imgPath;
+        String[] vitals;
+        String history;
+
+        PatientData(String name, String meta, String id, String imgPath, String[] vitals, String history) {
+            this.name = name;
+            this.meta = meta;
+            this.id = id;
+            this.imgPath = imgPath;
+            this.vitals = vitals;
+            this.history = history;
+        }
+    }
+
+    private final List<PatientData> patientList = new ArrayList<>();
 
     public PatientDetailsView(Stage stage) {
         this.stage = stage;
-        initData();
+        initPatientData();
         this.scene = createScene();
     }
 
-    private void initData() {
-        patientList.add(new Patient("Sarah Miller", "28 Years", "Female", "A+", "+1 (555) 123-4567", "/images/mocks/sarah_miller.png", "SM", "#2563EB", "#FFFFFF"));
-        patientList.add(new Patient("John Doe", "34 Years", "Male", "O+", "+1 (555) 987-6543", "/images/mocks/john_d.png", "JD", "#CBD5E1", "#475569"));
-        patientList.add(new Patient("Alice Walker", "42 Years", "Female", "B-", "+1 (555) 246-8101", null, "AW", "#CBD5E1", "#475569"));
-        patientList.add(new Patient("Robert Smith", "55 Years", "Male", "AB+", "+1 (555) 369-1122", null, "RS", "#0D9488", "#FFFFFF"));
-        
-        // Default selected patient
-        this.currentPatient = patientList.get(0);
+    private void initPatientData() {
+        patientList.add(new PatientData(
+                "Robert Chen",
+                "Male • 42 Years Old • Blood Group: A+",
+                "Patient ID: #PID-8842",
+                "/images/mocks/robert_chen.png",
+                new String[]{"• Heart Rate: 72 bpm", "• Blood Pressure: 120/80 mmHg", "• Temperature: 98.6 °F", "• SpO2: 99%"},
+                "Patient has a history of mild migraine. No known drug allergies reported. Last consultation conducted on Oct 26, 2023."
+        ));
+        patientList.add(new PatientData(
+                "Emily Watson",
+                "Female • 29 Years Old • Blood Group: O+",
+                "Patient ID: #PID-3109",
+                "/images/mocks/robert_chen.png",
+                new String[]{"• Heart Rate: 78 bpm", "• Blood Pressure: 115/75 mmHg", "• Temperature: 98.4 °F", "• SpO2: 98%"},
+                "Patient reports seasonal allergies and mild asthma. Prescribed inhaler for exercise-induced bronchospasm. Last consultation on Nov 12, 2023."
+        ));
+        patientList.add(new PatientData(
+                "Michael Brown",
+                "Male • 56 Years Old • Blood Group: B+",
+                "Patient ID: #PID-5521",
+                "/images/mocks/robert_chen.png",
+                new String[]{"• Heart Rate: 84 bpm", "• Blood Pressure: 135/88 mmHg", "• Temperature: 98.8 °F", "• SpO2: 96%"},
+                "Type 2 Diabetes mellitus under dietary management and metformin regime. Regular routine monitoring required. Last consultation on Dec 04, 2023."
+        ));
+        patientList.add(new PatientData(
+                "Sophia Martinez",
+                "Female • 35 Years Old • Blood Group: AB-",
+                "Patient ID: #PID-9012",
+                "/images/mocks/robert_chen.png",
+                new String[]{"• Heart Rate: 68 bpm", "• Blood Pressure: 118/76 mmHg", "• Temperature: 98.2 °F", "• SpO2: 100%"},
+                "Post-surgery follow-up for ACL reconstruction. Recovery progressing normally with daily physical therapy. Last consultation on Jan 15, 2024."
+        ));
     }
 
     public Scene getScene() {
@@ -55,486 +109,314 @@ public class PatientDetailsView {
         BorderPane mainRoot = new BorderPane();
         mainRoot.getStyleClass().add("root-pane");
 
-        // Sidebar Navigation
+        // --- Sidebar (Left Navigation) ---
         VBox sidebar = createSidebar();
         mainRoot.setLeft(sidebar);
 
-        // Content Area Container
-        dynamicContentArea = new VBox(20);
-        dynamicContentArea.setPadding(new Insets(20, 30, 20, 30));
-        dynamicContentArea.getStyleClass().add("content-area");
+        // --- Main Content Area ---
+        VBox contentArea = new VBox(20);
+        contentArea.setPadding(new Insets(20, 30, 30, 30));
+        contentArea.getStyleClass().add("content-area");
 
-        // Build main content layout
-        rebuildMainContent();
+        // Top Header
+        HBox topHeader = createTopHeader();
+        contentArea.getChildren().add(topHeader);
 
-        // ScrollPane Container
-        ScrollPane scrollPane = new ScrollPane(dynamicContentArea);
-        scrollPane.setFitToWidth(true);
-        scrollPane.getStyleClass().add("content-scrollpane");
-        mainRoot.setCenter(scrollPane);
+        // Title and Add Patient Header Section
+        BorderPane titleSection = createTitleSection();
+        contentArea.getChildren().add(titleSection);
 
-        Scene patientDetailsScene = new Scene(mainRoot, stage.getWidth(), stage.getHeight());
-        patientDetailsScene.getStylesheets().add(Objects.requireNonNull(
-                getClass().getResource("/css/patient_details.css")).toExternalForm());
+        // Patient Selector Bar (Multiple Patients Tab)
+        patientSelectorBar = createPatientSelectorBar();
+        contentArea.getChildren().add(patientSelectorBar);
+
+        // Patient Overview Header Card
+        VBox patientCard = createPatientOverviewCard();
+        contentArea.getChildren().add(patientCard);
+
+        // Information Grid Sections
+        GridPane detailsGrid = createDetailsGrid();
+        contentArea.getChildren().add(detailsGrid);
+
+        mainRoot.setCenter(contentArea);
+
+        // --- Outer ScrollPane to enable vertical scrolling down to the bottom ---
+        ScrollPane outerScrollPane = new ScrollPane(mainRoot);
+        outerScrollPane.setFitToWidth(true);
+        outerScrollPane.setFitToHeight(true);
+        outerScrollPane.getStyleClass().add("content-scrollpane");
+
+        Scene patientDetailsScene = new Scene(outerScrollPane, stage.getWidth(), stage.getHeight());
+
+        try {
+            patientDetailsScene.getStylesheets().add(Objects.requireNonNull(
+                    getClass().getResource("/css/appointments.css")).toExternalForm());
+        } catch (Exception ignored) {}
 
         return patientDetailsScene;
     }
 
-    /** Rebuilds or updates the main view layout when selected patient changes */
-    private void rebuildMainContent() {
-        dynamicContentArea.getChildren().clear();
+    private HBox createPatientSelectorBar() {
+        HBox bar = new HBox(10);
+        bar.setAlignment(Pos.CENTER_LEFT);
+        bar.setPadding(new Insets(5, 0, 5, 0));
 
-        // 1. Top Bar Header
-        dynamicContentArea.getChildren().add(createTopHeader());
+        Label selectLabel = new Label("Select Patient:");
+        selectLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #475569; -fx-font-size: 13px;");
+        bar.getChildren().add(selectLabel);
 
-        // 2. Quick Access Patient Switcher Bar
-        otherPatientsBarContainer = createOtherPatientsBar();
-        dynamicContentArea.getChildren().add(otherPatientsBarContainer);
+        rebuildPatientTabs(bar);
 
-        // 3. Selected Patient Card
-        dynamicContentArea.getChildren().add(createPatientHeaderCard(currentPatient));
-
-        // 4. Summary Cards (Allergies, Chronic Diseases, Vitals)
-        dynamicContentArea.getChildren().add(createSummaryCardsGrid(currentPatient));
-
-        // 5. Medical History & Previous Appointments Grid
-        dynamicContentArea.getChildren().add(createHistoryAndAppointmentsGrid(currentPatient));
-
-        // 6. Uploaded Reports Section
-        dynamicContentArea.getChildren().add(createUploadedReportsSection());
+        return bar;
     }
 
-    /** Switch active patient and reload dynamic view elements */
-    private void switchPatient(Patient selectedPatient) {
-        this.currentPatient = selectedPatient;
-        rebuildMainContent();
+    private void rebuildPatientTabs(HBox bar) {
+        bar.getChildren().removeIf(node -> node instanceof Button);
+        patientTabButtons.clear();
+
+        for (int i = 0; i < patientList.size(); i++) {
+            PatientData patient = patientList.get(i);
+            Button patientBtn = new Button(patient.name);
+            patientBtn.setCursor(javafx.scene.Cursor.HAND);
+
+            final int index = i;
+            patientBtn.setOnAction(e -> switchPatient(index));
+            patientTabButtons.add(patientBtn);
+            bar.getChildren().add(patientBtn);
+        }
+
+        updatePatientTabStyles(0);
     }
 
-    /** Other Patients Quick Switcher Bar */
-    private HBox createOtherPatientsBar() {
-        HBox card = new HBox(20);
-        card.getStyleClass().add("panel-card");
-        card.setAlignment(Pos.CENTER_LEFT);
-        card.setPadding(new Insets(12, 20, 12, 20));
+    private void switchPatient(int index) {
+        if (index < 0 || index >= patientList.size()) return;
+        PatientData patient = patientList.get(index);
 
-        Label sectionLabel = new Label("OTHER PATIENTS:");
-        sectionLabel.getStyleClass().add("section-mini-title");
+        nameLbl.setText(patient.name);
+        metaLbl.setText(patient.meta);
+        idLbl.setText(patient.id);
+        profileImg.setImage(ResourceImage.load(patient.imgPath));
 
-        HBox avatarList = new HBox(15);
-        avatarList.setAlignment(Pos.CENTER_LEFT);
+        vitalsContent.getChildren().clear();
+        for (String vital : patient.vitals) {
+            vitalsContent.getChildren().add(new Label(vital));
+        }
 
-        for (Patient p : patientList) {
-            boolean isSelected = p.equals(currentPatient);
-            VBox item;
+        historyText.setText(patient.history);
 
-            if (p.getAvatarPath() != null) {
-                item = createPatientItem(p, isSelected);
+        updatePatientTabStyles(index);
+    }
+
+    private void updatePatientTabStyles(int activeIndex) {
+        for (int i = 0; i < patientTabButtons.size(); i++) {
+            Button btn = patientTabButtons.get(i);
+            if (i == activeIndex) {
+                btn.setStyle("-fx-background-color: #3B82F6; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 6px; -fx-padding: 6 14;");
             } else {
-                item = createInitialsPatientItem(p, isSelected);
+                btn.setStyle("-fx-background-color: #E2E8F0; -fx-text-fill: #334155; -fx-font-weight: normal; -fx-background-radius: 6px; -fx-padding: 6 14;");
+            }
+        }
+    }
+
+    private BorderPane createTitleSection() {
+        BorderPane section = new BorderPane();
+
+        VBox titleBox = new VBox(2);
+        Label mainTitle = new Label("Patient Details");
+        mainTitle.getStyleClass().add("page-title");
+        Label subTitle = new Label("Comprehensive medical record and personal profile");
+        subTitle.getStyleClass().add("page-subtitle");
+        titleBox.getChildren().addAll(mainTitle, subTitle);
+
+        // CHANGED: Edit Profile replaced with Add Patient
+        Button addPatientBtn = new Button("+ Add Patient");
+        addPatientBtn.getStyleClass().add("btn-primary-action");
+
+        // ACTION: Open Modal Dialog to Add New Patient
+        addPatientBtn.setOnAction(e -> openAddPatientDialog());
+
+        section.setLeft(titleBox);
+        section.setRight(addPatientBtn);
+        return section;
+    }
+
+    private void openAddPatientDialog() {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(stage);
+        dialog.setTitle("Add New Patient");
+
+        VBox form = new VBox(12);
+        form.setPadding(new Insets(20));
+        form.setStyle("-fx-background-color: #FFFFFF;");
+
+        Label dialogTitle = new Label("New Patient Information");
+        dialogTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1E293B;");
+
+        TextField nameField = new TextField();
+        nameField.setPromptText("Full Name (e.g. John Doe)");
+
+        TextField ageField = new TextField();
+        ageField.setPromptText("Age (e.g. 30)");
+
+        ComboBox<String> genderBox = new ComboBox<>();
+        genderBox.getItems().addAll("Male", "Female", "Other");
+        genderBox.getSelectionModel().selectFirst();
+
+        TextField bloodGroupField = new TextField();
+        bloodGroupField.setPromptText("Blood Group (e.g. O+)");
+
+        TextField vitalsField = new TextField();
+        vitalsField.setPromptText("Vitals (comma-separated, e.g. HR: 72 bpm, BP: 120/80 mmHg)");
+
+        TextArea historyArea = new TextArea();
+        historyArea.setPromptText("Medical History & Notes...");
+        historyArea.setPrefRowCount(3);
+
+        HBox actionButtons = new HBox(10);
+        actionButtons.setAlignment(Pos.CENTER_RIGHT);
+
+        Button cancelBtn = new Button("Cancel");
+        cancelBtn.setOnAction(e -> dialog.close());
+
+        Button saveBtn = new Button("Add Patient");
+        saveBtn.setStyle("-fx-background-color: #3B82F6; -fx-text-fill: white; -fx-font-weight: bold;");
+        saveBtn.setOnAction(e -> {
+            String name = nameField.getText().trim();
+            if (name.isEmpty()) {
+                name = "New Patient";
+            }
+            String age = ageField.getText().trim().isEmpty() ? "30" : ageField.getText().trim();
+            String gender = genderBox.getValue();
+            String bloodGroup = bloodGroupField.getText().trim().isEmpty() ? "A+" : bloodGroupField.getText().trim();
+            
+            String meta = gender + " • " + age + " Years Old • Blood Group: " + bloodGroup;
+            String randomId = "Patient ID: #PID-" + (1000 + new Random().nextInt(9000));
+            
+            String[] vitals;
+            if (!vitalsField.getText().trim().isEmpty()) {
+                String[] rawVitals = vitalsField.getText().split(",");
+                vitals = new String[rawVitals.length];
+                for (int i = 0; i < rawVitals.length; i++) {
+                    vitals[i] = "• " + rawVitals[i].trim();
+                }
+            } else {
+                vitals = new String[]{"• Heart Rate: 72 bpm", "• Blood Pressure: 120/80 mmHg", "• Temperature: 98.6 °F", "• SpO2: 99%"};
             }
 
-            // Click listener to switch patient details dynamically
-            item.setOnMouseClicked(e -> switchPatient(p));
-            avatarList.getChildren().add(item);
-        }
+            String history = historyArea.getText().trim().isEmpty() 
+                ? "No prior medical history recorded." 
+                : historyArea.getText().trim();
 
-        StackPane addBtn = new StackPane();
-        addBtn.getStyleClass().add("add-patient-circle");
-        Label plusSign = new Label("+");
-        plusSign.getStyleClass().add("add-patient-plus");
-        addBtn.getChildren().add(plusSign);
+            PatientData newPatient = new PatientData(
+                name, meta, randomId, "/images/mocks/robert_chen.png", vitals, history
+            );
 
-        avatarList.getChildren().add(addBtn);
-        card.getChildren().addAll(sectionLabel, avatarList);
+            patientList.add(newPatient);
+            rebuildPatientTabs(patientSelectorBar);
+            switchPatient(patientList.size() - 1);
+            dialog.close();
+        });
 
-        return card;
+        actionButtons.getChildren().addAll(cancelBtn, saveBtn);
+
+        form.getChildren().addAll(
+            dialogTitle,
+            new Label("Name:"), nameField,
+            new Label("Age:"), ageField,
+            new Label("Gender:"), genderBox,
+            new Label("Blood Group:"), bloodGroupField,
+            new Label("Vitals:"), vitalsField,
+            new Label("History & Notes:"), historyArea,
+            actionButtons
+        );
+
+        Scene dialogScene = new Scene(form, 400, 500);
+        dialog.setScene(dialogScene);
+        dialog.showAndWait();
     }
 
-    private VBox createPatientItem(Patient p, boolean isSelected) {
-        VBox item = new VBox(4);
-        item.setAlignment(Pos.CENTER);
-        item.getStyleClass().add("clickable-icon");
-
-        ImageView avatar = new ImageView(ResourceImage.load(p.getAvatarPath()));
-        avatar.setFitWidth(38); avatar.setFitHeight(38);
-        Circle clip = new Circle(19, 19, 19);
-        avatar.setClip(clip);
-
-        if (isSelected) {
-            StackPane activeWrapper = new StackPane(avatar);
-            activeWrapper.getStyleClass().add("patient-avatar-active");
-            Label nameLbl = new Label(p.getName());
-            nameLbl.getStyleClass().add("patient-name-active");
-            item.getChildren().addAll(activeWrapper, nameLbl);
-        } else {
-            Label nameLbl = new Label(p.getName());
-            nameLbl.getStyleClass().add("patient-name-inactive");
-            item.getChildren().addAll(avatar, nameLbl);
-        }
-
-        return item;
-    }
-
-    private VBox createInitialsPatientItem(Patient p, boolean isSelected) {
-        VBox item = new VBox(4);
-        item.setAlignment(Pos.CENTER);
-        item.getStyleClass().add("clickable-icon");
-
-        StackPane circle = new StackPane();
-        String style = "-fx-background-color: " + p.getBgColor() + "; -fx-background-radius: 20; -fx-min-width: 38px; -fx-min-height: 38px;";
-        if (isSelected) {
-            style += " -fx-border-color: #2563EB; -fx-border-width: 2px; -fx-border-radius: 20px;";
-        }
-        circle.setStyle(style);
-
-        Label text = new Label(p.getInitials());
-        text.setStyle("-fx-text-fill: " + p.getTextColor() + "; -fx-font-weight: bold; -fx-font-size: 12px;");
-        circle.getChildren().add(text);
-
-        Label nameLbl = new Label(p.getName());
-        nameLbl.getStyleClass().add(isSelected ? "patient-name-active" : "patient-name-inactive");
-
-        item.getChildren().addAll(circle, nameLbl);
-        return item;
-    }
-
-    /** Selected Patient Header Card */
-    private HBox createPatientHeaderCard(Patient patient) {
-        HBox card = new HBox(20);
-        card.getStyleClass().add("panel-card");
-        card.setAlignment(Pos.CENTER_LEFT);
+    private VBox createPatientOverviewCard() {
+        VBox card = new VBox(15);
+        card.getStyleClass().add("filter-container-card");
         card.setPadding(new Insets(20));
 
-        ImageView avatar;
-        if (patient.getAvatarPath() != null) {
-            avatar = new ImageView(ResourceImage.load(patient.getAvatarPath()));
-        } else {
-            avatar = new ImageView(ResourceImage.load("/images/mocks/sarah_miller.png")); // Fallback default
-        }
-        avatar.setFitWidth(80); avatar.setFitHeight(80);
-        Circle clip = new Circle(40, 40, 40);
-        avatar.setClip(clip);
+        HBox profileHeader = new HBox(20);
+        profileHeader.setAlignment(Pos.CENTER_LEFT);
 
-        VBox detailsBox = new VBox(8);
-        Label name = new Label(patient.getName());
-        name.getStyleClass().add("patient-header-name");
+        PatientData initialData = patientList.get(0);
 
-        HBox metaBox = new HBox(20);
-        metaBox.setAlignment(Pos.CENTER_LEFT);
+        profileImg = new ImageView(ResourceImage.load(initialData.imgPath));
+        profileImg.setFitWidth(70);
+        profileImg.setFitHeight(70);
+        Circle clip = new Circle(35, 35, 35);
+        profileImg.setClip(clip);
 
-        HBox ageMeta = createMetaItem("/images/icons/ic_cake.png", patient.getAge());
-        HBox genderMeta = createMetaItem("/images/icons/ic_female.png", patient.getGender());
-        HBox bloodMeta = createMetaItem("/images/icons/ic_blood.png", patient.getBloodType());
-        HBox phoneMeta = createMetaItem("/images/icons/ic_phone.png", patient.getPhone());
+        VBox infoBox = new VBox(4);
+        nameLbl = new Label(initialData.name);
+        nameLbl.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1E293B;");
 
-        metaBox.getChildren().addAll(ageMeta, genderMeta, bloodMeta, phoneMeta);
-        detailsBox.getChildren().addAll(name, metaBox);
+        metaLbl = new Label(initialData.meta);
+        metaLbl.setStyle("-fx-font-size: 14px; -fx-text-fill: #64748B;");
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        idLbl = new Label(initialData.id);
+        idLbl.setStyle("-fx-font-size: 13px; -fx-text-fill: #3B82F6; -fx-font-weight: bold;");
 
-        Button editBtn = new Button("Edit Patient");
-        ImageView editIcon = new ImageView(ResourceImage.load("/images/icons/ic_edit.png"));
-        editIcon.setFitWidth(14); editIcon.setFitHeight(14);
-        editBtn.setGraphic(editIcon);
-        editBtn.getStyleClass().add("btn-edit-patient");
+        infoBox.getChildren().addAll(nameLbl, metaLbl, idLbl);
+        profileHeader.getChildren().addAll(profileImg, infoBox);
 
-        card.getChildren().addAll(avatar, detailsBox, spacer, editBtn);
+        card.getChildren().add(profileHeader);
         return card;
     }
 
-    private HBox createMetaItem(String iconPath, String text) {
-        HBox box = new HBox(6);
-        box.setAlignment(Pos.CENTER_LEFT);
-        ImageView icon = new ImageView(ResourceImage.load(iconPath));
-        icon.setFitWidth(14); icon.setFitHeight(14);
-        Label label = new Label(text);
-        label.getStyleClass().add("patient-header-meta");
-        box.getChildren().addAll(icon, label);
-        return box;
-    }
+    private GridPane createDetailsGrid() {
+        GridPane grid = new GridPane();
+        grid.setHgap(20);
+        grid.setVgap(20);
 
-    /** Summary Cards Grid dynamically rendered for selected patient */
-    private HBox createSummaryCardsGrid(Patient patient) {
-        HBox grid = new HBox(20);
+        PatientData initialData = patientList.get(0);
 
-        // 1. Allergies
-        VBox allergiesCard = createBorderedCard("Allergies", "#EF4444", "/images/icons/ic_allergy.png");
-        HBox allergyPills = new HBox(10);
-        if (patient.getName().equals("Sarah Miller")) {
-            allergyPills.getChildren().addAll(createPill("Penicillin"), createPill("Peanuts"));
-        } else {
-            allergyPills.getChildren().addAll(createPill("Dust/Pollen"));
+        // Vitals Card
+        VBox vitalsCard = new VBox(12);
+        vitalsCard.getStyleClass().add("filter-container-card");
+        vitalsCard.setPadding(new Insets(20));
+
+        Label vitalsTitle = new Label("Recent Vitals");
+        vitalsTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1E293B;");
+
+        vitalsContent = new VBox(8);
+        for (String vital : initialData.vitals) {
+            vitalsContent.getChildren().add(new Label(vital));
         }
-        allergiesCard.getChildren().add(allergyPills);
 
-        // 2. Chronic Diseases
-        VBox chronicCard = createBorderedCard("Chronic Diseases", "#10B981", "/images/icons/ic_disease.png");
-        HBox chronicPills = new HBox(10);
-        if (patient.getName().equals("Sarah Miller")) {
-            chronicPills.getChildren().add(createPill("Asthma"));
-        } else if (patient.getName().equals("Robert Smith")) {
-            chronicPills.getChildren().addAll(createPill("Hypertension"), createPill("Diabetes"));
-        } else {
-            chronicPills.getChildren().add(createPill("None"));
-        }
-        chronicCard.getChildren().add(chronicPills);
+        vitalsCard.getChildren().addAll(vitalsTitle, vitalsContent);
 
-        // 3. Latest Vitals
-        VBox vitalsCard = createBorderedCard("Latest Vitals", "#2563EB", "/images/icons/ic_vitals.png");
-        HBox vitalsRow = new HBox(20);
-        vitalsRow.setAlignment(Pos.CENTER_LEFT);
-
-        VBox hrBox = createVitalStat("HR", patient.getName().equals("Sarah Miller") ? "72" : "80", "bpm");
-        VBox bpBox = createVitalStat("BP", patient.getName().equals("Sarah Miller") ? "120/80" : "130/85", "");
-        VBox weightBox = createVitalStat("Weight", patient.getName().equals("Sarah Miller") ? "65" : "78", "kg");
-
-        vitalsRow.getChildren().addAll(hrBox, createSeparator(), bpBox, createSeparator(), weightBox);
-        vitalsCard.getChildren().add(vitalsRow);
-
-        HBox.setHgrow(allergiesCard, Priority.ALWAYS);
-        HBox.setHgrow(chronicCard, Priority.ALWAYS);
-        HBox.setHgrow(vitalsCard, Priority.ALWAYS);
-
-        grid.getChildren().addAll(allergiesCard, chronicCard, vitalsCard);
-        return grid;
-    }
-
-    private Label createPill(String text) {
-        Label pill = new Label(text);
-        pill.getStyleClass().add("tag-pill");
-        return pill;
-    }
-
-    private VBox createBorderedCard(String title, String borderColor, String iconPath) {
-        VBox card = new VBox(14);
-        card.getStyleClass().add("panel-card");
-        card.setStyle("-fx-border-color: " + borderColor + " transparent transparent transparent; -fx-border-width: 3px 1px 1px 1px;");
-        card.setPadding(new Insets(16));
-
-        HBox titleBox = new HBox(8);
-        titleBox.setAlignment(Pos.CENTER_LEFT);
-
-        ImageView icon = new ImageView(ResourceImage.load(iconPath));
-        icon.setFitWidth(18); icon.setFitHeight(18);
-
-        Label label = new Label(title);
-        label.getStyleClass().add("card-header-title");
-
-        titleBox.getChildren().addAll(icon, label);
-        card.getChildren().add(titleBox);
-        return card;
-    }
-
-    private VBox createVitalStat(String labelText, String valueText, String unitText) {
-        VBox box = new VBox(2);
-        box.setAlignment(Pos.CENTER);
-
-        Label lbl = new Label(labelText);
-        lbl.getStyleClass().add("vital-label");
-
-        HBox valBox = new HBox(2);
-        valBox.setAlignment(Pos.BASELINE_CENTER);
-        Label val = new Label(valueText);
-        val.getStyleClass().add("vital-value");
-        Label unit = new Label(unitText);
-        unit.getStyleClass().add("vital-unit");
-        valBox.getChildren().addAll(val, unit);
-
-        box.getChildren().addAll(lbl, valBox);
-        return box;
-    }
-
-    private Separator createSeparator() {
-        Separator s = new Separator(javafx.geometry.Orientation.VERTICAL);
-        s.setPrefHeight(28);
-        return s;
-    }
-
-    /** Medical History Timeline & Appointments Table dynamically rendered */
-    private HBox createHistoryAndAppointmentsGrid(Patient patient) {
-        HBox grid = new HBox(20);
-
-        // Left Column: Medical History Timeline
-        VBox historyCard = new VBox(15);
-        historyCard.getStyleClass().add("panel-card");
+        // Medical History Card
+        VBox historyCard = new VBox(12);
+        historyCard.getStyleClass().add("filter-container-card");
         historyCard.setPadding(new Insets(20));
-        HBox.setHgrow(historyCard, Priority.ALWAYS);
 
-        Label historyTitle = new Label("Medical History");
-        historyTitle.getStyleClass().add("section-card-title");
-        historyCard.getChildren().add(historyTitle);
+        Label historyTitle = new Label("Medical History & Notes");
+        historyTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1E293B;");
 
-        VBox timeline = new VBox(18);
+        historyText = new Label(initialData.history);
+        historyText.setWrapText(true);
+        historyText.setStyle("-fx-text-fill: #475569; -fx-font-size: 13px;");
 
-        if (patient.getName().equals("Sarah Miller")) {
-            timeline.getChildren().add(createTimelineNode(
-                    "Acute Bronchitis", "Oct 15, 2023",
-                    "Prescribed Amoxicillin 500mg. Recommended rest and increased fluid intake.",
-                    "/images/icons/ic_stethoscope.png", "#E0F2FE"));
-            timeline.getChildren().add(createTimelineNode(
-                    "Annual Checkup", "Jun 02, 2023",
-                    "Routine blood work clear. Administered flu shot.",
-                    "/images/icons/ic_pills.png", "#E0E7FF"));
-        } else {
-            timeline.getChildren().add(createTimelineNode(
-                    "General Consultation", "Jan 10, 2024",
-                    "Patient reported fatigue. Blood panel requested.",
-                    "/images/icons/ic_stethoscope.png", "#E0F2FE"));
-        }
+        historyCard.getChildren().addAll(historyTitle, historyText);
 
-        historyCard.getChildren().add(timeline);
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setPercentWidth(50);
+        ColumnConstraints col2 = new ColumnConstraints();
+        col2.setPercentWidth(50);
+        grid.getColumnConstraints().addAll(col1, col2);
 
-        // Right Column: Appointments
-        VBox apptCard = new VBox(15);
-        apptCard.getStyleClass().add("panel-card");
-        apptCard.setPadding(new Insets(20));
-        HBox.setHgrow(apptCard, Priority.ALWAYS);
+        grid.add(vitalsCard, 0, 0);
+        grid.add(historyCard, 1, 0);
 
-        Label apptTitle = new Label("Previous Appointments");
-        apptTitle.getStyleClass().add("section-card-title");
-
-        GridPane table = new GridPane();
-        table.setHgap(20);
-        table.setVgap(14);
-
-        table.add(createTableHeader("Date"), 0, 0);
-        table.add(createTableHeader("Doctor"), 1, 0);
-        table.add(createTableHeader("Reason"), 2, 0);
-        table.add(createTableHeader("Status"), 3, 0);
-
-        if (patient.getName().equals("Sarah Miller")) {
-            table.add(new Label("Oct 15, 2023"), 0, 1);
-            table.add(new Label("Dr. Julian"), 1, 1);
-            table.add(new Label("Severe Cough"), 2, 1);
-            table.add(createStatusPill("Completed", "pill-completed"), 3, 1);
-
-            table.add(new Label("Jun 02, 2023"), 0, 2);
-            table.add(new Label("Dr. Julian"), 1, 2);
-            table.add(new Label("Annual Physical"), 2, 2);
-            table.add(createStatusPill("Completed", "pill-completed"), 3, 2);
-        } else {
-            table.add(new Label("Jan 10, 2024"), 0, 1);
-            table.add(new Label("Dr. Julian"), 1, 1);
-            table.add(new Label("Fatigue Evaluation"), 2, 1);
-            table.add(createStatusPill("Completed", "pill-completed"), 3, 1);
-        }
-
-        apptCard.getChildren().addAll(apptTitle, table);
-        grid.getChildren().addAll(historyCard, apptCard);
         return grid;
     }
 
-    private HBox createTimelineNode(String title, String date, String desc, String iconPath, String badgeBgColor) {
-        HBox wrapper = new HBox(12);
-        wrapper.setAlignment(Pos.TOP_LEFT);
-
-        VBox timelineGraphic = new VBox(0);
-        timelineGraphic.setAlignment(Pos.TOP_CENTER);
-
-        StackPane badgeBox = new StackPane();
-        badgeBox.getStyleClass().add("timeline-badge");
-        badgeBox.setStyle("-fx-background-color: " + badgeBgColor + ";");
-
-        ImageView icon = new ImageView(ResourceImage.load(iconPath));
-        icon.setFitWidth(14); icon.setFitHeight(14);
-        badgeBox.getChildren().add(icon);
-
-        Region line = new Region();
-        line.getStyleClass().add("timeline-line");
-        VBox.setVgrow(line, Priority.ALWAYS);
-
-        timelineGraphic.getChildren().addAll(badgeBox, line);
-
-        VBox cardContent = createHistoryCard(title, date, desc);
-        HBox.setHgrow(cardContent, Priority.ALWAYS);
-
-        wrapper.getChildren().addAll(timelineGraphic, cardContent);
-        return wrapper;
-    }
-
-    private VBox createHistoryCard(String title, String date, String desc) {
-        VBox box = new VBox(8);
-        box.getStyleClass().add("history-item-box");
-        box.setPadding(new Insets(12));
-
-        BorderPane header = new BorderPane();
-        Label titleLbl = new Label(title);
-        titleLbl.getStyleClass().add("history-item-title");
-
-        Label dateLbl = new Label(date);
-        dateLbl.getStyleClass().add("history-item-date");
-
-        header.setLeft(titleLbl);
-        header.setRight(dateLbl);
-
-        Label descLbl = new Label(desc);
-        descLbl.setWrapText(true);
-        descLbl.getStyleClass().add("history-item-desc");
-
-        box.getChildren().addAll(header, descLbl);
-        return box;
-    }
-
-    private Label createTableHeader(String title) {
-        Label l = new Label(title);
-        l.getStyleClass().add("table-header-text");
-        return l;
-    }
-
-    private Label createStatusPill(String status, String styleClass) {
-        Label l = new Label(status);
-        l.getStyleClass().addAll("pill-status", styleClass);
-        return l;
-    }
-
-    /** Top Bar Header Search and Controls */
-    private HBox createTopHeader() {
-        HBox topBar = new HBox();
-        topBar.setAlignment(Pos.CENTER_RIGHT);
-
-        HBox searchField = new HBox(10);
-        searchField.getStyleClass().add("search-input-box");
-        searchField.setAlignment(Pos.CENTER_LEFT);
-
-        ImageView searchIcon = new ImageView(ResourceImage.load("/images/icons/ic_search.png"));
-        searchIcon.setFitWidth(16); searchIcon.setFitHeight(16);
-
-        TextField searchInput = new TextField();
-        searchInput.setPromptText("Search patients, records...");
-        searchInput.getStyleClass().add("search-text-field");
-        searchField.getChildren().addAll(searchIcon, searchInput);
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        HBox rightIcons = new HBox(18);
-        rightIcons.setAlignment(Pos.CENTER_RIGHT);
-
-        StackPane notificationBox = new StackPane();
-        ImageView bellIcon = new ImageView(ResourceImage.load("/images/icons/ic_bell.png"));
-        bellIcon.setFitWidth(18); bellIcon.setFitHeight(18);
-        Circle badge = new Circle(4, Color.RED);
-        StackPane.setAlignment(badge, Pos.TOP_RIGHT);
-        notificationBox.getChildren().addAll(bellIcon, badge);
-        notificationBox.getStyleClass().add("clickable-icon");
-
-        ImageView settingsIcon = new ImageView(ResourceImage.load("/images/icons/ic_settings.png"));
-        settingsIcon.setFitWidth(18); settingsIcon.setFitHeight(18);
-        settingsIcon.getStyleClass().add("clickable-icon");
-
-        ImageView userAvatar = new ImageView(ResourceImage.load("/images/doctor/portrait-3d-male-doctor.png"));
-        userAvatar.setFitWidth(32); userAvatar.setFitHeight(32);
-        Circle clip = new Circle(16, 16, 16);
-        userAvatar.setClip(clip);
-        userAvatar.getStyleClass().add("clickable-icon");
-
-        rightIcons.getChildren().addAll(notificationBox, settingsIcon, userAvatar);
-        topBar.getChildren().addAll(searchField, spacer, rightIcons);
-        return topBar;
-    }
-
-    /** Sidebar Navigation */
     private VBox createSidebar() {
         VBox sidebar = new VBox();
         sidebar.setPadding(new Insets(30, 15, 30, 15));
@@ -554,7 +436,7 @@ public class PatientDetailsView {
         VBox logoText = new VBox(0);
         Label appName = new Label("Health-Sphere");
         appName.getStyleClass().add("logo-name");
-        Label doctorSubtext = new Label("Doctor Module");
+        Label doctorSubtext = new Label("Doctor Dashboard");
         doctorSubtext.getStyleClass().add("logo-subtext");
         logoText.getChildren().addAll(appName, doctorSubtext);
         logoSection.getChildren().addAll(logoIconBox, logoText);
@@ -591,7 +473,40 @@ public class PatientDetailsView {
             navTab.setOnMouseClicked(e -> handleSidebarTabClick(index));
         }
 
-        sidebar.getChildren().addAll(logoSection, navItems);
+        VBox footer = new VBox(15);
+        footer.setAlignment(Pos.BOTTOM_CENTER);
+        VBox.setVgrow(footer, Priority.ALWAYS);
+
+        HBox doctorProfile = new HBox(12);
+        doctorProfile.getStyleClass().add("sidebar-profile");
+        doctorProfile.setAlignment(Pos.CENTER_LEFT);
+
+        ImageView profilePhoto = new ImageView(ResourceImage.load("/images/doctor/portrait-3d-male-doctor.png"));
+        profilePhoto.setFitWidth(28); profilePhoto.setFitHeight(28);
+        Circle profileClip = new Circle(14, 14, 14);
+        profilePhoto.setClip(profileClip);
+
+        VBox profileText = new VBox(0);
+        Label doctorName = new Label("Dr. Sarah");
+        doctorName.getStyleClass().add("sidebar-profile-name");
+        profileText.getChildren().add(doctorName);
+        doctorProfile.getChildren().addAll(profilePhoto, profileText);
+
+        doctorProfile.setOnMouseClicked(e -> Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()));
+
+        HBox logout = new HBox(15);
+        logout.getStyleClass().add("nav-tab");
+        logout.setAlignment(Pos.CENTER_LEFT);
+
+        ImageView logoutIcon = new ImageView(ResourceImage.load("/images/icons/ic_logout.png"));
+        logoutIcon.setFitWidth(18); logoutIcon.setFitHeight(18);
+
+        Label logoutLabel = new Label("Logout");
+        logoutLabel.getStyleClass().add("nav-text-logout");
+        logout.getChildren().addAll(logoutIcon, logoutLabel);
+
+        footer.getChildren().addAll(doctorProfile, logout);
+        sidebar.getChildren().addAll(logoSection, navItems, footer);
         return sidebar;
     }
 
@@ -609,24 +524,45 @@ public class PatientDetailsView {
         }
     }
 
-    /** Uploaded Reports Footer */
-    private HBox createUploadedReportsSection() {
-        BorderPane footer = new BorderPane();
-        footer.getStyleClass().add("panel-card");
-        footer.setPadding(new Insets(15, 20, 15, 20));
+    private HBox createTopHeader() {
+        HBox topBar = new HBox();
+        topBar.setAlignment(Pos.CENTER_RIGHT);
 
-        Label title = new Label("Uploaded Reports");
-        title.getStyleClass().add("section-card-title");
+        HBox searchField = new HBox(8);
+        searchField.getStyleClass().add("search-input-box");
+        searchField.setAlignment(Pos.CENTER_LEFT);
 
-        Hyperlink viewAll = new Hyperlink("View All");
-        viewAll.getStyleClass().add("link-view-all");
-        viewAll.setOnAction(e -> Navigation.goTo(stage, () -> new MedicalReportsView(stage).getScene()));
+        ImageView searchIcon = new ImageView(ResourceImage.load("/images/icons/ic_search.png"));
+        searchIcon.setFitWidth(16); searchIcon.setFitHeight(16);
 
-        footer.setLeft(title);
-        footer.setRight(viewAll);
+        TextField searchInput = new TextField();
+        searchInput.setPromptText("Search patients or IDs...");
+        searchInput.getStyleClass().add("search-text-field");
+        searchField.getChildren().addAll(searchIcon, searchInput);
 
-        HBox wrapper = new HBox(footer);
-        HBox.setHgrow(footer, Priority.ALWAYS);
-        return wrapper;
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        HBox rightIcons = new HBox(18);
+        rightIcons.setAlignment(Pos.CENTER_RIGHT);
+
+        StackPane notificationBox = new StackPane();
+        ImageView bellIcon = new ImageView(ResourceImage.load("/images/icons/ic_bell.png"));
+        bellIcon.setFitWidth(18); bellIcon.setFitHeight(18);
+        Circle badge = new Circle(4, Color.RED);
+        StackPane.setAlignment(badge, Pos.TOP_RIGHT);
+        notificationBox.getChildren().addAll(bellIcon, badge);
+        notificationBox.getStyleClass().add("clickable-icon");
+
+        ImageView userAvatar = new ImageView(ResourceImage.load("/images/doctor/portrait-3d-male-doctor.png"));
+        userAvatar.setFitWidth(32); userAvatar.setFitHeight(32);
+        Circle clip = new Circle(16, 16, 16);
+        userAvatar.setClip(clip);
+        userAvatar.getStyleClass().add("clickable-icon");
+        userAvatar.setOnMouseClicked(e -> Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()));
+
+        rightIcons.getChildren().addAll(notificationBox, userAvatar);
+        topBar.getChildren().addAll(searchField, spacer, rightIcons);
+        return topBar;
     }
 }

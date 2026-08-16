@@ -12,18 +12,29 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 /**
  * TodaysScheduleView represents the daily agenda screen for Doctors in Health-Sphere.
- * Fully interactive layout with responsive dynamic timeline line rendering and rich UI styling.
+ * Fully interactive layout with responsive dynamic timeline line rendering, interactive mini-calendar,
+ * date switcher navigation, and appointment rescheduling dialog.
  */
 public class TodaysScheduleView {
 
     private final Stage stage;
     private final Scene scene;
+
+    // Dynamic State for Date Navigation
+    private LocalDate currentDate = LocalDate.of(2023, 10, 25);
+    private LocalDate selectedCalendarDate = LocalDate.of(2023, 10, 25);
+    private Label dateTitleLabel;
+    private Label monthLabel;
+    private GridPane calendarGrid;
 
     public TodaysScheduleView(Stage stage) {
         this.stage = stage;
@@ -53,7 +64,7 @@ public class TodaysScheduleView {
 
         // Main 2-Column Split
         HBox mainGrid = new HBox(20);
-        
+
         VBox leftColumn = createScheduleTimelineColumn();
         HBox.setHgrow(leftColumn, Priority.ALWAYS);
 
@@ -64,15 +75,20 @@ public class TodaysScheduleView {
         mainGrid.getChildren().addAll(leftColumn, rightColumn);
         centerLayout.getChildren().add(mainGrid);
 
-        // ScrollPane Container
-        ScrollPane scrollPane = new ScrollPane(centerLayout);
-        scrollPane.setFitToWidth(true);
-        scrollPane.getStyleClass().add("content-scrollpane");
-        mainRoot.setCenter(scrollPane);
+        mainRoot.setCenter(centerLayout);
 
-        Scene scheduleScene = new Scene(mainRoot, stage.getWidth(), stage.getHeight());
-        scheduleScene.getStylesheets().add(Objects.requireNonNull(
-                getClass().getResource("/css/todays_schedule.css")).toExternalForm());
+        // Outer ScrollPane Container to wrap entire screen layout for full vertical scrolling
+        ScrollPane outerScrollPane = new ScrollPane(mainRoot);
+        outerScrollPane.setFitToWidth(true);
+        outerScrollPane.setFitToHeight(true);
+        outerScrollPane.getStyleClass().add("content-scrollpane");
+
+        Scene scheduleScene = new Scene(outerScrollPane, stage.getWidth(), stage.getHeight());
+        
+        try {
+            scheduleScene.getStylesheets().add(Objects.requireNonNull(
+                    getClass().getResource("/css/todays_schedule.css")).toExternalForm());
+        } catch (Exception ignored) {}
 
         return scheduleScene;
     }
@@ -88,7 +104,7 @@ public class TodaysScheduleView {
         HBox logoSection = new HBox(10);
         logoSection.setPadding(new Insets(0, 0, 30, 0));
         logoSection.setAlignment(Pos.CENTER_LEFT);
-        
+
         StackPane logoIconBox = new StackPane();
         logoIconBox.getStyleClass().add("logo-icon-box");
         Label logoAbbr = new Label("HS");
@@ -117,20 +133,20 @@ public class TodaysScheduleView {
         for (int i = 0; i < tabs.length; i++) {
             HBox navTab = new HBox(15);
             navTab.getStyleClass().add("nav-tab");
-            
+
             if (i == 1) { // Today's Schedule active highlight
                 navTab.getStyleClass().add("nav-tab-active");
             }
 
             ImageView icon = new ImageView(ResourceImage.load("/images/icons/" + icons[i] + ".png"));
-            icon.setFitWidth(18); icon.setFitHeight(18);
+            icon.setFitWidth(18);
+            icon.setFitHeight(18);
             Label tabLabel = new Label(tabs[i]);
             tabLabel.getStyleClass().add("nav-text");
 
             navTab.getChildren().addAll(icon, tabLabel);
             navItems.getChildren().add(navTab);
 
-            // ACTIVE TAB CLICK ACTIONS (Direct Scene Replacement)
             final int index = i;
             navTab.setOnMouseClicked(e -> handleSidebarTabClick(index));
         }
@@ -143,7 +159,8 @@ public class TodaysScheduleView {
         HBox doctorProfile = new HBox(12);
         doctorProfile.getStyleClass().add("sidebar-profile");
         ImageView profileIcon = new ImageView(ResourceImage.load("/images/icons/ic_doctor_profile_small.png"));
-        profileIcon.setFitWidth(28); profileIcon.setFitHeight(28);
+        profileIcon.setFitWidth(28);
+        profileIcon.setFitHeight(28);
         VBox profileText = new VBox(0);
         Label doctorRole = new Label("Doctor Profile");
         doctorRole.getStyleClass().add("sidebar-profile-role");
@@ -152,23 +169,20 @@ public class TodaysScheduleView {
         profileText.getChildren().addAll(doctorRole, doctorName);
         doctorProfile.getChildren().addAll(profileIcon, profileText);
 
-        doctorProfile.setOnMouseClicked(e -> {
-            System.out.println("Navigating to Doctor Profile...");
-            Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene());
-        });
+        doctorProfile.setOnMouseClicked(e -> 
+            Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene())
+        );
 
         HBox logout = new HBox(15);
         logout.getStyleClass().add("nav-tab");
         ImageView logoutIcon = new ImageView(ResourceImage.load("/images/icons/ic_logout.png"));
-        logoutIcon.setFitWidth(18); logoutIcon.setFitHeight(18);
+        logoutIcon.setFitWidth(18);
+        logoutIcon.setFitHeight(18);
         Label logoutLabel = new Label("Logout");
         logoutLabel.getStyleClass().add("nav-text");
         logout.getChildren().addAll(logoutIcon, logoutLabel);
-        
-        logout.setOnMouseClicked(e -> {
-            System.out.println("Logging out user...");
-            // Navigation.goTo(stage, () -> new LoginView(stage).getScene());
-        });
+
+        logout.setOnMouseClicked(e -> showInformationAlert("Logout", "Logged out successfully."));
 
         footer.getChildren().addAll(doctorProfile, logout);
         sidebar.getChildren().addAll(logoSection, navItems, footer);
@@ -210,7 +224,7 @@ public class TodaysScheduleView {
     /** Top Bar Breadcrumbs, Notifications, and Search */
     private BorderPane createTopHeader() {
         BorderPane header = new BorderPane();
-        
+
         HBox breadcrumbBox = new HBox(8);
         breadcrumbBox.setAlignment(Pos.CENTER_LEFT);
         Label parentLabel = new Label("Health-Sphere");
@@ -227,21 +241,24 @@ public class TodaysScheduleView {
         rightControls.setAlignment(Pos.CENTER_RIGHT);
 
         ImageView searchBtn = new ImageView(ResourceImage.load("/images/icons/ic_search.png"));
-        searchBtn.setFitWidth(18); searchBtn.setFitHeight(18);
+        searchBtn.setFitWidth(18);
+        searchBtn.setFitHeight(18);
         searchBtn.getStyleClass().add("clickable-icon");
-        searchBtn.setOnMouseClicked(e -> System.out.println("Opening global search overlay..."));
+        searchBtn.setOnMouseClicked(e -> showSearchDialog());
 
         StackPane notificationBox = new StackPane();
         ImageView bellIcon = new ImageView(ResourceImage.load("/images/icons/ic_bell.png"));
-        bellIcon.setFitWidth(18); bellIcon.setFitHeight(18);
+        bellIcon.setFitWidth(18);
+        bellIcon.setFitHeight(18);
         Circle badge = new Circle(4, Color.RED);
         StackPane.setAlignment(badge, Pos.TOP_RIGHT);
         notificationBox.getChildren().addAll(bellIcon, badge);
         notificationBox.getStyleClass().add("clickable-icon");
-        notificationBox.setOnMouseClicked(e -> System.out.println("Opening notifications drawer..."));
+        notificationBox.setOnMouseClicked(e -> showInformationAlert("Notifications", "You have 1 critical alert and 3 pending appointment requests."));
 
         ImageView userAvatar = new ImageView(ResourceImage.load("/images/mocks/dr_sarah_avatar.png"));
-        userAvatar.setFitWidth(32); userAvatar.setFitHeight(32);
+        userAvatar.setFitWidth(32);
+        userAvatar.setFitHeight(32);
         Circle clip = new Circle(16, 16, 16);
         userAvatar.setClip(clip);
         userAvatar.getStyleClass().add("clickable-icon");
@@ -261,25 +278,27 @@ public class TodaysScheduleView {
         // Date Controls Bar
         BorderPane dateHeader = new BorderPane();
         VBox dateTextGroup = new VBox(2);
-        Label dateTitle = new Label("Wednesday, Oct 25");
-        dateTitle.getStyleClass().add("date-title");
+
+        dateTitleLabel = new Label(formatDateTitle(currentDate));
+        dateTitleLabel.getStyleClass().add("date-title");
+
         Label apptSubtitle = new Label("5 Appointments remaining today");
         apptSubtitle.getStyleClass().add("date-subtitle");
-        dateTextGroup.getChildren().addAll(dateTitle, apptSubtitle);
+        dateTextGroup.getChildren().addAll(dateTitleLabel, apptSubtitle);
 
         HBox navButtons = new HBox(8);
         Button prevBtn = new Button("<");
         prevBtn.getStyleClass().add("btn-date-nav");
-        prevBtn.setOnAction(e -> System.out.println("Navigating to previous day schedule..."));
+        prevBtn.setOnAction(e -> updateCurrentDate(currentDate.minusDays(1)));
 
         Button todayBtn = new Button("Today");
-        todayBtn.setMinWidth(70); // Prevents text wrapping ("Toda\ny")
+        todayBtn.setMinWidth(70);
         todayBtn.getStyleClass().add("btn-date-today");
-        todayBtn.setOnAction(e -> System.out.println("Resetting to today's schedule..."));
+        todayBtn.setOnAction(e -> updateCurrentDate(LocalDate.of(2023, 10, 25)));
 
         Button nextBtn = new Button(">");
         nextBtn.getStyleClass().add("btn-date-nav");
-        nextBtn.setOnAction(e -> System.out.println("Navigating to next day schedule..."));
+        nextBtn.setOnAction(e -> updateCurrentDate(currentDate.plusDays(1)));
 
         navButtons.getChildren().addAll(prevBtn, todayBtn, nextBtn);
 
@@ -293,7 +312,8 @@ public class TodaysScheduleView {
 
         StackPane alertIconContainer = new StackPane();
         ImageView alertIcon = new ImageView(ResourceImage.load("/images/icons/ic_alert_red.png"));
-        alertIcon.setFitWidth(20); alertIcon.setFitHeight(20);
+        alertIcon.setFitWidth(20);
+        alertIcon.setFitHeight(20);
         alertIconContainer.getChildren().add(alertIcon);
 
         VBox alertContent = new VBox(3);
@@ -315,12 +335,12 @@ public class TodaysScheduleView {
         timelineCard.getChildren().add(createTimelineSlot("09:00 AM", "Sarah Jenkins", "General Checkup", "Completed", false, false));
         timelineCard.getChildren().add(createTimelineSlot("10:00 AM", "Michael Chang", "Follow-up", "Completed", false, false));
 
-        // Current Time Indicator (11:15 AM) with dynamic line dynamic width binding
+        // Current Time Indicator (11:15 AM)
         HBox timeIndicatorRow = new HBox(10);
         timeIndicatorRow.setAlignment(Pos.CENTER_LEFT);
         Label timeIndicatorLabel = new Label("11:15");
         timeIndicatorLabel.getStyleClass().add("time-indicator-label");
-        
+
         Circle blueDot = new Circle(4, Color.web("#0052CC"));
         Line indicatorLine = new Line();
         indicatorLine.setStartX(0);
@@ -331,7 +351,6 @@ public class TodaysScheduleView {
         lineBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(lineBox, Priority.ALWAYS);
 
-        // Dynamically bind the indicator line length to fill available parent width
         lineBox.widthProperty().addListener((obs, oldVal, newVal) -> {
             double lineLength = newVal.doubleValue() - blueDot.getRadius() * 2 - 10;
             if (lineLength > 0) {
@@ -344,7 +363,7 @@ public class TodaysScheduleView {
 
         // Active In-Room Slot
         timelineCard.getChildren().add(createTimelineSlot("11:00 AM", "Elena Rodriguez", "Cardiology Consult", "In Room", true, false));
-        
+
         // Lunch Break Slot
         timelineCard.getChildren().add(createTimelineSlot("12:00 PM", "", "Lunch Break", "", false, true));
 
@@ -383,7 +402,7 @@ public class TodaysScheduleView {
 
         if (isActive) {
             card.getStyleClass().add("slot-card-active");
-            
+
             VBox info = new VBox(4);
             Label nameLbl = new Label(patientName);
             nameLbl.getStyleClass().add("slot-card-active-title");
@@ -392,7 +411,7 @@ public class TodaysScheduleView {
 
             HBox metaBox = new HBox(15);
             metaBox.setPadding(new Insets(5, 0, 0, 0));
-            
+
             Label timeMeta = new Label("🕒 11:00 - 11:45");
             timeMeta.getStyleClass().add("slot-card-active-meta");
             Label roomMeta = new Label("🏥 Room 2");
@@ -427,10 +446,7 @@ public class TodaysScheduleView {
             card.getChildren().addAll(info, spacer, statusPill);
         }
 
-        card.setOnMouseClicked(e -> {
-            System.out.println("Opening Patient Details for: " + patientName);
-            Navigation.goTo(stage, () -> new PatientDetailsView(stage).getScene());
-        });
+        card.setOnMouseClicked(e -> Navigation.goTo(stage, () -> new PatientDetailsView(stage).getScene()));
 
         row.getChildren().addAll(timeLabel, card);
         return row;
@@ -455,37 +471,60 @@ public class TodaysScheduleView {
         card.setPadding(new Insets(15));
 
         BorderPane header = new BorderPane();
-        Label monthLabel = new Label("October 2023");
+        monthLabel = new Label(formatMonthTitle(selectedCalendarDate));
         monthLabel.getStyleClass().add("calendar-month-title");
 
         HBox nav = new HBox(8);
-        Label prev = new Label("<"); prev.getStyleClass().add("calendar-nav-arrow");
-        prev.setOnMouseClicked(e -> System.out.println("Calendar: Previous Month"));
-        Label next = new Label(">"); next.getStyleClass().add("calendar-nav-arrow");
-        next.setOnMouseClicked(e -> System.out.println("Calendar: Next Month"));
+        Label prev = new Label("<");
+        prev.getStyleClass().add("calendar-nav-arrow");
+        prev.setOnMouseClicked(e -> {
+            selectedCalendarDate = selectedCalendarDate.minusMonths(1);
+            refreshCalendarDisplay();
+        });
+
+        Label next = new Label(">");
+        next.getStyleClass().add("calendar-nav-arrow");
+        next.setOnMouseClicked(e -> {
+            selectedCalendarDate = selectedCalendarDate.plusMonths(1);
+            refreshCalendarDisplay();
+        });
         nav.getChildren().addAll(prev, next);
 
         header.setLeft(monthLabel);
         header.setRight(nav);
 
-        GridPane grid = new GridPane();
-        grid.setHgap(8); grid.setVgap(8);
-        grid.setAlignment(Pos.CENTER);
+        calendarGrid = new GridPane();
+        calendarGrid.setHgap(8);
+        calendarGrid.setVgap(8);
+        calendarGrid.setAlignment(Pos.CENTER);
+
+        refreshCalendarDisplay();
+
+        card.getChildren().addAll(header, calendarGrid);
+        return card;
+    }
+
+    /** Re-renders mini-calendar dates and attaches click events */
+    private void refreshCalendarDisplay() {
+        calendarGrid.getChildren().clear();
+        monthLabel.setText(formatMonthTitle(selectedCalendarDate));
 
         String[] days = {"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"};
         for (int i = 0; i < days.length; i++) {
             Label dayLbl = new Label(days[i]);
             dayLbl.getStyleClass().add("calendar-day-header");
-            grid.add(dayLbl, i, 0);
+            calendarGrid.add(dayLbl, i, 0);
         }
 
         String[] dates = {"22", "23", "24", "25", "26", "27", "28"};
         for (int i = 0; i < dates.length; i++) {
             StackPane cell = new StackPane();
             cell.getStyleClass().add("calendar-date-cell");
+            cell.setPrefSize(28, 28);
             Label dateLbl = new Label(dates[i]);
-            
-            if (dates[i].equals("25")) {
+
+            int dateVal = Integer.parseInt(dates[i]);
+            if (dateVal == currentDate.getDayOfMonth()) {
                 Circle circle = new Circle(12, Color.web("#0052CC"));
                 dateLbl.setStyle("-fx-text-fill: white; -fx-font-weight: bold;");
                 cell.getChildren().addAll(circle, dateLbl);
@@ -494,14 +533,14 @@ public class TodaysScheduleView {
                 cell.getChildren().add(dateLbl);
             }
 
-            final String selectedDate = dates[i];
-            cell.setOnMouseClicked(e -> System.out.println("Selected date: Oct " + selectedDate + ", 2023"));
+            final int dayNum = dateVal;
+            cell.setOnMouseClicked(e -> {
+                LocalDate clickedDate = LocalDate.of(selectedCalendarDate.getYear(), selectedCalendarDate.getMonth(), dayNum);
+                updateCurrentDate(clickedDate);
+            });
 
-            grid.add(cell, i, 1);
+            calendarGrid.add(cell, i, 1);
         }
-
-        card.getChildren().addAll(header, grid);
-        return card;
     }
 
     /** Interactive Current Patient Live Card */
@@ -528,7 +567,8 @@ public class TodaysScheduleView {
         patientProfile.setAlignment(Pos.CENTER_LEFT);
 
         ImageView avatar = new ImageView(ResourceImage.load("/images/mocks/elena_rodriguez.png"));
-        avatar.setFitWidth(50); avatar.setFitHeight(50);
+        avatar.setFitWidth(50);
+        avatar.setFitHeight(50);
         Circle clip = new Circle(25, 25, 25);
         avatar.setClip(clip);
 
@@ -541,34 +581,40 @@ public class TodaysScheduleView {
         patientProfile.getChildren().addAll(avatar, details);
 
         GridPane vitalsGrid = new GridPane();
-        vitalsGrid.setVgap(8); vitalsGrid.setHgap(20);
+        vitalsGrid.setVgap(8);
+        vitalsGrid.setHgap(20);
         vitalsGrid.setPadding(new Insets(5, 0, 5, 0));
 
-        Label reasonKey = new Label("Reason"); reasonKey.getStyleClass().add("vital-key");
-        Label reasonVal = new Label("Cardiology Consult"); reasonVal.getStyleClass().add("vital-val");
+        Label reasonKey = new Label("Reason");
+        reasonKey.getStyleClass().add("vital-key");
+        Label reasonVal = new Label("Cardiology Consult");
+        reasonVal.getStyleClass().add("vital-val");
 
-        Label vitalsKey = new Label("Vitals"); vitalsKey.getStyleClass().add("vital-key");
-        Label vitalsVal = new Label("BP 140/90"); vitalsVal.getStyleClass().add("vital-val-alert");
+        Label vitalsKey = new Label("Vitals");
+        vitalsKey.getStyleClass().add("vital-key");
+        Label vitalsVal = new Label("BP 140/90");
+        vitalsVal.getStyleClass().add("vital-val-alert");
 
-        vitalsGrid.add(reasonKey, 0, 0); vitalsGrid.add(reasonVal, 1, 0);
-        vitalsGrid.add(vitalsKey, 0, 1); vitalsGrid.add(vitalsVal, 1, 1);
+        vitalsGrid.add(reasonKey, 0, 0);
+        vitalsGrid.add(reasonVal, 1, 0);
+        vitalsGrid.add(vitalsKey, 0, 1);
+        vitalsGrid.add(vitalsVal, 1, 1);
 
         Button profileBtn = new Button("View Full Profile");
         profileBtn.getStyleClass().add("btn-primary-block");
         profileBtn.setMaxWidth(Double.MAX_VALUE);
         profileBtn.setOnAction(e -> Navigation.goTo(stage, () -> new PatientDetailsView(stage).getScene()));
 
-        // Reschedule button with calendar icon graphic added
         Button rescheduleBtn = new Button("Reschedule Appointment");
         rescheduleBtn.getStyleClass().add("btn-outline-block");
         rescheduleBtn.setMaxWidth(Double.MAX_VALUE);
-        
+
         ImageView calendarIcon = new ImageView(ResourceImage.load("/images/icons/ic_calendar.png"));
-        calendarIcon.setFitWidth(14); 
+        calendarIcon.setFitWidth(14);
         calendarIcon.setFitHeight(14);
         rescheduleBtn.setGraphic(calendarIcon);
-        
-        rescheduleBtn.setOnAction(e -> System.out.println("Opening Reschedule modal for Elena Rodriguez..."));
+
+        rescheduleBtn.setOnAction(e -> showRescheduleDialog("Elena Rodriguez"));
 
         card.getChildren().addAll(header, patientProfile, vitalsGrid, profileBtn, rescheduleBtn);
         return card;
@@ -599,12 +645,16 @@ public class TodaysScheduleView {
 
         StackPane avatar1 = createInitialsAvatar("DK");
         VBox info1 = new VBox(2);
-        Label name1 = new Label("David Kim"); name1.getStyleClass().add("queue-name");
-        Label time1 = new Label("01:00 PM"); time1.getStyleClass().add("queue-time");
+        Label name1 = new Label("David Kim");
+        name1.getStyleClass().add("queue-name");
+        Label time1 = new Label("01:00 PM");
+        time1.getStyleClass().add("queue-time");
         info1.getChildren().addAll(name1, time1);
 
-        Region spacer1 = new Region(); HBox.setHgrow(spacer1, Priority.ALWAYS);
-        Label status1 = new Label("Waiting"); status1.getStyleClass().add("pill-waiting");
+        Region spacer1 = new Region();
+        HBox.setHgrow(spacer1, Priority.ALWAYS);
+        Label status1 = new Label("Waiting");
+        status1.getStyleClass().add("pill-waiting");
 
         item1.getChildren().addAll(avatar1, info1, spacer1, status1);
         item1.setOnMouseClicked(e -> Navigation.goTo(stage, () -> new PatientDetailsView(stage).getScene()));
@@ -617,13 +667,17 @@ public class TodaysScheduleView {
         StackPane avatar2 = createInitialsAvatar("TW");
         avatar2.setStyle("-fx-background-color: #FCE8E6;");
         VBox info2 = new VBox(2);
-        Label name2 = new Label("Thomas Wright"); name2.getStyleClass().add("queue-name");
-        Label time2 = new Label("02:00 PM"); time2.getStyleClass().add("queue-time");
+        Label name2 = new Label("Thomas Wright");
+        name2.getStyleClass().add("queue-name");
+        Label time2 = new Label("02:00 PM");
+        time2.getStyleClass().add("queue-time");
         info2.getChildren().addAll(name2, time2);
 
-        Region spacer2 = new Region(); HBox.setHgrow(spacer2, Priority.ALWAYS);
+        Region spacer2 = new Region();
+        HBox.setHgrow(spacer2, Priority.ALWAYS);
         ImageView warningIcon = new ImageView(ResourceImage.load("/images/icons/ic_alert_red.png"));
-        warningIcon.setFitWidth(16); warningIcon.setFitHeight(16);
+        warningIcon.setFitWidth(16);
+        warningIcon.setFitHeight(16);
 
         item2.getChildren().addAll(avatar2, info2, spacer2, warningIcon);
         item2.setOnMouseClicked(e -> Navigation.goTo(stage, () -> new PatientDetailsView(stage).getScene()));
@@ -633,7 +687,89 @@ public class TodaysScheduleView {
         return card;
     }
 
-    /** Helper for Avatar Circles with Initials */
+    /** Interactive Modal Dialog for Rescheduling Appointments */
+    private void showRescheduleDialog(String patientName) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(stage);
+        dialog.setTitle("Reschedule Appointment");
+
+        VBox dialogRoot = new VBox(15);
+        dialogRoot.setPadding(new Insets(20));
+        dialogRoot.setAlignment(Pos.CENTER_LEFT);
+
+        Label header = new Label("Reschedule Appointment for " + patientName);
+        header.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1E293B;");
+
+        DatePicker datePicker = new DatePicker(LocalDate.now().plusDays(1));
+        datePicker.setMaxWidth(Double.MAX_VALUE);
+
+        ComboBox<String> timeSlotCombo = new ComboBox<>();
+        timeSlotCombo.getItems().addAll("09:00 AM", "10:00 AM", "11:30 AM", "02:00 PM", "04:00 PM");
+        timeSlotCombo.setValue("10:00 AM");
+        timeSlotCombo.setMaxWidth(Double.MAX_VALUE);
+
+        HBox actionButtons = new HBox(10);
+        actionButtons.setAlignment(Pos.CENTER_RIGHT);
+
+        Button cancelBtn = new Button("Cancel");
+        cancelBtn.setOnAction(e -> dialog.close());
+
+        Button confirmBtn = new Button("Confirm Reschedule");
+        confirmBtn.setStyle("-fx-background-color: #0052CC; -fx-text-fill: white; -fx-font-weight: bold;");
+        confirmBtn.setOnAction(e -> {
+            dialog.close();
+            showInformationAlert("Appointment Rescheduled", 
+                    "Successfully rescheduled " + patientName + "'s appointment to " 
+                    + datePicker.getValue() + " at " + timeSlotCombo.getValue() + ".");
+        });
+
+        actionButtons.getChildren().addAll(cancelBtn, confirmBtn);
+        dialogRoot.getChildren().addAll(header, new Label("Select New Date:"), datePicker, new Label("Select Time Slot:"), timeSlotCombo, actionButtons);
+
+        Scene dialogScene = new Scene(dialogRoot, 360, 260);
+        dialog.setScene(dialogScene);
+        dialog.showAndWait();
+    }
+
+    /** Interactive Global Search Modal */
+    private void showSearchDialog() {
+        TextInputDialog searchDialog = new TextInputDialog();
+        searchDialog.setTitle("Global Search");
+        searchDialog.setHeaderText("Search Doctor Agenda");
+        searchDialog.setContentText("Enter patient name or record ID:");
+        searchDialog.showAndWait().ifPresent(query -> {
+            if (!query.trim().isEmpty()) {
+                showInformationAlert("Search Result", "Found 1 record matching '" + query + "'.");
+            }
+        });
+    }
+
+    private void updateCurrentDate(LocalDate newDate) {
+        this.currentDate = newDate;
+        this.selectedCalendarDate = newDate;
+        if (dateTitleLabel != null) {
+            dateTitleLabel.setText(formatDateTitle(currentDate));
+        }
+        refreshCalendarDisplay();
+    }
+
+    private String formatDateTitle(LocalDate date) {
+        return date.format(DateTimeFormatter.ofPattern("EEEE, MMM d"));
+    }
+
+    private String formatMonthTitle(LocalDate date) {
+        return date.format(DateTimeFormatter.ofPattern("MMMM yyyy"));
+    }
+
+    private void showInformationAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
     private StackPane createInitialsAvatar(String initials) {
         StackPane avatar = new StackPane();
         avatar.getStyleClass().add("initials-avatar");

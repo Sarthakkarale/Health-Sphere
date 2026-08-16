@@ -17,6 +17,7 @@ import java.util.Objects;
 
 /**
  * AvailabilityScheduleView represents the Schedule Management and Weekly Calendar dashboard.
+ * Fixed overlapping of right-side cards and ensured full vertical scrolling to show footer controls clearly.
  */
 public class AvailabilityScheduleView {
 
@@ -42,7 +43,7 @@ public class AvailabilityScheduleView {
 
         // --- Main Content Area ---
         VBox contentArea = new VBox(20);
-        contentArea.setPadding(new Insets(24, 32, 24, 32));
+        contentArea.setPadding(new Insets(24, 32, 32, 32));
         contentArea.getStyleClass().add("content-area");
 
         // Top Header
@@ -57,15 +58,22 @@ public class AvailabilityScheduleView {
         HBox bodyLayout = createBodyLayout();
         contentArea.getChildren().add(bodyLayout);
 
-        // ScrollPane Container
-        ScrollPane scrollPane = new ScrollPane(contentArea);
-        scrollPane.setFitToWidth(true);
-        scrollPane.getStyleClass().add("content-scrollpane");
-        mainRoot.setCenter(scrollPane);
+        mainRoot.setCenter(contentArea);
 
-        Scene availabilityScene = new Scene(mainRoot, stage.getWidth(), stage.getHeight());
-        availabilityScene.getStylesheets().add(Objects.requireNonNull(
-                getClass().getResource("/css/availability_schedule.css")).toExternalForm());
+        // --- ScrollPane Container (Allows full vertical scrolling down to footer/logout) ---
+        ScrollPane scrollPane = new ScrollPane(mainRoot);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.getStyleClass().add("content-scrollpane");
+
+        Scene availabilityScene = new Scene(scrollPane, stage.getWidth(), stage.getHeight());
+
+        try {
+            availabilityScene.getStylesheets().add(Objects.requireNonNull(
+                    getClass().getResource("/css/availability_schedule.css")).toExternalForm());
+        } catch (Exception ignored) {}
 
         return availabilityScene;
     }
@@ -80,7 +88,7 @@ public class AvailabilityScheduleView {
 
         // Logo Section
         HBox logoSection = new HBox(12);
-        logoSection.setPadding(new Insets(0, 0, 32, 0));
+        logoSection.setPadding(new Insets(0, 0, 24, 0));
         logoSection.setAlignment(Pos.CENTER_LEFT);
 
         StackPane logoIconBox = new StackPane();
@@ -98,21 +106,22 @@ public class AvailabilityScheduleView {
         logoText.getChildren().addAll(appName, doctorSubtext);
         logoSection.getChildren().addAll(logoIconBox, logoText);
 
-        // Navigation Tabs
-        VBox navItems = new VBox(6);
+        // Navigation Tabs (AI Health Assistant placed right below Doctor Profile)
+        VBox navItems = new VBox(4);
         String[] tabs = {
             "Dashboard", "Today's Schedule", "Appointments", "Patient Details",
-            "Medical Reports & Prescription", "Availability & Schedule", "AI Health Assistant", "Doctor Profile"
+            "Medical Reports & Prescription", "Availability & Schedule", "Doctor Profile", "AI Health Assistant"
         };
         String[] icons = {
             "ic_dashboard", "ic_schedule", "ic_appointments", "ic_patient",
-            "ic_reports", "ic_availability", "ic_robot", "ic_profile"
+            "ic_reports", "ic_availability", "ic_profile", "ic_robot"
         };
 
         for (int i = 0; i < tabs.length; i++) {
             HBox navTab = new HBox(14);
             navTab.getStyleClass().add("nav-tab");
             navTab.setAlignment(Pos.CENTER_LEFT);
+            navTab.setPadding(new Insets(8, 12, 8, 12));
 
             if (i == 5) { // Active Highlight: Availability & Schedule
                 navTab.getStyleClass().add("nav-tab-active");
@@ -133,8 +142,9 @@ public class AvailabilityScheduleView {
         }
 
         // Sidebar Bottom / Footer Controls
-        VBox footer = new VBox(12);
+        VBox footer = new VBox(8);
         footer.setAlignment(Pos.BOTTOM_LEFT);
+        footer.setPadding(new Insets(16, 0, 0, 0));
         VBox.setVgrow(footer, Priority.ALWAYS);
 
         Separator lineDivider = new Separator();
@@ -143,6 +153,7 @@ public class AvailabilityScheduleView {
         HBox docProfile = new HBox(12);
         docProfile.setAlignment(Pos.CENTER_LEFT);
         docProfile.getStyleClass().add("sidebar-profile");
+        docProfile.setPadding(new Insets(6, 12, 6, 12));
 
         ImageView profileIcon = new ImageView(ResourceImage.load("/images/icons/ic_doctor_profile_small.png"));
         profileIcon.setFitWidth(20);
@@ -157,6 +168,7 @@ public class AvailabilityScheduleView {
         HBox logout = new HBox(12);
         logout.setAlignment(Pos.CENTER_LEFT);
         logout.getStyleClass().add("nav-tab-logout");
+        logout.setPadding(new Insets(6, 12, 6, 12));
 
         ImageView logoutIcon = new ImageView(ResourceImage.load("/images/icons/ic_logout.png"));
         logoutIcon.setFitWidth(18);
@@ -180,8 +192,8 @@ public class AvailabilityScheduleView {
             case 3: Navigation.goTo(stage, () -> new PatientDetailsView(stage).getScene()); break;
             case 4: Navigation.goTo(stage, () -> new MedicalReportsView(stage).getScene()); break;
             case 5: Navigation.goTo(stage, () -> new AvailabilityScheduleView(stage).getScene()); break;
-            case 6: Navigation.goTo(stage, () -> new AIHealthAssistantView(stage).getScene()); break;
-            case 7: Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()); break;
+            case 6: Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()); break;
+            case 7: Navigation.goTo(stage, () -> new AIHealthAssistantView(stage).getScene()); break;
             default: break;
         }
     }
@@ -208,7 +220,7 @@ public class AvailabilityScheduleView {
         HBox searchField = new HBox(10);
         searchField.getStyleClass().add("search-input-box");
         searchField.setAlignment(Pos.CENTER_LEFT);
-        searchField.setPrefWidth(280);
+        searchField.setPrefWidth(260);
 
         ImageView searchIcon = new ImageView(ResourceImage.load("/images/icons/ic_search.png"));
         searchIcon.setFitWidth(16);
@@ -307,10 +319,11 @@ public class AvailabilityScheduleView {
         VBox scheduleCard = createScheduleCalendarCard();
         HBox.setHgrow(scheduleCard, Priority.ALWAYS);
 
-        // Right Column: Controls Panel
+        // Right Column: Controls Panel (FixedWidth fixed to prevent overlapping into left grid)
         VBox controlsPanel = new VBox(20);
-        controlsPanel.setMinWidth(330);
-        controlsPanel.setMaxWidth(360);
+        controlsPanel.setMinWidth(320);
+        controlsPanel.setPrefWidth(340);
+        controlsPanel.setMaxWidth(340);
 
         VBox aiAssistantCard = createAIAssistantCard();
         VBox workingHoursCard = createWorkingHoursCard();
@@ -402,7 +415,7 @@ public class AvailabilityScheduleView {
                 headerLabel.getStyleClass().add("calendar-header-active");
             }
 
-            headerLabel.setPrefWidth(col == 0 ? 65 : 120);
+            headerLabel.setPrefWidth(col == 0 ? 55 : 100);
             headerLabel.setAlignment(Pos.CENTER);
             grid.add(headerLabel, col, 0);
         }
@@ -425,7 +438,7 @@ public class AvailabilityScheduleView {
 
         // Column Constraints for proper calendar column stretching
         ColumnConstraints col0 = new ColumnConstraints();
-        col0.setMinWidth(65);
+        col0.setMinWidth(55);
         grid.getColumnConstraints().add(col0);
 
         for (int i = 1; i <= 5; i++) {
@@ -541,18 +554,19 @@ public class AvailabilityScheduleView {
     }
 
     private HBox createWorkingDayRow(String day, boolean isChecked, String startTime, String endTime) {
-        HBox row = new HBox(8);
+        HBox row = new HBox(6);
         row.setAlignment(Pos.CENTER_LEFT);
 
         CheckBox cb = new CheckBox(day);
         cb.setSelected(isChecked);
         cb.getStyleClass().add("day-checkbox");
-        cb.setPrefWidth(60);
+        cb.setPrefWidth(54);
 
         if (isChecked) {
             ComboBox<String> startCombo = new ComboBox<>();
             startCombo.setValue(startTime);
             startCombo.getStyleClass().add("time-select");
+            startCombo.setPrefWidth(95);
 
             Label sep = new Label("-");
             sep.getStyleClass().add("time-separator");
@@ -560,6 +574,7 @@ public class AvailabilityScheduleView {
             ComboBox<String> endCombo = new ComboBox<>();
             endCombo.setValue(endTime);
             endCombo.getStyleClass().add("time-select");
+            endCombo.setPrefWidth(95);
 
             row.getChildren().addAll(cb, startCombo, sep, endCombo);
         } else {

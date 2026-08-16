@@ -17,6 +17,8 @@ import java.util.Objects;
 
 /**
  * MedicalReportsView represents the Prescription Manager & Medical Reports screen for Doctors in Health-Sphere.
+ * Updated to include the AI Health Assistant option in the navigation sidebar 
+ * and configured with full vertical scrolling down to the bottom.
  */
 public class MedicalReportsView {
 
@@ -57,20 +59,25 @@ public class MedicalReportsView {
         HBox bodyLayout = createBodyLayout();
         contentArea.getChildren().add(bodyLayout);
 
-        // ScrollPane Container
-        ScrollPane scrollPane = new ScrollPane(contentArea);
-        scrollPane.setFitToWidth(true);
-        scrollPane.getStyleClass().add("content-scrollpane");
-        mainRoot.setCenter(scrollPane);
+        mainRoot.setCenter(contentArea);
 
-        Scene medicalReportsScene = new Scene(mainRoot, stage.getWidth(), stage.getHeight());
-        medicalReportsScene.getStylesheets().add(Objects.requireNonNull(
-                getClass().getResource("/css/medical_reports.css")).toExternalForm());
+        // --- ScrollPane to enable vertical scrolling down to the very bottom ---
+        ScrollPane scrollPane = new ScrollPane(mainRoot);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(false); // Allows natural vertical height growth for scrolling
+        scrollPane.getStyleClass().add("content-scrollpane");
+
+        Scene medicalReportsScene = new Scene(scrollPane, stage.getWidth(), stage.getHeight());
+
+        try {
+            medicalReportsScene.getStylesheets().add(Objects.requireNonNull(
+                    getClass().getResource("/css/medical_reports.css")).toExternalForm());
+        } catch (Exception ignored) {}
 
         return medicalReportsScene;
     }
 
-    /** Creates Sidebar Navigation matching UI mockup sidebar design */
+    /** Creates Sidebar Navigation including the AI Health Assistant option */
     private VBox createSidebar() {
         VBox sidebar = new VBox();
         sidebar.setPadding(new Insets(28, 16, 28, 16));
@@ -97,15 +104,16 @@ public class MedicalReportsView {
         logoText.getChildren().addAll(appName, doctorSubtext);
         logoSection.getChildren().addAll(logoIconBox, logoText);
 
-        // Navigation Menu Options
+        // Navigation Menu Options (Includes Doctor Profile & AI Health Assistant)
         VBox navItems = new VBox(6);
         String[] tabs = {
             "Dashboard", "Today's Schedule", "Appointments", "Patient Details",
-            "Medical Reports & Prescription", "Availability & Schedule", "Doctor Profile"
+            "Medical Reports & Prescription", "Availability & Schedule", 
+            "Doctor Profile", "AI Health Assistant"
         };
         String[] icons = {
             "ic_dashboard", "ic_schedule", "ic_appointments", "ic_patient",
-            "ic_reports", "ic_availability", "ic_profile"
+            "ic_reports", "ic_availability", "ic_profile", "ic_ai_assistant"
         };
 
         for (int i = 0; i < tabs.length; i++) {
@@ -179,6 +187,7 @@ public class MedicalReportsView {
             case 4: Navigation.goTo(stage, () -> new MedicalReportsView(stage).getScene()); break;
             case 5: Navigation.goTo(stage, () -> new AvailabilityScheduleView(stage).getScene()); break;
             case 6: Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()); break;
+            case 7: System.out.println("Navigating to AI Health Assistant..."); break;
             default: break;
         }
     }
@@ -220,7 +229,7 @@ public class MedicalReportsView {
         ImageView bellIcon = new ImageView(ResourceImage.load("/images/icons/ic_bell.png"));
         bellIcon.setFitWidth(18); 
         bellIcon.setFitHeight(18);
-        
+
         Circle badge = new Circle(4, Color.web("#EF4444"));
         StackPane.setAlignment(badge, Pos.TOP_RIGHT);
         notificationBox.getChildren().addAll(bellIcon, badge);
@@ -323,11 +332,11 @@ public class MedicalReportsView {
         BorderPane cardHeader = new BorderPane();
         HBox titleBox = new HBox(8);
         titleBox.setAlignment(Pos.CENTER_LEFT);
-        
+
         ImageView rxIcon = new ImageView(ResourceImage.load("/images/icons/ic_rx.png"));
         rxIcon.setFitWidth(18); 
         rxIcon.setFitHeight(18);
-        
+
         Label titleLbl = new Label("Rx Editor");
         titleLbl.getStyleClass().add("section-card-title");
         titleBox.getChildren().addAll(rxIcon, titleLbl);
@@ -436,7 +445,7 @@ public class MedicalReportsView {
 
         StackPane cloudIconBox = new StackPane();
         cloudIconBox.getStyleClass().add("cloud-icon-bg");
-        
+
         ImageView cloudIcon = new ImageView(ResourceImage.load("/images/icons/ic_cloud_upload.png"));
         cloudIcon.setFitWidth(22); 
         cloudIcon.setFitHeight(22);
@@ -464,11 +473,11 @@ public class MedicalReportsView {
 
         HBox titleBox = new HBox(8);
         titleBox.setAlignment(Pos.CENTER_LEFT);
-        
+
         ImageView aiIcon = new ImageView(ResourceImage.load("/images/icons/ic_robot.png"));
         aiIcon.setFitWidth(18); 
         aiIcon.setFitHeight(18);
-        
+
         Label titleLbl = new Label("Clinical Assistant");
         titleLbl.getStyleClass().add("assistant-title");
         titleBox.getChildren().addAll(aiIcon, titleLbl);
@@ -480,11 +489,11 @@ public class MedicalReportsView {
 
         HBox alert1Header = new HBox(6);
         alert1Header.setAlignment(Pos.CENTER_LEFT);
-        
+
         ImageView warnIcon = new ImageView(ResourceImage.load("/images/icons/ic_warning.png"));
         warnIcon.setFitWidth(14); 
         warnIcon.setFitHeight(14);
-        
+
         Label alert1Title = new Label("Potential Interaction");
         alert1Title.getStyleClass().add("alert-warning-title");
         alert1Header.getChildren().addAll(warnIcon, alert1Title);
@@ -502,11 +511,11 @@ public class MedicalReportsView {
 
         HBox alert2Header = new HBox(6);
         alert2Header.setAlignment(Pos.CENTER_LEFT);
-        
+
         ImageView lightIcon = new ImageView(ResourceImage.load("/images/icons/ic_bulb.png"));
         lightIcon.setFitWidth(14); 
         lightIcon.setFitHeight(14);
-        
+
         Label alert2Title = new Label("Guideline Suggestion");
         alert2Title.getStyleClass().add("alert-info-title");
         alert2Header.getChildren().addAll(lightIcon, alert2Title);
@@ -529,11 +538,11 @@ public class MedicalReportsView {
 
         HBox titleBox = new HBox(8);
         titleBox.setAlignment(Pos.CENTER_LEFT);
-        
+
         ImageView clockIcon = new ImageView(ResourceImage.load("/images/icons/ic_history.png"));
         clockIcon.setFitWidth(18); 
         clockIcon.setFitHeight(18);
-        
+
         Label titleLbl = new Label("Recent History");
         titleLbl.getStyleClass().add("section-card-title");
         titleBox.getChildren().addAll(clockIcon, titleLbl);

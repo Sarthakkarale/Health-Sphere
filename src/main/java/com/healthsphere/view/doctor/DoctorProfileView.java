@@ -4,7 +4,6 @@ import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ResourceImage;
 
 import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -42,7 +41,7 @@ public class DoctorProfileView {
 
         // --- Main Content Area ---
         VBox contentArea = new VBox(20);
-        contentArea.setPadding(new Insets(24, 32, 24, 32));
+        contentArea.setPadding(new Insets(20, 30, 30, 30));
         contentArea.getStyleClass().add("content-area");
 
         // Top Navigation Header
@@ -73,24 +72,22 @@ public class DoctorProfileView {
     /** Creates Sidebar Navigation with active state on Doctor Profile tab */
     private VBox createSidebar() {
         VBox sidebar = new VBox();
-        sidebar.setPadding(new Insets(28, 16, 28, 16));
+        sidebar.setPadding(new Insets(25, 15, 25, 15));
         sidebar.getStyleClass().add("sidebar");
         sidebar.setMinWidth(240);
-        sidebar.setPrefWidth(240);
 
         // Logo Section
-        HBox logoSection = new HBox(12);
-        logoSection.setPadding(new Insets(0, 0, 32, 0));
+        HBox logoSection = new HBox(10);
+        logoSection.setPadding(new Insets(0, 0, 25, 0));
         logoSection.setAlignment(Pos.CENTER_LEFT);
 
         StackPane logoIconBox = new StackPane();
         logoIconBox.getStyleClass().add("logo-icon-box");
         ImageView logoIcon = new ImageView(ResourceImage.load("/images/icons/ic_shield.png"));
-        logoIcon.setFitWidth(18);
-        logoIcon.setFitHeight(18);
+        logoIcon.setFitWidth(18); logoIcon.setFitHeight(18);
         logoIconBox.getChildren().add(logoIcon);
 
-        VBox logoText = new VBox(2);
+        VBox logoText = new VBox(0);
         Label appName = new Label("Health-Sphere");
         appName.getStyleClass().add("logo-name");
         Label doctorSubtext = new Label("Doctor Module");
@@ -110,18 +107,15 @@ public class DoctorProfileView {
         };
 
         for (int i = 0; i < tabs.length; i++) {
-            HBox navTab = new HBox(14);
+            HBox navTab = new HBox(12);
             navTab.getStyleClass().add("nav-tab");
-            navTab.setAlignment(Pos.CENTER_LEFT);
 
             if (i == 6) { // Active Highlight: Doctor Profile
                 navTab.getStyleClass().add("nav-tab-active");
             }
 
             ImageView icon = new ImageView(ResourceImage.load("/images/icons/" + icons[i] + ".png"));
-            icon.setFitWidth(18);
-            icon.setFitHeight(18);
-
+            icon.setFitWidth(18); icon.setFitHeight(18);
             Label tabLabel = new Label(tabs[i]);
             tabLabel.getStyleClass().add("nav-text");
 
@@ -138,15 +132,32 @@ public class DoctorProfileView {
 
     private void handleSidebarTabClick(int index) {
         switch (index) {
-            case 0: Navigation.goTo(stage, () -> new DoctorDashboardView(stage).getScene()); break;
-            case 1: Navigation.goTo(stage, () -> new TodaysScheduleView(stage).getScene()); break;
-            case 2: Navigation.goTo(stage, () -> new AppointmentsView(stage).getScene()); break;
-            case 3: Navigation.goTo(stage, () -> new PatientDetailsView(stage).getScene()); break;
-            case 4: Navigation.goTo(stage, () -> new MedicalReportsView(stage).getScene()); break;
-            case 5: Navigation.goTo(stage, () -> new AvailabilityScheduleView(stage).getScene()); break;
-            case 6: Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()); break;
-            case 7: Navigation.goTo(stage, () -> new AIHealthAssistantView(stage).getScene()); break;
-            default: break;
+            case 0:
+                Navigation.goTo(stage, () -> new DoctorDashboardView(stage).getScene());
+                break;
+            case 1:
+                Navigation.goTo(stage, () -> new TodaysScheduleView(stage).getScene());
+                break;
+            case 2:
+                Navigation.goTo(stage, () -> new AppointmentsView(stage).getScene());
+                break;
+            case 3:
+                Navigation.goTo(stage, () -> new PatientDetailsView(stage).getScene());
+                break;
+            case 4:
+                Navigation.goTo(stage, () -> new MedicalReportsView(stage).getScene());
+                break;
+            case 5:
+                Navigation.goTo(stage, () -> new AvailabilityScheduleView(stage).getScene());
+                break;
+            case 6:
+                Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene());
+                break;
+            case 7:
+                Navigation.goTo(stage, () -> new AIHealthAssistantView(stage).getScene());
+                break;
+            default:
+                break;
         }
     }
 
@@ -158,16 +169,13 @@ public class DoctorProfileView {
         HBox searchField = new HBox(10);
         searchField.getStyleClass().add("search-input-box");
         searchField.setAlignment(Pos.CENTER_LEFT);
-        searchField.setPrefWidth(280);
 
         ImageView searchIcon = new ImageView(ResourceImage.load("/images/icons/ic_search.png"));
-        searchIcon.setFitWidth(16);
-        searchIcon.setFitHeight(16);
+        searchIcon.setFitWidth(16); searchIcon.setFitHeight(16);
 
         TextField searchInput = new TextField();
         searchInput.setPromptText("Search...");
         searchInput.getStyleClass().add("search-text-field");
-        HBox.setHgrow(searchInput, Priority.ALWAYS);
         searchField.getChildren().addAll(searchIcon, searchInput);
 
         Region spacer = new Region();
@@ -177,22 +185,18 @@ public class DoctorProfileView {
         rightIcons.setAlignment(Pos.CENTER_RIGHT);
 
         ImageView bellIcon = new ImageView(ResourceImage.load("/images/icons/ic_bell.png"));
-        bellIcon.setFitWidth(18);
-        bellIcon.setFitHeight(18);
+        bellIcon.setFitWidth(18); bellIcon.setFitHeight(18);
         bellIcon.getStyleClass().add("clickable-icon");
 
         ImageView settingsIcon = new ImageView(ResourceImage.load("/images/icons/ic_settings.png"));
-        settingsIcon.setFitWidth(18);
-        settingsIcon.setFitHeight(18);
+        settingsIcon.setFitWidth(18); settingsIcon.setFitHeight(18);
         settingsIcon.getStyleClass().add("clickable-icon");
 
-        Separator sep = new Separator(Orientation.VERTICAL);
+        Separator sep = new Separator(javafx.geometry.Orientation.VERTICAL);
         sep.setPrefHeight(20);
-        sep.getStyleClass().add("header-separator");
 
         ImageView topAvatar = new ImageView(ResourceImage.load("/images/mocks/dr_julian_avatar.png"));
-        topAvatar.setFitWidth(36);
-        topAvatar.setFitHeight(36);
+        topAvatar.setFitWidth(36); topAvatar.setFitHeight(36);
         Circle clip = new Circle(18, 18, 18);
         topAvatar.setClip(clip);
 
@@ -204,7 +208,7 @@ public class DoctorProfileView {
 
     /** Profile Hero Banner Card */
     private HBox createProfileBannerCard() {
-        HBox banner = new HBox(24);
+        HBox banner = new HBox(25);
         banner.getStyleClass().add("profile-banner-card");
         banner.setPadding(new Insets(24));
         banner.setAlignment(Pos.CENTER_LEFT);
@@ -229,8 +233,7 @@ public class DoctorProfileView {
         HBox locationBox = new HBox(6);
         locationBox.setAlignment(Pos.CENTER_LEFT);
         ImageView locIcon = new ImageView(ResourceImage.load("/images/icons/ic_location.png"));
-        locIcon.setFitWidth(14);
-        locIcon.setFitHeight(14);
+        locIcon.setFitWidth(14); locIcon.setFitHeight(14);
         Label locationText = new Label("St. Mary's Hospital, New York");
         locationText.getStyleClass().add("banner-subtext");
         locationBox.getChildren().addAll(locIcon, locationText);
@@ -238,8 +241,7 @@ public class DoctorProfileView {
         HBox ratingBox = new HBox(6);
         ratingBox.setAlignment(Pos.CENTER_LEFT);
         ImageView starIcon = new ImageView(ResourceImage.load("/images/icons/ic_star.png"));
-        starIcon.setFitWidth(14);
-        starIcon.setFitHeight(14);
+        starIcon.setFitWidth(14); starIcon.setFitHeight(14);
         Label ratingText = new Label("4.9/5 ");
         ratingText.getStyleClass().add("banner-rating-bold");
         Label reviewsText = new Label("(120 Reviews)");
@@ -261,7 +263,8 @@ public class DoctorProfileView {
 
         Button editProfileBtn = new Button("Edit Profile");
         editProfileBtn.getStyleClass().add("btn-primary-action");
-        editProfileBtn.setOnAction(e -> System.out.println("Opening Edit Profile..."));
+        // Navigation to DoctorEditProfileView
+        editProfileBtn.setOnAction(e -> Navigation.goTo(stage, () -> new DoctorEditProfileView(stage).getScene()));
 
         actionBtns.getChildren().addAll(accountSettingsBtn, editProfileBtn);
 
@@ -302,8 +305,7 @@ public class DoctorProfileView {
         HBox cardTitleBox = new HBox(8);
         cardTitleBox.setAlignment(Pos.CENTER_LEFT);
         ImageView personIcon = new ImageView(ResourceImage.load("/images/icons/ic_person.png"));
-        personIcon.setFitWidth(18);
-        personIcon.setFitHeight(18);
+        personIcon.setFitWidth(18); personIcon.setFitHeight(18);
         Label title = new Label("Personal Details");
         title.getStyleClass().add("card-title");
         cardTitleBox.getChildren().addAll(personIcon, title);
@@ -322,7 +324,7 @@ public class DoctorProfileView {
         detailsGrid.add(createDetailItem("PHONE NUMBER", "+1 (555) 123-4567"), 0, 1);
         detailsGrid.add(createDetailItem("LANGUAGES SPOKEN", "English, Spanish, French"), 1, 1);
 
-        // Row 3: Bio Spanning both columns
+        // Row 3: Bio Span across
         VBox bioBox = new VBox(4);
         Label bioLabel = new Label("BIO");
         bioLabel.getStyleClass().add("detail-field-label");
@@ -356,8 +358,7 @@ public class DoctorProfileView {
         HBox cardTitleBox = new HBox(8);
         cardTitleBox.setAlignment(Pos.CENTER_LEFT);
         ImageView gradIcon = new ImageView(ResourceImage.load("/images/icons/ic_academic.png"));
-        gradIcon.setFitWidth(18);
-        gradIcon.setFitHeight(18);
+        gradIcon.setFitWidth(18); gradIcon.setFitHeight(18);
         Label title = new Label("Qualification & Experience");
         title.getStyleClass().add("card-title");
         cardTitleBox.getChildren().addAll(gradIcon, title);
@@ -373,8 +374,7 @@ public class DoctorProfileView {
         StackPane expIconBox = new StackPane();
         expIconBox.getStyleClass().add("blue-icon-circle");
         ImageView expImg = new ImageView(ResourceImage.load("/images/icons/ic_briefcase.png"));
-        expImg.setFitWidth(16);
-        expImg.setFitHeight(16);
+        expImg.setFitWidth(16); expImg.setFitHeight(16);
         expIconBox.getChildren().add(expImg);
 
         VBox expText = new VBox(4);
@@ -394,8 +394,7 @@ public class DoctorProfileView {
         StackPane specIconBox = new StackPane();
         specIconBox.getStyleClass().add("green-icon-circle");
         ImageView specImg = new ImageView(ResourceImage.load("/images/icons/ic_award.png"));
-        specImg.setFitWidth(16);
-        specImg.setFitHeight(16);
+        specImg.setFitWidth(16); specImg.setFitHeight(16);
         specIconBox.getChildren().add(specImg);
 
         VBox specText = new VBox(4);
@@ -424,8 +423,7 @@ public class DoctorProfileView {
         HBox cardTitleBox = new HBox(8);
         cardTitleBox.setAlignment(Pos.CENTER_LEFT);
         ImageView starTitleIcon = new ImageView(ResourceImage.load("/images/icons/ic_star_blue.png"));
-        starTitleIcon.setFitWidth(18);
-        starTitleIcon.setFitHeight(18);
+        starTitleIcon.setFitWidth(18); starTitleIcon.setFitHeight(18);
         Label title = new Label("Patient Reviews");
         title.getStyleClass().add("card-title");
         cardTitleBox.getChildren().addAll(starTitleIcon, title);
@@ -482,8 +480,7 @@ public class DoctorProfileView {
         starRating.setAlignment(Pos.CENTER_RIGHT);
         for (int i = 0; i < stars; i++) {
             ImageView star = new ImageView(ResourceImage.load("/images/icons/ic_star_green.png"));
-            star.setFitWidth(12);
-            star.setFitHeight(12);
+            star.setFitWidth(12); star.setFitHeight(12);
             starRating.getChildren().add(star);
         }
 
@@ -514,8 +511,7 @@ public class DoctorProfileView {
         HBox feeLeft = new HBox(10);
         feeLeft.setAlignment(Pos.CENTER_LEFT);
         ImageView feeIcon = new ImageView(ResourceImage.load("/images/icons/ic_card_white.png"));
-        feeIcon.setFitWidth(18);
-        feeIcon.setFitHeight(18);
+        feeIcon.setFitWidth(18); feeIcon.setFitHeight(18);
         Label feeLabel = new Label("Standard Fee");
         feeLabel.getStyleClass().add("consultation-label");
         feeLeft.getChildren().addAll(feeIcon, feeLabel);
@@ -534,8 +530,7 @@ public class DoctorProfileView {
         HBox durLeft = new HBox(10);
         durLeft.setAlignment(Pos.CENTER_LEFT);
         ImageView clockIcon = new ImageView(ResourceImage.load("/images/icons/ic_clock_white.png"));
-        clockIcon.setFitWidth(18);
-        clockIcon.setFitHeight(18);
+        clockIcon.setFitWidth(18); clockIcon.setFitHeight(18);
         Label durLabel = new Label("Avg. Duration");
         durLabel.getStyleClass().add("consultation-label");
         durLeft.getChildren().addAll(clockIcon, durLabel);
@@ -554,8 +549,7 @@ public class DoctorProfileView {
         HBox teleLeft = new HBox(10);
         teleLeft.setAlignment(Pos.CENTER_LEFT);
         ImageView camIcon = new ImageView(ResourceImage.load("/images/icons/ic_video_white.png"));
-        camIcon.setFitWidth(18);
-        camIcon.setFitHeight(18);
+        camIcon.setFitWidth(18); camIcon.setFitHeight(18);
         Label teleLabel = new Label("Telehealth");
         teleLabel.getStyleClass().add("consultation-label");
         teleLeft.getChildren().addAll(camIcon, teleLabel);
@@ -581,8 +575,7 @@ public class DoctorProfileView {
         HBox titleBox = new HBox(8);
         titleBox.setAlignment(Pos.CENTER_LEFT);
         ImageView calIcon = new ImageView(ResourceImage.load("/images/icons/ic_calendar_blue.png"));
-        calIcon.setFitWidth(18);
-        calIcon.setFitHeight(18);
+        calIcon.setFitWidth(18); calIcon.setFitHeight(18);
         Label title = new Label("Weekly Availability");
         title.getStyleClass().add("card-title");
         titleBox.getChildren().addAll(calIcon, title);
@@ -596,8 +589,7 @@ public class DoctorProfileView {
 
         Button manageBtn = new Button("Manage Schedule");
         ImageView manageIcon = new ImageView(ResourceImage.load("/images/icons/ic_calendar_manage.png"));
-        manageIcon.setFitWidth(14);
-        manageIcon.setFitHeight(14);
+        manageIcon.setFitWidth(14); manageIcon.setFitHeight(14);
         manageBtn.setGraphic(manageIcon);
         manageBtn.getStyleClass().add("btn-outline-full");
         manageBtn.setMaxWidth(Double.MAX_VALUE);

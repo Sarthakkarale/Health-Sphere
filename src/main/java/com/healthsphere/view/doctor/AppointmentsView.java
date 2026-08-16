@@ -20,15 +20,16 @@ import java.util.Objects;
 
 /**
  * AppointmentsView represents the appointment management screen for Doctors in Health-Sphere.
- * Fully interactive filter tabs, navigation, and appointment detail actions.
+ * Fully interactive filter tabs, navigation, horizontal and vertical scrolling cards container,
+ * and full screen page scrolling down to the bottom.
  */
 public class AppointmentsView {
 
     private final Stage stage;
     private final Scene scene;
 
-    // Container for the cards so we can clear/re-populate when filtering
-    private HBox cardsGrid;
+    // FlowPane inside ScrollPane to handle horizontal flow & vertical multi-row card display
+    private FlowPane cardsGrid;
     
     // Store master list of appointment model data
     private final List<AppointmentData> appointmentList = new ArrayList<>();
@@ -125,7 +126,7 @@ public class AppointmentsView {
 
         // --- Main Content Area ---
         VBox contentArea = new VBox(20);
-        contentArea.setPadding(new Insets(20, 30, 20, 30));
+        contentArea.setPadding(new Insets(20, 30, 30, 30));
         contentArea.getStyleClass().add("content-area");
 
         // Top Header
@@ -140,18 +141,27 @@ public class AppointmentsView {
         HBox filterBar = createFilterBar();
         contentArea.getChildren().add(filterBar);
 
-        // Appointments Grid
-        cardsGrid = new HBox(20);
+        // Appointments Grid Container (Horizontal & Vertical Layout wrapped in ScrollPane)
+        cardsGrid = new FlowPane(20, 20);
+        cardsGrid.setAlignment(Pos.TOP_LEFT);
+
+        ScrollPane cardsScrollPane = new ScrollPane(cardsGrid);
+        cardsScrollPane.setFitToWidth(true);
+        cardsScrollPane.setPannable(true);
+        cardsScrollPane.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+
         renderFilteredAppointments("All"); // Default render all cards
-        contentArea.getChildren().add(cardsGrid);
+        contentArea.getChildren().add(cardsScrollPane);
 
-        // ScrollPane Container
-        ScrollPane scrollPane = new ScrollPane(contentArea);
-        scrollPane.setFitToWidth(true);
-        scrollPane.getStyleClass().add("content-scrollpane");
-        mainRoot.setCenter(scrollPane);
+        mainRoot.setCenter(contentArea);
 
-        Scene appointmentsScene = new Scene(mainRoot, stage.getWidth(), stage.getHeight());
+        // Outer ScrollPane Container to enable scrolling down the entire UI layout to the very bottom
+        ScrollPane outerScrollPane = new ScrollPane(mainRoot);
+        outerScrollPane.setFitToWidth(true);
+        outerScrollPane.setFitToHeight(true);
+        outerScrollPane.getStyleClass().add("content-scrollpane");
+
+        Scene appointmentsScene = new Scene(outerScrollPane, stage.getWidth(), stage.getHeight());
         appointmentsScene.getStylesheets().add(Objects.requireNonNull(
                 getClass().getResource("/css/appointments.css")).toExternalForm());
 
@@ -497,6 +507,9 @@ public class AppointmentsView {
 
         Button newApptBtn = new Button("+ New Appointment");
         newApptBtn.getStyleClass().add("btn-primary-action");
+        
+        // Navigation added to open NewAppointmentView
+        newApptBtn.setOnAction(e -> Navigation.goTo(stage, () -> new NewAppointmentView(stage).getScene()));
 
         section.setLeft(titleBox);
         section.setRight(newApptBtn);
