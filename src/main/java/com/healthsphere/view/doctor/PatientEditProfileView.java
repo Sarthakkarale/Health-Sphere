@@ -17,7 +17,7 @@ import java.util.Objects;
 
 /**
  * PatientEditProfileView allows doctors to edit patient records.
- * Features full vertical scrolling down to the bottom and back-navigation.
+ * Features full vertical scrolling down to the bottom and sidebar navigation identical to DoctorDashboardView.
  */
 public class PatientEditProfileView {
 
@@ -37,7 +37,7 @@ public class PatientEditProfileView {
         BorderPane mainRoot = new BorderPane();
         mainRoot.getStyleClass().add("root-pane");
 
-        // --- Sidebar (Left Navigation) ---
+        // --- Sidebar (Left Navigation matching DashboardView) ---
         VBox sidebar = createSidebar();
         mainRoot.setLeft(sidebar);
 
@@ -205,6 +205,7 @@ public class PatientEditProfileView {
         sidebar.getStyleClass().add("sidebar");
         sidebar.setMinWidth(250);
 
+        // Brand Logo Section
         HBox logoSection = new HBox(10);
         logoSection.setPadding(new Insets(0, 0, 30, 0));
         logoSection.setAlignment(Pos.CENTER_LEFT);
@@ -223,6 +224,7 @@ public class PatientEditProfileView {
         logoText.getChildren().addAll(appName, doctorSubtext);
         logoSection.getChildren().addAll(logoIconBox, logoText);
 
+        // Sidebar Navigation Links
         VBox navItems = new VBox(8);
         String[] tabs = {
             "Dashboard", "Today's Schedule", "Appointments", "Patient Details",
@@ -238,6 +240,7 @@ public class PatientEditProfileView {
             navTab.getStyleClass().add("nav-tab");
             navTab.setAlignment(Pos.CENTER_LEFT);
 
+            // Highlight 'Patient Details' as active item (index 3)
             if (i == 3) {
                 navTab.getStyleClass().add("nav-tab-active");
             }
@@ -255,6 +258,7 @@ public class PatientEditProfileView {
             navTab.setOnMouseClicked(e -> handleSidebarTabClick(index));
         }
 
+        // Bottom Footer (Profile & Logout)
         VBox footer = new VBox(15);
         footer.setAlignment(Pos.BOTTOM_CENTER);
         VBox.setVgrow(footer, Priority.ALWAYS);

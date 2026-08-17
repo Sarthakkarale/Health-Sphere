@@ -14,6 +14,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -21,7 +22,7 @@ import java.util.Objects;
 /**
  * AppointmentsView represents the appointment management screen for Doctors in Health-Sphere.
  * Fully interactive filter tabs, navigation, horizontal and vertical scrolling cards container,
- * and full screen page scrolling down to the bottom.
+ * with a static left sidebar matching DoctorDashboardView.
  */
 public class AppointmentsView {
 
@@ -120,7 +121,7 @@ public class AppointmentsView {
         BorderPane mainRoot = new BorderPane();
         mainRoot.getStyleClass().add("root-pane");
 
-        // --- Sidebar (Left Navigation) ---
+        // --- Sidebar (LEFT - Static matching Dashboard) ---
         VBox sidebar = createSidebar();
         mainRoot.setLeft(sidebar);
 
@@ -153,19 +154,172 @@ public class AppointmentsView {
         renderFilteredAppointments("All"); // Default render all cards
         contentArea.getChildren().add(cardsScrollPane);
 
-        mainRoot.setCenter(contentArea);
+        // ScrollPane wrapping ONLY contentArea so sidebar remains fixed
+        ScrollPane contentScrollPane = new ScrollPane(contentArea);
+        contentScrollPane.setFitToWidth(true);
+        contentScrollPane.setFitToHeight(true);
+        contentScrollPane.getStyleClass().add("content-scrollpane");
 
-        // Outer ScrollPane Container to enable scrolling down the entire UI layout to the very bottom
-        ScrollPane outerScrollPane = new ScrollPane(mainRoot);
-        outerScrollPane.setFitToWidth(true);
-        outerScrollPane.setFitToHeight(true);
-        outerScrollPane.getStyleClass().add("content-scrollpane");
+        mainRoot.setCenter(contentScrollPane);
 
-        Scene appointmentsScene = new Scene(outerScrollPane, stage.getWidth(), stage.getHeight());
-        appointmentsScene.getStylesheets().add(Objects.requireNonNull(
-                getClass().getResource("/css/appointments.css")).toExternalForm());
+        Scene appointmentsScene = new Scene(mainRoot, stage.getWidth(), stage.getHeight());
+        try {
+            appointmentsScene.getStylesheets().add(Objects.requireNonNull(
+                    getClass().getResource("/css/appointments.css")).toExternalForm());
+        } catch (Exception ignored) {}
 
         return appointmentsScene;
+    }
+
+    /**
+     * Sidebar navigation styled strictly like Dashboard with dark navy background,
+     * blue active highlight pill, and proper doctor profile footer card.
+     */
+    private VBox createSidebar() {
+        VBox sidebar = new VBox();
+        sidebar.setPadding(new Insets(25, 15, 25, 15));
+        sidebar.getStyleClass().add("sidebar");
+        sidebar.setStyle("-fx-background-color: #0F172A;"); // Dark Navy matching Dashboard
+        sidebar.setMinWidth(260);
+        sidebar.setPrefWidth(260);
+        sidebar.setMaxWidth(260);
+
+        // Logo Section
+        HBox logoSection = new HBox(12);
+        logoSection.setPadding(new Insets(0, 0, 25, 5));
+        logoSection.setAlignment(Pos.CENTER_LEFT);
+
+        StackPane logoIconBox = new StackPane();
+        logoIconBox.getStyleClass().add("logo-icon-box");
+        logoIconBox.setStyle("-fx-background-color: #3B82F6; -fx-background-radius: 8px; -fx-padding: 8px;");
+        ImageView logoIcon = createImageView("/images/icons/ic_shield.png", 20, 20);
+        if (logoIcon != null) {
+            logoIconBox.getChildren().add(logoIcon);
+        }
+
+        VBox logoText = new VBox(2);
+        Label appName = new Label("Health-Sphere");
+        appName.getStyleClass().add("logo-name");
+        appName.setStyle("-fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-font-size: 16px;");
+
+        Label doctorSubtext = new Label("Doctor Dashboard");
+        doctorSubtext.getStyleClass().add("logo-subtext");
+        doctorSubtext.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 12px;");
+
+        logoText.getChildren().addAll(appName, doctorSubtext);
+        logoSection.getChildren().addAll(logoIconBox, logoText);
+
+        // Navigation Items
+        VBox navItems = new VBox(6);
+        String[] tabs = {
+            "Dashboard", "Today's Schedule", "Appointments", "Patient Details",
+            "Medical Reports & Prescription", "Availability & Schedule", "Doctor Profile", "AI Health Assistant"
+        };
+        String[] icons = {
+            "ic_dashboard", "ic_schedule", "ic_appointments", "ic_patient",
+            "ic_reports", "ic_availability", "ic_profile", "ic_ai"
+        };
+
+        for (int i = 0; i < tabs.length; i++) {
+            final int tabIndex = i;
+            HBox navTab = new HBox(12);
+            navTab.setAlignment(Pos.CENTER_LEFT);
+            navTab.setPadding(new Insets(10, 14, 10, 14));
+            navTab.getStyleClass().add("nav-tab");
+
+            ImageView icon = createImageView("/images/icons/" + icons[i] + ".png", 18, 18);
+            Label tabLabel = new Label(tabs[i]);
+            tabLabel.getStyleClass().add("nav-text");
+
+            if (i == 2) { // Active Tab: Appointments
+                navTab.getStyleClass().add("nav-tab-active");
+                navTab.setStyle("-fx-background-color: #3B82F6; -fx-background-radius: 8px;");
+                tabLabel.setStyle("-fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-font-size: 14px;");
+            } else {
+                navTab.setStyle("-fx-background-color: transparent; -fx-background-radius: 8px;");
+                tabLabel.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 14px;");
+            }
+
+            if (icon != null) {
+                navTab.getChildren().add(icon);
+            }
+            navTab.getChildren().add(tabLabel);
+
+            // Handle Navigation Click
+            navTab.setOnMouseClicked(event -> handleSidebarTabClick(tabIndex));
+            navItems.getChildren().add(navTab);
+        }
+
+        // Spacer to push footer to bottom
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+
+        // Footer Section (Doctor Profile Card & Logout Button)
+        VBox footer = new VBox(10);
+        footer.setPadding(new Insets(15, 0, 0, 0));
+
+        // Bottom Doctor Profile Box
+        HBox sidebarProfile = new HBox(12);
+        sidebarProfile.setAlignment(Pos.CENTER_LEFT);
+        sidebarProfile.setPadding(new Insets(10, 12, 10, 12));
+        sidebarProfile.getStyleClass().add("sidebar-profile-box");
+        sidebarProfile.setStyle("-fx-background-color: #1E293B; -fx-background-radius: 10px; -fx-cursor: hand;");
+
+        ImageView profileAvatar = createImageView("/images/doctor/portrait-3d-male-doctor.png", 36, 36);
+        if (profileAvatar != null) {
+            Circle profileClip = new Circle(18, 18, 18);
+            profileAvatar.setClip(profileClip);
+        }
+
+        VBox profileTexts = new VBox(2);
+        Label profSubText = new Label("Doctor Profile");
+        profSubText.setStyle("-fx-text-fill: #64748B; -fx-font-size: 11px;");
+        Label profName = new Label("Dr. Sarah");
+        profName.getStyleClass().add("sidebar-profile-name");
+        profName.setStyle("-fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-font-size: 13px;");
+
+        profileTexts.getChildren().addAll(profSubText, profName);
+        if (profileAvatar != null) {
+            sidebarProfile.getChildren().add(profileAvatar);
+        }
+        sidebarProfile.getChildren().add(profileTexts);
+        sidebarProfile.setOnMouseClicked(e -> Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()));
+
+        // Logout Tab
+        HBox logoutTab = new HBox(12);
+        logoutTab.setAlignment(Pos.CENTER_LEFT);
+        logoutTab.setPadding(new Insets(10, 14, 10, 14));
+        logoutTab.getStyleClass().add("nav-tab");
+        logoutTab.setStyle("-fx-cursor: hand;");
+
+        ImageView logoutIcon = createImageView("/images/icons/ic_logout.png", 18, 18);
+        Label logoutLabel = new Label("Logout");
+        logoutLabel.getStyleClass().add("nav-text");
+        logoutLabel.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 14px;");
+
+        if (logoutIcon != null) {
+            logoutTab.getChildren().add(logoutIcon);
+        }
+        logoutTab.getChildren().add(logoutLabel);
+        logoutTab.setOnMouseClicked(event -> showInformationAlert("Logout", "Logged out successfully."));
+
+        footer.getChildren().addAll(sidebarProfile, logoutTab);
+        sidebar.getChildren().addAll(logoSection, navItems, spacer, footer);
+        return sidebar;
+    }
+
+    private void handleSidebarTabClick(int index) {
+        switch (index) {
+            case 0: Navigation.goTo(stage, () -> new DoctorDashboardView(stage).getScene()); break;
+            case 1: Navigation.goTo(stage, () -> new TodaysScheduleView(stage).getScene()); break;
+            case 2: Navigation.goTo(stage, () -> new AppointmentsView(stage).getScene()); break;
+            case 3: Navigation.goTo(stage, () -> new PatientDetailsView(stage).getScene()); break;
+            case 4: Navigation.goTo(stage, () -> new MedicalReportsView(stage).getScene()); break;
+            case 5: Navigation.goTo(stage, () -> new AvailabilityScheduleView(stage).getScene()); break;
+            case 6: Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()); break;
+            case 7: Navigation.goTo(stage, () -> new AIHealthAssistantView(stage).getScene()); break;
+            default: break;
+        }
     }
 
     /** Creates Filter Bar with dynamic click handling for tabs */
@@ -222,9 +376,10 @@ public class AppointmentsView {
 
         Button filterIconBtn = new Button();
         filterIconBtn.getStyleClass().add("btn-icon-filter");
-        ImageView filterIcon = new ImageView(ResourceImage.load("/images/icons/ic_filter.png"));
-        filterIcon.setFitWidth(16); filterIcon.setFitHeight(16);
-        filterIconBtn.setGraphic(filterIcon);
+        ImageView filterIcon = createImageView("/images/icons/ic_filter.png", 16, 16);
+        if (filterIcon != null) {
+            filterIconBtn.setGraphic(filterIcon);
+        }
 
         bar.getChildren().addAll(filterTabs, spacer, datePicker, filterIconBtn);
         return bar;
@@ -274,18 +429,16 @@ public class AppointmentsView {
 
         Node avatarNode;
         if (data.avatarPath != null) {
-            ImageView img = new ImageView(ResourceImage.load(data.avatarPath));
-            img.setFitWidth(42); img.setFitHeight(42);
-            Circle clip = new Circle(21, 21, 21);
-            img.setClip(clip);
-            avatarNode = img;
+            ImageView img = createImageView(data.avatarPath, 42, 42);
+            if (img != null) {
+                Circle clip = new Circle(21, 21, 21);
+                img.setClip(clip);
+                avatarNode = img;
+            } else {
+                avatarNode = createInitialsAvatar(data.initials);
+            }
         } else {
-            StackPane initialsAvatar = new StackPane();
-            initialsAvatar.getStyleClass().add("initials-avatar-large");
-            Label initialsText = new Label(data.initials);
-            initialsText.getStyleClass().add("initials-text-large");
-            initialsAvatar.getChildren().add(initialsText);
-            avatarNode = initialsAvatar;
+            avatarNode = createInitialsAvatar(data.initials);
         }
 
         VBox nameBox = new VBox(2);
@@ -295,12 +448,14 @@ public class AppointmentsView {
         HBox typeBox = new HBox(5);
         typeBox.setAlignment(Pos.CENTER_LEFT);
 
-        ImageView typeIcon = new ImageView(ResourceImage.load(data.typeIconPath));
-        typeIcon.setFitWidth(14); typeIcon.setFitHeight(14);
+        ImageView typeIcon = createImageView(data.typeIconPath, 14, 14);
 
         Label typeLbl = new Label(data.consultationType);
         typeLbl.getStyleClass().add("card-consult-type");
-        typeBox.getChildren().addAll(typeIcon, typeLbl);
+        if (typeIcon != null) {
+            typeBox.getChildren().add(typeIcon);
+        }
+        typeBox.getChildren().add(typeLbl);
 
         nameBox.getChildren().addAll(nameLbl, typeBox);
         profileRow.getChildren().addAll(avatarNode, nameBox);
@@ -308,21 +463,25 @@ public class AppointmentsView {
         // Date Row
         HBox timeRow = new HBox(8);
         timeRow.setAlignment(Pos.CENTER_LEFT);
-        ImageView clockIcon = new ImageView(ResourceImage.load("/images/icons/ic_clock.png"));
-        clockIcon.setFitWidth(14); clockIcon.setFitHeight(14);
+        ImageView clockIcon = createImageView("/images/icons/ic_clock.png", 14, 14);
         Label timeLbl = new Label(data.dateTime);
         timeLbl.getStyleClass().add("card-time-text");
-        timeRow.getChildren().addAll(clockIcon, timeLbl);
+        if (clockIcon != null) {
+            timeRow.getChildren().add(clockIcon);
+        }
+        timeRow.getChildren().add(timeLbl);
 
         // Notes Row
         HBox notesRow = new HBox(8);
         notesRow.setAlignment(Pos.TOP_LEFT);
-        ImageView notesIcon = new ImageView(ResourceImage.load("/images/icons/ic_stethoscope.png"));
-        notesIcon.setFitWidth(14); notesIcon.setFitHeight(14);
+        ImageView notesIcon = createImageView("/images/icons/ic_stethoscope.png", 14, 14);
         Label notesLbl = new Label(data.notes);
         notesLbl.setWrapText(true);
         notesLbl.getStyleClass().add("card-notes-text");
-        notesRow.getChildren().addAll(notesIcon, notesLbl);
+        if (notesIcon != null) {
+            notesRow.getChildren().add(notesIcon);
+        }
+        notesRow.getChildren().add(notesLbl);
 
         // Actions Row
         HBox actionRow = new HBox(10);
@@ -345,114 +504,6 @@ public class AppointmentsView {
         return card;
     }
 
-    /** Creates Sidebar Navigation */
-    private VBox createSidebar() {
-        VBox sidebar = new VBox();
-        sidebar.setPadding(new Insets(30, 15, 30, 15));
-        sidebar.getStyleClass().add("sidebar");
-        sidebar.setMinWidth(250);
-
-        HBox logoSection = new HBox(10);
-        logoSection.setPadding(new Insets(0, 0, 30, 0));
-        logoSection.setAlignment(Pos.CENTER_LEFT);
-
-        StackPane logoIconBox = new StackPane();
-        logoIconBox.getStyleClass().add("logo-icon-box");
-        Label logoAbbr = new Label("HS");
-        logoAbbr.getStyleClass().add("logo-icon-text");
-        logoIconBox.getChildren().add(logoAbbr);
-
-        VBox logoText = new VBox(0);
-        Label appName = new Label("Health-Sphere");
-        appName.getStyleClass().add("logo-name");
-        Label doctorSubtext = new Label("Doctor Dashboard");
-        doctorSubtext.getStyleClass().add("logo-subtext");
-        logoText.getChildren().addAll(appName, doctorSubtext);
-        logoSection.getChildren().addAll(logoIconBox, logoText);
-
-        VBox navItems = new VBox(8);
-        String[] tabs = {
-            "Dashboard", "Today's Schedule", "Appointments", "Patient Details",
-            "Medical Reports & Prescription", "Availability & Schedule", "Doctor Profile", "AI Health Assistant"
-        };
-        String[] icons = {
-            "ic_dashboard", "ic_schedule", "ic_appointments", "ic_patient",
-            "ic_reports", "ic_availability", "ic_profile", "ic_ai"
-        };
-
-        for (int i = 0; i < tabs.length; i++) {
-            HBox navTab = new HBox(15);
-            navTab.getStyleClass().add("nav-tab");
-            navTab.setAlignment(Pos.CENTER_LEFT);
-
-            if (i == 2) {
-                navTab.getStyleClass().add("nav-tab-active");
-            }
-
-            ImageView icon = new ImageView(ResourceImage.load("/images/icons/" + icons[i] + ".png"));
-            icon.setFitWidth(18); icon.setFitHeight(18);
-
-            Label tabLabel = new Label(tabs[i]);
-            tabLabel.getStyleClass().add("nav-text");
-
-            navTab.getChildren().addAll(icon, tabLabel);
-            navItems.getChildren().add(navTab);
-
-            final int index = i;
-            navTab.setOnMouseClicked(e -> handleSidebarTabClick(index));
-        }
-
-        VBox footer = new VBox(15);
-        footer.setAlignment(Pos.BOTTOM_CENTER);
-        VBox.setVgrow(footer, Priority.ALWAYS);
-
-        HBox doctorProfile = new HBox(12);
-        doctorProfile.getStyleClass().add("sidebar-profile");
-        doctorProfile.setAlignment(Pos.CENTER_LEFT);
-
-        ImageView profilePhoto = new ImageView(ResourceImage.load("/images/doctor/portrait-3d-male-doctor.png"));
-        profilePhoto.setFitWidth(28); profilePhoto.setFitHeight(28);
-        Circle profileClip = new Circle(14, 14, 14);
-        profilePhoto.setClip(profileClip);
-
-        VBox profileText = new VBox(0);
-        Label doctorName = new Label("Dr. Sarah");
-        doctorName.getStyleClass().add("sidebar-profile-name");
-        profileText.getChildren().add(doctorName);
-        doctorProfile.getChildren().addAll(profilePhoto, profileText);
-
-        doctorProfile.setOnMouseClicked(e -> Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()));
-
-        HBox logout = new HBox(15);
-        logout.getStyleClass().add("nav-tab");
-        logout.setAlignment(Pos.CENTER_LEFT);
-
-        ImageView logoutIcon = new ImageView(ResourceImage.load("/images/icons/ic_logout.png"));
-        logoutIcon.setFitWidth(18); logoutIcon.setFitHeight(18);
-
-        Label logoutLabel = new Label("Logout");
-        logoutLabel.getStyleClass().add("nav-text-logout");
-        logout.getChildren().addAll(logoutIcon, logoutLabel);
-
-        footer.getChildren().addAll(doctorProfile, logout);
-        sidebar.getChildren().addAll(logoSection, navItems, footer);
-        return sidebar;
-    }
-
-    private void handleSidebarTabClick(int index) {
-        switch (index) {
-            case 0: Navigation.goTo(stage, () -> new DoctorDashboardView(stage).getScene()); break;
-            case 1: Navigation.goTo(stage, () -> new TodaysScheduleView(stage).getScene()); break;
-            case 2: Navigation.goTo(stage, () -> new AppointmentsView(stage).getScene()); break;
-            case 3: Navigation.goTo(stage, () -> new PatientDetailsView(stage).getScene()); break;
-            case 4: Navigation.goTo(stage, () -> new MedicalReportsView(stage).getScene()); break;
-            case 5: Navigation.goTo(stage, () -> new AvailabilityScheduleView(stage).getScene()); break;
-            case 6: Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()); break;
-            case 7: Navigation.goTo(stage, () -> new AIHealthAssistantView(stage).getScene()); break;
-            default: break;
-        }
-    }
-
     private HBox createTopHeader() {
         HBox topBar = new HBox();
         topBar.setAlignment(Pos.CENTER_RIGHT);
@@ -461,13 +512,15 @@ public class AppointmentsView {
         searchField.getStyleClass().add("search-input-box");
         searchField.setAlignment(Pos.CENTER_LEFT);
 
-        ImageView searchIcon = new ImageView(ResourceImage.load("/images/icons/ic_search.png"));
-        searchIcon.setFitWidth(16); searchIcon.setFitHeight(16);
+        ImageView searchIcon = createImageView("/images/icons/ic_search.png", 16, 16);
 
         TextField searchInput = new TextField();
         searchInput.setPromptText("Search patients or IDs...");
         searchInput.getStyleClass().add("search-text-field");
-        searchField.getChildren().addAll(searchIcon, searchInput);
+        if (searchIcon != null) {
+            searchField.getChildren().add(searchIcon);
+        }
+        searchField.getChildren().add(searchInput);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -476,21 +529,27 @@ public class AppointmentsView {
         rightIcons.setAlignment(Pos.CENTER_RIGHT);
 
         StackPane notificationBox = new StackPane();
-        ImageView bellIcon = new ImageView(ResourceImage.load("/images/icons/ic_bell.png"));
-        bellIcon.setFitWidth(18); bellIcon.setFitHeight(18);
+        ImageView bellIcon = createImageView("/images/icons/ic_bell.png", 18, 18);
         Circle badge = new Circle(4, Color.RED);
         StackPane.setAlignment(badge, Pos.TOP_RIGHT);
-        notificationBox.getChildren().addAll(bellIcon, badge);
+        if (bellIcon != null) {
+            notificationBox.getChildren().add(bellIcon);
+        }
+        notificationBox.getChildren().add(badge);
         notificationBox.getStyleClass().add("clickable-icon");
 
-        ImageView userAvatar = new ImageView(ResourceImage.load("/images/doctor/portrait-3d-male-doctor.png"));
-        userAvatar.setFitWidth(32); userAvatar.setFitHeight(32);
-        Circle clip = new Circle(16, 16, 16);
-        userAvatar.setClip(clip);
-        userAvatar.getStyleClass().add("clickable-icon");
-        userAvatar.setOnMouseClicked(e -> Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()));
+        ImageView userAvatar = createImageView("/images/doctor/portrait-3d-male-doctor.png", 32, 32);
+        if (userAvatar != null) {
+            Circle clip = new Circle(16, 16, 16);
+            userAvatar.setClip(clip);
+            userAvatar.getStyleClass().add("clickable-icon");
+            userAvatar.setOnMouseClicked(e -> Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()));
+        }
 
-        rightIcons.getChildren().addAll(notificationBox, userAvatar);
+        rightIcons.getChildren().add(notificationBox);
+        if (userAvatar != null) {
+            rightIcons.getChildren().add(userAvatar);
+        }
         topBar.getChildren().addAll(searchField, spacer, rightIcons);
         return topBar;
     }
@@ -514,5 +573,38 @@ public class AppointmentsView {
         section.setLeft(titleBox);
         section.setRight(newApptBtn);
         return section;
+    }
+
+    private StackPane createInitialsAvatar(String initials) {
+        StackPane initialsAvatar = new StackPane();
+        initialsAvatar.getStyleClass().add("initials-avatar-large");
+        Label initialsText = new Label(initials != null ? initials : "--");
+        initialsText.getStyleClass().add("initials-text-large");
+        initialsAvatar.getChildren().add(initialsText);
+        return initialsAvatar;
+    }
+
+    private void showInformationAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    /** Helper method for safely loading image resources */
+    private ImageView createImageView(String resourcePath, double width, double height) {
+        if (resourcePath == null) return null;
+        try {
+            InputStream is = getClass().getResourceAsStream(resourcePath);
+            if (is != null) {
+                ImageView imageView = new ImageView(new javafx.scene.image.Image(is));
+                imageView.setFitWidth(width);
+                imageView.setFitHeight(height);
+                imageView.setPreserveRatio(true);
+                return imageView;
+            }
+        } catch (Exception ignored) {}
+        return null;
     }
 }

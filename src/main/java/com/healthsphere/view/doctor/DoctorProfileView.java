@@ -10,6 +10,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
 import java.util.Objects;
@@ -35,7 +36,7 @@ public class DoctorProfileView {
         BorderPane mainRoot = new BorderPane();
         mainRoot.getStyleClass().add("root-pane");
 
-        // --- Sidebar (Left Navigation) ---
+        // --- Sidebar (Left Navigation - Fixed Width & Colors) ---
         VBox sidebar = createSidebar();
         mainRoot.setLeft(sidebar);
 
@@ -69,29 +70,37 @@ public class DoctorProfileView {
         return profileScene;
     }
 
-    /** Creates Sidebar Navigation with active state on Doctor Profile tab */
+    /** Creates Sidebar Navigation with exact Dashboard dark theme, active profile highlight, and bottom profile/logout */
     private VBox createSidebar() {
         VBox sidebar = new VBox();
         sidebar.setPadding(new Insets(25, 15, 25, 15));
         sidebar.getStyleClass().add("sidebar");
-        sidebar.setMinWidth(240);
+        sidebar.setStyle("-fx-background-color: #0F172A;"); // Dark Navy background matching Dashboard
+        sidebar.setMinWidth(260);
+        sidebar.setPrefWidth(260);
+        sidebar.setMaxWidth(260);
 
         // Logo Section
-        HBox logoSection = new HBox(10);
-        logoSection.setPadding(new Insets(0, 0, 25, 0));
+        HBox logoSection = new HBox(12);
+        logoSection.setPadding(new Insets(0, 0, 25, 5));
         logoSection.setAlignment(Pos.CENTER_LEFT);
 
         StackPane logoIconBox = new StackPane();
         logoIconBox.getStyleClass().add("logo-icon-box");
+        logoIconBox.setStyle("-fx-background-color: #3B82F6; -fx-background-radius: 8px; -fx-padding: 8px;");
         ImageView logoIcon = new ImageView(ResourceImage.load("/images/icons/ic_shield.png"));
-        logoIcon.setFitWidth(18); logoIcon.setFitHeight(18);
+        logoIcon.setFitWidth(20); logoIcon.setFitHeight(20);
         logoIconBox.getChildren().add(logoIcon);
 
-        VBox logoText = new VBox(0);
+        VBox logoText = new VBox(2);
         Label appName = new Label("Health-Sphere");
         appName.getStyleClass().add("logo-name");
-        Label doctorSubtext = new Label("Doctor Module");
+        appName.setStyle("-fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-font-size: 16px;");
+        
+        Label doctorSubtext = new Label("Doctor Dashboard");
         doctorSubtext.getStyleClass().add("logo-subtext");
+        doctorSubtext.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 12px;");
+        
         logoText.getChildren().addAll(appName, doctorSubtext);
         logoSection.getChildren().addAll(logoIconBox, logoText);
 
@@ -108,16 +117,24 @@ public class DoctorProfileView {
 
         for (int i = 0; i < tabs.length; i++) {
             HBox navTab = new HBox(12);
+            navTab.setAlignment(Pos.CENTER_LEFT);
+            navTab.setPadding(new Insets(10, 14, 10, 14));
             navTab.getStyleClass().add("nav-tab");
-
-            if (i == 6) { // Active Highlight: Doctor Profile
-                navTab.getStyleClass().add("nav-tab-active");
-            }
 
             ImageView icon = new ImageView(ResourceImage.load("/images/icons/" + icons[i] + ".png"));
             icon.setFitWidth(18); icon.setFitHeight(18);
+            
             Label tabLabel = new Label(tabs[i]);
             tabLabel.getStyleClass().add("nav-text");
+
+            if (i == 6) { // Active Highlight: Doctor Profile
+                navTab.getStyleClass().add("nav-tab-active");
+                navTab.setStyle("-fx-background-color: #3B82F6; -fx-background-radius: 8px;");
+                tabLabel.setStyle("-fx-text-fill: #FFFFFF; -fx-font-weight: bold;");
+            } else {
+                navTab.setStyle("-fx-background-color: transparent; -fx-background-radius: 8px;");
+                tabLabel.setStyle("-fx-text-fill: #94A3B8;");
+            }
 
             navTab.getChildren().addAll(icon, tabLabel);
             navItems.getChildren().add(navTab);
@@ -126,7 +143,57 @@ public class DoctorProfileView {
             navTab.setOnMouseClicked(e -> handleSidebarTabClick(index));
         }
 
-        sidebar.getChildren().addAll(logoSection, navItems);
+        // Spacer to push footer profile & logout to bottom
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+
+        // Footer Section (Doctor Profile Card & Logout Button)
+        VBox footer = new VBox(10);
+        footer.setPadding(new Insets(15, 0, 0, 0));
+
+        // Bottom Doctor Profile Box
+        HBox sidebarProfile = new HBox(12);
+        sidebarProfile.setAlignment(Pos.CENTER_LEFT);
+        sidebarProfile.setPadding(new Insets(10, 12, 10, 12));
+        sidebarProfile.getStyleClass().add("sidebar-profile-box");
+        sidebarProfile.setStyle("-fx-background-color: #1E293B; -fx-background-radius: 10px; -fx-cursor: hand;");
+
+        ImageView profileAvatar = new ImageView(ResourceImage.load("/images/mocks/dr_julian_avatar.png"));
+        profileAvatar.setFitWidth(36); profileAvatar.setFitHeight(36);
+        Circle profileClip = new Circle(18, 18, 18);
+        profileAvatar.setClip(profileClip);
+
+        VBox profileTexts = new VBox(2);
+        Label profSubText = new Label("Doctor Profile");
+        profSubText.setStyle("-fx-text-fill: #64748B; -fx-font-size: 11px;");
+        Label profName = new Label("Dr. Sarah");
+        profName.getStyleClass().add("sidebar-profile-name");
+        profName.setStyle("-fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-font-size: 13px;");
+        
+        profileTexts.getChildren().addAll(profSubText, profName);
+        sidebarProfile.getChildren().addAll(profileAvatar, profileTexts);
+        sidebarProfile.setOnMouseClicked(e -> Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()));
+
+        // Logout Tab
+        HBox logoutTab = new HBox(12);
+        logoutTab.setAlignment(Pos.CENTER_LEFT);
+        logoutTab.setPadding(new Insets(10, 14, 10, 14));
+        logoutTab.getStyleClass().add("nav-tab");
+        logoutTab.setStyle("-fx-cursor: hand;");
+
+        ImageView logoutIcon = new ImageView(ResourceImage.load("/images/icons/ic_logout.png"));
+        logoutIcon.setFitWidth(18); logoutIcon.setFitHeight(18);
+        
+        Label logoutLabel = new Label("Logout");
+        logoutLabel.getStyleClass().add("nav-text");
+        logoutLabel.setStyle("-fx-text-fill: #94A3B8;");
+
+        logoutTab.getChildren().addAll(logoutIcon, logoutLabel);
+        logoutTab.setOnMouseClicked(e -> System.out.println("Logging out..."));
+
+        footer.getChildren().addAll(sidebarProfile, logoutTab);
+
+        sidebar.getChildren().addAll(logoSection, navItems, spacer, footer);
         return sidebar;
     }
 
@@ -255,7 +322,17 @@ public class DoctorProfileView {
 
         // Top Action Buttons
         HBox actionBtns = new HBox(12);
-        actionBtns.setAlignment(Pos.TOP_RIGHT);
+        actionBtns.setAlignment(Pos.CENTER_RIGHT);
+
+        // Image Icon placed directly on the left of "Account Settings"
+        ImageView settingsBtnIcon = new ImageView(ResourceImage.load("/images/icons/ic_settings.png"));
+        settingsBtnIcon.setFitWidth(16);
+        settingsBtnIcon.setFitHeight(16);
+
+        Button settingsIconButton = new Button();
+        settingsIconButton.setGraphic(settingsBtnIcon);
+        settingsIconButton.getStyleClass().add("btn-secondary-action");
+        settingsIconButton.setOnAction(e -> System.out.println("Opening Quick Settings..."));
 
         Button accountSettingsBtn = new Button("Account Settings");
         accountSettingsBtn.getStyleClass().add("btn-secondary-action");
@@ -263,10 +340,10 @@ public class DoctorProfileView {
 
         Button editProfileBtn = new Button("Edit Profile");
         editProfileBtn.getStyleClass().add("btn-primary-action");
-        // Navigation to DoctorEditProfileView
         editProfileBtn.setOnAction(e -> Navigation.goTo(stage, () -> new DoctorEditProfileView(stage).getScene()));
 
-        actionBtns.getChildren().addAll(accountSettingsBtn, editProfileBtn);
+        // Added settingsIconButton directly before accountSettingsBtn
+        actionBtns.getChildren().addAll(settingsIconButton, accountSettingsBtn, editProfileBtn);
 
         banner.getChildren().addAll(doctorImage, infoBox, spacer, actionBtns);
         return banner;
@@ -284,16 +361,36 @@ public class DoctorProfileView {
         leftColumn.getChildren().add(createQualificationCard());
         leftColumn.getChildren().add(createPatientReviewsCard());
 
-        // Right Column (Consultation Details & Weekly Availability)
+        // Right Column (Consultation Details, Weekly Availability & Side Banner)
         VBox rightColumn = new VBox(20);
         rightColumn.setMinWidth(320);
         rightColumn.setMaxWidth(340);
 
         rightColumn.getChildren().add(createConsultationDetailsCard());
         rightColumn.getChildren().add(createWeeklyAvailabilityCard());
+        rightColumn.getChildren().add(createSideImageCard());
 
         body.getChildren().addAll(leftColumn, rightColumn);
         return body;
+    }
+
+    /** Side Promo Banner Card below Weekly Availability */
+    private VBox createSideImageCard() {
+        VBox card = new VBox();
+        card.getStyleClass().add("panel-card");
+        card.setStyle("-fx-padding: 0; -fx-background-radius: 12px; -fx-overflow: hidden;");
+
+        ImageView sideImage = new ImageView(ResourceImage.load("/images/mocks/doctor_profile side.png"));
+        sideImage.setFitWidth(340);
+        sideImage.setPreserveRatio(true);
+
+        Rectangle clip = new Rectangle(340, 190);
+        clip.setArcWidth(24);
+        clip.setArcHeight(24);
+        sideImage.setClip(clip);
+
+        card.getChildren().add(sideImage);
+        return card;
     }
 
     /** Personal Details Section Card */

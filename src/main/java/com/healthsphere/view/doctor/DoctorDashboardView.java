@@ -64,15 +64,15 @@ public class DoctorDashboardView {
         VBox recentActivityTable = createRecentActivityTable();
         mainContent.getChildren().add(recentActivityTable);
 
-        mainRoot.setCenter(mainContent);
+        // ScrollPane wrapping ONLY mainContent so sidebar stays completely static
+        ScrollPane contentScrollPane = new ScrollPane(mainContent);
+        contentScrollPane.setFitToWidth(true);
+        contentScrollPane.setFitToHeight(true);
+        contentScrollPane.getStyleClass().add("content-scrollpane");
 
-        // Outer ScrollPane wrapping the entire mainRoot to allow vertical scrolling to the bottom
-        ScrollPane outerScrollPane = new ScrollPane(mainRoot);
-        outerScrollPane.setFitToWidth(true);
-        outerScrollPane.setFitToHeight(true);
-        outerScrollPane.getStyleClass().add("content-scrollpane");
+        mainRoot.setCenter(contentScrollPane);
 
-        Scene dashboardScene = new Scene(outerScrollPane, stage.getWidth(), stage.getHeight());
+        Scene dashboardScene = new Scene(mainRoot, stage.getWidth(), stage.getHeight());
 
         // Add external stylesheet if available
         try {

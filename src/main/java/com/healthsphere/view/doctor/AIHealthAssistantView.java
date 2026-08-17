@@ -16,14 +16,17 @@ import javafx.stage.Stage;
 import java.util.Objects;
 
 /**
- * AIHealthAssistantView presents the Clinical Decision Support AI Chat interface.
- * Updated layout hierarchy to enable smooth vertical scrolling down to bottom elements,
- * added sidebar footer controls (Doctor Profile & Logout), and matched sidebar tab styles.
+ * AIHealthAssistantView represents the Clinical AI Assistant dashboard.
+ * Provides real-time clinical decision support, diagnostic suggestions, and patient summary analytics.
  */
 public class AIHealthAssistantView {
 
     private final Stage stage;
     private final Scene scene;
+
+    // Chat components references for interactive updates
+    private VBox messageStream;
+    private TextField promptInput;
 
     public AIHealthAssistantView(Stage stage) {
         this.stage = stage;
@@ -38,68 +41,75 @@ public class AIHealthAssistantView {
         BorderPane mainRoot = new BorderPane();
         mainRoot.getStyleClass().add("root-pane");
 
-        // --- Sidebar (Left Navigation) ---
+        // --- Sidebar (Left Navigation - Fixed & Constant Width & Styling) ---
         VBox sidebar = createSidebar();
         mainRoot.setLeft(sidebar);
 
         // --- Main Content Area ---
         VBox contentArea = new VBox(20);
-        contentArea.setPadding(new Insets(20, 30, 30, 30));
+        contentArea.setPadding(new Insets(24, 32, 32, 32));
         contentArea.getStyleClass().add("content-area");
 
-        // Top Navigation Header
+        // Top Header
         HBox topHeader = createTopHeader();
         contentArea.getChildren().add(topHeader);
 
-        // Main Two-Column Layout (Chat Window on Left | Clinical Decision Support Panel on Right)
+        // Page Sub-header Title & Top Action Buttons
+        BorderPane pageHeader = createPageHeader();
+        contentArea.getChildren().add(pageHeader);
+
+        // Main Content Two-Column Grid (Interactive AI Chat Console on Left | Clinical Insights & Prompts on Right)
         HBox bodyLayout = createBodyLayout();
-        VBox.setVgrow(bodyLayout, Priority.ALWAYS);
         contentArea.getChildren().add(bodyLayout);
 
-        mainRoot.setCenter(contentArea);
-
-        // ScrollPane Container wrapping root layout to scroll down to bottom fully
-        ScrollPane scrollPane = new ScrollPane(mainRoot);
+        // --- ScrollPane Container for Content Only (Sidebar remains fixed on Left) ---
+        ScrollPane scrollPane = new ScrollPane(contentArea);
         scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.getStyleClass().add("content-scrollpane");
+        mainRoot.setCenter(scrollPane);
 
-        Scene aiScene = new Scene(scrollPane, stage.getWidth(), stage.getHeight());
-        
+        Scene aiAssistantScene = new Scene(mainRoot, stage.getWidth(), stage.getHeight());
+
         try {
-            aiScene.getStylesheets().add(Objects.requireNonNull(
+            aiAssistantScene.getStylesheets().add(Objects.requireNonNull(
                     getClass().getResource("/css/ai_health_assistant.css")).toExternalForm());
         } catch (Exception ignored) {}
 
-        return aiScene;
+        return aiAssistantScene;
     }
 
-    /** Creates Sidebar Navigation with Doctor Profile & Logout buttons at the bottom */
+    /** Creates Sidebar Navigation strictly matching Dashboard dark theme & fixed width */
     private VBox createSidebar() {
         VBox sidebar = new VBox();
         sidebar.setPadding(new Insets(25, 15, 25, 15));
         sidebar.getStyleClass().add("sidebar");
-        sidebar.setMinWidth(240);
-        sidebar.setPrefWidth(240);
+        sidebar.setStyle("-fx-background-color: #0F172A;"); // Dark Navy background matching Dashboard
+        sidebar.setMinWidth(260);
+        sidebar.setPrefWidth(260);
+        sidebar.setMaxWidth(260);
 
         // Logo Section
-        HBox logoSection = new HBox(10);
-        logoSection.setPadding(new Insets(0, 0, 25, 0));
+        HBox logoSection = new HBox(12);
+        logoSection.setPadding(new Insets(0, 0, 25, 5));
         logoSection.setAlignment(Pos.CENTER_LEFT);
 
         StackPane logoIconBox = new StackPane();
         logoIconBox.getStyleClass().add("logo-icon-box");
-        Label logoBadgeText = new Label("HS");
-        logoBadgeText.getStyleClass().add("logo-badge-text");
-        logoIconBox.getChildren().add(logoBadgeText);
+        logoIconBox.setStyle("-fx-background-color: #3B82F6; -fx-background-radius: 8px; -fx-padding: 8px;");
+        ImageView logoIcon = new ImageView(ResourceImage.load("/images/icons/ic_shield.png"));
+        logoIcon.setFitWidth(20);
+        logoIcon.setFitHeight(20);
+        logoIconBox.getChildren().add(logoIcon);
 
-        VBox logoText = new VBox(0);
+        VBox logoText = new VBox(2);
         Label appName = new Label("Health-Sphere");
         appName.getStyleClass().add("logo-name");
-        Label doctorSubtext = new Label("AI Healthcare Admin");
+        appName.setStyle("-fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-font-size: 16px;");
+
+        Label doctorSubtext = new Label("Doctor Dashboard");
         doctorSubtext.getStyleClass().add("logo-subtext");
+        doctorSubtext.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 12px;");
+
         logoText.getChildren().addAll(appName, doctorSubtext);
         logoSection.getChildren().addAll(logoIconBox, logoText);
 
@@ -116,19 +126,25 @@ public class AIHealthAssistantView {
 
         for (int i = 0; i < tabs.length; i++) {
             HBox navTab = new HBox(12);
-            navTab.getStyleClass().add("nav-tab");
             navTab.setAlignment(Pos.CENTER_LEFT);
-            navTab.setPadding(new Insets(8, 12, 8, 12));
+            navTab.setPadding(new Insets(10, 14, 10, 14));
+            navTab.getStyleClass().add("nav-tab");
+
+            ImageView icon = new ImageView(ResourceImage.load("/images/icons/" + icons[i] + ".png"));
+            icon.setFitWidth(18);
+            icon.setFitHeight(18);
+
+            Label tabLabel = new Label(tabs[i]);
+            tabLabel.getStyleClass().add("nav-text");
 
             if (i == 7) { // Active Highlight: AI Health Assistant
                 navTab.getStyleClass().add("nav-tab-active");
+                navTab.setStyle("-fx-background-color: #3B82F6; -fx-background-radius: 8px;");
+                tabLabel.setStyle("-fx-text-fill: #FFFFFF; -fx-font-weight: bold;");
+            } else {
+                navTab.setStyle("-fx-background-color: transparent; -fx-background-radius: 8px;");
+                tabLabel.setStyle("-fx-text-fill: #94A3B8;");
             }
-
-            ImageView icon = new ImageView(ResourceImage.load("/images/icons/" + icons[i] + ".png"));
-            icon.setFitWidth(18); 
-            icon.setFitHeight(18);
-            Label tabLabel = new Label(tabs[i]);
-            tabLabel.getStyleClass().add("nav-text");
 
             navTab.getChildren().addAll(icon, tabLabel);
             navItems.getChildren().add(navTab);
@@ -137,490 +153,452 @@ public class AIHealthAssistantView {
             navTab.setOnMouseClicked(e -> handleSidebarTabClick(index));
         }
 
-        // Sidebar Footer Controls (Doctor Profile & Logout Button)
-        VBox footer = new VBox(8);
-        footer.setAlignment(Pos.BOTTOM_LEFT);
-        footer.setPadding(new Insets(16, 0, 0, 0));
-        VBox.setVgrow(footer, Priority.ALWAYS);
+        // Spacer to push footer to bottom
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
 
-        Separator lineDivider = new Separator();
-        lineDivider.getStyleClass().add("sidebar-divider");
+        // Footer Section (Doctor Profile Card & Logout Button)
+        VBox footer = new VBox(10);
+        footer.setPadding(new Insets(15, 0, 0, 0));
 
-        HBox docProfile = new HBox(12);
-        docProfile.setAlignment(Pos.CENTER_LEFT);
-        docProfile.getStyleClass().add("sidebar-profile");
-        docProfile.setPadding(new Insets(6, 12, 6, 12));
+        // Bottom Doctor Profile Box
+        HBox sidebarProfile = new HBox(12);
+        sidebarProfile.setAlignment(Pos.CENTER_LEFT);
+        sidebarProfile.setPadding(new Insets(10, 12, 10, 12));
+        sidebarProfile.getStyleClass().add("sidebar-profile-box");
+        sidebarProfile.setStyle("-fx-background-color: #1E293B; -fx-background-radius: 10px; -fx-cursor: hand;");
 
-        ImageView profileIcon = new ImageView(ResourceImage.load("/images/icons/ic_doctor_profile_small.png"));
-        profileIcon.setFitWidth(18);
-        profileIcon.setFitHeight(18);
+        ImageView profileAvatar = new ImageView(ResourceImage.load("/images/doctor/portrait-3d-male-doctor.png"));
+        profileAvatar.setFitWidth(36);
+        profileAvatar.setFitHeight(36);
+        Circle profileClip = new Circle(18, 18, 18);
+        profileAvatar.setClip(profileClip);
 
-        Label docLabel = new Label("Doctor Profile");
-        docLabel.getStyleClass().add("sidebar-profile-name");
-        docProfile.getChildren().addAll(profileIcon, docLabel);
-        docProfile.setOnMouseClicked(e ->
-                Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()));
+        VBox profileTexts = new VBox(2);
+        Label profSubText = new Label("Doctor Profile");
+        profSubText.setStyle("-fx-text-fill: #64748B; -fx-font-size: 11px;");
+        Label profName = new Label("Dr. Sarah");
+        profName.getStyleClass().add("sidebar-profile-name");
+        profName.setStyle("-fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-font-size: 13px;");
 
-        HBox logout = new HBox(12);
-        logout.setAlignment(Pos.CENTER_LEFT);
-        logout.getStyleClass().add("nav-tab-logout");
-        logout.setPadding(new Insets(6, 12, 6, 12));
+        profileTexts.getChildren().addAll(profSubText, profName);
+        sidebarProfile.getChildren().addAll(profileAvatar, profileTexts);
+        sidebarProfile.setOnMouseClicked(e -> Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()));
+
+        // Logout Tab
+        HBox logoutTab = new HBox(12);
+        logoutTab.setAlignment(Pos.CENTER_LEFT);
+        logoutTab.setPadding(new Insets(10, 14, 10, 14));
+        logoutTab.getStyleClass().add("nav-tab");
+        logoutTab.setStyle("-fx-cursor: hand;");
 
         ImageView logoutIcon = new ImageView(ResourceImage.load("/images/icons/ic_logout.png"));
         logoutIcon.setFitWidth(18);
         logoutIcon.setFitHeight(18);
 
         Label logoutLabel = new Label("Logout");
-        logoutLabel.getStyleClass().add("nav-text-logout");
-        logout.getChildren().addAll(logoutIcon, logoutLabel);
-        logout.setOnMouseClicked(e -> System.out.println("Logging out..."));
+        logoutLabel.getStyleClass().add("nav-text");
+        logoutLabel.setStyle("-fx-text-fill: #94A3B8;");
 
-        footer.getChildren().addAll(lineDivider, docProfile, logout);
-        sidebar.getChildren().addAll(logoSection, navItems, footer);
+        logoutTab.getChildren().addAll(logoutIcon, logoutLabel);
+        logoutTab.setOnMouseClicked(e -> System.out.println("Logging out..."));
+
+        footer.getChildren().addAll(sidebarProfile, logoutTab);
+
+        sidebar.getChildren().addAll(logoSection, navItems, spacer, footer);
         return sidebar;
     }
 
     private void handleSidebarTabClick(int index) {
         switch (index) {
-            case 0:
-                Navigation.goTo(stage, () -> new DoctorDashboardView(stage).getScene());
-                break;
-            case 1:
-                Navigation.goTo(stage, () -> new TodaysScheduleView(stage).getScene());
-                break;
-            case 2:
-                Navigation.goTo(stage, () -> new AppointmentsView(stage).getScene());
-                break;
-            case 3:
-                Navigation.goTo(stage, () -> new PatientDetailsView(stage).getScene());
-                break;
-            case 4:
-                Navigation.goTo(stage, () -> new MedicalReportsView(stage).getScene());
-                break;
-            case 5:
-                Navigation.goTo(stage, () -> new AvailabilityScheduleView(stage).getScene());
-                break;
-            case 6:
-                Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene());
-                break;
-            case 7:
-                Navigation.goTo(stage, () -> new AIHealthAssistantView(stage).getScene());
-                break;
-            default:
-                break;
+            case 0: Navigation.goTo(stage, () -> new DoctorDashboardView(stage).getScene()); break;
+            case 1: Navigation.goTo(stage, () -> new TodaysScheduleView(stage).getScene()); break;
+            case 2: Navigation.goTo(stage, () -> new AppointmentsView(stage).getScene()); break;
+            case 3: Navigation.goTo(stage, () -> new PatientDetailsView(stage).getScene()); break;
+            case 4: Navigation.goTo(stage, () -> new MedicalReportsView(stage).getScene()); break;
+            case 5: Navigation.goTo(stage, () -> new AvailabilityScheduleView(stage).getScene()); break;
+            case 6: Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()); break;
+            case 7: Navigation.goTo(stage, () -> new AIHealthAssistantView(stage).getScene()); break;
+            default: break;
         }
     }
 
-    /** Top Navigation Header */
+    /** Top Navigation & Profile Bar */
     private HBox createTopHeader() {
         HBox topBar = new HBox();
         topBar.setAlignment(Pos.CENTER_LEFT);
 
-        Label pageTitle = new Label("Doctor Module");
-        pageTitle.getStyleClass().add("module-header-title");
+        HBox breadcrumbs = new HBox(6);
+        breadcrumbs.setAlignment(Pos.CENTER_LEFT);
+        Label p1 = new Label("Clinical Support");
+        p1.getStyleClass().add("breadcrumb-inactive");
+        Label sep = new Label("›");
+        sep.getStyleClass().add("breadcrumb-separator");
+        Label p2 = new Label("AI Health Assistant");
+        p2.getStyleClass().add("breadcrumb-active");
+        breadcrumbs.getChildren().addAll(p1, sep, p2);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        HBox rightIcons = new HBox(18);
+        // Search Box
+        HBox searchField = new HBox(10);
+        searchField.getStyleClass().add("search-input-box");
+        searchField.setAlignment(Pos.CENTER_LEFT);
+        searchField.setPrefWidth(260);
+
+        ImageView searchIcon = new ImageView(ResourceImage.load("/images/icons/ic_search.png"));
+        searchIcon.setFitWidth(16);
+        searchIcon.setFitHeight(16);
+
+        TextField searchInput = new TextField();
+        searchInput.setPromptText("Search clinical queries...");
+        searchInput.getStyleClass().add("search-text-field");
+        HBox.setHgrow(searchInput, Priority.ALWAYS);
+
+        searchField.getChildren().addAll(searchIcon, searchInput);
+
+        // Notifications & Avatar Container
+        HBox rightIcons = new HBox(16);
         rightIcons.setAlignment(Pos.CENTER_RIGHT);
+        rightIcons.setPadding(new Insets(0, 0, 0, 16));
 
-        Label docProfileLink = new Label("Doctor Profile");
-        docProfileLink.getStyleClass().add("header-profile-link");
-        docProfileLink.setOnMouseClicked(e -> 
-                Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()));
-
-        ImageView bellIcon = new ImageView(ResourceImage.load("/images/doctor/bell.png"));
-        bellIcon.setFitWidth(18); 
+        StackPane notificationBox = new StackPane();
+        ImageView bellIcon = new ImageView(ResourceImage.load("/images/icons/ic_bell.png"));
+        bellIcon.setFitWidth(18);
         bellIcon.setFitHeight(18);
-        bellIcon.getStyleClass().add("clickable-icon");
 
-        ImageView settingsIcon = new ImageView(ResourceImage.load("/images/doctor/settings.png"));
-        settingsIcon.setFitWidth(18); 
-        settingsIcon.setFitHeight(18);
-        settingsIcon.getStyleClass().add("clickable-icon");
+        Circle badge = new Circle(4, Color.web("#EF4444"));
+        StackPane.setAlignment(badge, Pos.TOP_RIGHT);
+        notificationBox.getChildren().addAll(bellIcon, badge);
+        notificationBox.getStyleClass().add("clickable-icon");
+        notificationBox.setOnMouseClicked(e -> System.out.println("Opening notifications..."));
 
-        ImageView topAvatar = new ImageView(ResourceImage.load("/images/doctor/portrait-3d-male-doctor.png"));
-        topAvatar.setFitWidth(32); 
-        topAvatar.setFitHeight(32);
-        Circle clip = new Circle(16, 16, 16);
-        topAvatar.setClip(clip);
+        HBox userProfile = new HBox(10);
+        userProfile.setAlignment(Pos.CENTER_LEFT);
+        userProfile.getStyleClass().add("clickable-icon");
 
-        rightIcons.getChildren().addAll(docProfileLink, bellIcon, settingsIcon, topAvatar);
+        ImageView userAvatar = new ImageView(ResourceImage.load("/images/doctor/portrait-3d-male-doctor.png"));
+        userAvatar.setFitWidth(36);
+        userAvatar.setFitHeight(36);
+        Circle clip = new Circle(18, 18, 18);
+        userAvatar.setClip(clip);
 
-        topBar.getChildren().addAll(pageTitle, spacer, rightIcons);
+        VBox userDetails = new VBox(0);
+        Label docName = new Label("Dr. Sarah Jenkins");
+        docName.getStyleClass().add("profile-name");
+        Label docDept = new Label("Cardiology");
+        docDept.getStyleClass().add("profile-dept");
+        userDetails.getChildren().addAll(docName, docDept);
+
+        userProfile.getChildren().addAll(userAvatar, userDetails);
+        rightIcons.getChildren().addAll(notificationBox, userProfile);
+
+        topBar.getChildren().addAll(breadcrumbs, spacer, searchField, rightIcons);
         return topBar;
     }
 
-    /** Main Two-Column Layout */
+    /** Page Title and Top Actions Header */
+    private BorderPane createPageHeader() {
+        BorderPane header = new BorderPane();
+        header.setPadding(new Insets(4, 0, 8, 0));
+
+        VBox titles = new VBox(4);
+        Label title = new Label("AI Health Assistant");
+        title.getStyleClass().add("page-title");
+        Label subtext = new Label("Intelligent diagnostic assistance, medical literature query, and clinical decision support.");
+        subtext.getStyleClass().add("page-subtext");
+        titles.getChildren().addAll(title, subtext);
+
+        HBox actionBtns = new HBox(12);
+        actionBtns.setAlignment(Pos.CENTER_RIGHT);
+
+        Button clearBtn = new Button("Clear Chat");
+        ImageView clearIcon = new ImageView(ResourceImage.load("/images/icons/ic_export.png"));
+        clearIcon.setFitWidth(14);
+        clearIcon.setFitHeight(14);
+        clearBtn.setGraphic(clearIcon);
+        clearBtn.getStyleClass().add("btn-secondary-action");
+        clearBtn.setOnAction(e -> handleClearChat());
+
+        Button newSessionBtn = new Button("New Consultation");
+        ImageView addIcon = new ImageView(ResourceImage.load("/images/icons/ic_save.png"));
+        addIcon.setFitWidth(14);
+        addIcon.setFitHeight(14);
+        newSessionBtn.setGraphic(addIcon);
+        newSessionBtn.getStyleClass().add("btn-primary-action");
+        newSessionBtn.setOnAction(e -> handleNewConsultation());
+
+        actionBtns.getChildren().addAll(clearBtn, newSessionBtn);
+
+        header.setLeft(titles);
+        header.setRight(actionBtns);
+        return header;
+    }
+
+    /** Body Layout: Interactive Assistant Console on Left & Analytics Panel on Right */
     private HBox createBodyLayout() {
         HBox layout = new HBox(20);
 
-        // Left Column: Main Interactive AI Chat Window
-        VBox chatCard = createChatWindowCard();
+        // Left Column: Interactive Chat & Consultation Console
+        VBox chatCard = createChatConsoleCard();
         HBox.setHgrow(chatCard, Priority.ALWAYS);
 
-        // Right Column: Clinical Decision Support Panel
-        VBox supportPanel = createClinicalDecisionSupportPanel();
-        supportPanel.setMinWidth(320);
-        supportPanel.setMaxWidth(340);
+        // Right Column: Controls & Context Panel (FixedWidth fixed to prevent overlapping)
+        VBox controlsPanel = new VBox(20);
+        controlsPanel.setMinWidth(320);
+        controlsPanel.setPrefWidth(340);
+        controlsPanel.setMaxWidth(340);
 
-        layout.getChildren().addAll(chatCard, supportPanel);
+        VBox activePatientCard = createActivePatientContextCard();
+        VBox quickPromptsCard = createQuickPromptsCard();
+        VBox aiDisclaimerCard = createAIDisclaimerCard();
+
+        controlsPanel.getChildren().addAll(activePatientCard, quickPromptsCard, aiDisclaimerCard);
+
+        layout.getChildren().addAll(chatCard, controlsPanel);
         return layout;
     }
 
-    /** Main Interactive Chat Card Component */
-    private VBox createChatWindowCard() {
-        VBox card = new VBox(0);
+    /** Main Interactive Chat Console Pane */
+    private VBox createChatConsoleCard() {
+        VBox card = new VBox(16);
         card.getStyleClass().add("panel-card");
-        VBox.setVgrow(card, Priority.ALWAYS);
+        card.setPadding(new Insets(20));
 
-        // Chat Header
-        BorderPane chatHeader = new BorderPane();
-        chatHeader.setPadding(new Insets(16, 20, 16, 20));
-        chatHeader.getStyleClass().add("chat-header");
+        // Header: Model selection & Status
+        BorderPane consoleHeader = new BorderPane();
 
-        HBox aiTitleBox = new HBox(10);
-        aiTitleBox.setAlignment(Pos.CENTER_LEFT);
+        HBox modelInfo = new HBox(8);
+        modelInfo.setAlignment(Pos.CENTER_LEFT);
+        ImageView botIcon = new ImageView(ResourceImage.load("/images/icons/ic_robot.png"));
+        botIcon.setFitWidth(20);
+        botIcon.setFitHeight(20);
+        Label consoleTitle = new Label("Clinical AI Co-Pilot");
+        consoleTitle.getStyleClass().add("card-title");
+        modelInfo.getChildren().addAll(botIcon, consoleTitle);
 
-        StackPane aiAvatar = new StackPane();
-        aiAvatar.getStyleClass().add("ai-avatar-circle");
-        ImageView aiIcon = new ImageView(ResourceImage.load("/images/doctor/ai sparkelicon.png"));
-        aiIcon.setFitWidth(16); 
-        aiIcon.setFitHeight(16);
-        aiAvatar.getChildren().add(aiIcon);
+        HBox statusBadge = new HBox(6);
+        statusBadge.setAlignment(Pos.CENTER_RIGHT);
+        Circle statusDot = new Circle(4, Color.web("#10B981"));
+        Label statusText = new Label("Medical LLM v4.2 Active");
+        statusText.getStyleClass().add("legend-text");
+        statusBadge.getChildren().addAll(statusDot, statusText);
 
-        VBox titleText = new VBox(2);
-        Label mainTitle = new Label("Health-Sphere AI");
-        mainTitle.getStyleClass().add("chat-header-title");
-        Label subTitle = new Label("Clinical Decision Support System");
-        subTitle.getStyleClass().add("chat-header-subtitle");
-        titleText.getChildren().addAll(mainTitle, subTitle);
+        consoleHeader.setLeft(modelInfo);
+        consoleHeader.setRight(statusBadge);
 
-        aiTitleBox.getChildren().addAll(aiAvatar, titleText);
+        // Chat Conversation Stream Container
+        messageStream = new VBox(14);
+        messageStream.setPadding(new Insets(12));
+        messageStream.getStyleClass().add("chat-stream-box");
 
-        Button historyBtn = new Button("History");
-        ImageView historyIcon = new ImageView(ResourceImage.load("/images/doctor/ai sparkelicon.png"));
-        historyIcon.setFitWidth(14); 
-        historyIcon.setFitHeight(14);
-        historyBtn.setGraphic(historyIcon);
-        historyBtn.getStyleClass().add("btn-history");
+        // Initial default conversation setup
+        loadDefaultChatMessages();
 
-        chatHeader.setLeft(aiTitleBox);
-        chatHeader.setRight(historyBtn);
+        VBox.setVgrow(messageStream, Priority.ALWAYS);
 
-        // Chat Scroll Area
-        VBox chatMessagesContainer = new VBox(18);
-        chatMessagesContainer.setPadding(new Insets(20));
-        chatMessagesContainer.getStyleClass().add("chat-messages-area");
+        // Input Prompt Box Area
+        HBox inputContainer = new HBox(10);
+        inputContainer.setAlignment(Pos.CENTER_LEFT);
+        inputContainer.setPadding(new Insets(10, 0, 0, 0));
 
-        // Message 1: Bot Greeting
-        chatMessagesContainer.getChildren().add(createBotMessage(
-                "Good morning, Dr. Profile. I am ready to assist with your patient consultations today. You can ask me to analyze symptoms, review drug interactions, or summarize patient histories."
-        ));
+        promptInput = new TextField();
+        promptInput.setPromptText("Ask a clinical question or request lab summary...");
+        promptInput.getStyleClass().add("search-text-field");
+        HBox.setHgrow(promptInput, Priority.ALWAYS);
 
-        // Message 2: User Prompt
-        chatMessagesContainer.getChildren().add(createUserMessage(
-                "Analyze the latest lab results for John Doe (ID: 48291). He presented with fatigue and mild jaundice."
-        ));
+        Button sendBtn = new Button("Send");
+        ImageView sendIcon = new ImageView(ResourceImage.load("/images/icons/ic_save.png"));
+        sendIcon.setFitWidth(14);
+        sendIcon.setFitHeight(14);
+        sendBtn.setGraphic(sendIcon);
+        sendBtn.getStyleClass().add("btn-primary-action");
+        sendBtn.setOnAction(e -> handleSendMessage());
+        promptInput.setOnAction(e -> handleSendMessage());
 
-        // Message 3: Bot Detailed Analysis
-        VBox analysisContent = new VBox(12);
-        Label introText = new Label("Based on John Doe's recent metabolic panel and reported symptoms, here is the analysis:");
-        introText.getStyleClass().add("chat-body-text");
+        inputContainer.getChildren().addAll(promptInput, sendBtn);
 
-        VBox abnCard = new VBox(6);
-        abnCard.getStyleClass().add("abnormalities-card");
-        abnCard.setPadding(new Insets(12));
-
-        Label abnTitle = new Label("Key Abnormalities:");
-        abnTitle.getStyleClass().add("abnormalities-title");
-
-        VBox abnList = new VBox(4);
-        abnList.getChildren().addAll(
-                createBulletPoint("Elevated Bilirubin (Total: 2.5 mg/dL)"),
-                createBulletPoint("Elevated ALT (85 U/L) and AST (72 U/L)"),
-                createBulletPoint("Slightly decreased Hemoglobin (12.8 g/dL)")
-        );
-        abnCard.getChildren().addAll(abnTitle, abnList);
-
-        Label summaryText = new Label("These results, combined with fatigue and mild jaundice, suggest potential hepatic involvement or hemolytic anemia. I recommend reviewing his recent medication history, particularly the introduction of new NSAIDs last month.");
-        summaryText.getStyleClass().add("chat-body-text");
-        summaryText.setWrapText(true);
-
-        analysisContent.getChildren().addAll(introText, abnCard, summaryText);
-        chatMessagesContainer.getChildren().add(createBotCustomMessage(analysisContent));
-
-        // Message 4: Bot Typing Indicator
-        chatMessagesContainer.getChildren().add(createBotTypingIndicator());
-
-        ScrollPane messageScrollPane = new ScrollPane(chatMessagesContainer);
-        messageScrollPane.setFitToWidth(true);
-        messageScrollPane.getStyleClass().add("chat-scrollpane");
-        VBox.setVgrow(messageScrollPane, Priority.ALWAYS);
-
-        // Chat Input Section
-        VBox chatInputBox = createChatInputSection();
-
-        card.getChildren().addAll(chatHeader, new Separator(), messageScrollPane, chatInputBox);
+        card.getChildren().addAll(consoleHeader, messageStream, inputContainer);
         return card;
     }
 
-    private HBox createBotMessage(String text) {
-        HBox row = new HBox(12);
-        row.setAlignment(Pos.TOP_LEFT);
+    /** Load default initial conversation messages */
+    private void loadDefaultChatMessages() {
+        messageStream.getChildren().clear();
 
-        StackPane avatar = createMiniBotAvatar();
-
-        VBox bubble = new VBox();
-        bubble.getStyleClass().add("bot-bubble");
-        bubble.setPadding(new Insets(12, 16, 12, 16));
-        bubble.setMaxWidth(520);
-
-        Label label = new Label(text);
-        label.getStyleClass().add("chat-body-text");
-        label.setWrapText(true);
-        bubble.getChildren().add(label);
-
-        row.getChildren().addAll(avatar, bubble);
-        return row;
-    }
-
-    private HBox createBotCustomMessage(VBox customContent) {
-        HBox row = new HBox(12);
-        row.setAlignment(Pos.TOP_LEFT);
-
-        StackPane avatar = createMiniBotAvatar();
-
-        VBox bubble = new VBox();
-        bubble.getStyleClass().add("bot-bubble");
-        bubble.setPadding(new Insets(14, 16, 14, 16));
-        bubble.setMaxWidth(540);
-
-        bubble.getChildren().add(customContent);
-        row.getChildren().addAll(avatar, bubble);
-        return row;
-    }
-
-    private HBox createUserMessage(String text) {
-        HBox row = new HBox(12);
-        row.setAlignment(Pos.TOP_RIGHT);
-
-        VBox bubble = new VBox();
-        bubble.getStyleClass().add("user-bubble");
-        bubble.setPadding(new Insets(12, 16, 12, 16));
-        bubble.setMaxWidth(480);
-
-        Label label = new Label(text);
-        label.getStyleClass().add("user-chat-text");
-        label.setWrapText(true);
-        bubble.getChildren().add(label);
-
-        ImageView userAvatar = new ImageView(ResourceImage.load("/images/doctor/portrait-3d-male-doctor.png"));
-        userAvatar.setFitWidth(28); 
-        userAvatar.setFitHeight(28);
-        Circle clip = new Circle(14, 14, 14);
-        userAvatar.setClip(clip);
-
-        row.getChildren().addAll(bubble, userAvatar);
-        return row;
-    }
-
-    private HBox createBotTypingIndicator() {
-        HBox row = new HBox(12);
-        row.setAlignment(Pos.TOP_LEFT);
-
-        StackPane avatar = createMiniBotAvatar();
-
-        HBox bubble = new HBox(6);
-        bubble.getStyleClass().add("bot-bubble");
-        bubble.setPadding(new Insets(12, 16, 12, 16));
-        bubble.setAlignment(Pos.CENTER);
-
-        Circle dot1 = new Circle(3, Color.web("#2563EB"));
-        Circle dot2 = new Circle(3, Color.web("#2563EB"));
-        Circle dot3 = new Circle(3, Color.web("#2563EB"));
-        bubble.getChildren().addAll(dot1, dot2, dot3);
-
-        row.getChildren().addAll(avatar, bubble);
-        return row;
-    }
-
-    private StackPane createMiniBotAvatar() {
-        StackPane avatar = new StackPane();
-        avatar.getStyleClass().add("mini-bot-avatar");
-        ImageView icon = new ImageView(ResourceImage.load("/images/doctor/ai sparkelicon.png"));
-        icon.setFitWidth(14); 
-        icon.setFitHeight(14);
-        avatar.getChildren().add(icon);
-        return avatar;
-    }
-
-    private HBox createBulletPoint(String text) {
-        HBox bullet = new HBox(8);
-        bullet.setAlignment(Pos.CENTER_LEFT);
-        Circle dot = new Circle(2.5, Color.web("#334155"));
-        Label label = new Label(text);
-        label.getStyleClass().add("bullet-text");
-        bullet.getChildren().addAll(dot, label);
-        return bullet;
-    }
-
-    /** Bottom Prompt Controls & Action Chips */
-    private VBox createChatInputSection() {
-        VBox container = new VBox(12);
-        container.setPadding(new Insets(16, 20, 20, 20));
-        container.getStyleClass().add("input-section-container");
-
-        // Action Chip Suggestions
-        HBox chipsBox = new HBox(10);
-        chipsBox.getChildren().addAll(
-                createChipButton("Analyze symptoms"),
-                createChipButton("Check drug interactions"),
-                createChipButton("Summarize patient history")
+        // Message 1: AI Welcome
+        VBox msg1 = createChatMessage(
+                "Clinical AI",
+                "Hello Dr. Jenkins. I am synced with your current active patient file (John Doe, ID: #P-8842). How can I assist with diagnostic analysis or treatment guidelines today?",
+                false
         );
 
-        // Text Input Bar
-        HBox inputBox = new HBox(12);
-        inputBox.getStyleClass().add("chat-input-box");
-        inputBox.setPadding(new Insets(8, 14, 8, 14));
-        inputBox.setAlignment(Pos.CENTER_LEFT);
+        // Message 2: Doctor Query
+        VBox msg2 = createChatMessage(
+                "Dr. Sarah Jenkins",
+                "Summarize the drug interaction risks between his prescribed Beta-Blocker and the new hypertension regimen.",
+                true
+        );
 
-        ImageView attachIcon = new ImageView(ResourceImage.load("/images/doctor/attach_icon.png"));
-        attachIcon.setFitWidth(18); 
-        attachIcon.setFitHeight(18);
-        attachIcon.getStyleClass().add("clickable-icon");
+        // Message 3: AI Analysis Response
+        VBox msg3 = createChatMessage(
+                "Clinical AI",
+                "Analysis complete. Combining Bisoprolol with Verapamil may increase the risk of severe bradycardia and AV block. Recommendation: Monitor heart rate closely or consider substituting with a Dihydropyridine CCB like Amlodipine.",
+                false
+        );
 
-        TextField promptField = new TextField();
-        promptField.setPromptText("Type your clinical query here...");
-        promptField.getStyleClass().add("prompt-text-field");
-        HBox.setHgrow(promptField, Priority.ALWAYS);
-
-        ImageView sendIcon = new ImageView(ResourceImage.load("/images/doctor/send icon.png"));
-        sendIcon.setFitWidth(18); 
-        sendIcon.setFitHeight(18);
-        sendIcon.getStyleClass().add("clickable-icon");
-
-        inputBox.getChildren().addAll(attachIcon, promptField, sendIcon);
-
-        container.getChildren().addAll(chipsBox, inputBox);
-        return container;
+        messageStream.getChildren().addAll(msg1, msg2, msg3);
     }
 
-    private Button createChipButton(String text) {
-        Button chip = new Button(text);
-        chip.getStyleClass().add("suggestion-chip");
-        chip.setOnAction(e -> System.out.println("Selected chip: " + text));
-        return chip;
+    /** Handles Clear Chat Button Action */
+    private void handleClearChat() {
+        if (messageStream != null) {
+            messageStream.getChildren().clear();
+            // Show fresh greeting message after clearing history
+            VBox welcomeMsg = createChatMessage(
+                    "Clinical AI",
+                    "Chat history cleared. How can I assist you with your next query, Dr. Jenkins?",
+                    false
+            );
+            messageStream.getChildren().add(welcomeMsg);
+        }
+        if (promptInput != null) {
+            promptInput.clear();
+        }
     }
 
-    /** Clinical Decision Support Panel (Right Column) */
-    private VBox createClinicalDecisionSupportPanel() {
-        VBox panel = new VBox(16);
-        panel.getStyleClass().add("cds-panel");
-        panel.setPadding(new Insets(16));
-
-        // Header
-        HBox header = new HBox(8);
-        header.setAlignment(Pos.CENTER_LEFT);
-        ImageView shieldIcon = new ImageView(ResourceImage.load("/images/doctor/shield_icon.jpg"));
-        shieldIcon.setFitWidth(18); 
-        shieldIcon.setFitHeight(18);
-        Label title = new Label("Clinical Decision Support");
-        title.getStyleClass().add("cds-header-title");
-        header.getChildren().addAll(shieldIcon, title);
-
-        // Section 1: Differential Diagnosis
-        VBox diffCard = new VBox(12);
-        diffCard.getStyleClass().add("cds-card");
-        diffCard.setPadding(new Insets(14));
-
-        HBox diffHeader = new HBox(6);
-        diffHeader.setAlignment(Pos.CENTER_LEFT);
-        Label diffTitle = new Label("Differential Diagnosis");
-        diffTitle.getStyleClass().add("cds-card-title");
-        diffHeader.getChildren().add(diffTitle);
-
-        VBox diffList = new VBox(8);
-        diffList.getChildren().add(createDiagnosisItem("Drug-induced\nHepatotoxicity", "High\nProb.", "high-prob-badge"));
-        diffList.getChildren().add(createDiagnosisItem("Viral Hepatitis", "Mod Prob.", "mod-prob-badge"));
-
-        diffCard.getChildren().addAll(diffHeader, diffList);
-
-        // Section 2: Recommendations
-        VBox recCard = new VBox(10);
-        recCard.getStyleClass().add("cds-card");
-        recCard.setPadding(new Insets(14));
-
-        HBox recHeader = new HBox(6);
-        recHeader.setAlignment(Pos.CENTER_LEFT);
-        Label recTitle = new Label("Recommendations");
-        recTitle.getStyleClass().add("cds-card-title");
-        recHeader.getChildren().add(recTitle);
-
-        VBox recCallout = new VBox(8);
-        recCallout.getStyleClass().add("recommendation-callout");
-        recCallout.setPadding(new Insets(12));
-
-        Label recText = new Label("Consider immediate cessation of recent NSAID regimen. Order comprehensive viral hepatitis panel.");
-        recText.getStyleClass().add("recommendation-text");
-        recText.setWrapText(true);
-
-        Hyperlink reviewLink = new Hyperlink("Review Guidelines ↗");
-        reviewLink.getStyleClass().add("recommendation-link");
-
-        recCallout.getChildren().addAll(recText, reviewLink);
-        recCard.getChildren().addAll(recHeader, recCallout);
-
-        // Section 3: Quick Lookup
-        VBox lookupCard = new VBox(10);
-        lookupCard.getStyleClass().add("cds-card");
-        lookupCard.setPadding(new Insets(14));
-
-        HBox lookupHeader = new HBox(6);
-        lookupHeader.setAlignment(Pos.CENTER_LEFT);
-        ImageView searchBlueIcon = new ImageView(ResourceImage.load("/images/doctor/search icon doctordash.png"));
-        searchBlueIcon.setFitWidth(16); 
-        searchBlueIcon.setFitHeight(16);
-        Label lookupTitle = new Label("Quick Lookup");
-        lookupTitle.getStyleClass().add("cds-card-title");
-        lookupHeader.getChildren().addAll(searchBlueIcon, lookupTitle);
-
-        HBox lookupSearchBox = new HBox(8);
-        lookupSearchBox.getStyleClass().add("lookup-search-box");
-        lookupSearchBox.setAlignment(Pos.CENTER_LEFT);
-        lookupSearchBox.setPadding(new Insets(6, 10, 6, 10));
-
-        ImageView searchIcon = new ImageView(ResourceImage.load("/images/doctor/search icon doctordash.png"));
-        searchIcon.setFitWidth(14); 
-        searchIcon.setFitHeight(14);
-
-        TextField lookupInput = new TextField();
-        lookupInput.setPromptText("Search drugs, interactions...");
-        lookupInput.getStyleClass().add("lookup-input-field");
-        HBox.setHgrow(lookupInput, Priority.ALWAYS);
-
-        lookupSearchBox.getChildren().addAll(searchIcon, lookupInput);
-        lookupCard.getChildren().addAll(lookupHeader, lookupSearchBox);
-
-        panel.getChildren().addAll(header, diffCard, recCard, lookupCard);
-        return panel;
+    /** Handles New Consultation Button Action */
+    private void handleNewConsultation() {
+        if (messageStream != null) {
+            messageStream.getChildren().clear();
+            // Start fresh consultation session message
+            VBox newSessionMsg = createChatMessage(
+                    "Clinical AI",
+                    "New consultation session started. Ready to evaluate new patient diagnostics or medical records.",
+                    false
+            );
+            messageStream.getChildren().add(newSessionMsg);
+        }
+        if (promptInput != null) {
+            promptInput.clear();
+        }
     }
 
-    private BorderPane createDiagnosisItem(String condition, String probText, String badgeStyle) {
-        BorderPane row = new BorderPane();
-        row.getStyleClass().add("diagnosis-row");
-        row.setPadding(new Insets(8, 10, 8, 10));
+    /** Handles user prompt sending */
+    private void handleSendMessage() {
+        if (promptInput == null || messageStream == null) return;
+        String text = promptInput.getText().trim();
+        if (!text.isEmpty()) {
+            VBox userMsg = createChatMessage("Dr. Sarah Jenkins", text, true);
+            messageStream.getChildren().add(userMsg);
+            promptInput.clear();
+        }
+    }
 
-        Label condLabel = new Label(condition);
-        condLabel.getStyleClass().add("diagnosis-name");
+    private VBox createChatMessage(String sender, String text, boolean isUser) {
+        VBox msgBox = new VBox(4);
+        msgBox.setPadding(new Insets(10, 14, 10, 14));
+        msgBox.getStyleClass().add(isUser ? "chat-bubble-user" : "chat-bubble-ai");
 
-        Label badge = new Label(probText);
-        badge.getStyleClass().add(badgeStyle);
-        badge.setAlignment(Pos.CENTER);
+        Label senderLbl = new Label(sender);
+        senderLbl.getStyleClass().add(isUser ? "chat-sender-user" : "chat-sender-ai");
 
-        row.setLeft(condLabel);
-        row.setRight(badge);
-        return row;
+        Label contentLbl = new Label(text);
+        contentLbl.setWrapText(true);
+        contentLbl.getStyleClass().add("chat-text-content");
+
+        msgBox.getChildren().addAll(senderLbl, contentLbl);
+        return msgBox;
+    }
+
+    /** Active Patient Selection Card */
+    private VBox createActivePatientContextCard() {
+        VBox card = new VBox(12);
+        card.getStyleClass().add("ai-assistant-card");
+        card.setPadding(new Insets(18));
+
+        HBox titleBox = new HBox(8);
+        titleBox.setAlignment(Pos.CENTER_LEFT);
+
+        ImageView userIcon = new ImageView(ResourceImage.load("/images/icons/ic_patient.png"));
+        userIcon.setFitWidth(18);
+        userIcon.setFitHeight(18);
+
+        Label titleLbl = new Label("Loaded Context");
+        titleLbl.getStyleClass().add("ai-card-title");
+        titleBox.getChildren().addAll(userIcon, titleLbl);
+
+        Label patientDetails = new Label("Patient: John Doe (Male, 54)\nCondition: Hypertension, Stage 2\nLast Visit: Oct 20, 2023");
+        patientDetails.setWrapText(true);
+        patientDetails.getStyleClass().add("ai-card-desc");
+
+        Hyperlink changeLink = new Hyperlink("Switch Patient Context →");
+        changeLink.getStyleClass().add("ai-card-link");
+        changeLink.setOnAction(e -> System.out.println("Changing patient context..."));
+
+        card.getChildren().addAll(titleBox, patientDetails, changeLink);
+        return card;
+    }
+
+    /** Suggested Clinical Shortcuts / Prompts Panel */
+    private VBox createQuickPromptsCard() {
+        VBox card = new VBox(14);
+        card.getStyleClass().add("panel-card");
+        card.setPadding(new Insets(18));
+
+        Label title = new Label("Quick Clinical Prompts");
+        title.getStyleClass().add("card-title");
+
+        VBox promptList = new VBox(8);
+
+        String[] prompts = {
+            "Check Drug Interactions",
+            "Generate Treatment Summary",
+            "Suggest Differential Diagnosis",
+            "Review Lab Trends"
+        };
+
+        for (String p : prompts) {
+            Button promptBtn = new Button(p);
+            promptBtn.setMaxWidth(Double.MAX_VALUE);
+            promptBtn.setAlignment(Pos.CENTER_LEFT);
+            promptBtn.getStyleClass().add("btn-secondary-action");
+            promptBtn.setOnAction(e -> {
+                if (promptInput != null) {
+                    promptInput.setText(p);
+                }
+            });
+            promptList.getChildren().add(promptBtn);
+        }
+
+        card.getChildren().addAll(title, promptList);
+        return card;
+    }
+
+    /** AI Safety & Compliance Disclaimer */
+    private VBox createAIDisclaimerCard() {
+        VBox card = new VBox(8);
+        card.getStyleClass().add("panel-card");
+        card.setPadding(new Insets(16));
+
+        BorderPane header = new BorderPane();
+        HBox left = new HBox(6);
+        left.setAlignment(Pos.CENTER_LEFT);
+
+        Label aster = new Label("✻");
+        aster.getStyleClass().add("emergency-asterisk");
+        Label title = new Label("Clinical Disclaimer");
+        title.getStyleClass().add("card-title");
+        left.getChildren().addAll(aster, title);
+
+        header.setLeft(left);
+
+        Label desc = new Label("AI suggestions are for decision support only. Final clinical judgment remains with the attending physician.");
+        desc.setWrapText(true);
+        desc.getStyleClass().add("emergency-desc");
+
+        card.getChildren().addAll(header, desc);
+        return card;
     }
 }
