@@ -1,28 +1,20 @@
 package com.healthsphere.controller.admin;
 
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.QuerySnapshot;
-import com.healthsphere.config.FirebaseConfig;
+import com.healthsphere.dao.admin.AdminDAO;
 
 import java.util.concurrent.CompletableFuture;
 
 public class AdminDashboardController {
 
-    private static final String HOSPITALS_COLLECTION =
-            "hospitals";
-
-    private static final String DOCTORS_COLLECTION =
-            "doctors";
-
-    private final Firestore firestore;
+    private final AdminDAO adminDAO;
 
     private final HospitalVerificationController
             verificationController;
 
     public AdminDashboardController() {
 
-        this.firestore =
-                FirebaseConfig.getFirestore();
+        this.adminDAO =
+                new AdminDAO();
 
         this.verificationController =
                 new HospitalVerificationController();
@@ -30,40 +22,33 @@ public class AdminDashboardController {
 
     /**
      * Load total number of registered hospitals.
+     *
+     * Database access is handled by AdminDAO.
      */
     public int getRegisteredHospitalCount()
             throws Exception {
 
-        QuerySnapshot snapshot =
-                firestore
-                        .collection(
-                                HOSPITALS_COLLECTION
-                        )
-                        .get()
-                        .get();
-
-        return snapshot.size();
+        return adminDAO
+                .getRegisteredHospitalCount();
     }
 
     /**
      * Load total number of doctors.
+     *
+     * Database access is handled by AdminDAO.
      */
     public int getActiveDoctorCount()
             throws Exception {
 
-        QuerySnapshot snapshot =
-                firestore
-                        .collection(
-                                DOCTORS_COLLECTION
-                        )
-                        .get()
-                        .get();
-
-        return snapshot.size();
+        return adminDAO
+                .getActiveDoctorCount();
     }
 
     /**
      * Load number of pending hospital verifications.
+     *
+     * Hospital verification database operations
+     * are handled by HospitalVerificationController.
      */
     public int getPendingVerificationCount()
             throws Exception {
