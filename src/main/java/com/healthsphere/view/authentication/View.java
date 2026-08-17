@@ -1,6 +1,7 @@
 package com.healthsphere.view.authentication;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -19,17 +20,29 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 
+/**
+ * Main application window.
+ *
+ * IMPORTANT:
+ * This class owns the ONE shared Stage used by the entire application.
+ *
+ * Other views such as LoginView, Dashboard, Appointments etc.
+ * must ONLY replace the Scene.
+ */
 public class View extends Application {
 
     /*
      * =========================================================
      * ONE SHARED STAGE
      * =========================================================
-     *
-     * Every screen in the application must use this same Stage.
      */
     public static Stage stage;
 
+    /*
+     * =========================================================
+     * START APPLICATION
+     * =========================================================
+     */
     @Override
     public void start(Stage primaryStage) {
 
@@ -40,85 +53,201 @@ public class View extends Application {
         );
 
         /*
-         * Minimum usable window size.
+         * Prevent the application from becoming a tiny window.
          */
         stage.setMinWidth(1100);
         stage.setMinHeight(700);
 
         /*
-         * Start maximized.
+         * =====================================================
+         * INITIAL SCENE
+         * =====================================================
          */
-        stage.setMaximized(true);
+        Scene initialScene = getScene();
+
+        stage.setScene(initialScene);
 
         /*
-         * Initial screen.
-         */
-        stage.setScene(getScene());
-
-        /*
-         * Show the SAME Stage.
+         * =====================================================
+         * SHOW WINDOW
+         * =====================================================
          */
         stage.show();
 
         /*
-         * Make absolutely sure the initial window is maximized.
+         * =====================================================
+         * MAXIMIZE AFTER SHOW
+         * =====================================================
+         *
+         * On Windows, maximizing BEFORE the Stage is actually
+         * displayed can sometimes be ignored/reset.
+         *
+         * Therefore:
+         *
+         * 1. show()
+         * 2. maximize()
+         * 3. force layout
+         */
+        maximizeWindow();
+
+        /*
+         * =====================================================
+         * FINAL LAYOUT PASS
+         * =====================================================
+         */
+        Platform.runLater(() -> {
+
+            maximizeWindow();
+
+            if (stage.getScene() != null) {
+
+                stage.getScene()
+                        .getRoot()
+                        .applyCss();
+
+                stage.getScene()
+                        .getRoot()
+                        .layout();
+            }
+        });
+    }
+
+    /*
+     * =========================================================
+     * MAXIMIZE WINDOW
+     * =========================================================
+     */
+    private void maximizeWindow() {
+
+        if (stage == null) {
+            return;
+        }
+
+        /*
+         * First make sure the Stage is visible.
+         */
+        if (!stage.isShowing()) {
+            stage.show();
+        }
+
+        /*
+         * Tell JavaFX/Windows to maximize.
          */
         stage.setMaximized(true);
+
+        /*
+         * If Windows does not immediately apply the state,
+         * apply it again on the next JavaFX pulse.
+         */
+        Platform.runLater(() -> {
+
+            if (stage != null && stage.isShowing()) {
+                stage.setMaximized(true);
+            }
+        });
     }
+
+    // =========================================================
+    // INITIAL SCENE
+    // =========================================================
 
     public Scene getScene() {
 
         BorderPane root =
                 new BorderPane();
 
-        root.getStyleClass().add("root");
+        /*
+         * Allow the root to completely fill the Scene.
+         */
+        root.setMinWidth(0);
+        root.setMinHeight(0);
+
+        root.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        root.setMaxHeight(
+                Double.MAX_VALUE
+        );
+
+        root.getStyleClass().add(
+                "root"
+        );
 
         /*
-         * IMPORTANT:
-         *
-         * No fixed Scene width.
-         * No fixed Scene height.
-         *
-         * The Stage controls the actual size.
+         * =====================================================
+         * HEADER
+         * =====================================================
          */
         root.setTop(
                 createHeader()
         );
 
+        /*
+         * =====================================================
+         * MAIN
+         * =====================================================
+         */
+        NodeWrapper mainContent =
+                new NodeWrapper(
+                        createMainContent()
+                );
+
         root.setCenter(
-                createMainContent()
+                mainContent.getNode()
         );
 
+        /*
+         * =====================================================
+         * FOOTER
+         * =====================================================
+         */
         root.setBottom(
                 createFooter()
         );
 
+        /*
+         * =====================================================
+         * SCENE
+         * =====================================================
+         */
         Scene scene =
-                new Scene(root);
+                new Scene(
+                        root,
+                        1100,
+                        700
+                );
 
         /*
-         * Load CSS safely.
+         * =====================================================
+         * CSS
+         * =====================================================
          */
-        String cssPath = null;
-
         if (getClass().getResource(
                 "/css/dashboard.css"
         ) != null) {
 
-            cssPath =
+            scene.getStylesheets().add(
                     getClass()
                             .getResource(
                                     "/css/dashboard.css"
                             )
-                            .toExternalForm();
-        }
-
-        if (cssPath != null) {
-
-            scene.getStylesheets().add(
-                    cssPath
+                            .toExternalForm()
             );
         }
+
+        /*
+         * =====================================================
+         * ROOT FILL SCENE
+         * =====================================================
+         */
+        root.prefWidthProperty().bind(
+                scene.widthProperty()
+        );
+
+        root.prefHeightProperty().bind(
+                scene.heightProperty()
+        );
 
         return scene;
     }
@@ -138,6 +267,10 @@ public class View extends Application {
 
         header.setAlignment(
                 Pos.CENTER_LEFT
+        );
+
+        header.setMaxWidth(
+                Double.MAX_VALUE
         );
 
         Text brandText =
@@ -193,7 +326,9 @@ public class View extends Application {
         );
 
         Text avatarText =
-                new Text("HS");
+                new Text(
+                        "HS"
+                );
 
         avatarText.setStyle(
                 "-fx-font-size: 10px;" +
@@ -242,9 +377,20 @@ public class View extends Application {
                 Pos.CENTER
         );
 
+        mainContainer.setMinWidth(0);
+        mainContainer.setMinHeight(0);
+
+        mainContainer.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        mainContainer.setMaxHeight(
+                Double.MAX_VALUE
+        );
+
         /*
          * =====================================================
-         * LEFT SIDE
+         * LEFT
          * =====================================================
          */
 
@@ -255,9 +401,8 @@ public class View extends Application {
                 Pos.CENTER_LEFT
         );
 
-        leftContent.setMaxWidth(
-                520
-        );
+        leftContent.setMinWidth(0);
+        leftContent.setMaxWidth(520);
 
         HBox.setHgrow(
                 leftContent,
@@ -295,6 +440,10 @@ public class View extends Application {
                         titleLine2
                 );
 
+        headline.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
         Label description =
                 new Label(
                         "Precision care at scale. Intelligently " +
@@ -307,6 +456,16 @@ public class View extends Application {
 
         description.setWrapText(true);
 
+        description.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        /*
+         * =====================================================
+         * BUTTONS
+         * =====================================================
+         */
+
         HBox buttonRow =
                 new HBox(16);
 
@@ -315,7 +474,9 @@ public class View extends Application {
         );
 
         Button signUpBtn =
-                new Button("Sign Up");
+                new Button(
+                        "Sign Up"
+                );
 
         signUpBtn.getStyleClass().add(
                 "btn-primary"
@@ -329,13 +490,17 @@ public class View extends Application {
                                     .getScene()
                     );
 
-                    stage.show();
-                    stage.setMaximized(true);
+                    /*
+                     * Keep the shared window maximized.
+                     */
+                    keepMaximized();
                 }
         );
 
         Button registerBtn =
-                new Button("Register");
+                new Button(
+                        "Register"
+                );
 
         registerBtn.getStyleClass().add(
                 "btn-teal"
@@ -349,8 +514,7 @@ public class View extends Application {
                                     .getScene()
                     );
 
-                    stage.show();
-                    stage.setMaximized(true);
+                    keepMaximized();
                 }
         );
 
@@ -368,12 +532,15 @@ public class View extends Application {
 
         /*
          * =====================================================
-         * RIGHT SIDE
+         * RIGHT VISUAL
          * =====================================================
          */
 
         StackPane rightVisual =
                 new StackPane();
+
+        rightVisual.setMinWidth(0);
+        rightVisual.setMinHeight(0);
 
         HBox.setHgrow(
                 rightVisual,
@@ -407,9 +574,22 @@ public class View extends Application {
         StackPane imageWrapper =
                 new StackPane();
 
+        imageWrapper.setMinWidth(0);
+        imageWrapper.setMinHeight(0);
+
+        imageWrapper.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
         imageWrapper.getChildren().add(
                 heroImgView
         );
+
+        /*
+         * =====================================================
+         * FLOATING CARD
+         * =====================================================
+         */
 
         VBox floatingCard =
                 new VBox(6);
@@ -491,6 +671,10 @@ public class View extends Application {
 
         footer.setAlignment(
                 Pos.CENTER_LEFT
+        );
+
+        footer.setMaxWidth(
+                Double.MAX_VALUE
         );
 
         Text footerBrand =
@@ -581,7 +765,7 @@ public class View extends Application {
     }
 
     // =========================================================
-    // IMAGE
+    // SAFE IMAGE
     // =========================================================
 
     private ImageView createSafeImageView(
@@ -607,16 +791,12 @@ public class View extends Application {
 
         try {
 
-            if (getClass().getResource(
-                    path
-            ) != null) {
+            if (getClass().getResource(path) != null) {
 
                 imageView.setImage(
                         new Image(
                                 getClass()
-                                        .getResourceAsStream(
-                                                path
-                                        )
+                                        .getResourceAsStream(path)
                         )
                 );
             }
@@ -664,5 +844,56 @@ public class View extends Application {
         }
 
         return button;
+    }
+
+    // =========================================================
+    // KEEP WINDOW MAXIMIZED
+    // =========================================================
+
+    private void keepMaximized() {
+
+        if (stage == null) {
+            return;
+        }
+
+        Platform.runLater(() -> {
+
+            if (stage.isShowing()) {
+
+                stage.setMaximized(true);
+
+                if (stage.getScene() != null) {
+
+                    stage.getScene()
+                            .getRoot()
+                            .applyCss();
+
+                    stage.getScene()
+                            .getRoot()
+                            .layout();
+                }
+            }
+        });
+    }
+
+    // =========================================================
+    // SIMPLE NODE WRAPPER
+    // =========================================================
+
+    private static class NodeWrapper {
+
+        private final javafx.scene.Node node;
+
+        NodeWrapper(
+                javafx.scene.Node node
+        ) {
+
+            this.node = node;
+        }
+
+        javafx.scene.Node getNode() {
+
+            return node;
+        }
     }
 }

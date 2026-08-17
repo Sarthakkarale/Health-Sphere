@@ -2,7 +2,6 @@ package com.healthsphere.view.Patient;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -20,9 +19,6 @@ public final class PatientUI {
     private PatientUI() {
     }
 
-    public static final double DEFAULT_WIDTH = 1280;
-    public static final double DEFAULT_HEIGHT = 720;
-
     // =========================================================
     // COMMON PATIENT SCENE
     // =========================================================
@@ -32,11 +28,23 @@ public final class PatientUI {
             String activePage,
             String pageTitle,
             String pageSubtitle,
-            Node content
+            javafx.scene.Node content
     ) {
 
-        BorderPane root =
-                new BorderPane();
+        // =====================================================
+        // ROOT
+        // =====================================================
+
+        BorderPane root = new BorderPane();
+
+        root.setMinWidth(0);
+        root.setMinHeight(0);
+
+        root.setPrefWidth(0);
+        root.setPrefHeight(0);
+
+        root.setMaxWidth(Double.MAX_VALUE);
+        root.setMaxHeight(Double.MAX_VALUE);
 
         root.setStyle(
                 "-fx-background-color: #f1f5f9;"
@@ -67,7 +75,7 @@ public final class PatientUI {
         root.setTop(header);
 
         // =====================================================
-        // PAGE CONTENT
+        // PAGE
         // =====================================================
 
         VBox page =
@@ -77,18 +85,19 @@ public final class PatientUI {
                 new Insets(28)
         );
 
+        page.setSpacing(20);
+
         page.setFillWidth(true);
 
-        /*
-         * IMPORTANT:
-         *
-         * Never give Patient pages a fixed width.
-         */
         page.setMinWidth(0);
+        page.setPrefWidth(0);
         page.setMaxWidth(Double.MAX_VALUE);
 
+        page.setMinHeight(0);
+        page.setMaxHeight(Double.MAX_VALUE);
+
         // =====================================================
-        // TITLE
+        // PAGE HEADING
         // =====================================================
 
         Label title =
@@ -100,15 +109,15 @@ public final class PatientUI {
 
         title.setWrapText(true);
 
+        title.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
         title.setStyle(
                 "-fx-font-size: 30px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #0f172a;"
         );
-
-        // =====================================================
-        // SUBTITLE
-        // =====================================================
 
         Label subtitle =
                 new Label(
@@ -136,7 +145,6 @@ public final class PatientUI {
                 );
 
         heading.setMinWidth(0);
-
         heading.setMaxWidth(
                 Double.MAX_VALUE
         );
@@ -146,7 +154,7 @@ public final class PatientUI {
         );
 
         // =====================================================
-        // PAGE-SPECIFIC CONTENT
+        // SCREEN CONTENT
         // =====================================================
 
         if (content != null) {
@@ -156,18 +164,12 @@ public final class PatientUI {
                 Region region =
                         (Region) content;
 
-                /*
-                 * Critical width settings.
-                 */
                 region.setMinWidth(0);
+
+                region.setPrefWidth(0);
 
                 region.setMaxWidth(
                         Double.MAX_VALUE
-                );
-
-                VBox.setVgrow(
-                        region,
-                        Priority.ALWAYS
                 );
             }
 
@@ -177,41 +179,28 @@ public final class PatientUI {
         }
 
         // =====================================================
-        // SINGLE SCROLL PANE
+        // SCROLL PANE
         // =====================================================
 
         ScrollPane scroll =
                 new ScrollPane();
 
-        scroll.setContent(
-                page
-        );
+        scroll.setContent(page);
 
         /*
-         * CRITICAL:
-         *
-         * The page follows the available viewport width.
+         * The page always follows the available width.
          */
         scroll.setFitToWidth(true);
 
         /*
-         * DO NOT use fitToHeight.
-         *
-         * Content can become taller than the screen
-         * and therefore needs vertical scrolling.
+         * Keep false so long pages can scroll vertically.
          */
         scroll.setFitToHeight(false);
 
-        /*
-         * Horizontal scrolling is NEVER allowed.
-         */
         scroll.setHbarPolicy(
                 ScrollPane.ScrollBarPolicy.NEVER
         );
 
-        /*
-         * Vertical scrolling appears when required.
-         */
         scroll.setVbarPolicy(
                 ScrollPane.ScrollBarPolicy.AS_NEEDED
         );
@@ -219,11 +208,15 @@ public final class PatientUI {
         scroll.setPannable(true);
 
         scroll.setMinWidth(0);
+        scroll.setMinHeight(0);
+
+        scroll.setPrefWidth(0);
+        scroll.setPrefHeight(0);
+
         scroll.setMaxWidth(
                 Double.MAX_VALUE
         );
 
-        scroll.setMinHeight(0);
         scroll.setMaxHeight(
                 Double.MAX_VALUE
         );
@@ -234,37 +227,27 @@ public final class PatientUI {
                 "-fx-border-color: transparent;"
         );
 
-        // =====================================================
-        // VIEWPORT WIDTH FIX
-        // =====================================================
-
+        /*
+         * Force the page to follow the ScrollPane viewport.
+         */
         scroll.viewportBoundsProperty().addListener(
                 (obs, oldBounds, newBounds) -> {
 
-                    if (newBounds == null) {
-                        return;
-                    }
+                    if (newBounds != null) {
 
-                    double width =
-                            newBounds.getWidth();
+                        double width =
+                                newBounds.getWidth();
 
-                    if (width > 0) {
+                        if (width > 0) {
 
-                        /*
-                         * Make the page exactly as wide
-                         * as the available viewport.
-                         */
-                        page.setMinWidth(
-                                width
-                        );
+                            page.setPrefWidth(
+                                    width
+                            );
 
-                        page.setPrefWidth(
-                                width
-                        );
-
-                        page.setMaxWidth(
-                                width
-                        );
+                            page.setMinWidth(
+                                    width
+                            );
+                        }
                     }
                 }
         );
@@ -273,17 +256,16 @@ public final class PatientUI {
         // CENTER
         // =====================================================
 
-        root.setCenter(
-                scroll
-        );
+        root.setCenter(scroll);
 
-        /*
-         * Force ScrollPane to occupy the entire
-         * remaining area.
-         */
         BorderPane.setAlignment(
                 scroll,
                 Pos.CENTER
+        );
+
+        BorderPane.setMargin(
+                scroll,
+                Insets.EMPTY
         );
 
         // =====================================================
@@ -291,24 +273,36 @@ public final class PatientUI {
         // =====================================================
 
         Scene scene =
-                new Scene(
-                        root,
-                        DEFAULT_WIDTH,
-                        DEFAULT_HEIGHT
-                );
+                new Scene(root);
 
         /*
          * IMPORTANT:
          *
-         * Use the same Stage for every Patient screen.
+         * PatientUI does NOT:
+         *
+         * stage.show()
+         * stage.setMaximized()
+         * stage.sizeToScene()
+         *
+         * The shared Stage is controlled by View.
          */
-        if (stage != null) {
 
-            if (!stage.isMaximized()) {
+        /*
+         * Make root automatically follow the Scene size.
+         */
+        root.prefWidthProperty().bind(
+                scene.widthProperty()
+        );
 
-                stage.setMaximized(true);
-            }
-        }
+        root.prefHeightProperty().bind(
+                scene.heightProperty()
+        );
+
+        /*
+         * Initial layout.
+         */
+        scene.getRoot().applyCss();
+        scene.getRoot().layout();
 
         return scene;
     }
@@ -577,6 +571,10 @@ public final class PatientUI {
                 textLabel
         );
 
+        // =====================================================
+        // HOVER
+        // =====================================================
+
         if (!selected) {
 
             item.setOnMouseEntered(
@@ -596,6 +594,10 @@ public final class PatientUI {
             );
         }
 
+        // =====================================================
+        // CLICK
+        // =====================================================
+
         item.setOnMouseClicked(
                 e -> navigate(
                         stage,
@@ -607,7 +609,7 @@ public final class PatientUI {
     }
 
     // =========================================================
-    // NAVIGATION
+    // CENTRALIZED NAVIGATION
     // =========================================================
 
     private static void navigate(
@@ -619,103 +621,98 @@ public final class PatientUI {
             return;
         }
 
+        Scene scene;
+
         switch (page) {
 
             case "Dashboard":
 
-                stage.setScene(
+                scene =
                         new Dashboard(stage)
-                                .getScene()
-                );
+                                .getScene();
 
                 break;
 
             case "Search Hospitals":
 
-                stage.setScene(
+                scene =
                         new SearchHospitals(stage)
-                                .getScene()
-                );
+                                .getScene();
 
                 break;
 
             case "Appointments":
 
-                stage.setScene(
+                scene =
                         new Appointments(stage)
-                                .getScene()
-                );
+                                .getScene();
 
                 break;
 
             case "Health Passport":
 
-                stage.setScene(
+                scene =
                         new HealthPassport(stage)
-                                .getScene()
-                );
+                                .getScene();
 
                 break;
 
             case "Medical Records":
 
-                stage.setScene(
+                scene =
                         new MedicalRecords(stage)
-                                .getScene()
-                );
+                                .getScene();
 
                 break;
 
             case "AI Assistant":
 
-                stage.setScene(
+                scene =
                         new AiHealthAssistant(stage)
-                                .getScene()
-                );
+                                .getScene();
 
                 break;
 
             case "Emergency Assistance":
 
-                stage.setScene(
+                scene =
                         new EmergencyAssistance(stage)
-                                .getScene()
-                );
+                                .getScene();
 
                 break;
 
             case "Notifications":
 
-                stage.setScene(
+                scene =
                         new Notifications(stage)
-                                .getScene()
-                );
+                                .getScene();
 
                 break;
 
             case "Profile & Settings":
 
-                stage.setScene(
+                scene =
                         new ProfileSettings(stage)
-                                .getScene()
-                );
+                                .getScene();
 
                 break;
 
             default:
-
                 return;
         }
 
-        stage.show();
+        /*
+         * SAME SHARED STAGE.
+         */
+        stage.setScene(scene);
 
         /*
-         * Keep the Patient application maximized.
+         * IMPORTANT:
+         *
+         * Do not call setMaximized(true) here.
+         *
+         * If the Stage is already maximized, it stays maximized.
          */
-        if (!stage.isMaximized()) {
-
-            stage.setMaximized(true);
-        }
     }
 
     // =========================================================
@@ -757,6 +754,10 @@ public final class PatientUI {
                 "-fx-border-width: 0 0 1 0;"
         );
 
+        // =====================================================
+        // CURRENT PAGE
+        // =====================================================
+
         Label currentPage =
                 new Label(
                         pageTitle == null
@@ -770,6 +771,10 @@ public final class PatientUI {
                 "-fx-text-fill: #0f172a;"
         );
 
+        // =====================================================
+        // SPACER
+        // =====================================================
+
         Region spacer =
                 new Region();
 
@@ -777,6 +782,10 @@ public final class PatientUI {
                 spacer,
                 Priority.ALWAYS
         );
+
+        // =====================================================
+        // NOTIFICATION
+        // =====================================================
 
         Button notification =
                 new Button("♧");
@@ -793,21 +802,15 @@ public final class PatientUI {
         );
 
         notification.setOnAction(
-                e -> {
-
-                    stage.setScene(
-                            new Notifications(stage)
-                                    .getScene()
-                    );
-
-                    stage.show();
-
-                    if (!stage.isMaximized()) {
-
-                        stage.setMaximized(true);
-                    }
-                }
+                e -> navigate(
+                        stage,
+                        "Notifications"
+                )
         );
+
+        // =====================================================
+        // PROFILE
+        // =====================================================
 
         Button profile =
                 new Button("Sarah");
@@ -824,20 +827,10 @@ public final class PatientUI {
         );
 
         profile.setOnAction(
-                e -> {
-
-                    stage.setScene(
-                            new ProfileSettings(stage)
-                                    .getScene()
-                    );
-
-                    stage.show();
-
-                    if (!stage.isMaximized()) {
-
-                        stage.setMaximized(true);
-                    }
-                }
+                e -> navigate(
+                        stage,
+                        "Profile & Settings"
+                )
         );
 
         header.getChildren().addAll(
@@ -893,9 +886,7 @@ public final class PatientUI {
                     "-fx-text-fill: #0f172a;"
             );
 
-            box.getChildren().add(
-                    label
-            );
+            box.getChildren().add(label);
         }
 
         return box;
@@ -947,9 +938,7 @@ public final class PatientUI {
                     "-fx-text-fill: #0f172a;"
             );
 
-            box.getChildren().add(
-                    label
-            );
+            box.getChildren().add(label);
         }
 
         return box;
@@ -982,7 +971,6 @@ public final class PatientUI {
                 e -> {
 
                     if (action != null) {
-
                         action.run();
                     }
                 }
@@ -1021,7 +1009,6 @@ public final class PatientUI {
                 e -> {
 
                     if (action != null) {
-
                         action.run();
                     }
                 }
@@ -1100,7 +1087,7 @@ public final class PatientUI {
     }
 
     // =========================================================
-    // COLORED CARDS
+    // BLUE CARD
     // =========================================================
 
     public static VBox blueCard(
@@ -1113,6 +1100,10 @@ public final class PatientUI {
         );
     }
 
+    // =========================================================
+    // GREEN CARD
+    // =========================================================
+
     public static VBox greenCard(
             String title
     ) {
@@ -1122,6 +1113,10 @@ public final class PatientUI {
                 "#dcfce7"
         );
     }
+
+    // =========================================================
+    // ORANGE CARD
+    // =========================================================
 
     public static VBox orangeCard(
             String title
@@ -1133,6 +1128,10 @@ public final class PatientUI {
         );
     }
 
+    // =========================================================
+    // PURPLE CARD
+    // =========================================================
+
     public static VBox purpleCard(
             String title
     ) {
@@ -1142,6 +1141,10 @@ public final class PatientUI {
                 "#f3e8ff"
         );
     }
+
+    // =========================================================
+    // TEAL CARD
+    // =========================================================
 
     public static VBox tealCard(
             String title
@@ -1154,7 +1157,7 @@ public final class PatientUI {
     }
 
     // =========================================================
-    // LABELS
+    // MUTED LABEL
     // =========================================================
 
     public static Label muted(
@@ -1172,6 +1175,10 @@ public final class PatientUI {
         return label;
     }
 
+    // =========================================================
+    // GREEN LABEL
+    // =========================================================
+
     public static Label green(
             String text
     ) {
@@ -1187,6 +1194,10 @@ public final class PatientUI {
 
         return label;
     }
+
+    // =========================================================
+    // BLUE LABEL
+    // =========================================================
 
     public static Label blue(
             String text
@@ -1204,6 +1215,10 @@ public final class PatientUI {
         return label;
     }
 
+    // =========================================================
+    // RED LABEL
+    // =========================================================
+
     public static Label red(
             String text
     ) {
@@ -1219,6 +1234,10 @@ public final class PatientUI {
 
         return label;
     }
+
+    // =========================================================
+    // ORANGE LABEL
+    // =========================================================
 
     public static Label orange(
             String text

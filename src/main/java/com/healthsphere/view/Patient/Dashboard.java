@@ -35,20 +35,6 @@ public class Dashboard {
 
     public Scene getScene() {
 
-        /*
-         * IMPORTANT:
-         *
-         * Dashboard creates ONLY its content.
-         *
-         * PatientUI is responsible for:
-         * - Sidebar
-         * - Header
-         * - ScrollPane
-         * - Full width
-         * - Full height
-         * - Navigation
-         */
-
         VBox content =
                 new VBox(22);
 
@@ -139,6 +125,8 @@ public class Dashboard {
                         subtitle
                 );
 
+        heading.setMinWidth(0);
+
         heading.setMaxWidth(
                 Double.MAX_VALUE
         );
@@ -151,6 +139,8 @@ public class Dashboard {
                 new HBox(15);
 
         imageRow.setFillHeight(true);
+
+        imageRow.setMinWidth(0);
 
         imageRow.setMaxWidth(
                 Double.MAX_VALUE
@@ -224,6 +214,8 @@ public class Dashboard {
 
         stats.setFillHeight(true);
 
+        stats.setMinWidth(0);
+
         stats.setMaxWidth(
                 Double.MAX_VALUE
         );
@@ -295,6 +287,8 @@ public class Dashboard {
                 new HBox(18);
 
         middle.setFillHeight(true);
+
+        middle.setMinWidth(0);
 
         middle.setMaxWidth(
                 Double.MAX_VALUE
@@ -425,7 +419,7 @@ public class Dashboard {
                 Pos.CENTER_LEFT
         );
 
-        actions.setFillHeight(true);
+        actions.setMinWidth(0);
 
         actions.setMaxWidth(
                 Double.MAX_VALUE
@@ -486,25 +480,8 @@ public class Dashboard {
         );
 
         // =====================================================
-        // COMMON PATIENT UI
+        // PATIENT UI
         // =====================================================
-
-        /*
-         * DO NOT create a ScrollPane here.
-         *
-         * PatientUI creates the single ScrollPane.
-         *
-         * This makes Dashboard behave exactly like:
-         *
-         * Search Hospitals
-         * Appointments
-         * Health Passport
-         * Medical Records
-         * AI Assistant
-         * Emergency
-         * Notifications
-         * Profile & Settings
-         */
 
         return PatientUI.createScene(
                 stage,
@@ -559,8 +536,7 @@ public class Dashboard {
         }
 
         imageView.setFitWidth(200);
-
-        imageView.setFitHeight(150);
+        imageView.setFitHeight(140);
 
         imageView.setPreserveRatio(false);
 
@@ -741,8 +717,8 @@ public class Dashboard {
                 "-fx-effect: dropshadow(gaussian, rgba(15,23,42,0.08), 10, 0, 0, 3);"
         );
 
-        if (title != null &&
-                !title.isEmpty()) {
+        if (title != null
+                && !title.isEmpty()) {
 
             Label label =
                     new Label(title);
@@ -896,63 +872,73 @@ public class Dashboard {
     // NAVIGATION
     // =========================================================
 
+    private void navigate(
+            Scene scene
+    ) {
+
+        if (stage == null || scene == null) {
+            return;
+        }
+
+        /*
+         * IMPORTANT:
+         *
+         * Only replace the Scene.
+         *
+         * DO NOT:
+         * - maximize
+         * - show
+         * - sizeToScene
+         * - create another Stage
+         */
+        stage.setScene(scene);
+    }
+
     private void showAppointments() {
 
-        stage.setScene(
+        navigate(
                 new Appointments(stage)
                         .getScene()
         );
-
-        stage.show();
     }
 
     private void showSearchHospitals() {
 
-        stage.setScene(
+        navigate(
                 new SearchHospitals(stage)
                         .getScene()
         );
-
-        stage.show();
     }
 
     private void showHealthPassport() {
 
-        stage.setScene(
+        navigate(
                 new HealthPassport(stage)
                         .getScene()
         );
-
-        stage.show();
     }
 
     private void showMedicalRecords() {
 
-        stage.setScene(
+        navigate(
                 new MedicalRecords(stage)
                         .getScene()
         );
-
-        stage.show();
     }
 
     private void showAIHealthAssistant() {
 
-        stage.setScene(
+        navigate(
                 new AiHealthAssistant(stage)
                         .getScene()
         );
-
-        stage.show();
     }
 
     private void showEmergencyAssistance() {
 
-        stage.setScene(
+        navigate(
                 new EmergencyAssistance(stage)
                         .getScene()
         );
-
-        stage.show();
     }
 }

@@ -36,29 +36,22 @@ import javafx.stage.Stage;
 
 public class LoginView {
 
-    private Button selectedRoleBtn;
-
-    /*
-     * SAME STAGE THROUGHOUT THE APPLICATION
-     */
     private final Stage stage;
+    private final LoginController loginController;
+
+    private Button selectedRoleBtn;
 
     private Button btnPatient;
     private Button btnDoctor;
     private Button btnHospital;
     private Button btnAdmin;
 
-    private final LoginController loginController;
-
     private Label errorLabel;
 
-    /*
-     * IMPORTANT:
-     *
-     * No default constructor.
-     *
-     * LoginView MUST receive the shared Stage.
-     */
+    // =========================================================
+    // CONSTRUCTOR
+    // =========================================================
+
     public LoginView(Stage stage) {
 
         this.stage = stage;
@@ -67,10 +60,25 @@ public class LoginView {
                 new LoginController();
     }
 
+    // =========================================================
+    // LOGIN SCENE
+    // =========================================================
+
     public Scene getScene() {
 
         HBox root =
                 new HBox();
+
+        root.setMinWidth(0);
+        root.setMinHeight(0);
+
+        root.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        root.setMaxHeight(
+                Double.MAX_VALUE
+        );
 
         root.getStyleClass().add(
                 "login-root"
@@ -109,29 +117,28 @@ public class LoginView {
                 rightScroll
         );
 
-        /*
-         * NO FIXED WIDTH OR HEIGHT.
-         */
         Scene scene =
                 new Scene(root);
 
-        String cssPath =
-                getClass().getResource(
-                        "/css/login.css"
-                ) != null
-                        ? getClass()
-                                .getResource(
-                                        "/css/login.css"
-                                )
-                                .toExternalForm()
-                        : null;
-
-        if (cssPath != null) {
+        if (getClass().getResource(
+                "/css/login.css"
+        ) != null) {
 
             scene.getStylesheets().add(
-                    cssPath
+                    getClass()
+                            .getResource(
+                                    "/css/login.css"
+                            )
+                            .toExternalForm()
             );
         }
+
+        /*
+         * IMPORTANT:
+         *
+         * Do NOT maximize here.
+         * View already maximized the shared Stage.
+         */
 
         return scene;
     }
@@ -151,6 +158,17 @@ public class LoginView {
 
         leftBox.setAlignment(
                 Pos.TOP_LEFT
+        );
+
+        leftBox.setMinWidth(0);
+        leftBox.setMinHeight(0);
+
+        leftBox.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        leftBox.setMaxHeight(
+                Double.MAX_VALUE
         );
 
         HBox brandRow =
@@ -203,8 +221,10 @@ public class LoginView {
                 "hero-subtext"
         );
 
-        subtext.setWrapText(
-                true
+        subtext.setWrapText(true);
+
+        subtext.setMaxWidth(
+                Double.MAX_VALUE
         );
 
         textContent.getChildren().addAll(
@@ -245,9 +265,7 @@ public class LoginView {
                         220
                 );
 
-        heroImg.setPreserveRatio(
-                false
-        );
+        heroImg.setPreserveRatio(false);
 
         Rectangle clip =
                 new Rectangle(
@@ -258,9 +276,7 @@ public class LoginView {
         clip.setArcWidth(16);
         clip.setArcHeight(16);
 
-        heroImg.setClip(
-                clip
-        );
+        heroImg.setClip(clip);
 
         leftBox.getChildren().addAll(
                 brandRow,
@@ -272,6 +288,10 @@ public class LoginView {
 
         return leftBox;
     }
+
+    // =========================================================
+    // FEATURE PILL
+    // =========================================================
 
     private HBox createFeaturePill(
             String text
@@ -303,7 +323,7 @@ public class LoginView {
     }
 
     // =========================================================
-    // RIGHT LOGIN FORM
+    // RIGHT FORM
     // =========================================================
 
     private ScrollPane createRightFormPanel() {
@@ -324,6 +344,12 @@ public class LoginView {
                 )
         );
 
+        container.setMinWidth(0);
+
+        container.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
         VBox card =
                 new VBox(20);
 
@@ -331,9 +357,7 @@ public class LoginView {
                 "form-card"
         );
 
-        card.setMaxWidth(
-                480
-        );
+        card.setMaxWidth(480);
 
         card.setAlignment(
                 Pos.TOP_CENTER
@@ -440,9 +464,7 @@ public class LoginView {
                         "🔑"
                 );
 
-        selectRole(
-                btnPatient
-        );
+        selectRole(btnPatient);
 
         btnPatient.setOnAction(
                 e -> selectRole(btnPatient)
@@ -489,9 +511,7 @@ public class LoginView {
             ColumnConstraints column =
                     new ColumnConstraints();
 
-            column.setPercentWidth(
-                    25
-            );
+            column.setPercentWidth(25);
 
             roleGrid
                     .getColumnConstraints()
@@ -510,17 +530,11 @@ public class LoginView {
         errorLabel =
                 new Label();
 
-        errorLabel.setWrapText(
-                true
-        );
+        errorLabel.setWrapText(true);
 
-        errorLabel.setVisible(
-                false
-        );
+        errorLabel.setVisible(false);
 
-        errorLabel.setManaged(
-                false
-        );
+        errorLabel.setManaged(false);
 
         errorLabel.setStyle(
                 "-fx-text-fill: #ef4444;" +
@@ -608,9 +622,7 @@ public class LoginView {
                 event -> {
 
                     ForgotPasswordView forgot =
-                            new ForgotPasswordView(
-                                    stage
-                            );
+                            new ForgotPasswordView(stage);
 
                     stage.setScene(
                             forgot.getScene()
@@ -778,9 +790,7 @@ public class LoginView {
                 e -> {
 
                     RegisterView registerView =
-                            new RegisterView(
-                                    stage
-                            );
+                            new RegisterView(stage);
 
                     stage.setScene(
                             registerView.getScene()
@@ -806,17 +816,13 @@ public class LoginView {
         );
 
         ScrollPane scrollPane =
-                new ScrollPane(
-                        container
-                );
+                new ScrollPane(container);
 
         scrollPane.getStyleClass().add(
                 "right-panel-scroll"
         );
 
-        scrollPane.setFitToWidth(
-                true
-        );
+        scrollPane.setFitToWidth(true);
 
         scrollPane.setHbarPolicy(
                 ScrollPane.ScrollBarPolicy.NEVER
@@ -824,6 +830,17 @@ public class LoginView {
 
         scrollPane.setVbarPolicy(
                 ScrollPane.ScrollBarPolicy.AS_NEEDED
+        );
+
+        scrollPane.setMinWidth(0);
+        scrollPane.setMinHeight(0);
+
+        scrollPane.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        scrollPane.setMaxHeight(
+                Double.MAX_VALUE
         );
 
         return scrollPane;
@@ -971,20 +988,14 @@ public class LoginView {
 
             if (!selectedRoleBtn
                     .getStyleClass()
-                    .contains(
-                            "role-btn"
-                    )) {
+                    .contains("role-btn")) {
 
                 selectedRoleBtn
                         .getStyleClass()
-                        .add(
-                                "role-btn"
-                        );
+                        .add("role-btn");
             }
 
-            selectedRoleBtn.setStyle(
-                    ""
-            );
+            selectedRoleBtn.setStyle("");
         }
 
         button.getStyleClass().remove(
@@ -1003,8 +1014,7 @@ public class LoginView {
                 "-fx-border-radius: 8px;"
         );
 
-        selectedRoleBtn =
-                button;
+        selectedRoleBtn = button;
     }
 
     // =========================================================
@@ -1014,22 +1024,18 @@ public class LoginView {
     private String getSelectedTabRoleString() {
 
         if (selectedRoleBtn == btnPatient) {
-
             return Role.PATIENT.name();
         }
 
         if (selectedRoleBtn == btnDoctor) {
-
             return Role.DOCTOR.name();
         }
 
         if (selectedRoleBtn == btnHospital) {
-
             return Role.HOSPITAL.name();
         }
 
         if (selectedRoleBtn == btnAdmin) {
-
             return Role.ADMIN.name();
         }
 
@@ -1044,54 +1050,50 @@ public class LoginView {
             LoginDestination destination
     ) {
 
+        Scene destinationScene;
+
         switch (destination) {
 
             case PATIENT_DASHBOARD -> {
 
-                stage.setScene(
+                destinationScene =
                         new Dashboard(stage)
-                                .getScene()
-                );
+                                .getScene();
             }
 
             case DOCTOR_DASHBOARD -> {
 
-                stage.setScene(
+                destinationScene =
                         new DoctorDashboardView(stage)
-                                .getScene()
-                );
+                                .getScene();
             }
 
             case DOCTOR_PENDING -> {
 
-                stage.setScene(
+                destinationScene =
                         new DoctorPendingApprovalView(stage)
-                                .getScene()
-                );
+                                .getScene();
             }
 
             case HOSPITAL_DASHBOARD -> {
 
-                stage.setScene(
+                destinationScene =
                         new HospitalDashboardView(stage)
-                                .getScene()
-                );
+                                .getScene();
             }
 
             case HOSPITAL_PENDING -> {
 
-                stage.setScene(
+                destinationScene =
                         new DoctorPendingApprovalView(stage)
-                                .getScene()
-                );
+                                .getScene();
             }
 
             case ADMIN_DASHBOARD -> {
 
-                stage.setScene(
+                destinationScene =
                         new AdminDashboardView(stage)
-                                .getScene()
-                );
+                                .getScene();
             }
 
             case LOGIN -> {
@@ -1099,16 +1101,27 @@ public class LoginView {
                 showError(
                         "Unable to determine user access."
                 );
+
+                return;
+            }
+
+            default -> {
+                return;
             }
         }
 
         /*
-         * Keep the same maximized Stage after navigation.
+         * =====================================================
+         * SAME SHARED STAGE
+         * =====================================================
+         *
+         * No maximize.
+         * No show().
+         * No new Stage.
          */
-        if (!stage.isMaximized()) {
-
-            stage.setMaximized(true);
-        }
+        stage.setScene(
+                destinationScene
+        );
     }
 
     // =========================================================
@@ -1136,7 +1149,7 @@ public class LoginView {
     }
 
     // =========================================================
-    // IMAGE
+    // SAFE IMAGE
     // =========================================================
 
     private ImageView createSafeImageView(
@@ -1148,30 +1161,19 @@ public class LoginView {
         ImageView imageView =
                 new ImageView();
 
-        imageView.setFitWidth(
-                width
-        );
+        imageView.setFitWidth(width);
+        imageView.setFitHeight(height);
 
-        imageView.setFitHeight(
-                height
-        );
-
-        imageView.setPreserveRatio(
-                true
-        );
+        imageView.setPreserveRatio(true);
 
         try {
 
-            if (getClass().getResource(
-                    path
-            ) != null) {
+            if (getClass().getResource(path) != null) {
 
                 imageView.setImage(
                         new Image(
                                 getClass()
-                                        .getResourceAsStream(
-                                                path
-                                        )
+                                        .getResourceAsStream(path)
                         )
                 );
             }

@@ -13,7 +13,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -41,11 +40,35 @@ public class Appointments {
 
     public Scene getScene() {
 
+        /*
+         * IMPORTANT:
+         *
+         * This class creates ONLY the page content.
+         *
+         * PatientUI creates:
+         *
+         * - Sidebar
+         * - Header
+         * - ONE ScrollPane
+         * - Full available width
+         * - Full available height
+         *
+         * DO NOT create another ScrollPane here.
+         */
+
         VBox content =
                 new VBox(20);
 
         content.setPadding(
                 new Insets(5)
+        );
+
+        content.setFillWidth(true);
+
+        content.setMinWidth(0);
+
+        content.setMaxWidth(
+                Double.MAX_VALUE
         );
 
         // =====================================================
@@ -59,31 +82,47 @@ public class Appointments {
                 Pos.CENTER_LEFT
         );
 
-        imageRow.getChildren().addAll(
+        imageRow.setFillHeight(true);
 
+        imageRow.setMinWidth(0);
+
+        imageRow.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        ImageView image1 =
                 createImage(
                         "/images/appointments/appointment1.jpg",
                         250,
                         165
-                ),
+                );
 
+        ImageView image2 =
                 createImage(
                         "/images/appointments/appointment2.jpg",
                         250,
                         165
-                ),
+                );
 
+        ImageView image3 =
                 createImage(
                         "/images/appointments/appointment3.jpg",
                         250,
                         165
-                ),
+                );
 
+        ImageView image4 =
                 createImage(
                         "/images/appointments/appointment4.jpg",
                         250,
                         165
-                )
+                );
+
+        imageRow.getChildren().addAll(
+                image1,
+                image2,
+                image3,
+                image4
         );
 
         // =====================================================
@@ -95,12 +134,22 @@ public class Appointments {
                         "Book a New Appointment"
                 );
 
+        booking.setMinWidth(0);
+
+        booking.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
         Label bookingText =
                 new Label(
                         "Need to see a doctor? Find an available specialist and book your appointment."
                 );
 
         bookingText.setWrapText(true);
+
+        bookingText.setMaxWidth(
+                Double.MAX_VALUE
+        );
 
         bookingText.setStyle(
                 "-fx-text-fill: #64748b;" +
@@ -114,7 +163,6 @@ public class Appointments {
                 );
 
         booking.getChildren().addAll(
-
                 bookingText,
                 book
         );
@@ -130,9 +178,15 @@ public class Appointments {
 
         try {
 
-            appointments =
+            List<Appointment> loadedAppointments =
                     appointmentController
                             .getCurrentPatientAppointments();
+
+            if (loadedAppointments != null) {
+
+                appointments =
+                        loadedAppointments;
+            }
 
         } catch (Exception e) {
 
@@ -153,6 +207,12 @@ public class Appointments {
                 PatientUI.card(
                         "Upcoming Appointment"
                 );
+
+        upcoming.setMinWidth(0);
+
+        upcoming.setMaxWidth(
+                Double.MAX_VALUE
+        );
 
         if (errorMessage != null) {
 
@@ -183,10 +243,17 @@ public class Appointments {
                 for (Appointment appointment :
                         upcomingAppointments) {
 
-                    upcoming.getChildren().add(
+                    HBox appointmentBox =
                             appointmentCard(
                                     appointment
-                            )
+                            );
+
+                    appointmentBox.setMaxWidth(
+                            Double.MAX_VALUE
+                    );
+
+                    upcoming.getChildren().add(
+                            appointmentBox
                     );
                 }
             }
@@ -200,6 +267,12 @@ public class Appointments {
                 PatientUI.card(
                         "Previous Appointments"
                 );
+
+        previous.setMinWidth(0);
+
+        previous.setMaxWidth(
+                Double.MAX_VALUE
+        );
 
         if (errorMessage != null) {
 
@@ -229,10 +302,17 @@ public class Appointments {
                 for (Appointment appointment :
                         previousAppointments) {
 
-                    previous.getChildren().add(
+                    HBox previousBox =
                             previousAppointment(
                                     appointment
-                            )
+                            );
+
+                    previousBox.setMaxWidth(
+                            Double.MAX_VALUE
+                    );
+
+                    previous.getChildren().add(
+                            previousBox
                     );
                 }
             }
@@ -245,39 +325,30 @@ public class Appointments {
         content.getChildren().addAll(
 
                 imageRow,
+
                 booking,
+
                 upcoming,
+
                 previous
         );
 
-        // =====================================================
-        // SCROLL
-        // =====================================================
-
-        ScrollPane scroll =
-                new ScrollPane(content);
-
-        scroll.setFitToWidth(true);
-
-        scroll.setHbarPolicy(
-                ScrollPane.ScrollBarPolicy.NEVER
-        );
-
-        scroll.setVbarPolicy(
-                ScrollPane.ScrollBarPolicy.AS_NEEDED
-        );
-
-        scroll.setStyle(
-                "-fx-background-color: transparent;" +
-                "-fx-background: transparent;"
-        );
-
-        VBox wrapper =
-                new VBox(scroll);
-
-        // =====================================================
-        // COMMON PATIENT HEADER
-        // =====================================================
+        /*
+         * =====================================================
+         * IMPORTANT
+         * =====================================================
+         *
+         * There is NO ScrollPane here.
+         *
+         * PatientUI.createScene() creates the ONLY ScrollPane.
+         *
+         * This fixes:
+         *
+         * - nested scrollbars
+         * - content being trapped inside another viewport
+         * - inconsistent screen sizing
+         * - scrolling only after manual maximize
+         */
 
         return PatientUI.createScene(
 
@@ -289,7 +360,7 @@ public class Appointments {
 
                 "Manage your upcoming and previous healthcare appointments.",
 
-                wrapper
+                content
         );
     }
 
@@ -307,10 +378,16 @@ public class Appointments {
         LocalDate today =
                 LocalDate.now();
 
+        if (appointments == null) {
+
+            return result;
+        }
+
         for (Appointment appointment :
                 appointments) {
 
             if (appointment == null) {
+
                 continue;
             }
 
@@ -320,8 +397,8 @@ public class Appointments {
                                     .getAppointmentDate()
                     );
 
-            if (appointmentDate != null &&
-                    !appointmentDate.isBefore(today)) {
+            if (appointmentDate != null
+                    && !appointmentDate.isBefore(today)) {
 
                 result.add(
                         appointment
@@ -359,10 +436,16 @@ public class Appointments {
         LocalDate today =
                 LocalDate.now();
 
+        if (appointments == null) {
+
+            return result;
+        }
+
         for (Appointment appointment :
                 appointments) {
 
             if (appointment == null) {
+
                 continue;
             }
 
@@ -372,8 +455,8 @@ public class Appointments {
                                     .getAppointmentDate()
                     );
 
-            if (appointmentDate != null &&
-                    appointmentDate.isBefore(today)) {
+            if (appointmentDate != null
+                    && appointmentDate.isBefore(today)) {
 
                 result.add(
                         appointment
@@ -405,8 +488,8 @@ public class Appointments {
             String date
     ) {
 
-        if (date == null ||
-                date.isBlank()) {
+        if (date == null
+                || date.isBlank()) {
 
             return null;
         }
@@ -442,12 +525,22 @@ public class Appointments {
                 Pos.CENTER_LEFT
         );
 
+        box.setMinWidth(0);
+
+        box.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
         box.setStyle(
                 "-fx-background-color: #f8fafc;" +
                 "-fx-background-radius: 12;" +
                 "-fx-border-color: #bfdbfe;" +
                 "-fx-border-radius: 12;"
         );
+
+        // =====================================================
+        // IMAGE
+        // =====================================================
 
         ImageView image =
                 createImage(
@@ -456,8 +549,18 @@ public class Appointments {
                         110
                 );
 
+        // =====================================================
+        // INFORMATION
+        // =====================================================
+
         VBox information =
                 new VBox(7);
+
+        information.setMinWidth(0);
+
+        information.setMaxWidth(
+                Double.MAX_VALUE
+        );
 
         Label doctor =
                 new Label(
@@ -466,6 +569,8 @@ public class Appointments {
                                 "Doctor"
                         )
                 );
+
+        doctor.setWrapText(true);
 
         doctor.setStyle(
                 "-fx-font-size: 18px;" +
@@ -480,6 +585,8 @@ public class Appointments {
                                 "Specialty"
                         )
                 );
+
+        speciality.setWrapText(true);
 
         speciality.setStyle(
                 "-fx-text-fill: #2563eb;" +
@@ -498,6 +605,8 @@ public class Appointments {
                         )
                 );
 
+        date.setWrapText(true);
+
         date.setStyle(
                 "-fx-text-fill: #475569;"
         );
@@ -509,6 +618,8 @@ public class Appointments {
                                 "Hospital"
                         )
                 );
+
+        hospital.setWrapText(true);
 
         hospital.setStyle(
                 "-fx-text-fill: #64748b;"
@@ -522,6 +633,8 @@ public class Appointments {
                         )
                 );
 
+        status.setWrapText(true);
+
         status.setStyle(
                 "-fx-text-fill: #16a34a;" +
                 "-fx-font-weight: bold;"
@@ -530,9 +643,13 @@ public class Appointments {
         information.getChildren().addAll(
 
                 doctor,
+
                 speciality,
+
                 date,
+
                 hospital,
+
                 status
         );
 
@@ -541,18 +658,25 @@ public class Appointments {
                 Priority.ALWAYS
         );
 
+        // =====================================================
+        // VIEW BUTTON
+        // =====================================================
+
         Button view =
                 PatientUI.button(
                         "View",
-                        () -> showAppointmentDetails(
-                                appointment
-                        )
+                        () ->
+                                showAppointmentDetails(
+                                        appointment
+                                )
                 );
 
         box.getChildren().addAll(
 
                 image,
+
                 information,
+
                 view
         );
 
@@ -578,6 +702,12 @@ public class Appointments {
                 Pos.CENTER_LEFT
         );
 
+        box.setMinWidth(0);
+
+        box.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
         box.setStyle(
                 "-fx-background-color: white;" +
                 "-fx-background-radius: 10;" +
@@ -595,6 +725,12 @@ public class Appointments {
         VBox information =
                 new VBox(5);
 
+        information.setMinWidth(0);
+
+        information.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
         Label doctor =
                 new Label(
                         safe(
@@ -602,6 +738,8 @@ public class Appointments {
                                 "Doctor"
                         )
                 );
+
+        doctor.setWrapText(true);
 
         doctor.setStyle(
                 "-fx-font-size: 16px;" +
@@ -617,6 +755,8 @@ public class Appointments {
                         )
                 );
 
+        speciality.setWrapText(true);
+
         speciality.setStyle(
                 "-fx-text-fill: #2563eb;"
         );
@@ -628,6 +768,8 @@ public class Appointments {
                         )
                 );
 
+        date.setWrapText(true);
+
         date.setStyle(
                 "-fx-text-fill: #64748b;"
         );
@@ -635,7 +777,9 @@ public class Appointments {
         information.getChildren().addAll(
 
                 doctor,
+
                 speciality,
+
                 date
         );
 
@@ -652,6 +796,8 @@ public class Appointments {
                         )
                 );
 
+        status.setWrapText(true);
+
         status.setStyle(
                 "-fx-text-fill: #16a34a;" +
                 "-fx-font-weight: bold;"
@@ -660,7 +806,9 @@ public class Appointments {
         box.getChildren().addAll(
 
                 image,
+
                 information,
+
                 status
         );
 
@@ -686,10 +834,18 @@ public class Appointments {
                 Pos.TOP_LEFT
         );
 
+        content.setMinWidth(0);
+
+        content.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
         Label title =
                 new Label(
                         "Appointment Details"
                 );
+
+        title.setWrapText(true);
 
         title.setStyle(
                 "-fx-font-size: 26px;" +
@@ -750,27 +906,32 @@ public class Appointments {
         content.getChildren().addAll(
 
                 title,
+
                 doctor,
+
                 specialty,
+
                 hospital,
+
                 date,
+
                 time,
+
                 reason,
+
                 status,
+
                 back
         );
 
-        VBox wrapper =
-                new VBox(content);
-
-        wrapper.setPadding(
-                new Insets(20)
-        );
-
-        ScrollPane scroll =
-                new ScrollPane(wrapper);
-
-        scroll.setFitToWidth(true);
+        /*
+         * IMPORTANT:
+         *
+         * No ScrollPane here.
+         *
+         * PatientUI will provide the single
+         * application-wide ScrollPane.
+         */
 
         stage.setScene(
 
@@ -784,11 +945,20 @@ public class Appointments {
 
                         "View your appointment information.",
 
-                        scroll
+                        content
                 )
         );
 
         stage.show();
+
+        /*
+         * Keep the Patient module maximized.
+         */
+
+        if (!stage.isMaximized()) {
+
+            stage.setMaximized(true);
+        }
     }
 
     // =========================================================
@@ -802,11 +972,19 @@ public class Appointments {
 
         Label label =
                 new Label(
-                        title + ": "
-                                + safe(value, "Not available")
+                        title
+                                + ": "
+                                + safe(
+                                        value,
+                                        "Not available"
+                                )
                 );
 
         label.setWrapText(true);
+
+        label.setMaxWidth(
+                Double.MAX_VALUE
+        );
 
         label.setStyle(
                 "-fx-font-size: 15px;" +
@@ -826,6 +1004,8 @@ public class Appointments {
 
         Label label =
                 new Label(message);
+
+        label.setWrapText(true);
 
         label.setStyle(
                 "-fx-text-fill: #64748b;" +
@@ -848,6 +1028,10 @@ public class Appointments {
 
         label.setWrapText(true);
 
+        label.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
         label.setStyle(
                 "-fx-text-fill: #dc2626;" +
                 "-fx-font-size: 14px;"
@@ -865,8 +1049,8 @@ public class Appointments {
             String fallback
     ) {
 
-        if (value == null ||
-                value.isBlank()) {
+        if (value == null
+                || value.isBlank()) {
 
             return fallback;
         }
@@ -882,8 +1066,8 @@ public class Appointments {
             String date
     ) {
 
-        if (date == null ||
-                date.isBlank()) {
+        if (date == null
+                || date.isBlank()) {
 
             return "Date not available";
         }
@@ -893,15 +1077,19 @@ public class Appointments {
             LocalDate localDate =
                     LocalDate.parse(date);
 
+            String month =
+                    localDate
+                            .getMonth()
+                            .toString();
+
+            month =
+                    month.substring(0, 1)
+                            + month.substring(1)
+                                    .toLowerCase();
+
             return localDate.getDayOfMonth()
                     + " "
-                    + localDate.getMonth()
-                            .toString()
-                            .charAt(0)
-                    + localDate.getMonth()
-                            .toString()
-                            .substring(1)
-                            .toLowerCase()
+                    + month
                     + " "
                     + localDate.getYear();
 
@@ -935,6 +1123,7 @@ public class Appointments {
             );
 
             view.setFitWidth(width);
+
             view.setFitHeight(height);
 
             return view;
@@ -948,6 +1137,7 @@ public class Appointments {
         view.setImage(image);
 
         view.setFitWidth(width);
+
         view.setFitHeight(height);
 
         view.setPreserveRatio(false);
@@ -967,6 +1157,11 @@ public class Appointments {
         );
 
         stage.show();
+
+        if (!stage.isMaximized()) {
+
+            stage.setMaximized(true);
+        }
     }
 
     private void showAppointments() {
@@ -977,5 +1172,10 @@ public class Appointments {
         );
 
         stage.show();
+
+        if (!stage.isMaximized()) {
+
+            stage.setMaximized(true);
+        }
     }
 }

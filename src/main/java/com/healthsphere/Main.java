@@ -58,10 +58,11 @@ public class Main {
         }
 
         /*
-         * View is the actual JavaFX Application.
+         * =====================================================
+         * START JAVAFX APPLICATION
+         * =====================================================
          *
-         * It owns the ONE shared Stage for the
-         * entire HealthSphere application.
+         * View owns the ONE shared Stage.
          */
         javafx.application.Application.launch(
                 View.class,
