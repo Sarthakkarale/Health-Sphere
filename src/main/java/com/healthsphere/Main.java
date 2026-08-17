@@ -17,7 +17,85 @@
 
 package com.healthsphere;
 
-import com.healthsphere.view.authentication.SplashView;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.google.cloud.firestore.Firestore;
+import com.healthsphere.config.FirebaseConfig;
+import com.healthsphere.view.authentication.View;
+
+import javafx.application.Application;
+import javafx.stage.Stage;
+
+public class Main extends Application {
+
+    @Override
+    public void start(Stage stage) throws Exception {
+
+        try {
+            System.out.println("Initializing Firebase...");
+
+            FirebaseConfig.initialize();
+
+            System.out.println("Firebase initialized successfully!");
+
+            Firestore db = FirebaseConfig.getFirestore();
+
+            Map<String, Object> testData = new HashMap<>();
+
+            testData.put("message", "Health-Sphere Firebase Test");
+            testData.put("status", "SUCCESS");
+
+            db.collection("connection_test")
+                    .document("test")
+                    .set(testData)
+                    .get();
+
+            System.out.println("Firestore WRITE successful!");
+
+        } catch (Exception e) {
+
+            System.out.println("Firebase/Firestore test failed!");
+            e.printStackTrace();
+
+            return;
+        }
+
+        /*
+         * Start the authentication View.
+         *
+         * IMPORTANT:
+         * Do not use:
+         *
+         * Application.launch(View.class, stage);
+         *
+         * because launch() accepts String arguments, not Stage.
+         */
+
+        View view = new View();
+
+        /*
+         * If View contains its own JavaFX UI initialization,
+         * call the appropriate method from View here.
+         *
+         * For example:
+         *
+         * view.start(stage);
+         */
+
+        view.start(stage);
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
+
+
+/*package com.healthsphere;
+
+import com.healthsphere.view.Hospital.HospitalDashboardView;
+
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -25,62 +103,51 @@ import javafx.stage.Stage;
 public class Main extends Application {
 
     @Override
-    public void start(Stage primaryStage) {
+    public void start(Stage stage) {
 
-        // Create Splash Screen
-        SplashView splashView = new SplashView();
+        // ---------------------------------------------------------
+        // APPLICATION WINDOW
+        // ---------------------------------------------------------
 
-        // Create Scene
-        Scene scene = splashView.getScene();
+        stage.setTitle("Health-Sphere | Smart Healthcare");
 
-        // Configure Stage
-        primaryStage.setTitle("Health-Sphere");
-        primaryStage.setScene(scene);
+        // Initial window size
+        stage.setWidth(1400);
+        stage.setHeight(850);
 
-        primaryStage.setWidth(1440);
-        primaryStage.setHeight(900);
+        // Minimum window size
+        stage.setMinWidth(1100);
+        stage.setMinHeight(700);
 
-        primaryStage.setMinWidth(1200);
-        primaryStage.setMinHeight(700);
+        // ---------------------------------------------------------
+        // INITIAL SCREEN
+        // ---------------------------------------------------------
 
-        primaryStage.setMaximized(true);
+        HospitalDashboardView dashboardView =
+                new HospitalDashboardView();
 
-        primaryStage.show();
+        Scene scene =
+                dashboardView.createScene(stage);
+
+        stage.setScene(scene);
+
+        // ---------------------------------------------------------
+        // WINDOW SETTINGS
+        // ---------------------------------------------------------
+
+        stage.setResizable(true);
+
+        // Start maximized
+        stage.setMaximized(true);
+
+        stage.show();
     }
+
+    // -------------------------------------------------------------
+    // APPLICATION ENTRY POINT
+    // -------------------------------------------------------------
 
     public static void main(String[] args) {
-
-    try {
-
-        System.out.println("Initializing Firebase...");
-
-        FirebaseConfig.initialize();
-
-        System.out.println("Firebase initialized successfully!");
-
-        Firestore db = FirebaseConfig.getFirestore();
-
-        Map<String, Object> testData = new HashMap<>();
-
-        testData.put("message", "Health-Sphere Firebase Test");
-        testData.put("status", "SUCCESS");
-
-        db.collection("connection_test")
-                .document("test")
-                .set(testData)
-                .get();
-
-        System.out.println("Firestore WRITE successful!");
-
-    } catch (Exception e) {
-
-        System.out.println("Firebase/Firestore test failed!");
-        e.printStackTrace();
-
-        return;
+        launch(args);
     }
-
-    Application.launch(View.class, args);
-}
-}
-
+}/* */

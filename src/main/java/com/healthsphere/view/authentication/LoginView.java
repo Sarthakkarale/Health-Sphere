@@ -2,7 +2,7 @@ package com.healthsphere.view.authentication;
 
 import com.healthsphere.view.patient.PatientDashboardView;
 import com.healthsphere.view.doctor.DoctorDashboardView;
-import com.healthsphere.view.hospital.HospitalDashboardView;
+import com.healthsphere.view.Hospital.HospitalDashboardView;
 import com.healthsphere.view.admin.AdminDashboardView;
 import com.healthsphere.view.authentication.*;
 
@@ -389,32 +389,38 @@ public class LoginView {
     }
 
     private void handleLoginDestination(LoginDestination destination) {
-        switch (destination) {
-            case PATIENT_DASHBOARD -> {
-                stage.setScene(new PatientDashboardView(stage).getScene());
-            }
-            case DOCTOR_DASHBOARD -> {
-                stage.setScene(new DoctorDashboardView(stage).getScene());
-            }
-            case DOCTOR_PENDING -> {
-                // Handle doctor pending screen navigation if implemented
-                stage.setScene(new DoctorPendingApprovalView(stage).getScene());
-            }
-            case HOSPITAL_DASHBOARD -> {
-                stage.setScene(new HospitalDashboardView(stage).getScene());
-            }
-            case HOSPITAL_PENDING -> {
-                // Handle hospital pending screen navigation if implemented
-                stage.setScene(new DoctorPendingApprovalView(stage).getScene());
-            }
-            case ADMIN_DASHBOARD -> {
-                stage.setScene(new AdminDashboardView(stage).getScene());
-            }
-            case LOGIN -> {
-                showError("Unable to determine user access.");
-            }
+    switch (destination) {
+
+        case PATIENT_DASHBOARD -> {
+            stage.setScene(new PatientDashboardView(stage).getScene());
+        }
+
+        case DOCTOR_DASHBOARD -> {
+            stage.setScene(new DoctorDashboardView(stage).getScene());
+        }
+
+        case DOCTOR_PENDING -> {
+            stage.setScene(new DoctorPendingApprovalView(stage).getScene());
+        }
+
+        case HOSPITAL_DASHBOARD -> {
+            HospitalDashboardView hospitalView = new HospitalDashboardView();
+            stage.setScene(hospitalView.createScene(stage));
+        }
+
+        case HOSPITAL_PENDING -> {
+            stage.setScene(new DoctorPendingApprovalView(stage).getScene());
+        }
+
+        case ADMIN_DASHBOARD -> {
+            stage.setScene(new AdminDashboardView(stage).getScene());
+        }
+
+        case LOGIN -> {
+            showError("Unable to determine user access.");
         }
     }
+}
 
     private void showError(String message) {
         if (errorLabel != null) {
