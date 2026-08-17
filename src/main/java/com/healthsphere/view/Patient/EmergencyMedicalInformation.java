@@ -5,7 +5,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -23,12 +22,9 @@ public class EmergencyMedicalInformation {
 
     public Scene getScene() {
 
-        VBox content =
-                new VBox(20);
+        VBox content = new VBox(20);
 
-        content.setPadding(
-                new Insets(25)
-        );
+        content.setPadding(new Insets(25));
 
         // =====================================================
         // HERO
@@ -56,11 +52,10 @@ public class EmergencyMedicalInformation {
         // EMERGENCY INFORMATION
         // =====================================================
 
-        VBox information =
-                PatientUI.coloredCard(
-                        "🩹 Basic Emergency Guidance",
-                        "#dbeafe"
-                );
+        VBox information = PatientUI.coloredCard(
+                "🩹 Basic Emergency Guidance",
+                "#dbeafe"
+        );
 
         information.getChildren().addAll(
 
@@ -99,11 +94,10 @@ public class EmergencyMedicalInformation {
         // MEDICATION INFORMATION
         // =====================================================
 
-        VBox medication =
-                PatientUI.coloredCard(
-                        "💊 Medication & Allergy Information",
-                        "#ede9fe"
-                );
+        VBox medication = PatientUI.coloredCard(
+                "💊 Medication & Allergy Information",
+                "#ede9fe"
+        );
 
         medication.getChildren().addAll(
 
@@ -127,12 +121,9 @@ public class EmergencyMedicalInformation {
         // IMPORTANT NOTE
         // =====================================================
 
-        VBox note =
-                new VBox(8);
+        VBox note = new VBox(8);
 
-        note.setPadding(
-                new Insets(18)
-        );
+        note.setPadding(new Insets(18));
 
         note.setStyle(
                 "-fx-background-color: #fee2e2;" +
@@ -141,10 +132,9 @@ public class EmergencyMedicalInformation {
                 "-fx-border-radius: 14;"
         );
 
-        Label noteTitle =
-                new Label(
-                        "🚨 Emergency Warning"
-                );
+        Label noteTitle = new Label(
+                "🚨 Emergency Warning"
+        );
 
         noteTitle.setStyle(
                 "-fx-font-size: 17px;" +
@@ -152,12 +142,11 @@ public class EmergencyMedicalInformation {
                 "-fx-text-fill: #991b1b;"
         );
 
-        Label noteText =
-                new Label(
-                        "This information is for basic emergency awareness only. " +
-                        "It does not replace professional medical care. " +
-                        "For a life-threatening emergency, contact emergency services immediately."
-                );
+        Label noteText = new Label(
+                "This information is for basic emergency awareness only. " +
+                "It does not replace professional medical care. " +
+                "For a life-threatening emergency, contact emergency services immediately."
+        );
 
         noteText.setWrapText(true);
 
@@ -174,14 +163,12 @@ public class EmergencyMedicalInformation {
         // BACK
         // =====================================================
 
-        Button back =
-                PatientUI.secondaryButton(
-                        "← Back to Emergency Assistance",
-                        () -> stage.setScene(
-                                new EmergencyAssistance(stage)
-                                        .getScene()
-                        )
-                );
+        Button back = PatientUI.secondaryButton(
+                "← Back to Emergency Assistance",
+                () -> stage.setScene(
+                        new EmergencyAssistance(stage).getScene()
+                )
+        );
 
         content.getChildren().addAll(
                 information,
@@ -190,28 +177,16 @@ public class EmergencyMedicalInformation {
                 back
         );
 
-        ScrollPane scroll =
-                new ScrollPane(
-                        content
-                );
-
-        scroll.setFitToWidth(true);
-
-        scroll.setHbarPolicy(
-                ScrollPane.ScrollBarPolicy.NEVER
-        );
-
-        scroll.setStyle(
-                "-fx-background-color: transparent;" +
-                "-fx-background: transparent;"
-        );
+        // =====================================================
+        // NO INNER SCROLLPANE
+        // =====================================================
 
         return PatientUI.createScene(
                 stage,
                 "Emergency Medical Information",
                 "Emergency Medical Information",
                 "Basic emergency information and first-aid guidance.",
-                scroll
+                content
         );
     }
 
@@ -224,16 +199,10 @@ public class EmergencyMedicalInformation {
             String description
     ) {
 
-        HBox row =
-                new HBox(12);
+        HBox row = new HBox(12);
 
-        row.setAlignment(
-                Pos.TOP_LEFT
-        );
-
-        row.setPadding(
-                new Insets(13)
-        );
+        row.setAlignment(Pos.TOP_LEFT);
+        row.setPadding(new Insets(13));
 
         row.setStyle(
                 "-fx-background-color: white;" +
@@ -242,24 +211,21 @@ public class EmergencyMedicalInformation {
                 "-fx-border-radius: 10;"
         );
 
-        Label bullet =
-                new Label("●");
+        Label bullet = new Label("●");
 
         bullet.setStyle(
                 "-fx-text-fill: #2563eb;" +
                 "-fx-font-size: 12px;"
         );
 
-        VBox text =
-                new VBox(3);
+        VBox text = new VBox(3);
 
         HBox.setHgrow(
                 text,
                 Priority.ALWAYS
         );
 
-        Label titleLabel =
-                new Label(title);
+        Label titleLabel = new Label(title);
 
         titleLabel.setStyle(
                 "-fx-font-weight: bold;" +
@@ -267,8 +233,7 @@ public class EmergencyMedicalInformation {
                 "-fx-text-fill: #0f172a;"
         );
 
-        Label descriptionLabel =
-                new Label(description);
+        Label descriptionLabel = new Label(description);
 
         descriptionLabel.setWrapText(true);
 
@@ -299,27 +264,20 @@ public class EmergencyMedicalInformation {
             String subtitle
     ) {
 
-        VBox box =
-                new VBox();
+        VBox box = new VBox();
 
         box.setPrefHeight(250);
+        box.setAlignment(Pos.BOTTOM_LEFT);
 
-        box.setAlignment(
-                Pos.BOTTOM_LEFT
-        );
-
-        var resource =
-                getClass().getResource(path);
+        var resource = getClass().getResource(path);
 
         if (resource != null) {
 
-            Image image =
-                    new Image(
-                            resource.toExternalForm()
-                    );
+            Image image = new Image(
+                    resource.toExternalForm()
+            );
 
-            ImageView view =
-                    new ImageView(image);
+            ImageView view = new ImageView(image);
 
             view.setFitWidth(1000);
             view.setFitHeight(250);
@@ -328,19 +286,15 @@ public class EmergencyMedicalInformation {
             box.getChildren().add(view);
         }
 
-        VBox overlay =
-                new VBox(4);
+        VBox overlay = new VBox(4);
 
-        overlay.setPadding(
-                new Insets(18)
-        );
+        overlay.setPadding(new Insets(18));
 
         overlay.setStyle(
                 "-fx-background-color: rgba(0,0,0,0.58);"
         );
 
-        Label titleLabel =
-                new Label(title);
+        Label titleLabel = new Label(title);
 
         titleLabel.setStyle(
                 "-fx-font-size: 25px;" +
@@ -348,8 +302,7 @@ public class EmergencyMedicalInformation {
                 "-fx-text-fill: white;"
         );
 
-        Label subtitleLabel =
-                new Label(subtitle);
+        Label subtitleLabel = new Label(subtitle);
 
         subtitleLabel.setStyle(
                 "-fx-text-fill: white;"
@@ -360,9 +313,7 @@ public class EmergencyMedicalInformation {
                 subtitleLabel
         );
 
-        box.getChildren().add(
-                overlay
-        );
+        box.getChildren().add(overlay);
 
         return box;
     }
@@ -371,35 +322,27 @@ public class EmergencyMedicalInformation {
     // SECOND IMAGE
     // =========================================================
 
-    private VBox imageBanner(
-            String path
-    ) {
+    private VBox imageBanner(String path) {
 
-        VBox box =
-                new VBox();
+        VBox box = new VBox();
 
         box.setPrefHeight(210);
 
-        var resource =
-                getClass().getResource(path);
+        var resource = getClass().getResource(path);
 
         if (resource != null) {
 
-            Image image =
-                    new Image(
-                            resource.toExternalForm()
-                    );
+            Image image = new Image(
+                    resource.toExternalForm()
+            );
 
-            ImageView view =
-                    new ImageView(image);
+            ImageView view = new ImageView(image);
 
             view.setFitWidth(1000);
             view.setFitHeight(210);
             view.setPreserveRatio(false);
 
-            box.getChildren().add(
-                    view
-            );
+            box.getChildren().add(view);
         }
 
         box.setStyle(

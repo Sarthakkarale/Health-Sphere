@@ -15,10 +15,16 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-public class PatientUI {
+public final class PatientUI {
+
+    private PatientUI() {
+    }
+
+    public static final double DEFAULT_WIDTH = 1280;
+    public static final double DEFAULT_HEIGHT = 720;
 
     // =========================================================
-    // MAIN SCENE CREATOR
+    // COMMON PATIENT SCENE
     // =========================================================
 
     public static Scene createScene(
@@ -37,7 +43,7 @@ public class PatientUI {
         );
 
         // =====================================================
-        // LEFT SIDEBAR
+        // SIDEBAR
         // =====================================================
 
         VBox sidebar =
@@ -49,29 +55,19 @@ public class PatientUI {
         root.setLeft(sidebar);
 
         // =====================================================
-        // TOP HEADER
+        // HEADER
         // =====================================================
-
-        String headerTitle =
-                pageTitle;
-
-        if (headerTitle == null ||
-                headerTitle.trim().isEmpty()) {
-
-            headerTitle =
-                    activePage;
-        }
 
         HBox header =
                 createHeader(
                         stage,
-                        headerTitle
+                        pageTitle
                 );
 
         root.setTop(header);
 
         // =====================================================
-        // MAIN PAGE
+        // PAGE CONTENT
         // =====================================================
 
         VBox page =
@@ -83,14 +79,26 @@ public class PatientUI {
 
         page.setFillWidth(true);
 
+        /*
+         * IMPORTANT:
+         *
+         * Never give Patient pages a fixed width.
+         */
+        page.setMinWidth(0);
+        page.setMaxWidth(Double.MAX_VALUE);
+
         // =====================================================
-        // PAGE TITLE
+        // TITLE
         // =====================================================
 
         Label title =
                 new Label(
-                        pageTitle
+                        pageTitle == null
+                                ? ""
+                                : pageTitle
                 );
+
+        title.setWrapText(true);
 
         title.setStyle(
                 "-fx-font-size: 30px;" +
@@ -98,12 +106,22 @@ public class PatientUI {
                 "-fx-text-fill: #0f172a;"
         );
 
+        // =====================================================
+        // SUBTITLE
+        // =====================================================
+
         Label subtitle =
                 new Label(
-                        pageSubtitle
+                        pageSubtitle == null
+                                ? ""
+                                : pageSubtitle
                 );
 
         subtitle.setWrapText(true);
+
+        subtitle.setMaxWidth(
+                Double.MAX_VALUE
+        );
 
         subtitle.setStyle(
                 "-fx-font-size: 15px;" +
@@ -117,15 +135,41 @@ public class PatientUI {
                         subtitle
                 );
 
+        heading.setMinWidth(0);
+
+        heading.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
         page.getChildren().add(
                 heading
         );
 
         // =====================================================
-        // SCREEN CONTENT
+        // PAGE-SPECIFIC CONTENT
         // =====================================================
 
         if (content != null) {
+
+            if (content instanceof Region) {
+
+                Region region =
+                        (Region) content;
+
+                /*
+                 * Critical width settings.
+                 */
+                region.setMinWidth(0);
+
+                region.setMaxWidth(
+                        Double.MAX_VALUE
+                );
+
+                VBox.setVgrow(
+                        region,
+                        Priority.ALWAYS
+                );
+            }
 
             page.getChildren().add(
                     content
@@ -133,54 +177,144 @@ public class PatientUI {
         }
 
         // =====================================================
-        // SCROLL PANE
+        // SINGLE SCROLL PANE
         // =====================================================
 
         ScrollPane scroll =
-                new ScrollPane(
-                        page
-                );
+                new ScrollPane();
 
-        scroll.setFitToWidth(
-                true
+        scroll.setContent(
+                page
         );
 
+        /*
+         * CRITICAL:
+         *
+         * The page follows the available viewport width.
+         */
+        scroll.setFitToWidth(true);
+
+        /*
+         * DO NOT use fitToHeight.
+         *
+         * Content can become taller than the screen
+         * and therefore needs vertical scrolling.
+         */
+        scroll.setFitToHeight(false);
+
+        /*
+         * Horizontal scrolling is NEVER allowed.
+         */
         scroll.setHbarPolicy(
                 ScrollPane.ScrollBarPolicy.NEVER
         );
 
+        /*
+         * Vertical scrolling appears when required.
+         */
         scroll.setVbarPolicy(
                 ScrollPane.ScrollBarPolicy.AS_NEEDED
         );
 
+        scroll.setPannable(true);
+
+        scroll.setMinWidth(0);
+        scroll.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        scroll.setMinHeight(0);
+        scroll.setMaxHeight(
+                Double.MAX_VALUE
+        );
+
         scroll.setStyle(
                 "-fx-background-color: #f1f5f9;" +
-                "-fx-background: #f1f5f9;"
+                "-fx-background: #f1f5f9;" +
+                "-fx-border-color: transparent;"
         );
+
+        // =====================================================
+        // VIEWPORT WIDTH FIX
+        // =====================================================
+
+        scroll.viewportBoundsProperty().addListener(
+                (obs, oldBounds, newBounds) -> {
+
+                    if (newBounds == null) {
+                        return;
+                    }
+
+                    double width =
+                            newBounds.getWidth();
+
+                    if (width > 0) {
+
+                        /*
+                         * Make the page exactly as wide
+                         * as the available viewport.
+                         */
+                        page.setMinWidth(
+                                width
+                        );
+
+                        page.setPrefWidth(
+                                width
+                        );
+
+                        page.setMaxWidth(
+                                width
+                        );
+                    }
+                }
+        );
+
+        // =====================================================
+        // CENTER
+        // =====================================================
 
         root.setCenter(
                 scroll
         );
 
+        /*
+         * Force ScrollPane to occupy the entire
+         * remaining area.
+         */
+        BorderPane.setAlignment(
+                scroll,
+                Pos.CENTER
+        );
+
         // =====================================================
         // SCENE
-        //
-        // Keep the original 1440 x 900 size.
-        // The Stage itself can be maximized from View.java.
         // =====================================================
 
         Scene scene =
                 new Scene(
                         root,
-                        1440,
-                        900
+                        DEFAULT_WIDTH,
+                        DEFAULT_HEIGHT
                 );
+
+        /*
+         * IMPORTANT:
+         *
+         * Use the same Stage for every Patient screen.
+         */
+        if (stage != null) {
+
+            if (!stage.isMaximized()) {
+
+                stage.setMaximized(true);
+            }
+        }
 
         return scene;
     }
 
     // =========================================================
-    // LEFT SIDEBAR
+    // SIDEBAR
     // =========================================================
 
     private static VBox createSidebar(
@@ -223,10 +357,6 @@ public class PatientUI {
                 "-fx-font-weight: bold;"
         );
 
-        // =====================================================
-        // MODULE TITLE
-        // =====================================================
-
         Label module =
                 new Label(
                         "Patient Module"
@@ -247,10 +377,6 @@ public class PatientUI {
                 "-fx-font-weight: bold;"
         );
 
-        // =====================================================
-        // SEPARATOR
-        // =====================================================
-
         Separator separator =
                 new Separator();
 
@@ -265,7 +391,7 @@ public class PatientUI {
         );
 
         // =====================================================
-        // MAIN NAVIGATION
+        // NAVIGATION
         // =====================================================
 
         sidebar.getChildren().addAll(
@@ -393,7 +519,6 @@ public class PatientUI {
         );
 
         item.setPrefHeight(46);
-
         item.setMinHeight(46);
 
         item.setMaxWidth(
@@ -405,33 +530,22 @@ public class PatientUI {
                         activePage
                 );
 
-        if (selected) {
-
-            item.setStyle(
-                    "-fx-background-color: #2563eb;" +
-                    "-fx-background-radius: 9;"
-            );
-
-        } else {
-
-            item.setStyle(
-                    "-fx-background-color: transparent;" +
-                    "-fx-background-radius: 9;"
-            );
-        }
-
-        // =====================================================
-        // ICON
-        // =====================================================
+        item.setStyle(
+                "-fx-background-color: " +
+                (
+                        selected
+                                ? "#2563eb"
+                                : "transparent"
+                ) +
+                ";" +
+                "-fx-background-radius: 9;" +
+                "-fx-cursor: hand;"
+        );
 
         Label iconLabel =
-                new Label(
-                        icon
-                );
+                new Label(icon);
 
-        iconLabel.setPrefWidth(
-                25
-        );
+        iconLabel.setPrefWidth(25);
 
         iconLabel.setAlignment(
                 Pos.CENTER
@@ -442,22 +556,20 @@ public class PatientUI {
                 "-fx-font-size: 17px;"
         );
 
-        // =====================================================
-        // TEXT
-        // =====================================================
-
         Label textLabel =
-                new Label(
-                        text
-                );
+                new Label(text);
+
+        textLabel.setWrapText(true);
 
         textLabel.setStyle(
                 "-fx-text-fill: white;" +
                 "-fx-font-size: 14px;" +
                 "-fx-font-weight: " +
-                (selected
-                        ? "bold;"
-                        : "normal;")
+                (
+                        selected
+                                ? "bold;"
+                                : "normal;"
+                )
         );
 
         item.getChildren().addAll(
@@ -465,30 +577,24 @@ public class PatientUI {
                 textLabel
         );
 
-        // =====================================================
-        // HOVER
-        // =====================================================
-
         if (!selected) {
 
             item.setOnMouseEntered(
                     e -> item.setStyle(
                             "-fx-background-color: #1e293b;" +
-                            "-fx-background-radius: 9;"
+                            "-fx-background-radius: 9;" +
+                            "-fx-cursor: hand;"
                     )
             );
 
             item.setOnMouseExited(
                     e -> item.setStyle(
                             "-fx-background-color: transparent;" +
-                            "-fx-background-radius: 9;"
+                            "-fx-background-radius: 9;" +
+                            "-fx-cursor: hand;"
                     )
             );
         }
-
-        // =====================================================
-        // DIRECT NAVIGATION
-        // =====================================================
 
         item.setOnMouseClicked(
                 e -> navigate(
@@ -501,13 +607,17 @@ public class PatientUI {
     }
 
     // =========================================================
-    // DIRECT STAGE NAVIGATION
+    // NAVIGATION
     // =========================================================
 
     private static void navigate(
             Stage stage,
             String page
     ) {
+
+        if (stage == null) {
+            return;
+        }
 
         switch (page) {
 
@@ -594,18 +704,22 @@ public class PatientUI {
 
             default:
 
-                System.out.println(
-                        "Unknown page: " + page
-                );
-
                 return;
         }
 
         stage.show();
+
+        /*
+         * Keep the Patient application maximized.
+         */
+        if (!stage.isMaximized()) {
+
+            stage.setMaximized(true);
+        }
     }
 
     // =========================================================
-    // TOP HEADER
+    // HEADER
     // =========================================================
 
     private static HBox createHeader(
@@ -629,16 +743,12 @@ public class PatientUI {
                 )
         );
 
-        header.setPrefHeight(
-                70
-        );
+        header.setPrefHeight(70);
+        header.setMinHeight(70);
+        header.setMaxHeight(70);
 
-        header.setMinHeight(
-                70
-        );
-
-        header.setMaxHeight(
-                70
+        header.setMaxWidth(
+                Double.MAX_VALUE
         );
 
         header.setStyle(
@@ -647,13 +757,11 @@ public class PatientUI {
                 "-fx-border-width: 0 0 1 0;"
         );
 
-        // =====================================================
-        // CURRENT PAGE TITLE
-        // =====================================================
-
         Label currentPage =
                 new Label(
-                        pageTitle
+                        pageTitle == null
+                                ? ""
+                                : pageTitle
                 );
 
         currentPage.setStyle(
@@ -661,10 +769,6 @@ public class PatientUI {
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #0f172a;"
         );
-
-        // =====================================================
-        // SPACER
-        // =====================================================
 
         Region spacer =
                 new Region();
@@ -674,22 +778,11 @@ public class PatientUI {
                 Priority.ALWAYS
         );
 
-        // =====================================================
-        // NOTIFICATION BUTTON
-        // =====================================================
-
         Button notification =
-                new Button(
-                        "♧"
-                );
+                new Button("♧");
 
-        notification.setPrefWidth(
-                48
-        );
-
-        notification.setPrefHeight(
-                42
-        );
+        notification.setPrefWidth(48);
+        notification.setPrefHeight(42);
 
         notification.setStyle(
                 "-fx-background-color: #eff6ff;" +
@@ -708,21 +801,18 @@ public class PatientUI {
                     );
 
                     stage.show();
+
+                    if (!stage.isMaximized()) {
+
+                        stage.setMaximized(true);
+                    }
                 }
         );
 
-        // =====================================================
-        // PROFILE BUTTON
-        // =====================================================
-
         Button profile =
-                new Button(
-                        "Sarah"
-                );
+                new Button("Sarah");
 
-        profile.setPrefHeight(
-                42
-        );
+        profile.setPrefHeight(42);
 
         profile.setStyle(
                 "-fx-background-color: #eff6ff;" +
@@ -742,12 +832,13 @@ public class PatientUI {
                     );
 
                     stage.show();
+
+                    if (!stage.isMaximized()) {
+
+                        stage.setMaximized(true);
+                    }
                 }
         );
-
-        // =====================================================
-        // HEADER COMPONENTS
-        // =====================================================
 
         header.getChildren().addAll(
                 currentPage,
@@ -760,7 +851,7 @@ public class PatientUI {
     }
 
     // =========================================================
-    // STANDARD CARD
+    // NORMAL CARD
     // =========================================================
 
     public static VBox card(
@@ -774,6 +865,12 @@ public class PatientUI {
                 new Insets(20)
         );
 
+        box.setMinWidth(0);
+
+        box.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
         box.setStyle(
                 "-fx-background-color: white;" +
                 "-fx-background-radius: 14;" +
@@ -783,12 +880,12 @@ public class PatientUI {
         );
 
         if (title != null &&
-                !title.isEmpty()) {
+                !title.isBlank()) {
 
             Label label =
-                    new Label(
-                            title
-                    );
+                    new Label(title);
+
+            label.setWrapText(true);
 
             label.setStyle(
                     "-fx-font-size: 18px;" +
@@ -820,6 +917,12 @@ public class PatientUI {
                 new Insets(20)
         );
 
+        box.setMinWidth(0);
+
+        box.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
         box.setStyle(
                 "-fx-background-color: " +
                 backgroundColor +
@@ -831,12 +934,12 @@ public class PatientUI {
         );
 
         if (title != null &&
-                !title.isEmpty()) {
+                !title.isBlank()) {
 
             Label label =
-                    new Label(
-                            title
-                    );
+                    new Label(title);
+
+            label.setWrapText(true);
 
             label.setStyle(
                     "-fx-font-size: 18px;" +
@@ -853,7 +956,7 @@ public class PatientUI {
     }
 
     // =========================================================
-    // STANDARD BUTTON
+    // BUTTON
     // =========================================================
 
     public static Button button(
@@ -862,13 +965,9 @@ public class PatientUI {
     ) {
 
         Button button =
-                new Button(
-                        text
-                );
+                new Button(text);
 
-        button.setPrefHeight(
-                42
-        );
+        button.setPrefHeight(42);
 
         button.setStyle(
                 "-fx-background-color: #2563eb;" +
@@ -902,13 +1001,9 @@ public class PatientUI {
     ) {
 
         Button button =
-                new Button(
-                        text
-                );
+                new Button(text);
 
-        button.setPrefHeight(
-                42
-        );
+        button.setPrefHeight(42);
 
         button.setStyle(
                 "-fx-background-color: #eff6ff;" +
@@ -936,7 +1031,130 @@ public class PatientUI {
     }
 
     // =========================================================
-    // MUTED LABEL
+    // BLUE BUTTON
+    // =========================================================
+
+    public static Button blueButton(
+            String text,
+            Runnable action
+    ) {
+
+        return button(
+                text,
+                action
+        );
+    }
+
+    // =========================================================
+    // ORANGE BUTTON
+    // =========================================================
+
+    public static Button orangeButton(
+            String text,
+            Runnable action
+    ) {
+
+        Button button =
+                button(
+                        text,
+                        action
+                );
+
+        button.setStyle(
+                "-fx-background-color: #f97316;" +
+                "-fx-text-fill: white;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-radius: 8;" +
+                "-fx-padding: 8 16;" +
+                "-fx-cursor: hand;"
+        );
+
+        return button;
+    }
+
+    // =========================================================
+    // RED BUTTON
+    // =========================================================
+
+    public static Button redButton(
+            String text,
+            Runnable action
+    ) {
+
+        Button button =
+                button(
+                        text,
+                        action
+                );
+
+        button.setStyle(
+                "-fx-background-color: #dc2626;" +
+                "-fx-text-fill: white;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-radius: 8;" +
+                "-fx-padding: 8 16;" +
+                "-fx-cursor: hand;"
+        );
+
+        return button;
+    }
+
+    // =========================================================
+    // COLORED CARDS
+    // =========================================================
+
+    public static VBox blueCard(
+            String title
+    ) {
+
+        return coloredCard(
+                title,
+                "#dbeafe"
+        );
+    }
+
+    public static VBox greenCard(
+            String title
+    ) {
+
+        return coloredCard(
+                title,
+                "#dcfce7"
+        );
+    }
+
+    public static VBox orangeCard(
+            String title
+    ) {
+
+        return coloredCard(
+                title,
+                "#fff7ed"
+        );
+    }
+
+    public static VBox purpleCard(
+            String title
+    ) {
+
+        return coloredCard(
+                title,
+                "#f3e8ff"
+        );
+    }
+
+    public static VBox tealCard(
+            String title
+    ) {
+
+        return coloredCard(
+                title,
+                "#ccfbf1"
+        );
+    }
+
+    // =========================================================
+    // LABELS
     // =========================================================
 
     public static Label muted(
@@ -944,9 +1162,7 @@ public class PatientUI {
     ) {
 
         Label label =
-                new Label(
-                        text
-                );
+                new Label(text);
 
         label.setStyle(
                 "-fx-text-fill: #64748b;" +
@@ -956,18 +1172,12 @@ public class PatientUI {
         return label;
     }
 
-    // =========================================================
-    // GREEN LABEL
-    // =========================================================
-
     public static Label green(
             String text
     ) {
 
         Label label =
-                new Label(
-                        text
-                );
+                new Label(text);
 
         label.setStyle(
                 "-fx-text-fill: #16a34a;" +
@@ -978,18 +1188,12 @@ public class PatientUI {
         return label;
     }
 
-    // =========================================================
-    // BLUE LABEL
-    // =========================================================
-
     public static Label blue(
             String text
     ) {
 
         Label label =
-                new Label(
-                        text
-                );
+                new Label(text);
 
         label.setStyle(
                 "-fx-text-fill: #2563eb;" +
@@ -1000,18 +1204,12 @@ public class PatientUI {
         return label;
     }
 
-    // =========================================================
-    // RED LABEL
-    // =========================================================
-
     public static Label red(
             String text
     ) {
 
         Label label =
-                new Label(
-                        text
-                );
+                new Label(text);
 
         label.setStyle(
                 "-fx-text-fill: #dc2626;" +
@@ -1022,18 +1220,12 @@ public class PatientUI {
         return label;
     }
 
-    // =========================================================
-    // ORANGE LABEL
-    // =========================================================
-
     public static Label orange(
             String text
     ) {
 
         Label label =
-                new Label(
-                        text
-                );
+                new Label(text);
 
         label.setStyle(
                 "-fx-text-fill: #ea580c;" +
@@ -1042,5 +1234,91 @@ public class PatientUI {
         );
 
         return label;
+    }
+
+    // =========================================================
+    // STAT CARD
+    // =========================================================
+
+    public static VBox statCard(
+            String icon,
+            String title,
+            String value,
+            String status,
+            String background,
+            String border
+    ) {
+
+        VBox card =
+                new VBox(7);
+
+        card.setPadding(
+                new Insets(18)
+        );
+
+        card.setMinWidth(0);
+
+        card.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        HBox.setHgrow(
+                card,
+                Priority.ALWAYS
+        );
+
+        card.setStyle(
+                "-fx-background-color: " +
+                background +
+                ";" +
+                "-fx-background-radius: 14;" +
+                "-fx-border-color: " +
+                border +
+                ";" +
+                "-fx-border-radius: 14;"
+        );
+
+        Label iconLabel =
+                new Label(icon);
+
+        iconLabel.setStyle(
+                "-fx-font-size: 24px;"
+        );
+
+        Label titleLabel =
+                new Label(title);
+
+        titleLabel.setWrapText(true);
+
+        titleLabel.setStyle(
+                "-fx-font-size: 13px;" +
+                "-fx-text-fill: #64748b;"
+        );
+
+        Label valueLabel =
+                new Label(value);
+
+        valueLabel.setStyle(
+                "-fx-font-size: 22px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #0f172a;"
+        );
+
+        Label statusLabel =
+                new Label(status);
+
+        statusLabel.setStyle(
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #16a34a;"
+        );
+
+        card.getChildren().addAll(
+                iconLabel,
+                titleLabel,
+                valueLabel,
+                statusLabel
+        );
+
+        return card;
     }
 }

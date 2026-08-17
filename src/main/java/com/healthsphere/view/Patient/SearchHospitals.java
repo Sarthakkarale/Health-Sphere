@@ -5,7 +5,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -30,6 +29,19 @@ public class SearchHospitals {
 
         VBox content = new VBox(20);
 
+        /*
+         * IMPORTANT
+         *
+         * PatientUI.createScene() already creates the
+         * ScrollPane.
+         *
+         * Therefore DO NOT create another ScrollPane here.
+         */
+        content.setFillWidth(true);
+
+        content.setMinWidth(0);
+        content.setMaxWidth(Double.MAX_VALUE);
+
         content.setPadding(
                 new Insets(5)
         );
@@ -43,6 +55,11 @@ public class SearchHospitals {
                         "Find a Hospital"
                 );
 
+        searchCard.setMinWidth(0);
+        searchCard.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
         Label instruction =
                 new Label(
                         "Search for hospitals, clinics and healthcare facilities near you."
@@ -50,16 +67,31 @@ public class SearchHospitals {
 
         instruction.setWrapText(true);
 
+        instruction.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
         instruction.setStyle(
                 "-fx-text-fill: #64748b;" +
                 "-fx-font-size: 14px;"
         );
+
+        // =====================================================
+        // SEARCH ROW
+        // =====================================================
 
         HBox searchRow =
                 new HBox(12);
 
         searchRow.setAlignment(
                 Pos.CENTER_LEFT
+        );
+
+        searchRow.setFillHeight(true);
+
+        searchRow.setMinWidth(0);
+        searchRow.setMaxWidth(
+                Double.MAX_VALUE
         );
 
         TextField searchField =
@@ -70,6 +102,12 @@ public class SearchHospitals {
         );
 
         searchField.setPrefHeight(42);
+
+        searchField.setMinWidth(0);
+
+        searchField.setMaxWidth(
+                Double.MAX_VALUE
+        );
 
         HBox.setHgrow(
                 searchField,
@@ -110,6 +148,14 @@ public class SearchHospitals {
                 PatientUI.card(
                         "Nearby Hospitals"
                 );
+
+        results.setFillWidth(true);
+
+        results.setMinWidth(0);
+
+        results.setMaxWidth(
+                Double.MAX_VALUE
+        );
 
         // =====================================================
         // HOSPITAL 1
@@ -179,40 +225,18 @@ public class SearchHospitals {
                 results
         );
 
-        // =====================================================
-        // SCROLL
-        // =====================================================
-
-        ScrollPane scroll =
-                new ScrollPane(
-                        content
-                );
-
-        scroll.setFitToWidth(true);
-
-        scroll.setHbarPolicy(
-                ScrollPane.ScrollBarPolicy.NEVER
-        );
-
-        scroll.setVbarPolicy(
-                ScrollPane.ScrollBarPolicy.AS_NEEDED
-        );
-
-        scroll.setStyle(
-                "-fx-background-color: transparent;" +
-                "-fx-background: transparent;"
-        );
-
-        // =====================================================
-        // COMMON PATIENT UI
-        // =====================================================
-
+        /*
+         * IMPORTANT
+         *
+         * Content itself is passed to PatientUI.
+         * PatientUI will create the ONLY ScrollPane.
+         */
         return PatientUI.createScene(
                 stage,
                 "Search Hospitals",
                 "Search Hospitals",
                 "Find nearby hospitals and healthcare facilities.",
-                scroll
+                content
         );
     }
 
@@ -241,14 +265,6 @@ public class SearchHospitals {
 
         /*
          * Backend hospital search can be connected here later.
-         *
-         * Example:
-         *
-         * HospitalController
-         *      -> HospitalDAO
-         *      -> Firebase
-         *
-         * For now this is only UI/demo functionality.
          */
     }
 
@@ -275,8 +291,20 @@ public class SearchHospitals {
                 Pos.CENTER_LEFT
         );
 
+        /*
+         * IMPORTANT
+         *
+         * Allow this card to use the entire available width.
+         */
+        box.setMinWidth(0);
+
         box.setMaxWidth(
                 Double.MAX_VALUE
+        );
+
+        HBox.setHgrow(
+                box,
+                Priority.ALWAYS
         );
 
         box.setStyle(
@@ -287,7 +315,7 @@ public class SearchHospitals {
         );
 
         // =====================================================
-        // HOSPITAL IMAGE
+        // IMAGE
         // =====================================================
 
         ImageView image =
@@ -297,12 +325,24 @@ public class SearchHospitals {
                         110
                 );
 
+        /*
+         * Do not allow image to consume unlimited width.
+         */
+        image.setFitWidth(180);
+        image.setFitHeight(110);
+
         // =====================================================
-        // HOSPITAL INFORMATION
+        // INFORMATION
         // =====================================================
 
         VBox information =
                 new VBox(7);
+
+        information.setMinWidth(0);
+
+        information.setMaxWidth(
+                Double.MAX_VALUE
+        );
 
         HBox.setHgrow(
                 information,
@@ -310,9 +350,13 @@ public class SearchHospitals {
         );
 
         Label nameLabel =
-                new Label(
-                        name
-                );
+                new Label(name);
+
+        nameLabel.setWrapText(true);
+
+        nameLabel.setMaxWidth(
+                Double.MAX_VALUE
+        );
 
         nameLabel.setStyle(
                 "-fx-font-size: 18px;" +
@@ -325,14 +369,16 @@ public class SearchHospitals {
                         "📍 " + location
                 );
 
+        locationLabel.setWrapText(true);
+
         locationLabel.setStyle(
                 "-fx-text-fill: #64748b;"
         );
 
         Label specialityLabel =
-                new Label(
-                        speciality
-                );
+                new Label(speciality);
+
+        specialityLabel.setWrapText(true);
 
         specialityLabel.setStyle(
                 "-fx-text-fill: #2563eb;" +
@@ -381,7 +427,7 @@ public class SearchHospitals {
     }
 
     // =========================================================
-    // SHOW HOSPITAL DETAILS
+    // HOSPITAL DETAILS
     // =========================================================
 
     private void showHospitalDetails(
@@ -403,6 +449,15 @@ public class SearchHospitals {
         );
 
         stage.show();
+
+        /*
+         * Do NOT create a new Stage.
+         *
+         * Keep the common Patient Stage maximized.
+         */
+        if (!stage.isMaximized()) {
+            stage.setMaximized(true);
+        }
     }
 
     // =========================================================
@@ -417,23 +472,23 @@ public class SearchHospitals {
 
             case "Apollo Hospitals":
 
-                return "Cardiology, Neurology, Orthopedics, " +
-                        "Oncology, General Medicine";
+                return "Cardiology, Neurology, Orthopedics, "
+                        + "Oncology, General Medicine";
 
             case "Care Hospitals":
 
-                return "Cardiology, Gastroenterology, Pulmonology, " +
-                        "Orthopedics, General Medicine";
+                return "Cardiology, Gastroenterology, Pulmonology, "
+                        + "Orthopedics, General Medicine";
 
             case "Yashoda Hospitals":
 
-                return "Cardiology, Neurology, Oncology, " +
-                        "Nephrology, Gastroenterology";
+                return "Cardiology, Neurology, Oncology, "
+                        + "Nephrology, Gastroenterology";
 
             case "KIMS Hospitals":
 
-                return "Cardiology, Orthopedics, Neurology, " +
-                        "Urology, General Medicine";
+                return "Cardiology, Orthopedics, Neurology, "
+                        + "Urology, General Medicine";
 
             default:
 
@@ -454,22 +509,13 @@ public class SearchHospitals {
         ImageView view =
                 new ImageView();
 
-        view.setFitWidth(
-                width
-        );
+        view.setFitWidth(width);
+        view.setFitHeight(height);
 
-        view.setFitHeight(
-                height
-        );
-
-        view.setPreserveRatio(
-                false
-        );
+        view.setPreserveRatio(false);
 
         var resource =
-                getClass().getResource(
-                        path
-                );
+                getClass().getResource(path);
 
         if (resource == null) {
 
@@ -481,14 +527,22 @@ public class SearchHospitals {
             return view;
         }
 
-        Image image =
-                new Image(
-                        resource.toExternalForm()
-                );
+        try {
 
-        view.setImage(
-                image
-        );
+            Image image =
+                    new Image(
+                            resource.toExternalForm()
+                    );
+
+            view.setImage(image);
+
+        } catch (Exception e) {
+
+            System.err.println(
+                    "Unable to load hospital image: "
+                            + path
+            );
+        }
 
         return view;
     }

@@ -1,20 +1,3 @@
-// package com.healthsphere;
-
-// import com.healthsphere.view.authentication.*;
-// import javafx.application.Application;
-
-// /**
-//  * Main Entry Point for Health-Sphere.
-//  * Delegates launch execution to your initial View application class.
-//  */
-// public class Main {
-
-//     public static void main(String[] args) {
-//         // Delegates execution directly to your initial View class which extends Application
-//         Application.launch(View.class, args);
-//     }
-// }
-
 package com.healthsphere;
 
 import java.util.HashMap;
@@ -24,50 +7,65 @@ import com.google.cloud.firestore.Firestore;
 import com.healthsphere.config.FirebaseConfig;
 import com.healthsphere.view.authentication.View;
 
-import javafx.application.Application;
-import javafx.stage.Stage;
-
-public class Main extends Application {
-
-    
+public class Main {
 
     public static void main(String[] args) {
 
-    try {
+        try {
 
-        System.out.println("Initializing Firebase...");
+            System.out.println("Initializing Firebase...");
 
-        FirebaseConfig.initialize();
+            FirebaseConfig.initialize();
 
-        System.out.println("Firebase initialized successfully!");
+            System.out.println(
+                    "Firebase initialized successfully!"
+            );
 
-        Firestore db = FirebaseConfig.getFirestore();
+            Firestore db =
+                    FirebaseConfig.getFirestore();
 
-        Map<String, Object> testData = new HashMap<>();
+            Map<String, Object> testData =
+                    new HashMap<>();
 
-        testData.put("message", "Health-Sphere Firebase Test");
-        testData.put("status", "SUCCESS");
+            testData.put(
+                    "message",
+                    "Health-Sphere Firebase Test"
+            );
 
-        db.collection("connection_test")
-                .document("test")
-                .set(testData)
-                .get();
+            testData.put(
+                    "status",
+                    "SUCCESS"
+            );
 
-        System.out.println("Firestore WRITE successful!");
+            db.collection("connection_test")
+                    .document("test")
+                    .set(testData)
+                    .get();
 
-    } catch (Exception e) {
+            System.out.println(
+                    "Firestore WRITE successful!"
+            );
 
-        System.out.println("Firebase/Firestore test failed!");
-        e.printStackTrace();
+        } catch (Exception e) {
 
-        return;
-    }
+            System.out.println(
+                    "Firebase/Firestore test failed!"
+            );
 
-    Application.launch(View.class, args);
-}
+            e.printStackTrace();
 
-    @Override
-    public void start(Stage primaryStage) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet.");
+            return;
+        }
+
+        /*
+         * View is the actual JavaFX Application.
+         *
+         * It owns the ONE shared Stage for the
+         * entire HealthSphere application.
+         */
+        javafx.application.Application.launch(
+                View.class,
+                args
+        );
     }
 }

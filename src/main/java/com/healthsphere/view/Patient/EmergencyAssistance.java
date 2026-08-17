@@ -5,7 +5,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -30,6 +29,7 @@ public class EmergencyAssistance {
     public Scene getScene() {
 
         VBox content = new VBox(22);
+
         content.setPadding(new Insets(25));
 
         // =====================================================
@@ -113,7 +113,7 @@ public class EmergencyAssistance {
                         "🚑",
                         "Ambulance",
                         "Request emergency medical transportation.",
-                        () -> openAmbulanceScreen()
+                        this::openAmbulanceScreen
                 ),
 
                 emergencyService(
@@ -129,14 +129,14 @@ public class EmergencyAssistance {
                         "👨‍⚕",
                         "Doctor Support",
                         "Search for doctors and healthcare professionals.",
-                        () -> openDoctorSupport()
+                        this::openDoctorSupport
                 ),
 
                 emergencyService(
                         "💊",
                         "Medical Information",
                         "Learn what to do during common medical emergencies.",
-                        () -> openMedicalInformation()
+                        this::openMedicalInformation
                 )
         );
 
@@ -202,28 +202,8 @@ public class EmergencyAssistance {
         );
 
         // =====================================================
-        // SCROLL
-        // =====================================================
-
-        ScrollPane scroll = new ScrollPane(content);
-
-        scroll.setFitToWidth(true);
-
-        scroll.setHbarPolicy(
-                ScrollPane.ScrollBarPolicy.NEVER
-        );
-
-        scroll.setVbarPolicy(
-                ScrollPane.ScrollBarPolicy.AS_NEEDED
-        );
-
-        scroll.setStyle(
-                "-fx-background-color: transparent;" +
-                "-fx-background: transparent;"
-        );
-
-        // =====================================================
-        // COMMON PATIENT UI
+        // IMPORTANT:
+        // NO INNER SCROLLPANE HERE
         // =====================================================
 
         return PatientUI.createScene(
@@ -231,7 +211,7 @@ public class EmergencyAssistance {
                 "Emergency Assistance",
                 "Emergency Assistance",
                 "Get immediate help and access important emergency services.",
-                scroll
+                content
         );
     }
 
@@ -286,7 +266,7 @@ public class EmergencyAssistance {
     }
 
     // =========================================================
-    // SQUARE IMAGE CARD
+    // IMAGE CARD
     // =========================================================
 
     private VBox imageCard(
@@ -315,24 +295,13 @@ public class EmergencyAssistance {
         VBox imageContainer = new VBox(imageView);
 
         imageContainer.setAlignment(Pos.CENTER);
-
-        imageContainer.setPadding(
-                new Insets(10)
-        );
+        imageContainer.setPadding(new Insets(10));
 
         Label titleLabel = new Label(title);
 
-        titleLabel.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        titleLabel.setAlignment(
-                Pos.CENTER
-        );
-
-        titleLabel.setPadding(
-                new Insets(12)
-        );
+        titleLabel.setMaxWidth(Double.MAX_VALUE);
+        titleLabel.setAlignment(Pos.CENTER);
+        titleLabel.setPadding(new Insets(12));
 
         titleLabel.setStyle(
                 "-fx-font-size: 16px;" +
@@ -349,7 +318,7 @@ public class EmergencyAssistance {
     }
 
     // =========================================================
-    // SQUARE IMAGE LOADER
+    // IMAGE LOADER
     // =========================================================
 
     private ImageView createSquareImage(
@@ -359,9 +328,7 @@ public class EmergencyAssistance {
 
         ImageView imageView = new ImageView();
 
-        var resource = getClass().getResource(
-                imagePath
-        );
+        var resource = getClass().getResource(imagePath);
 
         if (resource == null) {
 
@@ -385,14 +352,6 @@ public class EmergencyAssistance {
         imageView.setFitWidth(size);
         imageView.setFitHeight(size);
 
-        /*
-         * Square display.
-         *
-         * PreserveRatio is false so every image occupies
-         * exactly the square area instead of becoming a
-         * wide image across the page.
-         */
-
         imageView.setPreserveRatio(false);
 
         return imageView;
@@ -411,13 +370,8 @@ public class EmergencyAssistance {
 
         HBox row = new HBox(15);
 
-        row.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        row.setPadding(
-                new Insets(15)
-        );
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(15));
 
         row.setStyle(
                 "-fx-background-color: rgba(255,255,255,0.95);" +
@@ -448,9 +402,7 @@ public class EmergencyAssistance {
                 "-fx-text-fill: #0f172a;"
         );
 
-        Label descriptionLabel = new Label(
-                description
-        );
+        Label descriptionLabel = new Label(description);
 
         descriptionLabel.setWrapText(true);
 
@@ -463,9 +415,7 @@ public class EmergencyAssistance {
                 descriptionLabel
         );
 
-        Button actionButton = new Button(
-                "Open"
-        );
+        Button actionButton = new Button("Open");
 
         actionButton.setStyle(
                 "-fx-background-color: #dc2626;" +
@@ -497,23 +447,13 @@ public class EmergencyAssistance {
 
         VBox content = new VBox(20);
 
-        content.setPadding(
-                new Insets(25)
-        );
-
-        // =====================================================
-        // HERO IMAGE
-        // =====================================================
+        content.setPadding(new Insets(25));
 
         VBox hero = createHeroImage(
                 "/images/emergency/emergency6.jpg",
                 "Emergency Services in India",
                 "Important emergency contact numbers"
         );
-
-        // =====================================================
-        // WARNING
-        // =====================================================
 
         VBox warning = PatientUI.coloredCard(
                 "🚨 Important",
@@ -533,13 +473,7 @@ public class EmergencyAssistance {
                 "-fx-text-fill: #7f1d1d;"
         );
 
-        warning.getChildren().add(
-                warningText
-        );
-
-        // =====================================================
-        // INDIA EMERGENCY NUMBERS
-        // =====================================================
+        warning.getChildren().add(warningText);
 
         GridPane numbers = new GridPane();
 
@@ -634,15 +568,10 @@ public class EmergencyAssistance {
                 3
         );
 
-        // =====================================================
-        // BACK
-        // =====================================================
-
         Button back = PatientUI.secondaryButton(
                 "← Back to Emergency Assistance",
                 () -> stage.setScene(
-                        new EmergencyAssistance(stage)
-                                .getScene()
+                        new EmergencyAssistance(stage).getScene()
                 )
         );
 
@@ -653,20 +582,7 @@ public class EmergencyAssistance {
                 back
         );
 
-        ScrollPane scroll = new ScrollPane(
-                content
-        );
-
-        scroll.setFitToWidth(true);
-
-        scroll.setHbarPolicy(
-                ScrollPane.ScrollBarPolicy.NEVER
-        );
-
-        scroll.setStyle(
-                "-fx-background-color: transparent;" +
-                "-fx-background: transparent;"
-        );
+        // NO INNER SCROLLPANE
 
         stage.setScene(
                 PatientUI.createScene(
@@ -674,7 +590,7 @@ public class EmergencyAssistance {
                         "Emergency Services",
                         "Emergency Services",
                         "Important emergency contact numbers in India.",
-                        scroll
+                        content
                 )
         );
 
@@ -695,10 +611,7 @@ public class EmergencyAssistance {
         VBox card = new VBox(8);
 
         card.setPrefWidth(390);
-
-        card.setPadding(
-                new Insets(18)
-        );
+        card.setPadding(new Insets(18));
 
         card.setStyle(
                 "-fx-background-color: white;" +
@@ -730,9 +643,7 @@ public class EmergencyAssistance {
                 "-fx-text-fill: #dc2626;"
         );
 
-        Label descriptionLabel = new Label(
-                description
-        );
+        Label descriptionLabel = new Label(description);
 
         descriptionLabel.setWrapText(true);
 
@@ -758,19 +669,13 @@ public class EmergencyAssistance {
 
         VBox content = new VBox(22);
 
-        content.setPadding(
-                new Insets(25)
-        );
+        content.setPadding(new Insets(25));
 
         VBox hero = createHeroImage(
                 "/images/emergency/emergency7.jpg",
                 "Ambulance Assistance",
                 "Get emergency medical transportation"
         );
-
-        // =====================================================
-        // NUMBERS
-        // =====================================================
 
         VBox numbersCard = PatientUI.coloredCard(
                 "🚑 Ambulance Emergency Numbers",
@@ -798,10 +703,6 @@ public class EmergencyAssistance {
                 )
         );
 
-        // =====================================================
-        // AMBULANCE LIST
-        // =====================================================
-
         VBox available = PatientUI.coloredCard(
                 "🚑 Ambulance Services",
                 "#dbeafe"
@@ -828,10 +729,6 @@ public class EmergencyAssistance {
                 )
         );
 
-        // =====================================================
-        // INFORMATION
-        // =====================================================
-
         VBox info = PatientUI.coloredCard(
                 "📍 Before the Ambulance Arrives",
                 "#fef3c7"
@@ -855,8 +752,7 @@ public class EmergencyAssistance {
         Button back = PatientUI.secondaryButton(
                 "← Back to Emergency Assistance",
                 () -> stage.setScene(
-                        new EmergencyAssistance(stage)
-                                .getScene()
+                        new EmergencyAssistance(stage).getScene()
                 )
         );
 
@@ -887,13 +783,8 @@ public class EmergencyAssistance {
 
         HBox row = new HBox(15);
 
-        row.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        row.setPadding(
-                new Insets(14)
-        );
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(14));
 
         row.setStyle(
                 "-fx-background-color: white;" +
@@ -902,9 +793,7 @@ public class EmergencyAssistance {
                 "-fx-border-radius: 12;"
         );
 
-        Label numberLabel = new Label(
-                number
-        );
+        Label numberLabel = new Label(number);
 
         numberLabel.setStyle(
                 "-fx-font-size: 24px;" +
@@ -919,18 +808,14 @@ public class EmergencyAssistance {
                 Priority.ALWAYS
         );
 
-        Label titleLabel = new Label(
-                title
-        );
+        Label titleLabel = new Label(title);
 
         titleLabel.setStyle(
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #0f172a;"
         );
 
-        Label descriptionLabel = new Label(
-                description
-        );
+        Label descriptionLabel = new Label(description);
 
         descriptionLabel.setWrapText(true);
 
@@ -963,9 +848,7 @@ public class EmergencyAssistance {
 
         VBox card = new VBox(7);
 
-        card.setPadding(
-                new Insets(15)
-        );
+        card.setPadding(new Insets(15));
 
         card.setStyle(
                 "-fx-background-color: white;" +
@@ -984,9 +867,7 @@ public class EmergencyAssistance {
                 "-fx-text-fill: #1e3a8a;"
         );
 
-        Label descriptionLabel = new Label(
-                description
-        );
+        Label descriptionLabel = new Label(description);
 
         descriptionLabel.setWrapText(true);
 
@@ -1013,26 +894,20 @@ public class EmergencyAssistance {
     }
 
     // =========================================================
-    // DOCTOR SUPPORT SCREEN
+    // DOCTOR SUPPORT
     // =========================================================
 
     private void openDoctorSupport() {
 
         VBox content = new VBox(22);
 
-        content.setPadding(
-                new Insets(25)
-        );
+        content.setPadding(new Insets(25));
 
         VBox hero = createHeroImage(
                 "/images/emergency/emergency8.jpg",
                 "Doctor Support",
                 "Find medical professionals who can help"
         );
-
-        // =====================================================
-        // SEARCH
-        // =====================================================
 
         VBox searchCard = PatientUI.coloredCard(
                 "🔎 Search Doctors",
@@ -1058,9 +933,7 @@ public class EmergencyAssistance {
         Button searchButton = PatientUI.button(
                 "Search Doctors",
                 () -> {
-                    // This is a UI search screen.
-                    // Connect this button to your doctor database
-                    // when the Doctor module is available.
+                    // Connect to doctor database later.
                 }
         );
 
@@ -1068,10 +941,6 @@ public class EmergencyAssistance {
                 searchField,
                 searchButton
         );
-
-        // =====================================================
-        // SPECIALTIES
-        // =====================================================
 
         VBox specialties = PatientUI.coloredCard(
                 "👨‍⚕ Popular Medical Specialists",
@@ -1105,10 +974,6 @@ public class EmergencyAssistance {
                 )
         );
 
-        // =====================================================
-        // EMERGENCY NOTICE
-        // =====================================================
-
         VBox notice = PatientUI.coloredCard(
                 "🚨 Emergency Notice",
                 "#fee2e2"
@@ -1127,15 +992,12 @@ public class EmergencyAssistance {
                 "-fx-font-size: 14px;"
         );
 
-        notice.getChildren().add(
-                noticeText
-        );
+        notice.getChildren().add(noticeText);
 
         Button back = PatientUI.secondaryButton(
                 "← Back to Emergency Assistance",
                 () -> stage.setScene(
-                        new EmergencyAssistance(stage)
-                                .getScene()
+                        new EmergencyAssistance(stage).getScene()
                 )
         );
 
@@ -1166,13 +1028,8 @@ public class EmergencyAssistance {
 
         HBox row = new HBox(14);
 
-        row.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        row.setPadding(
-                new Insets(12)
-        );
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(12));
 
         row.setStyle(
                 "-fx-background-color: white;" +
@@ -1181,9 +1038,7 @@ public class EmergencyAssistance {
                 "-fx-border-radius: 10;"
         );
 
-        Label iconLabel = new Label(
-                icon
-        );
+        Label iconLabel = new Label(icon);
 
         iconLabel.setStyle(
                 "-fx-font-size: 26px;"
@@ -1191,18 +1046,21 @@ public class EmergencyAssistance {
 
         VBox text = new VBox(3);
 
-        Label titleLabel = new Label(
-                title
+        HBox.setHgrow(
+                text,
+                Priority.ALWAYS
         );
+
+        Label titleLabel = new Label(title);
 
         titleLabel.setStyle(
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #1e3a8a;"
         );
 
-        Label descriptionLabel = new Label(
-                description
-        );
+        Label descriptionLabel = new Label(description);
+
+        descriptionLabel.setWrapText(true);
 
         descriptionLabel.setStyle(
                 "-fx-text-fill: #64748b;"
@@ -1222,26 +1080,20 @@ public class EmergencyAssistance {
     }
 
     // =========================================================
-    // MEDICAL INFORMATION SCREEN
+    // MEDICAL INFORMATION
     // =========================================================
 
     private void openMedicalInformation() {
 
         VBox content = new VBox(22);
 
-        content.setPadding(
-                new Insets(25)
-        );
+        content.setPadding(new Insets(25));
 
         VBox hero = createHeroImage(
                 "/images/emergency/emergency9.jpg",
                 "Emergency Medical Information",
                 "Basic first-response information for common emergencies"
         );
-
-        // =====================================================
-        // CPR
-        // =====================================================
 
         VBox cpr = medicalInfoCard(
                 "❤️ CPR & Cardiac Emergency",
@@ -1250,20 +1102,12 @@ public class EmergencyAssistance {
                 "are trained and follow instructions from the emergency dispatcher."
         );
 
-        // =====================================================
-        // BLEEDING
-        // =====================================================
-
         VBox bleeding = medicalInfoCard(
                 "🩸 Severe Bleeding",
                 "Apply firm, direct pressure to the bleeding area using " +
                 "clean cloth or gauze. Continue pressure and seek emergency " +
                 "medical assistance for severe or uncontrolled bleeding."
         );
-
-        // =====================================================
-        // BURNS
-        // =====================================================
 
         VBox burns = medicalInfoCard(
                 "🔥 Burns",
@@ -1272,10 +1116,6 @@ public class EmergencyAssistance {
                 "require urgent professional medical care."
         );
 
-        // =====================================================
-        // CHOKING
-        // =====================================================
-
         VBox choking = medicalInfoCard(
                 "🫁 Choking",
                 "If someone cannot breathe, speak or cough effectively, " +
@@ -1283,19 +1123,11 @@ public class EmergencyAssistance {
                 "if you are trained."
         );
 
-        // =====================================================
-        // FRACTURE
-        // =====================================================
-
         VBox fracture = medicalInfoCard(
                 "🦴 Suspected Fracture",
                 "Keep the injured area as still as possible. Do not attempt " +
                 "to straighten a visibly deformed limb. Seek professional medical care."
         );
-
-        // =====================================================
-        // STROKE
-        // =====================================================
 
         VBox stroke = medicalInfoCard(
                 "🧠 Possible Stroke",
@@ -1304,20 +1136,12 @@ public class EmergencyAssistance {
                 "emergency medical assessment."
         );
 
-        // =====================================================
-        // ALLERGIC REACTION
-        // =====================================================
-
         VBox allergy = medicalInfoCard(
                 "⚠ Severe Allergic Reaction",
                 "Difficulty breathing, swelling of the face or throat, fainting " +
                 "or rapidly worsening symptoms can be an emergency. Contact " +
                 "emergency services immediately."
         );
-
-        // =====================================================
-        // POISONING
-        // =====================================================
 
         VBox poisoning = medicalInfoCard(
                 "☠ Poisoning",
@@ -1343,15 +1167,12 @@ public class EmergencyAssistance {
                 "-fx-text-fill: #991b1b;"
         );
 
-        emergencyReminder.getChildren().add(
-                reminder
-        );
+        emergencyReminder.getChildren().add(reminder);
 
         Button back = PatientUI.secondaryButton(
                 "← Back to Emergency Assistance",
                 () -> stage.setScene(
-                        new EmergencyAssistance(stage)
-                                .getScene()
+                        new EmergencyAssistance(stage).getScene()
                 )
         );
 
@@ -1387,9 +1208,7 @@ public class EmergencyAssistance {
 
         VBox card = new VBox(8);
 
-        card.setPadding(
-                new Insets(18)
-        );
+        card.setPadding(new Insets(18));
 
         card.setStyle(
                 "-fx-background-color: white;" +
@@ -1399,9 +1218,7 @@ public class EmergencyAssistance {
                 "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.07), 9, 0, 0, 2);"
         );
 
-        Label titleLabel = new Label(
-                title
-        );
+        Label titleLabel = new Label(title);
 
         titleLabel.setStyle(
                 "-fx-font-size: 17px;" +
@@ -1409,9 +1226,7 @@ public class EmergencyAssistance {
                 "-fx-text-fill: #4c1d95;"
         );
 
-        Label descriptionLabel = new Label(
-                description
-        );
+        Label descriptionLabel = new Label(description);
 
         descriptionLabel.setWrapText(true);
 
@@ -1432,27 +1247,19 @@ public class EmergencyAssistance {
     // BULLET
     // =========================================================
 
-    private HBox bullet(
-            String text
-    ) {
+    private HBox bullet(String text) {
 
         HBox row = new HBox(10);
 
-        row.setAlignment(
-                Pos.TOP_LEFT
-        );
+        row.setAlignment(Pos.TOP_LEFT);
 
-        Label bullet = new Label(
-                "●"
-        );
+        Label bullet = new Label("●");
 
         bullet.setStyle(
                 "-fx-text-fill: #d97706;"
         );
 
-        Label description = new Label(
-                text
-        );
+        Label description = new Label(text);
 
         description.setWrapText(true);
 
@@ -1485,13 +1292,8 @@ public class EmergencyAssistance {
 
         VBox hero = new VBox(14);
 
-        hero.setAlignment(
-                Pos.CENTER
-        );
-
-        hero.setPadding(
-                new Insets(15)
-        );
+        hero.setAlignment(Pos.CENTER);
+        hero.setPadding(new Insets(15));
 
         hero.setStyle(
                 "-fx-background-color: white;" +
@@ -1506,9 +1308,9 @@ public class EmergencyAssistance {
                 280
         );
 
-        Label titleLabel = new Label(
-                title
-        );
+        Label titleLabel = new Label(title);
+
+        titleLabel.setWrapText(true);
 
         titleLabel.setStyle(
                 "-fx-font-size: 25px;" +
@@ -1516,15 +1318,10 @@ public class EmergencyAssistance {
                 "-fx-text-fill: #991b1b;"
         );
 
-        Label subtitleLabel = new Label(
-                subtitle
-        );
+        Label subtitleLabel = new Label(subtitle);
 
         subtitleLabel.setWrapText(true);
-
-        subtitleLabel.setAlignment(
-                Pos.CENTER
-        );
+        subtitleLabel.setAlignment(Pos.CENTER);
 
         subtitleLabel.setStyle(
                 "-fx-font-size: 14px;" +
@@ -1541,7 +1338,7 @@ public class EmergencyAssistance {
     }
 
     // =========================================================
-    // COMMON SCROLLABLE SCENE
+    // COMMON SCENE
     // =========================================================
 
     private void showScrollableScene(
@@ -1550,24 +1347,10 @@ public class EmergencyAssistance {
             String description
     ) {
 
-        ScrollPane scroll = new ScrollPane(
-                content
-        );
-
-        scroll.setFitToWidth(true);
-
-        scroll.setHbarPolicy(
-                ScrollPane.ScrollBarPolicy.NEVER
-        );
-
-        scroll.setVbarPolicy(
-                ScrollPane.ScrollBarPolicy.AS_NEEDED
-        );
-
-        scroll.setStyle(
-                "-fx-background-color: transparent;" +
-                "-fx-background: transparent;"
-        );
+        // =====================================================
+        // NO INNER SCROLLPANE
+        // PatientUI handles the scrolling.
+        // =====================================================
 
         stage.setScene(
                 PatientUI.createScene(
@@ -1575,7 +1358,7 @@ public class EmergencyAssistance {
                         title,
                         title,
                         description,
-                        scroll
+                        content
                 )
         );
 

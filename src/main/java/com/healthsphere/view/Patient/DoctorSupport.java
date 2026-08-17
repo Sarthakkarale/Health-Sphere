@@ -7,7 +7,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -28,12 +27,9 @@ public class DoctorSupport {
 
     public Scene getScene() {
 
-        VBox content =
-                new VBox(20);
+        VBox content = new VBox(20);
 
-        content.setPadding(
-                new Insets(25)
-        );
+        content.setPadding(new Insets(25));
 
         // =====================================================
         // HERO
@@ -51,14 +47,12 @@ public class DoctorSupport {
         // SEARCH CARD
         // =====================================================
 
-        VBox searchCard =
-                PatientUI.coloredCard(
-                        "🔎 Search Doctors",
-                        "#ede9fe"
-                );
+        VBox searchCard = PatientUI.coloredCard(
+                "🔎 Search Doctors",
+                "#ede9fe"
+        );
 
-        TextField search =
-                new TextField();
+        TextField search = new TextField();
 
         search.setPromptText(
                 "Search by doctor name or specialty..."
@@ -74,68 +68,56 @@ public class DoctorSupport {
                 "-fx-padding: 10;"
         );
 
-        ComboBox<String> specialty =
-                new ComboBox<>(
-                        FXCollections.observableArrayList(
-                                "All Specialties",
-                                "General Physician",
-                                "Cardiologist",
-                                "Neurologist",
-                                "Orthopedic",
-                                "Pediatrician",
-                                "Dermatologist",
-                                "Emergency Medicine"
-                        )
-                );
-
-        specialty.setValue(
-                "All Specialties"
+        ComboBox<String> specialty = new ComboBox<>(
+                FXCollections.observableArrayList(
+                        "All Specialties",
+                        "General Physician",
+                        "Cardiologist",
+                        "Neurologist",
+                        "Orthopedic",
+                        "Pediatrician",
+                        "Dermatologist",
+                        "Emergency Medicine"
+                )
         );
 
+        specialty.setValue("All Specialties");
         specialty.setPrefHeight(42);
 
-        Button searchButton =
-                PatientUI.button(
-                        "🔎 Search",
-                        () -> performSearch(
-                                search.getText(),
-                                specialty.getValue()
-                        )
-                );
+        Button searchButton = PatientUI.button(
+                "🔎 Search",
+                () -> performSearch(
+                        search.getText(),
+                        specialty.getValue()
+                )
+        );
 
-        HBox searchRow =
-                new HBox(
-                        12,
-                        search,
-                        specialty,
-                        searchButton
-                );
+        HBox searchRow = new HBox(
+                12,
+                search,
+                specialty,
+                searchButton
+        );
 
         HBox.setHgrow(
                 search,
                 Priority.ALWAYS
         );
 
-        searchCard.getChildren().add(
-                searchRow
-        );
+        searchCard.getChildren().add(searchRow);
 
         // =====================================================
         // RESULTS
         // =====================================================
 
-        results =
-                new VBox(12);
+        results = new VBox(12);
 
-        VBox resultsCard =
-                PatientUI.coloredCard(
-                        "👨‍⚕ Available Doctor Support",
-                        "#dbeafe"
-                );
-
-        resultsCard.getChildren().add(
-                results
+        VBox resultsCard = PatientUI.coloredCard(
+                "👨‍⚕ Available Doctor Support",
+                "#dbeafe"
         );
+
+        resultsCard.getChildren().add(results);
 
         showDefaultDoctors();
 
@@ -143,17 +125,15 @@ public class DoctorSupport {
         // IMPORTANT
         // =====================================================
 
-        VBox information =
-                PatientUI.coloredCard(
-                        "⚠ Emergency Note",
-                        "#fef3c7"
-                );
+        VBox information = PatientUI.coloredCard(
+                "⚠ Emergency Note",
+                "#fef3c7"
+        );
 
-        Label note =
-                new Label(
-                        "Doctor search is useful for support and guidance. " +
-                        "For a life-threatening emergency, contact emergency services immediately."
-                );
+        Label note = new Label(
+                "Doctor search is useful for support and guidance. " +
+                "For a life-threatening emergency, contact emergency services immediately."
+        );
 
         note.setWrapText(true);
 
@@ -162,22 +142,18 @@ public class DoctorSupport {
                 "-fx-font-size: 14px;"
         );
 
-        information.getChildren().add(
-                note
-        );
+        information.getChildren().add(note);
 
         // =====================================================
         // BACK
         // =====================================================
 
-        Button back =
-                PatientUI.secondaryButton(
-                        "← Back to Emergency Assistance",
-                        () -> stage.setScene(
-                                new EmergencyAssistance(stage)
-                                        .getScene()
-                        )
-                );
+        Button back = PatientUI.secondaryButton(
+                "← Back to Emergency Assistance",
+                () -> stage.setScene(
+                        new EmergencyAssistance(stage).getScene()
+                )
+        );
 
         content.getChildren().addAll(
                 searchCard,
@@ -186,26 +162,16 @@ public class DoctorSupport {
                 back
         );
 
-        ScrollPane scroll =
-                new ScrollPane(content);
-
-        scroll.setFitToWidth(true);
-
-        scroll.setHbarPolicy(
-                ScrollPane.ScrollBarPolicy.NEVER
-        );
-
-        scroll.setStyle(
-                "-fx-background-color: transparent;" +
-                "-fx-background: transparent;"
-        );
+        // =====================================================
+        // NO INNER SCROLLPANE
+        // =====================================================
 
         return PatientUI.createScene(
                 stage,
                 "Doctor Support",
                 "Doctor Support",
                 "Search for healthcare professionals.",
-                scroll
+                content
         );
     }
 
@@ -323,19 +289,16 @@ public class DoctorSupport {
 
         if (!found) {
 
-            Label empty =
-                    new Label(
-                            "No doctors found. Try another name or specialty."
-                    );
+            Label empty = new Label(
+                    "No doctors found. Try another name or specialty."
+            );
 
             empty.setStyle(
                     "-fx-text-fill: #64748b;" +
                     "-fx-font-size: 15px;"
             );
 
-            results.getChildren().add(
-                    empty
-            );
+            results.getChildren().add(empty);
         }
     }
 
@@ -350,16 +313,10 @@ public class DoctorSupport {
             String availability
     ) {
 
-        HBox card =
-                new HBox(15);
+        HBox card = new HBox(15);
 
-        card.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        card.setPadding(
-                new Insets(15)
-        );
+        card.setAlignment(Pos.CENTER_LEFT);
+        card.setPadding(new Insets(15));
 
         card.setStyle(
                 "-fx-background-color: white;" +
@@ -368,23 +325,20 @@ public class DoctorSupport {
                 "-fx-border-radius: 12;"
         );
 
-        Label iconLabel =
-                new Label(icon);
+        Label iconLabel = new Label(icon);
 
         iconLabel.setStyle(
                 "-fx-font-size: 34px;"
         );
 
-        VBox information =
-                new VBox(4);
+        VBox information = new VBox(4);
 
         HBox.setHgrow(
                 information,
                 Priority.ALWAYS
         );
 
-        Label nameLabel =
-                new Label(name);
+        Label nameLabel = new Label(name);
 
         nameLabel.setStyle(
                 "-fx-font-size: 16px;" +
@@ -392,17 +346,15 @@ public class DoctorSupport {
                 "-fx-text-fill: #4c1d95;"
         );
 
-        Label specialtyLabel =
-                new Label(specialty);
+        Label specialtyLabel = new Label(specialty);
 
         specialtyLabel.setStyle(
                 "-fx-text-fill: #64748b;"
         );
 
-        Label availabilityLabel =
-                new Label(
-                        "● " + availability
-                );
+        Label availabilityLabel = new Label(
+                "● " + availability
+        );
 
         availabilityLabel.setStyle(
                 "-fx-text-fill: #16a34a;" +
@@ -415,10 +367,7 @@ public class DoctorSupport {
                 availabilityLabel
         );
 
-        Button support =
-                new Button(
-                        "Support"
-                );
+        Button support = new Button("Support");
 
         support.setStyle(
                 "-fx-background-color: #7c3aed;" +
@@ -448,27 +397,20 @@ public class DoctorSupport {
             String subtitle
     ) {
 
-        VBox box =
-                new VBox();
+        VBox box = new VBox();
 
         box.setPrefHeight(250);
+        box.setAlignment(Pos.BOTTOM_LEFT);
 
-        box.setAlignment(
-                Pos.BOTTOM_LEFT
-        );
-
-        var resource =
-                getClass().getResource(path);
+        var resource = getClass().getResource(path);
 
         if (resource != null) {
 
-            Image image =
-                    new Image(
-                            resource.toExternalForm()
-                    );
+            Image image = new Image(
+                    resource.toExternalForm()
+            );
 
-            ImageView view =
-                    new ImageView(image);
+            ImageView view = new ImageView(image);
 
             view.setFitWidth(1000);
             view.setFitHeight(250);
@@ -477,19 +419,15 @@ public class DoctorSupport {
             box.getChildren().add(view);
         }
 
-        VBox overlay =
-                new VBox(4);
+        VBox overlay = new VBox(4);
 
-        overlay.setPadding(
-                new Insets(18)
-        );
+        overlay.setPadding(new Insets(18));
 
         overlay.setStyle(
                 "-fx-background-color: rgba(0,0,0,0.55);"
         );
 
-        Label titleLabel =
-                new Label(title);
+        Label titleLabel = new Label(title);
 
         titleLabel.setStyle(
                 "-fx-font-size: 25px;" +
@@ -497,8 +435,7 @@ public class DoctorSupport {
                 "-fx-text-fill: white;"
         );
 
-        Label subtitleLabel =
-                new Label(subtitle);
+        Label subtitleLabel = new Label(subtitle);
 
         subtitleLabel.setStyle(
                 "-fx-text-fill: white;"
@@ -509,9 +446,7 @@ public class DoctorSupport {
                 subtitleLabel
         );
 
-        box.getChildren().add(
-                overlay
-        );
+        box.getChildren().add(overlay);
 
         return box;
     }
