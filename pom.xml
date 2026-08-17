@@ -11,6 +11,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
 
@@ -19,7 +20,10 @@
 
     <dependencies>
 
-        <!-- JavaFX -->
+        <!-- ============================= -->
+        <!-- JavaFX                         -->
+        <!-- ============================= -->
+
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
@@ -32,28 +36,51 @@
             <version>${javafx.version}</version>
         </dependency>
 
-        <!-- Firebase -->
+        <!-- JavaFX Media for Video / Audio -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-media</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+
+        <!-- ============================= -->
+        <!-- Firebase                       -->
+        <!-- ============================= -->
+
         <dependency>
             <groupId>com.google.firebase</groupId>
             <artifactId>firebase-admin</artifactId>
             <version>9.7.0</version>
         </dependency>
 
-        <!-- Gson -->
+
+        <!-- ============================= -->
+        <!-- Gson                           -->
+        <!-- ============================= -->
+
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.13.1</version>
         </dependency>
 
-        <!-- JFreeChart -->
+
+        <!-- ============================= -->
+        <!-- JFreeChart                     -->
+        <!-- ============================= -->
+
         <dependency>
             <groupId>org.jfree</groupId>
             <artifactId>jfreechart</artifactId>
             <version>1.5.6</version>
         </dependency>
 
-        <!-- Logging -->
+
+        <!-- ============================= -->
+        <!-- Logging                        -->
+        <!-- ============================= -->
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -66,11 +93,10 @@
             <version>1.5.18</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.google.firebase</groupId>
-            <artifactId>firebase-admin</artifactId>
-            <version>9.1.1</version>
-        </dependency>
+
+        <!-- ============================= -->
+        <!-- Jackson                        -->
+        <!-- ============================= -->
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -80,22 +106,36 @@
 
     </dependencies>
 
+
+    <!-- ============================= -->
+    <!-- BUILD                          -->
+    <!-- ============================= -->
+
     <build>
 
         <plugins>
 
+            <!-- Java Compiler -->
             <plugin>
+
                 <groupId>org.apache.maven.plugins</groupId>
+
                 <artifactId>maven-compiler-plugin</artifactId>
+
                 <version>3.14.0</version>
 
                 <configuration>
+
                     <source>17</source>
+
                     <target>17</target>
+
                 </configuration>
 
             </plugin>
 
+
+            <!-- JavaFX Maven Plugin -->
             <plugin>
 
                 <groupId>org.openjfx</groupId>
@@ -106,7 +146,9 @@
 
                 <configuration>
 
-                    <mainClass>com.healthsphere.Main</mainClass>
+                    <mainClass>
+                        com.healthsphere.Main
+                    </mainClass>
 
                 </configuration>
 

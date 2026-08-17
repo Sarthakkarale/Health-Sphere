@@ -35,20 +35,43 @@ public class LoginController {
 
         try {
 
+            // ====================================================
+            // STEP 1 — FIREBASE AUTHENTICATION
+            // ====================================================
+
             AuthenticationResponse response =
                     authenticationDAO.login(
                             email,
                             password
                     );
 
-            SessionManager.createSession(
-                    response
-            );
+            // ====================================================
+            // STEP 2 — GET APPLICATION USER PROFILE
+            // ====================================================
 
             UserProfile userProfile =
                     userDAO.getUserProfile(
                             response.getUid()
                     );
+
+            // ====================================================
+            // STEP 3 — CREATE SESSION
+            // ====================================================
+
+            SessionManager.createSession(
+                    response
+            );
+
+            // Store the already-fetched profile
+            // in the current session.
+            SessionManager.getInstance()
+                    .setCurrentUser(
+                            userProfile
+                    );
+
+            // ====================================================
+            // STEP 4 — RETURN USER PROFILE
+            // ====================================================
 
             return userProfile;
 
@@ -76,50 +99,74 @@ public class LoginController {
     public LoginDestination determineDestination(
             UserProfile profile) {
 
-        String role = profile.getRole();
-        String status = profile.getStatus();
+        if (profile == null) {
 
+            return LoginDestination.LOGIN;
+        }
+
+        String role =
+                profile.getRole();
+
+        String status =
+                profile.getStatus();
+
+        // ========================================================
         // PATIENT
-        if (role.equals(Role.PATIENT.name())
-                && status.equals(AccountStatus.ACTIVE.name())) {
+        // ========================================================
+
+        if (Role.PATIENT.name().equals(role)
+                && AccountStatus.ACTIVE.name().equals(status)) {
 
             return LoginDestination.PATIENT_DASHBOARD;
         }
 
+        // ========================================================
         // DOCTOR
-        if (role.equals(Role.DOCTOR.name())) {
+        // ========================================================
 
-            if (status.equals(AccountStatus.ACTIVE.name())) {
+        if (Role.DOCTOR.name().equals(role)) {
+
+            if (AccountStatus.ACTIVE.name().equals(status)) {
 
                 return LoginDestination.DOCTOR_DASHBOARD;
             }
 
-            if (status.equals(AccountStatus.PENDING.name())) {
+            if (AccountStatus.PENDING.name().equals(status)) {
 
                 return LoginDestination.DOCTOR_PENDING;
             }
         }
 
+        // ========================================================
         // HOSPITAL
-        if (role.equals(Role.HOSPITAL.name())) {
+        // ========================================================
 
-            if (status.equals(AccountStatus.ACTIVE.name())) {
+        if (Role.HOSPITAL.name().equals(role)) {
+
+            if (AccountStatus.ACTIVE.name().equals(status)) {
 
                 return LoginDestination.HOSPITAL_DASHBOARD;
             }
 
-            if (status.equals(AccountStatus.PENDING.name())) {
+            if (AccountStatus.PENDING.name().equals(status)) {
 
                 return LoginDestination.HOSPITAL_PENDING;
             }
         }
 
+        // ========================================================
         // ADMIN
-        if (role.equals(Role.ADMIN.name())
-                && status.equals(AccountStatus.ACTIVE.name())) {
+        // ========================================================
+
+        if (Role.ADMIN.name().equals(role)
+                && AccountStatus.ACTIVE.name().equals(status)) {
 
             return LoginDestination.ADMIN_DASHBOARD;
         }
+
+        // ========================================================
+        // UNKNOWN / INVALID ROLE OR STATUS
+        // ========================================================
 
         return LoginDestination.LOGIN;
     }

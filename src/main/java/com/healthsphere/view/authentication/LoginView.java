@@ -109,7 +109,7 @@ public class LoginView {
         HBox brandRow = new HBox(10);
         brandRow.setAlignment(Pos.CENTER_LEFT);
         ImageView logoView = createSafeImageView("/images/icons/brand_logo.png", 32, 32);
-        Text brandTitle = new Text("MediNexus AI");
+        Text brandTitle = new Text("Health Spere");
         brandTitle.getStyleClass().add("panel-brand");
         brandRow.getChildren().addAll(logoView, brandTitle);
 
@@ -135,7 +135,7 @@ public class LoginView {
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
         // Bottom Illustration Image
-        ImageView heroImg = createSafeImageView("/images/icons/login_hero.png", 420, 220);
+        ImageView heroImg = createSafeImageView("/images/auth-background.jpg", 430, 250);
         heroImg.setPreserveRatio(false);
         Rectangle clip = new Rectangle(420, 220);
         clip.setArcWidth(16);
@@ -413,7 +413,7 @@ public class LoginView {
             case LOGIN -> {
                 showError("Unable to determine user access.");
             }
-        }
+        }  
     }
 
     private void showError(String message) {

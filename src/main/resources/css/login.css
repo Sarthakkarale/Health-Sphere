@@ -6,7 +6,11 @@
 
 /* --- LEFT HERO PANEL --- */
 .left-panel {
-    -fx-background-color: linear-gradient(to bottom right, #E0F2FE, #E0F7FA);
+    -fx-background-color: linear-gradient(
+        to bottom right,
+        #163A5F,
+        #2389A8
+    );
     -fx-padding: 48px;
 }
 
