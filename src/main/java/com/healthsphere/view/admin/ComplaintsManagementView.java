@@ -1,5 +1,8 @@
 package com.healthsphere.view.admin;
 
+import com.healthsphere.controller.admin.ModerationController;
+import com.healthsphere.model.ComplaintModel;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -10,6 +13,7 @@ import javafx.scene.Scene;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -17,559 +21,2387 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 public class ComplaintsManagementView {
 
     private final Stage stage;
+    private final ModerationController moderationController;
+
     private TableView<ComplaintModel> ticketTable;
+
     private ObservableList<ComplaintModel> masterTicketData;
     private FilteredList<ComplaintModel> filteredData;
 
     private Label totalTicketsLabel;
     private Label openTicketsLabel;
     private Label inReviewTicketsLabel;
-    private Label avgResolutionTimeLabel;
+    private Label resolvedTicketsLabel;
+
     private BarChart<String, Number> categoryChart;
+    private PieChart statusChart;
+
+    private ComboBox<String> categoryFilter;
+    private ComboBox<String> statusFilter;
+    private TextField searchInput;
+
+    private static final DateTimeFormatter DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     public ComplaintsManagementView(Stage stage) {
         this.stage = stage;
+        this.moderationController = new ModerationController();
     }
 
-    /**
-     * Creates and returns a new Scene wrapping the root View node.
-     */
     public Scene getScene() {
         return new Scene(getView());
     }
 
-    /**
-     * Builds and returns the main View container as a Parent node.
-     */
     public Parent getView() {
-        VBox root = new VBox(24);
-        root.setPadding(new Insets(28));
-        root.setStyle("-fx-background-color: #F8FAFC;");
 
-        // 1. Top Header & Action Controls
+        VBox root = new VBox(24);
+
+        root.setPadding(new Insets(28));
+
+        root.setStyle(
+                "-fx-background-color: #F8FAFC;"
+        );
+
         HBox header = createHeader();
 
-        // 2. Overview Stat Cards
         HBox kpiSection = createKPISection();
 
-        // 3. Search & Filter Bar
         HBox filterBar = createFilterBar();
 
-        // 4. Main Body: Left (Tickets Table) & Right (Category Graph + Quick Insights)
         GridPane contentGrid = new GridPane();
+
         contentGrid.setHgap(20);
         contentGrid.setVgap(20);
 
-        ColumnConstraints col1 = new ColumnConstraints();
-        col1.setPercentWidth(65);
-        ColumnConstraints col2 = new ColumnConstraints();
-        col2.setPercentWidth(35);
-        contentGrid.getColumnConstraints().addAll(col1, col2);
+        ColumnConstraints tableColumn =
+                new ColumnConstraints();
 
-        VBox tableContainer = createTicketTableCard();
-        VBox sidebarContainer = createSidebarAnalyticsCard();
+        tableColumn.setPercentWidth(68);
 
-        contentGrid.add(tableContainer, 0, 0);
-        contentGrid.add(sidebarContainer, 1, 0);
+        ColumnConstraints analyticsColumn =
+                new ColumnConstraints();
 
-        root.getChildren().addAll(header, kpiSection, filterBar, contentGrid);
+        analyticsColumn.setPercentWidth(32);
 
-        // Load Sample Complaint Data
+        contentGrid.getColumnConstraints().addAll(
+                tableColumn,
+                analyticsColumn
+        );
+
+        VBox tableContainer =
+                createTicketTableCard();
+
+        VBox analyticsContainer =
+                createSidebarAnalyticsCard();
+
+        contentGrid.add(
+                tableContainer,
+                0,
+                0
+        );
+
+        contentGrid.add(
+                analyticsContainer,
+                1,
+                0
+        );
+
+        root.getChildren().addAll(
+                header,
+                kpiSection,
+                filterBar,
+                contentGrid
+        );
+
         loadComplaintData();
 
-        ScrollPane scroll = new ScrollPane(root);
-        scroll.setFitToWidth(true);
-        scroll.setStyle("-fx-background-color: #F8FAFC; -fx-background: #F8FAFC; -fx-border-color: transparent;");
-        return scroll;
+        ScrollPane scrollPane =
+                new ScrollPane(root);
+
+        scrollPane.setFitToWidth(true);
+
+        scrollPane.setStyle(
+                "-fx-background-color: #F8FAFC;" +
+                "-fx-background: #F8FAFC;" +
+                "-fx-border-color: transparent;"
+        );
+
+        return scrollPane;
     }
 
-    // ------------------------------------------------------------------------
-    // UI BUILDERS
-    // ------------------------------------------------------------------------
+    // ============================================================
+    // HEADER
+    // ============================================================
 
     private HBox createHeader() {
-        HBox header = new HBox();
-        header.setAlignment(Pos.CENTER_LEFT);
 
-        VBox titleBox = new VBox(4);
-        Label title = new Label("Reports & Content Moderation Desk");
-        title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 24));
-        title.setTextFill(Color.web("#0F172A"));
+        HBox header =
+                new HBox();
 
-        Label subTitle = new Label("Investigate user tickets, disputed consultation charges, provider issues, and audit logs.");
-        subTitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 13));
-        subTitle.setTextFill(Color.web("#64748B"));
+        header.setAlignment(
+                Pos.CENTER_LEFT
+        );
 
-        titleBox.getChildren().addAll(title, subTitle);
+        VBox titleBox =
+                new VBox(4);
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Label title =
+                new Label(
+                        "Reports, Moderation & Telemetry"
+                );
 
-        Button exportBtn = new Button("Export Moderation Report");
-        exportBtn.setStyle("-fx-background-color: #FFFFFF; -fx-text-fill: #334155; -fx-border-color: #CBD5E1; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 8 16; -fx-font-weight: bold; -fx-cursor: hand;");
-        exportBtn.setOnAction(e -> showInfo("Report Exported", "Complaints & moderation summary log has been saved to CSV format."));
+        title.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        24
+                )
+        );
 
-        Button newTicketBtn = new Button("+ File Internal Ticket");
-        newTicketBtn.setStyle("-fx-background-color: #4F46E5; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; -fx-background-radius: 8px; -fx-cursor: hand;");
-        newTicketBtn.setOnAction(e -> showCreateTicketModal());
+        title.setTextFill(
+                Color.web("#0F172A")
+        );
 
-        HBox buttonGroup = new HBox(12, exportBtn, newTicketBtn);
-        buttonGroup.setAlignment(Pos.CENTER_RIGHT);
+        Label subtitle =
+                new Label(
+                        "Monitor complaints, moderation activity, provider issues, and support tickets."
+                );
 
-        header.getChildren().addAll(titleBox, spacer, buttonGroup);
+        subtitle.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.NORMAL,
+                        13
+                )
+        );
+
+        subtitle.setTextFill(
+                Color.web("#64748B")
+        );
+
+        titleBox.getChildren().addAll(
+                title,
+                subtitle
+        );
+
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        Button refreshButton =
+                new Button(
+                        "Refresh Data"
+                );
+
+        refreshButton.setStyle(
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-text-fill: #334155;" +
+                "-fx-border-color: #CBD5E1;" +
+                "-fx-border-radius: 8px;" +
+                "-fx-background-radius: 8px;" +
+                "-fx-padding: 8 16;" +
+                "-fx-font-weight: bold;" +
+                "-fx-cursor: hand;"
+        );
+
+        refreshButton.setOnAction(
+                e -> loadComplaintData()
+        );
+
+        Button exportButton =
+                new Button(
+                        "Export Report"
+                );
+
+        exportButton.setStyle(
+                "-fx-background-color: #4F46E5;" +
+                "-fx-text-fill: white;" +
+                "-fx-font-weight: bold;" +
+                "-fx-padding: 8 16;" +
+                "-fx-background-radius: 8px;" +
+                "-fx-cursor: hand;"
+        );
+
+        exportButton.setOnAction(
+                e -> exportComplaints()
+        );
+
+        Button newTicketButton =
+                new Button(
+                        "+ File Internal Ticket"
+                );
+
+        newTicketButton.setStyle(
+                "-fx-background-color: #059669;" +
+                "-fx-text-fill: white;" +
+                "-fx-font-weight: bold;" +
+                "-fx-padding: 8 16;" +
+                "-fx-background-radius: 8px;" +
+                "-fx-cursor: hand;"
+        );
+
+        newTicketButton.setOnAction(
+                e -> showCreateTicketModal()
+        );
+
+        HBox buttons =
+                new HBox(
+                        10,
+                        refreshButton,
+                        exportButton,
+                        newTicketButton
+                );
+
+        buttons.setAlignment(
+                Pos.CENTER_RIGHT
+        );
+
+        header.getChildren().addAll(
+                titleBox,
+                spacer,
+                buttons
+        );
+
         return header;
     }
 
+    // ============================================================
+    // KPI SECTION
+    // ============================================================
+
     private HBox createKPISection() {
-        HBox section = new HBox(16);
-        section.setAlignment(Pos.CENTER);
 
-        totalTicketsLabel = new Label("0");
-        openTicketsLabel = new Label("0");
-        inReviewTicketsLabel = new Label("0");
-        avgResolutionTimeLabel = new Label("3.2 hrs");
+        HBox section =
+                new HBox(16);
 
-        VBox totalCard = createKpiCard("Total Tickets", totalTicketsLabel, "All time submissions", "#4F46E5");
-        VBox openCard = createKpiCard("Open Tickets", openTicketsLabel, "Action required", "#DC2626");
-        VBox reviewCard = createKpiCard("In Review", inReviewTicketsLabel, "Under investigation", "#D97706");
-        VBox avgTimeCard = createKpiCard("Avg Resolution", avgResolutionTimeLabel, "Target: < 6.0 hrs", "#059669");
+        section.setAlignment(
+                Pos.CENTER
+        );
 
-        HBox.setHgrow(totalCard, Priority.ALWAYS);
-        HBox.setHgrow(openCard, Priority.ALWAYS);
-        HBox.setHgrow(reviewCard, Priority.ALWAYS);
-        HBox.setHgrow(avgTimeCard, Priority.ALWAYS);
+        totalTicketsLabel =
+                new Label("0");
 
-        section.getChildren().addAll(totalCard, openCard, reviewCard, avgTimeCard);
+        openTicketsLabel =
+                new Label("0");
+
+        inReviewTicketsLabel =
+                new Label("0");
+
+        resolvedTicketsLabel =
+                new Label("0");
+
+        VBox totalCard =
+                createKpiCard(
+                        "Total Tickets",
+                        totalTicketsLabel,
+                        "Live Firestore count",
+                        "#4F46E5"
+                );
+
+        VBox openCard =
+                createKpiCard(
+                        "Open Tickets",
+                        openTicketsLabel,
+                        "Requires action",
+                        "#DC2626"
+                );
+
+        VBox reviewCard =
+                createKpiCard(
+                        "In Review",
+                        inReviewTicketsLabel,
+                        "Currently investigated",
+                        "#D97706"
+                );
+
+        VBox resolvedCard =
+                createKpiCard(
+                        "Resolved Tickets",
+                        resolvedTicketsLabel,
+                        "Successfully resolved",
+                        "#059669"
+                );
+
+        HBox.setHgrow(
+                totalCard,
+                Priority.ALWAYS
+        );
+
+        HBox.setHgrow(
+                openCard,
+                Priority.ALWAYS
+        );
+
+        HBox.setHgrow(
+                reviewCard,
+                Priority.ALWAYS
+        );
+
+        HBox.setHgrow(
+                resolvedCard,
+                Priority.ALWAYS
+        );
+
+        section.getChildren().addAll(
+                totalCard,
+                openCard,
+                reviewCard,
+                resolvedCard
+        );
+
         return section;
     }
 
-    private VBox createKpiCard(String title, Label valueLabel, String subtext, String accentColorHex) {
-        VBox card = new VBox(6);
-        card.setPadding(new Insets(16));
-        card.setStyle(
-            "-fx-background-color: #FFFFFF; " +
-            "-fx-background-radius: 12px; " +
-            "-fx-border-color: #E2E8F0; " +
-            "-fx-border-radius: 12px;"
+    private VBox createKpiCard(
+            String title,
+            Label valueLabel,
+            String subtitle,
+            String accentColor) {
+
+        VBox card =
+                new VBox(6);
+
+        card.setPadding(
+                new Insets(16)
         );
 
-        Label titleLabel = new Label(title);
-        titleLabel.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
-        titleLabel.setTextFill(Color.web("#64748B"));
+        card.setStyle(
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 12px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 12px;"
+        );
 
-        valueLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 22));
-        valueLabel.setTextFill(Color.web("#0F172A"));
+        Label titleLabel =
+                new Label(title);
 
-        Label subLabel = new Label(subtext);
-        subLabel.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 11));
-        subLabel.setTextFill(Color.web(accentColorHex));
+        titleLabel.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.SEMI_BOLD,
+                        12
+                )
+        );
 
-        card.getChildren().addAll(titleLabel, valueLabel, subLabel);
+        titleLabel.setTextFill(
+                Color.web("#64748B")
+        );
+
+        valueLabel.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        24
+                )
+        );
+
+        valueLabel.setTextFill(
+                Color.web("#0F172A")
+        );
+
+        Label subtitleLabel =
+                new Label(subtitle);
+
+        subtitleLabel.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.NORMAL,
+                        11
+                )
+        );
+
+        subtitleLabel.setTextFill(
+                Color.web(accentColor)
+        );
+
+        card.getChildren().addAll(
+                titleLabel,
+                valueLabel,
+                subtitleLabel
+        );
+
         return card;
     }
 
+    // ============================================================
+    // FILTER BAR
+    // ============================================================
+
     private HBox createFilterBar() {
-        HBox bar = new HBox(14);
-        bar.setAlignment(Pos.CENTER_LEFT);
-        bar.setPadding(new Insets(14));
+
+        HBox bar =
+                new HBox(12);
+
+        bar.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        bar.setPadding(
+                new Insets(14)
+        );
+
         bar.setStyle(
-            "-fx-background-color: #FFFFFF; " +
-            "-fx-background-radius: 10px; " +
-            "-fx-border-color: #E2E8F0; " +
-            "-fx-border-radius: 10px;"
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 10px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 10px;"
         );
 
-        TextField searchInput = new TextField();
-        searchInput.setPromptText("🔍 Search Ticket ID, Complainant, or Issue...");
-        searchInput.setPrefWidth(320);
-        searchInput.setStyle(
-            "-fx-background-color: #F8FAFC; " +
-            "-fx-text-fill: #0F172A; " +
-            "-fx-border-color: #CBD5E1; " +
-            "-fx-border-radius: 6px; " +
-            "-fx-padding: 8px 12px;"
+        searchInput =
+                new TextField();
+
+        searchInput.setPromptText(
+                "Search Ticket ID, Reporter, Issue..."
         );
 
-        ComboBox<String> priorityFilter = new ComboBox<>();
-        priorityFilter.getItems().addAll("All Priorities", "HIGH", "MEDIUM", "LOW");
-        priorityFilter.setValue("All Priorities");
-        priorityFilter.setStyle("-fx-background-color: #F8FAFC; -fx-text-fill: #0F172A; -fx-border-color: #CBD5E1; -fx-border-radius: 6px;");
+        searchInput.setPrefWidth(330);
 
-        ComboBox<String> statusFilter = new ComboBox<>();
-        statusFilter.getItems().addAll("All Statuses", "OPEN", "IN_REVIEW", "RESOLVED");
-        statusFilter.setValue("All Statuses");
-        statusFilter.setStyle("-fx-background-color: #F8FAFC; -fx-text-fill: #0F172A; -fx-border-color: #CBD5E1; -fx-border-radius: 6px;");
+        categoryFilter =
+                new ComboBox<>();
 
-        Runnable applyFilters = () -> {
-            String query = searchInput.getText().toLowerCase().trim();
-            String selectedPriority = priorityFilter.getValue();
-            String selectedStatus = statusFilter.getValue();
+        categoryFilter.setPromptText(
+                "All Categories"
+        );
 
-            filteredData.setPredicate(ticket -> {
-                boolean matchesSearch = query.isEmpty() ||
-                        ticket.getTicketId().toLowerCase().contains(query) ||
-                        ticket.getComplainant().toLowerCase().contains(query) ||
-                        ticket.getIssueTitle().toLowerCase().contains(query) ||
-                        ticket.getCategory().toLowerCase().contains(query);
+        categoryFilter.setPrefWidth(170);
 
-                boolean matchesPriority = selectedPriority.equals("All Priorities") || ticket.getPriority().equalsIgnoreCase(selectedPriority);
-                boolean matchesStatus = selectedStatus.equals("All Statuses") || ticket.getStatus().equalsIgnoreCase(selectedStatus);
+        statusFilter =
+                new ComboBox<>();
 
-                return matchesSearch && matchesPriority && matchesStatus;
-            });
-        };
+        statusFilter.setPromptText(
+                "All Statuses"
+        );
 
-        searchInput.textProperty().addListener((obs, oldVal, newVal) -> applyFilters.run());
-        priorityFilter.valueProperty().addListener((obs, oldVal, newVal) -> applyFilters.run());
-        statusFilter.valueProperty().addListener((obs, oldVal, newVal) -> applyFilters.run());
+        statusFilter.setPrefWidth(150);
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Button resetButton =
+                new Button(
+                        "Reset Filters"
+                );
 
-        Button resetBtn = new Button("Reset Filters");
-        resetBtn.setStyle("-fx-background-color: #F1F5F9; -fx-text-fill: #475569; -fx-font-weight: bold; -fx-background-radius: 6px; -fx-padding: 8 14; -fx-cursor: hand;");
-        resetBtn.setOnAction(e -> {
-            searchInput.clear();
-            priorityFilter.setValue("All Priorities");
-            statusFilter.setValue("All Statuses");
-        });
+        resetButton.setOnAction(
+                e -> resetFilters()
+        );
 
-        bar.getChildren().addAll(searchInput, priorityFilter, statusFilter, spacer, resetBtn);
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        searchInput.textProperty().addListener(
+                (obs, oldValue, newValue) ->
+                        applyFilters()
+        );
+
+        categoryFilter.valueProperty().addListener(
+                (obs, oldValue, newValue) ->
+                        applyFilters()
+        );
+
+        statusFilter.valueProperty().addListener(
+                (obs, oldValue, newValue) ->
+                        applyFilters()
+        );
+
+        bar.getChildren().addAll(
+                searchInput,
+                categoryFilter,
+                statusFilter,
+                spacer,
+                resetButton
+        );
+
         return bar;
     }
 
-    @SuppressWarnings("unchecked")
+    private void resetFilters() {
+
+        if (searchInput != null) {
+            searchInput.clear();
+        }
+
+        if (categoryFilter != null) {
+            categoryFilter.setValue(null);
+        }
+
+        if (statusFilter != null) {
+            statusFilter.setValue(null);
+        }
+
+        applyFilters();
+    }
+
+    private void applyFilters() {
+
+        if (filteredData == null) {
+            return;
+        }
+
+        String search =
+                searchInput == null
+                        ? ""
+                        : safe(searchInput.getText())
+                                .trim()
+                                .toLowerCase();
+
+        String selectedCategory =
+                categoryFilter == null
+                        ? null
+                        : categoryFilter.getValue();
+
+        String selectedStatus =
+                statusFilter == null
+                        ? null
+                        : statusFilter.getValue();
+
+        filteredData.setPredicate(
+                ticket -> {
+
+                    boolean matchesSearch =
+                            search.isEmpty()
+                                    ||
+                            safe(ticket.getTicketId())
+                                    .toLowerCase()
+                                    .contains(search)
+                                    ||
+                            safe(ticket.getComplainant())
+                                    .toLowerCase()
+                                    .contains(search)
+                                    ||
+                            safe(ticket.getIssueTitle())
+                                    .toLowerCase()
+                                    .contains(search)
+                                    ||
+                            safe(ticket.getDescription())
+                                    .toLowerCase()
+                                    .contains(search)
+                                    ||
+                            safe(ticket.getCategory())
+                                    .toLowerCase()
+                                    .contains(search);
+
+                    boolean matchesCategory =
+                            selectedCategory == null
+                                    ||
+                            selectedCategory.equals(
+                                    ticket.getCategory()
+                            );
+
+                    boolean matchesStatus =
+                            selectedStatus == null
+                                    ||
+                            selectedStatus.equalsIgnoreCase(
+                                    safe(ticket.getStatus())
+                            );
+
+                    return matchesSearch
+                            && matchesCategory
+                            && matchesStatus;
+                }
+        );
+    }
+
+    // ============================================================
+    // TABLE
+    // ============================================================
+
     private VBox createTicketTableCard() {
-        VBox container = new VBox(12);
-        container.setPadding(new Insets(16));
-        container.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 12px; -fx-border-color: #E2E8F0; -fx-border-radius: 12px;");
 
-        Label cardTitle = new Label("Active Moderation Tickets");
-        cardTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 15));
-        cardTitle.setTextFill(Color.web("#0F172A"));
+        VBox container =
+                new VBox(12);
 
-        ticketTable = new TableView<>();
-        ticketTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        ticketTable.setStyle("-fx-background-color: transparent;");
-        ticketTable.setPrefHeight(400);
+        container.setPadding(
+                new Insets(16)
+        );
 
-        TableColumn<ComplaintModel, String> idCol = new TableColumn<>("Ticket ID");
-        idCol.setCellValueFactory(new PropertyValueFactory<>("ticketId"));
-        idCol.setPrefWidth(90);
+        container.setStyle(
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 12px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 12px;"
+        );
 
-        TableColumn<ComplaintModel, String> issueCol = new TableColumn<>("Issue & Complainant");
-        issueCol.setCellValueFactory(new PropertyValueFactory<>("issueTitle"));
-        issueCol.setCellFactory(col -> new TableCell<>() {
-            @Override
-            protected void updateItem(String titleText, boolean empty) {
-                super.updateItem(titleText, empty);
-                if (empty || titleText == null) {
-                    setGraphic(null);
-                } else {
-                    ComplaintModel ticket = getTableView().getItems().get(getIndex());
-                    VBox box = new VBox(3);
+        Label title =
+                new Label(
+                        "Live Moderation Tickets"
+                );
 
-                    Label titleLbl = new Label(titleText);
-                    titleLbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 12));
-                    titleLbl.setTextFill(Color.web("#0F172A"));
+        title.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        15
+                )
+        );
 
-                    Label subLbl = new Label(ticket.getComplainant() + " • " + ticket.getCategory());
-                    subLbl.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 11));
-                    subLbl.setTextFill(Color.web("#64748B"));
+        ticketTable =
+                new TableView<>();
 
-                    box.getChildren().addAll(titleLbl, subLbl);
-                    setGraphic(box);
-                }
-            }
-        });
+        ticketTable.setColumnResizePolicy(
+                TableView.CONSTRAINED_RESIZE_POLICY
+        );
 
-        TableColumn<ComplaintModel, String> priorityCol = new TableColumn<>("Priority");
-        priorityCol.setCellValueFactory(new PropertyValueFactory<>("priority"));
-        priorityCol.setCellFactory(col -> new TableCell<>() {
-            @Override
-            protected void updateItem(String priority, boolean empty) {
-                super.updateItem(priority, empty);
-                if (empty || priority == null) {
-                    setGraphic(null);
-                } else {
-                    Label badge = new Label(priority.toUpperCase());
-                    badge.setPadding(new Insets(4, 10, 4, 10));
-                    badge.setFont(Font.font("Segoe UI", FontWeight.BOLD, 10));
+        ticketTable.setPrefHeight(450);
 
-                    switch (priority.toUpperCase()) {
-                        case "HIGH" -> badge.setStyle("-fx-background-color: #FFE4E6; -fx-text-fill: #E11D48; -fx-background-radius: 20px;");
-                        case "MEDIUM" -> badge.setStyle("-fx-background-color: #FEF3C7; -fx-text-fill: #D97706; -fx-background-radius: 20px;");
-                        default -> badge.setStyle("-fx-background-color: #EEF2FF; -fx-text-fill: #4F46E5; -fx-background-radius: 20px;");
-                    }
-                    setGraphic(badge);
-                }
-            }
-        });
+        TableColumn<ComplaintModel, String> ticketIdColumn =
+                new TableColumn<>(
+                        "Ticket ID"
+                );
 
-        TableColumn<ComplaintModel, String> statusCol = new TableColumn<>("Status");
-        statusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
-        statusCol.setCellFactory(col -> new TableCell<>() {
-            @Override
-            protected void updateItem(String status, boolean empty) {
-                super.updateItem(status, empty);
-                if (empty || status == null) {
-                    setGraphic(null);
-                } else {
-                    Label badge = new Label(status.replace("_", " "));
-                    badge.setPadding(new Insets(4, 10, 4, 10));
-                    badge.setFont(Font.font("Segoe UI", FontWeight.BOLD, 10));
+        ticketIdColumn.setCellValueFactory(
+                new PropertyValueFactory<>(
+                        "ticketId"
+                )
+        );
 
-                    switch (status.toUpperCase()) {
-                        case "RESOLVED" -> badge.setStyle("-fx-background-color: #DCFCE7; -fx-text-fill: #15803D; -fx-background-radius: 6px;");
-                        case "IN_REVIEW" -> badge.setStyle("-fx-background-color: #E0E7FF; -fx-text-fill: #3730A3; -fx-background-radius: 6px;");
-                        default -> badge.setStyle("-fx-background-color: #FEE2E2; -fx-text-fill: #B91C1C; -fx-background-radius: 6px;");
-                    }
-                    setGraphic(badge);
-                }
-            }
-        });
+        TableColumn<ComplaintModel, String> issueColumn =
+                new TableColumn<>(
+                        "Issue / Reporter"
+                );
 
-        TableColumn<ComplaintModel, Void> actionCol = new TableColumn<>("Actions");
-        actionCol.setCellFactory(col -> new TableCell<>() {
-            private final Button inspectBtn = new Button("Inspect");
-            private final Button actionBtn = new Button();
-            private final HBox btnGroup = new HBox(6, inspectBtn, actionBtn);
+        issueColumn.setCellValueFactory(
+                new PropertyValueFactory<>(
+                        "issueTitle"
+                )
+        );
 
-            {
-                btnGroup.setAlignment(Pos.CENTER);
-                inspectBtn.setStyle("-fx-background-color: #F1F5F9; -fx-text-fill: #334155; -fx-cursor: hand; -fx-font-size: 11px; -fx-background-radius: 4px;");
+        issueColumn.setCellFactory(
+                column ->
+                        new TableCell<>() {
 
-                inspectBtn.setOnAction(e -> {
-                    ComplaintModel ticket = getTableView().getItems().get(getIndex());
-                    showTicketDetailsModal(ticket);
-                });
+                            @Override
+                            protected void updateItem(
+                                    String issue,
+                                    boolean empty) {
 
-                actionBtn.setOnAction(e -> {
-                    ComplaintModel ticket = getTableView().getItems().get(getIndex());
-                    if ("RESOLVED".equalsIgnoreCase(ticket.getStatus())) {
-                        ticket.setStatus("OPEN");
-                    } else if ("OPEN".equalsIgnoreCase(ticket.getStatus())) {
-                        ticket.setStatus("IN_REVIEW");
-                    } else {
-                        ticket.setStatus("RESOLVED");
-                    }
-                    ticketTable.refresh();
-                    recalculateStats();
-                });
-            }
+                                super.updateItem(
+                                        issue,
+                                        empty
+                                );
 
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) {
-                    setGraphic(null);
-                } else {
-                    ComplaintModel ticket = getTableView().getItems().get(getIndex());
-                    if ("RESOLVED".equalsIgnoreCase(ticket.getStatus())) {
-                        actionBtn.setText("Re-open");
-                        actionBtn.setStyle("-fx-background-color: #FEE2E2; -fx-text-fill: #991B1B; -fx-cursor: hand; -fx-font-size: 11px; -fx-background-radius: 4px;");
-                    } else if ("OPEN".equalsIgnoreCase(ticket.getStatus())) {
-                        actionBtn.setText("Review");
-                        actionBtn.setStyle("-fx-background-color: #E0E7FF; -fx-text-fill: #3730A3; -fx-cursor: hand; -fx-font-size: 11px; -fx-background-radius: 4px;");
-                    } else {
-                        actionBtn.setText("Resolve");
-                        actionBtn.setStyle("-fx-background-color: #DCFCE7; -fx-text-fill: #166534; -fx-cursor: hand; -fx-font-size: 11px; -fx-background-radius: 4px;");
-                    }
-                    setGraphic(btnGroup);
-                }
-            }
-        });
+                                if (
+                                        empty ||
+                                        issue == null
+                                ) {
 
-        ticketTable.getColumns().addAll(idCol, issueCol, priorityCol, statusCol, actionCol);
-        container.getChildren().addAll(cardTitle, ticketTable);
+                                    setGraphic(null);
+                                    return;
+                                }
+
+                                ComplaintModel ticket =
+                                        getTableView()
+                                                .getItems()
+                                                .get(
+                                                        getIndex()
+                                                );
+
+                                VBox box =
+                                        new VBox(3);
+
+                                Label issueLabel =
+                                        new Label(
+                                                issue
+                                        );
+
+                                issueLabel.setFont(
+                                        Font.font(
+                                                "Segoe UI",
+                                                FontWeight.BOLD,
+                                                12
+                                        )
+                                );
+
+                                Label reporterLabel =
+                                        new Label(
+                                                "By: "
+                                                        + safe(
+                                                                ticket.getComplainant()
+                                                        )
+                                                        + " • "
+                                                        + safe(
+                                                                ticket.getCategory()
+                                                        )
+                                        );
+
+                                reporterLabel.setFont(
+                                        Font.font(
+                                                "Segoe UI",
+                                                10
+                                        )
+                                );
+
+                                reporterLabel.setTextFill(
+                                        Color.web(
+                                                "#64748B"
+                                        )
+                                );
+
+                                box.getChildren().addAll(
+                                        issueLabel,
+                                        reporterLabel
+                                );
+
+                                setGraphic(box);
+                            }
+                        }
+        );
+
+        TableColumn<ComplaintModel, String> priorityColumn =
+                new TableColumn<>(
+                        "Priority"
+                );
+
+        priorityColumn.setCellValueFactory(
+                new PropertyValueFactory<>(
+                        "priority"
+                )
+        );
+
+        priorityColumn.setCellFactory(
+                column ->
+                        new TableCell<>() {
+
+                            @Override
+                            protected void updateItem(
+                                    String priority,
+                                    boolean empty) {
+
+                                super.updateItem(
+                                        priority,
+                                        empty
+                                );
+
+                                if (
+                                        empty ||
+                                        priority == null
+                                ) {
+
+                                    setGraphic(null);
+                                    return;
+                                }
+
+                                Label label =
+                                        new Label(
+                                                priority
+                                        );
+
+                                label.setPadding(
+                                        new Insets(
+                                                5,
+                                                10,
+                                                5,
+                                                10
+                                        )
+                                );
+
+                                label.setStyle(
+                                        getPriorityStyle(
+                                                priority
+                                        )
+                                );
+
+                                setGraphic(label);
+                            }
+                        }
+        );
+
+        TableColumn<ComplaintModel, String> statusColumn =
+                new TableColumn<>(
+                        "Status"
+                );
+
+        statusColumn.setCellValueFactory(
+                new PropertyValueFactory<>(
+                        "status"
+                )
+        );
+
+        statusColumn.setCellFactory(
+                column ->
+                        new TableCell<>() {
+
+                            @Override
+                            protected void updateItem(
+                                    String status,
+                                    boolean empty) {
+
+                                super.updateItem(
+                                        status,
+                                        empty
+                                );
+
+                                if (
+                                        empty ||
+                                        status == null
+                                ) {
+
+                                    setGraphic(null);
+                                    return;
+                                }
+
+                                Label label =
+                                        new Label(
+                                                status
+                                        );
+
+                                label.setPadding(
+                                        new Insets(
+                                                5,
+                                                10,
+                                                5,
+                                                10
+                                        )
+                                );
+
+                                label.setStyle(
+                                        getStatusStyle(
+                                                status
+                                        )
+                                );
+
+                                setGraphic(label);
+                            }
+                        }
+        );
+
+        TableColumn<ComplaintModel, String> dateColumn =
+                new TableColumn<>(
+                        "Created"
+                );
+
+        dateColumn.setCellValueFactory(
+                new PropertyValueFactory<>(
+                        "createdDate"
+                )
+        );
+
+        TableColumn<ComplaintModel, Void> actionColumn =
+                new TableColumn<>(
+                        "Moderation Action"
+                );
+
+        actionColumn.setCellFactory(
+                column ->
+                        new TableCell<>() {
+
+                            private final Button inspectButton =
+                                    new Button(
+                                            "Inspect"
+                                    );
+
+                            private final Button actionButton =
+                                    new Button();
+
+                            private final HBox buttons =
+                                    new HBox(
+                                            6,
+                                            inspectButton,
+                                            actionButton
+                                    );
+
+                            {
+
+                                inspectButton.setOnAction(
+                                        event -> {
+
+                                            ComplaintModel ticket =
+                                                    getCurrentTicket();
+
+                                            if (ticket != null) {
+                                                showTicketDetailsModal(
+                                                        ticket
+                                                );
+                                            }
+                                        }
+                                );
+
+                                actionButton.setOnAction(
+                                        event -> {
+
+                                            ComplaintModel ticket =
+                                                    getCurrentTicket();
+
+                                            if (ticket != null) {
+                                                changeTicketStatus(
+                                                        ticket
+                                                );
+                                            }
+                                        }
+                                );
+                            }
+
+                            private ComplaintModel getCurrentTicket() {
+
+                                if (
+                                        getIndex() < 0 ||
+                                        getIndex()
+                                                >= getTableView()
+                                                        .getItems()
+                                                        .size()
+                                ) {
+                                    return null;
+                                }
+
+                                return getTableView()
+                                        .getItems()
+                                        .get(
+                                                getIndex()
+                                        );
+                            }
+
+                            @Override
+                            protected void updateItem(
+                                    Void item,
+                                    boolean empty) {
+
+                                super.updateItem(
+                                        item,
+                                        empty
+                                );
+
+                                if (empty) {
+
+                                    setGraphic(null);
+                                    return;
+                                }
+
+                                ComplaintModel ticket =
+                                        getCurrentTicket();
+
+                                if (ticket == null) {
+
+                                    setGraphic(null);
+                                    return;
+                                }
+
+                                String status =
+                                        safe(
+                                                ticket.getStatus()
+                                        );
+
+                                if (
+                                        "OPEN"
+                                                .equalsIgnoreCase(
+                                                        status
+                                                )
+                                ) {
+
+                                    actionButton.setText(
+                                            "Review"
+                                    );
+
+                                } else if (
+                                        "IN_REVIEW"
+                                                .equalsIgnoreCase(
+                                                        status
+                                                )
+                                ) {
+
+                                    actionButton.setText(
+                                            "Resolve"
+                                    );
+
+                                } else {
+
+                                    actionButton.setText(
+                                            "Re-open"
+                                    );
+                                }
+
+                                setGraphic(buttons);
+                            }
+                        }
+        );
+
+        ticketTable.getColumns().addAll(
+                ticketIdColumn,
+                issueColumn,
+                priorityColumn,
+                statusColumn,
+                dateColumn,
+                actionColumn
+        );
+
+        container.getChildren().addAll(
+                title,
+                ticketTable
+        );
+
+        VBox.setVgrow(
+                ticketTable,
+                Priority.ALWAYS
+        );
+
         return container;
     }
+
+    private String getPriorityStyle(
+            String priority) {
+
+        if (
+                "CRITICAL".equalsIgnoreCase(
+                        priority
+                ) ||
+                "HIGH".equalsIgnoreCase(
+                        priority
+                )
+        ) {
+
+            return
+                    "-fx-background-color: #FEE2E2;" +
+                    "-fx-text-fill: #B91C1C;" +
+                    "-fx-background-radius: 12px;";
+        }
+
+        if (
+                "MEDIUM".equalsIgnoreCase(
+                        priority
+                )
+        ) {
+
+            return
+                    "-fx-background-color: #FEF3C7;" +
+                    "-fx-text-fill: #92400E;" +
+                    "-fx-background-radius: 12px;";
+        }
+
+        return
+                "-fx-background-color: #E0F2FE;" +
+                "-fx-text-fill: #075985;" +
+                "-fx-background-radius: 12px;";
+    }
+
+    private String getStatusStyle(
+            String status) {
+
+        if (
+                "OPEN".equalsIgnoreCase(
+                        status
+                )
+        ) {
+
+            return
+                    "-fx-background-color: #FEE2E2;" +
+                    "-fx-text-fill: #B91C1C;" +
+                    "-fx-background-radius: 12px;";
+        }
+
+        if (
+                "IN_REVIEW".equalsIgnoreCase(
+                        status
+                )
+        ) {
+
+            return
+                    "-fx-background-color: #FEF3C7;" +
+                    "-fx-text-fill: #92400E;" +
+                    "-fx-background-radius: 12px;";
+        }
+
+        if (
+                "RESOLVED".equalsIgnoreCase(
+                        status
+                )
+        ) {
+
+            return
+                    "-fx-background-color: #D1FAE5;" +
+                    "-fx-text-fill: #047857;" +
+                    "-fx-background-radius: 12px;";
+        }
+
+        return
+                "-fx-background-color: #E2E8F0;" +
+                "-fx-text-fill: #334155;" +
+                "-fx-background-radius: 12px;";
+    }
+
+    // ============================================================
+    // ANALYTICS
+    // ============================================================
 
     private VBox createSidebarAnalyticsCard() {
-        VBox container = new VBox(16);
 
-        // Chart Card
-        VBox chartCard = new VBox(12);
-        chartCard.setPadding(new Insets(16));
-        chartCard.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 12px; -fx-border-color: #E2E8F0; -fx-border-radius: 12px;");
+        VBox container =
+                new VBox(16);
 
-        Label chartTitle = new Label("Complaints by Category");
-        chartTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
-        chartTitle.setTextFill(Color.web("#0F172A"));
+        VBox categoryCard =
+                new VBox(10);
 
-        CategoryAxis xAxis = new CategoryAxis();
-        NumberAxis yAxis = new NumberAxis();
-        yAxis.setLabel("Tickets");
+        categoryCard.setPadding(
+                new Insets(16)
+        );
 
-        categoryChart = new BarChart<>(xAxis, yAxis);
-        categoryChart.setPrefHeight(220);
-        categoryChart.setLegendVisible(false);
-        categoryChart.setAnimated(false);
+        categoryCard.setStyle(
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 12px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 12px;"
+        );
 
-        chartCard.getChildren().addAll(chartTitle, categoryChart);
+        Label categoryTitle =
+                new Label(
+                        "Complaints by Category"
+                );
 
-        // Moderation SLA Guidelines Box
-        VBox slaCard = new VBox(10);
-        slaCard.setPadding(new Insets(16));
-        slaCard.setStyle("-fx-background-color: #F8FAFC; -fx-background-radius: 12px; -fx-border-color: #E2E8F0; -fx-border-radius: 12px;");
+        categoryTitle.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        14
+                )
+        );
 
-        Label slaTitle = new Label("Moderation SLA Policy");
-        slaTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
-        slaTitle.setTextFill(Color.web("#0F172A"));
+        CategoryAxis xAxis =
+                new CategoryAxis();
 
-        Label slaDesc1 = new Label("• High Priority: Initial response within 1 hour.");
-        slaDesc1.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 11));
-        slaDesc1.setTextFill(Color.web("#475569"));
+        NumberAxis yAxis =
+                new NumberAxis();
 
-        Label slaDesc2 = new Label("• Billing Disputes: Refund clearance within 24 hours.");
-        slaDesc2.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 11));
-        slaDesc2.setTextFill(Color.web("#475569"));
+        yAxis.setLabel(
+                "Tickets"
+        );
 
-        Label slaDesc3 = new Label("• Doctor Complaints: escalates to Medical Ethics Board.");
-        slaDesc3.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 11));
-        slaDesc3.setTextFill(Color.web("#475569"));
+        categoryChart =
+                new BarChart<>(
+                        xAxis,
+                        yAxis
+                );
 
-        slaCard.getChildren().addAll(slaTitle, slaDesc1, slaDesc2, slaDesc3);
+        categoryChart.setLegendVisible(
+                false
+        );
 
-        container.getChildren().addAll(chartCard, slaCard);
+        categoryChart.setAnimated(
+                false
+        );
+
+        categoryChart.setPrefHeight(
+                280
+        );
+
+        categoryCard.getChildren().addAll(
+                categoryTitle,
+                categoryChart
+        );
+
+        VBox statusCard =
+                new VBox(10);
+
+        statusCard.setPadding(
+                new Insets(16)
+        );
+
+        statusCard.setStyle(
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 12px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 12px;"
+        );
+
+        Label statusTitle =
+                new Label(
+                        "Status Breakdown"
+                );
+
+        statusTitle.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        14
+                )
+        );
+
+        statusChart =
+                new PieChart();
+
+        statusChart.setLegendVisible(
+                true
+        );
+
+        statusChart.setLabelsVisible(
+                true
+        );
+
+        statusChart.setAnimated(
+                false
+        );
+
+        statusChart.setPrefHeight(
+                250
+        );
+
+        statusCard.getChildren().addAll(
+                statusTitle,
+                statusChart
+        );
+
+        container.getChildren().addAll(
+                categoryCard,
+                statusCard
+        );
+
         return container;
     }
 
-    // ------------------------------------------------------------------------
-    // DATA LOAD & LOGIC
-    // ------------------------------------------------------------------------
+    // ============================================================
+    // LOAD FIRESTORE DATA
+    // ============================================================
 
     private void loadComplaintData() {
-        masterTicketData = FXCollections.observableArrayList(
-            new ComplaintModel("TKT-8801", "Billing Dispute", "Incorrect Billing Charge", "Patient reported double charge of ₹1,200 for Tele-consultation.", "Ananya Verma", "HIGH", "OPEN", "2026-08-10 09:30"),
-            new ComplaintModel("TKT-8802", "Provider Misconduct", "Doctor No-Show", "Doctor missed scheduled Tele-consultation appointment without notice.", "Vikram Malhotra", "MEDIUM", "IN_REVIEW", "2026-08-11 11:15"),
-            new ComplaintModel("TKT-8803", "Prescription Issue", "Missing E-Prescription", "Prescription not generated after completed consultation session.", "Saurabh Deshmukh", "HIGH", "OPEN", "2026-08-11 14:00"),
-            new ComplaintModel("TKT-8804", "Platform Bug", "Video Call Lag & Disconnect", "Audio/Video lost connection repeatedly during appointment.", "Pooja Hegde", "LOW", "RESOLVED", "2026-08-09 16:45"),
-            new ComplaintModel("TKT-8805", "Billing Dispute", "Refund Pending", "Refund initiated 5 days ago but not credited to UPI account.", "Rohan Gupta", "MEDIUM", "IN_REVIEW", "2026-08-12 08:20")
+
+        try {
+
+            List<ComplaintModel> complaints =
+                    moderationController
+                            .getAllComplaints();
+
+            if (complaints == null) {
+                complaints =
+                        List.of();
+            }
+
+            masterTicketData =
+                    FXCollections.observableArrayList(
+                            complaints
+                    );
+
+            filteredData =
+                    new FilteredList<>(
+                            masterTicketData,
+                            ticket -> true
+                    );
+
+            if (ticketTable != null) {
+
+                ticketTable.setItems(
+                        filteredData
+                );
+            }
+
+            populateFilters();
+
+            recalculateStats();
+
+        } catch (Exception e) {
+
+            masterTicketData =
+                    FXCollections.observableArrayList();
+
+            filteredData =
+                    new FilteredList<>(
+                            masterTicketData,
+                            ticket -> true
+                    );
+
+            if (ticketTable != null) {
+
+                ticketTable.setItems(
+                        filteredData
+                );
+            }
+
+            updateEmptyAnalytics();
+
+            showError(
+                    "Firestore Error",
+                    "Unable to load complaints.\n\n"
+                            + safe(
+                                    e.getMessage()
+                            )
+            );
+        }
+    }
+
+    // ============================================================
+    // FILTER VALUES FROM REAL DATA
+    // ============================================================
+
+    private void populateFilters() {
+
+        if (
+                masterTicketData == null ||
+                categoryFilter == null ||
+                statusFilter == null
+        ) {
+            return;
+        }
+
+        String oldCategory =
+                categoryFilter.getValue();
+
+        String oldStatus =
+                statusFilter.getValue();
+
+        List<String> categories =
+                masterTicketData.stream()
+                        .map(
+                                ComplaintModel::getCategory
+                        )
+                        .filter(
+                                value ->
+                                        value != null
+                                                &&
+                                        !value.trim().isEmpty()
+                        )
+                        .map(String::trim)
+                        .distinct()
+                        .sorted()
+                        .collect(
+                                Collectors.toList()
+                        );
+
+        List<String> statuses =
+                masterTicketData.stream()
+                        .map(
+                                ComplaintModel::getStatus
+                        )
+                        .filter(
+                                value ->
+                                        value != null
+                                                &&
+                                        !value.trim().isEmpty()
+                        )
+                        .map(String::trim)
+                        .distinct()
+                        .sorted()
+                        .collect(
+                                Collectors.toList()
+                        );
+
+        categoryFilter.getItems().setAll(
+                categories
         );
 
-        filteredData = new FilteredList<>(masterTicketData, p -> true);
-        ticketTable.setItems(filteredData);
+        statusFilter.getItems().setAll(
+                statuses
+        );
 
-        recalculateStats();
+        if (
+                oldCategory != null &&
+                categories.contains(oldCategory)
+        ) {
+
+            categoryFilter.setValue(
+                    oldCategory
+            );
+        } else {
+
+            categoryFilter.setValue(
+                    null
+            );
+        }
+
+        if (
+                oldStatus != null &&
+                statuses.contains(oldStatus)
+        ) {
+
+            statusFilter.setValue(
+                    oldStatus
+            );
+        } else {
+
+            statusFilter.setValue(
+                    null
+            );
+        }
     }
+
+    // ============================================================
+    // DYNAMIC STATISTICS
+    // ============================================================
 
     private void recalculateStats() {
-        int total = masterTicketData.size();
-        long open = masterTicketData.stream().filter(t -> "OPEN".equalsIgnoreCase(t.getStatus())).count();
-        long review = masterTicketData.stream().filter(t -> "IN_REVIEW".equalsIgnoreCase(t.getStatus())).count();
 
-        totalTicketsLabel.setText(String.valueOf(total));
-        openTicketsLabel.setText(String.valueOf(open));
-        inReviewTicketsLabel.setText(String.valueOf(review));
+        if (masterTicketData == null) {
+            return;
+        }
 
-        updateBarChart();
+        long total =
+                masterTicketData.size();
+
+        long open =
+                masterTicketData.stream()
+                        .filter(
+                                ticket ->
+                                        "OPEN"
+                                                .equalsIgnoreCase(
+                                                        safe(
+                                                                ticket.getStatus()
+                                                        )
+                                                )
+                        )
+                        .count();
+
+        long inReview =
+                masterTicketData.stream()
+                        .filter(
+                                ticket ->
+                                        "IN_REVIEW"
+                                                .equalsIgnoreCase(
+                                                        safe(
+                                                                ticket.getStatus()
+                                                        )
+                                                )
+                        )
+                        .count();
+
+        long resolved =
+                masterTicketData.stream()
+                        .filter(
+                                ticket ->
+                                        "RESOLVED"
+                                                .equalsIgnoreCase(
+                                                        safe(
+                                                                ticket.getStatus()
+                                                        )
+                                                )
+                        )
+                        .count();
+
+        totalTicketsLabel.setText(
+                String.valueOf(total)
+        );
+
+        openTicketsLabel.setText(
+                String.valueOf(open)
+        );
+
+        inReviewTicketsLabel.setText(
+                String.valueOf(inReview)
+        );
+
+        resolvedTicketsLabel.setText(
+                String.valueOf(resolved)
+        );
+
+        updateCategoryChart();
+
+        updateStatusChart();
     }
 
-    private void updateBarChart() {
+    // ============================================================
+    // DYNAMIC CATEGORY CHART
+    // ============================================================
+
+    private void updateCategoryChart() {
+
+        if (categoryChart == null) {
+            return;
+        }
+
         categoryChart.getData().clear();
 
-        long billing = masterTicketData.stream().filter(t -> "Billing Dispute".equalsIgnoreCase(t.getCategory())).count();
-        long provider = masterTicketData.stream().filter(t -> "Provider Misconduct".equalsIgnoreCase(t.getCategory())).count();
-        long rx = masterTicketData.stream().filter(t -> "Prescription Issue".equalsIgnoreCase(t.getCategory())).count();
-        long bug = masterTicketData.stream().filter(t -> "Platform Bug".equalsIgnoreCase(t.getCategory())).count();
+        if (
+                masterTicketData == null ||
+                masterTicketData.isEmpty()
+        ) {
+            return;
+        }
 
-        XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.getData().add(new XYChart.Data<>("Billing", billing));
-        series.getData().add(new XYChart.Data<>("Provider", provider));
-        series.getData().add(new XYChart.Data<>("Rx Issue", rx));
-        series.getData().add(new XYChart.Data<>("Platform", bug));
+        Map<String, Long> categoryCounts =
+                masterTicketData.stream()
+                        .collect(
+                                Collectors.groupingBy(
+                                        ticket -> {
 
-        categoryChart.getData().add(series);
-    }
+                                            String category =
+                                                    safe(
+                                                            ticket.getCategory()
+                                                    ).trim();
 
-    private void showTicketDetailsModal(ComplaintModel ticket) {
-        Alert dialog = new Alert(Alert.AlertType.INFORMATION);
-        dialog.setTitle("Ticket Moderation Inspection");
-        dialog.setHeaderText("Ticket Details: " + ticket.getTicketId() + " [" + ticket.getPriority() + " PRIORITY]");
+                                            return category.isEmpty()
+                                                    ? "Uncategorized"
+                                                    : category;
+                                        },
+                                        Collectors.counting()
+                                )
+                        );
 
-        dialog.setContentText(
-            "Category: " + ticket.getCategory() + "\n" +
-            "Issue: " + ticket.getIssueTitle() + "\n" +
-            "Complainant: " + ticket.getComplainant() + "\n" +
-            "Filed Date: " + ticket.getCreatedDate() + "\n" +
-            "Current Status: " + ticket.getStatus() + "\n\n" +
-            "Complaint Summary:\n" + ticket.getDescription() + "\n\n" +
-            "Moderation Actions:\n" +
-            "• Checked logs: Session ID #SESS-9921 verification completed.\n" +
-            "• Resolution Path: Payment gateway refund or doctor reassignment."
+        XYChart.Series<String, Number> series =
+                new XYChart.Series<>();
+
+        categoryCounts.entrySet()
+                .stream()
+                .sorted(
+                        Map.Entry.<String, Long>comparingByValue()
+                                .reversed()
+                )
+                .forEach(
+                        entry ->
+                                series.getData().add(
+                                        new XYChart.Data<>(
+                                                entry.getKey(),
+                                                entry.getValue()
+                                        )
+                                )
+                );
+
+        categoryChart.getData().add(
+                series
         );
-        dialog.showAndWait();
     }
+
+    // ============================================================
+    // DYNAMIC STATUS CHART
+    // ============================================================
+
+    private void updateStatusChart() {
+
+        if (statusChart == null) {
+            return;
+        }
+
+        statusChart.getData().clear();
+
+        if (
+                masterTicketData == null ||
+                masterTicketData.isEmpty()
+        ) {
+            return;
+        }
+
+        Map<String, Long> statusCounts =
+                masterTicketData.stream()
+                        .collect(
+                                Collectors.groupingBy(
+                                        ticket -> {
+
+                                            String status =
+                                                    safe(
+                                                            ticket.getStatus()
+                                                    ).trim();
+
+                                            return status.isEmpty()
+                                                    ? "UNKNOWN"
+                                                    : status;
+                                        },
+                                        Collectors.counting()
+                                )
+                        );
+
+        statusCounts.forEach(
+                (status, count) ->
+                        statusChart.getData().add(
+                                new PieChart.Data(
+                                        status,
+                                        count
+                                )
+                        )
+        );
+    }
+
+    private void updateEmptyAnalytics() {
+
+        if (totalTicketsLabel != null) {
+            totalTicketsLabel.setText("0");
+        }
+
+        if (openTicketsLabel != null) {
+            openTicketsLabel.setText("0");
+        }
+
+        if (inReviewTicketsLabel != null) {
+            inReviewTicketsLabel.setText("0");
+        }
+
+        if (resolvedTicketsLabel != null) {
+            resolvedTicketsLabel.setText("0");
+        }
+
+        if (categoryChart != null) {
+            categoryChart.getData().clear();
+        }
+
+        if (statusChart != null) {
+            statusChart.getData().clear();
+        }
+    }
+
+    // ============================================================
+    // CHANGE STATUS
+    // ============================================================
+
+    private void changeTicketStatus(
+            ComplaintModel ticket) {
+
+        String currentStatus =
+                safe(
+                        ticket.getStatus()
+                );
+
+        String newStatus;
+
+        if (
+                "OPEN".equalsIgnoreCase(
+                        currentStatus
+                )
+        ) {
+
+            newStatus =
+                    "IN_REVIEW";
+
+        } else if (
+                "IN_REVIEW".equalsIgnoreCase(
+                        currentStatus
+                )
+        ) {
+
+            newStatus =
+                    "RESOLVED";
+
+        } else {
+
+            newStatus =
+                    "OPEN";
+        }
+
+        try {
+
+            boolean success =
+                    moderationController
+                            .updateComplaintStatus(
+                                    ticket.getTicketId(),
+                                    newStatus
+                            );
+
+            if (!success) {
+
+                showError(
+                        "Update Failed",
+                        "Unable to update ticket status."
+                );
+
+                return;
+            }
+
+            ticket.setStatus(
+                    newStatus
+            );
+
+            ticketTable.refresh();
+
+            recalculateStats();
+
+            showInfo(
+                    "Status Updated",
+                    "Ticket "
+                            + ticket.getTicketId()
+                            + " is now "
+                            + newStatus
+                            + "."
+            );
+
+        } catch (Exception e) {
+
+            showError(
+                    "Update Failed",
+                    e.getMessage()
+            );
+        }
+    }
+
+    // ============================================================
+    // TICKET DETAILS
+    // ============================================================
+
+    private void showTicketDetailsModal(
+            ComplaintModel ticket) {
+
+        Dialog<ButtonType> dialog =
+                new Dialog<>();
+
+        dialog.setTitle(
+                "Moderation Inspection"
+        );
+
+        dialog.setHeaderText(
+                "Ticket: "
+                        + safe(
+                                ticket.getTicketId()
+                        )
+        );
+
+        Label details =
+                new Label(
+                        "Ticket ID: "
+                                + safe(
+                                        ticket.getTicketId()
+                                )
+                                + "\n\nCategory: "
+                                + safe(
+                                        ticket.getCategory()
+                                )
+                                + "\n\nIssue: "
+                                + safe(
+                                        ticket.getIssueTitle()
+                                )
+                                + "\n\nDescription:\n"
+                                + safe(
+                                        ticket.getDescription()
+                                )
+                                + "\n\nComplainant: "
+                                + safe(
+                                        ticket.getComplainant()
+                                )
+                                + "\n\nPriority: "
+                                + safe(
+                                        ticket.getPriority()
+                                )
+                                + "\n\nStatus: "
+                                + safe(
+                                        ticket.getStatus()
+                                )
+                                + "\n\nCreated Date: "
+                                + safe(
+                                        ticket.getCreatedDate()
+                                )
+                );
+
+        details.setWrapText(
+                true
+        );
+
+        details.setMaxWidth(
+                550
+        );
+
+        details.setPadding(
+                new Insets(10)
+        );
+
+        ButtonType closeButton =
+                new ButtonType(
+                        "Close",
+                        ButtonBar.ButtonData.CANCEL_CLOSE
+                );
+
+        ButtonType deleteButton =
+                new ButtonType(
+                        "Delete Ticket",
+                        ButtonBar.ButtonData.LEFT
+                );
+
+        dialog.getDialogPane()
+                .setContent(
+                        details
+                );
+
+        dialog.getDialogPane()
+                .getButtonTypes()
+                .addAll(
+                        deleteButton,
+                        closeButton
+                );
+
+        dialog.setResultConverter(
+                buttonType ->
+                        buttonType
+        );
+
+        dialog.showAndWait()
+                .ifPresent(
+                        result -> {
+
+                            if (
+                                    result == deleteButton
+                            ) {
+
+                                deleteTicket(
+                                        ticket
+                                );
+                            }
+                        }
+                );
+    }
+
+    // ============================================================
+    // DELETE TICKET
+    // ============================================================
+
+    private void deleteTicket(
+            ComplaintModel ticket) {
+
+        Alert confirmation =
+                new Alert(
+                        Alert.AlertType.CONFIRMATION
+                );
+
+        confirmation.setTitle(
+                "Delete Complaint"
+        );
+
+        confirmation.setHeaderText(
+                "Delete ticket "
+                        + ticket.getTicketId()
+                        + "?"
+        );
+
+        confirmation.setContentText(
+                "This will permanently remove the complaint from Firestore."
+        );
+
+        confirmation.showAndWait()
+                .ifPresent(
+                        result -> {
+
+                            if (
+                                    result
+                                            == ButtonType.OK
+                            ) {
+
+                                try {
+
+                                    boolean success =
+                                            moderationController
+                                                    .deleteComplaint(
+                                                            ticket.getTicketId()
+                                                    );
+
+                                    if (!success) {
+
+                                        showError(
+                                                "Delete Failed",
+                                                "Unable to delete complaint."
+                                        );
+
+                                        return;
+                                    }
+
+                                    masterTicketData.remove(
+                                            ticket
+                                    );
+
+                                    recalculateStats();
+
+                                    showInfo(
+                                            "Deleted",
+                                            "Ticket "
+                                                    + ticket.getTicketId()
+                                                    + " has been deleted."
+                                    );
+
+                                } catch (Exception e) {
+
+                                    showError(
+                                            "Delete Failed",
+                                            e.getMessage()
+                                    );
+                                }
+                            }
+                        }
+                );
+    }
+
+    // ============================================================
+    // CREATE INTERNAL TICKET
+    // ============================================================
 
     private void showCreateTicketModal() {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("File Internal Moderation Ticket");
-        dialog.setHeaderText("Create new Complaint / Support Ticket");
-        dialog.setContentText("Enter Issue Title:");
 
-        dialog.showAndWait().ifPresent(title -> {
-            if (!title.trim().isEmpty()) {
-                String newId = "TKT-" + (8800 + masterTicketData.size() + 1);
-                String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        Dialog<ButtonType> dialog =
+                new Dialog<>();
 
-                ComplaintModel newTicket = new ComplaintModel(newId, "Platform Bug", title, "Internal ticket created by Admin desk.", "Admin Desk", "MEDIUM", "OPEN", now);
-                masterTicketData.add(0, newTicket);
-                recalculateStats();
-                showInfo("Ticket Created", "New ticket " + newId + " has been added to the moderation queue.");
-            }
-        });
+        dialog.setTitle(
+                "Create Internal Complaint"
+        );
+
+        dialog.setHeaderText(
+                "File a new moderation ticket"
+        );
+
+        GridPane form =
+                new GridPane();
+
+        form.setHgap(10);
+        form.setVgap(12);
+        form.setPadding(
+                new Insets(10)
+        );
+
+        TextField issueTitleField =
+                new TextField();
+
+        issueTitleField.setPromptText(
+                "Issue title"
+        );
+
+        ComboBox<String> categoryBox =
+                new ComboBox<>();
+
+        categoryBox.setEditable(
+                true
+        );
+
+        categoryBox.getItems().addAll(
+                "Billing Dispute",
+                "Doctor Misbehavior",
+                "Provider Misconduct",
+                "Prescription Issue",
+                "App Bug",
+                "Fake Profile",
+                "Platform Bug"
+        );
+
+        TextArea descriptionArea =
+                new TextArea();
+
+        descriptionArea.setPromptText(
+                "Complaint description"
+        );
+
+        descriptionArea.setPrefRowCount(
+                4
+        );
+
+        TextField complainantField =
+                new TextField();
+
+        complainantField.setPromptText(
+                "Complainant"
+        );
+
+        ComboBox<String> priorityBox =
+                new ComboBox<>();
+
+        priorityBox.getItems().addAll(
+                "LOW",
+                "MEDIUM",
+                "HIGH",
+                "CRITICAL"
+        );
+
+        priorityBox.setValue(
+                "MEDIUM"
+        );
+
+        form.add(
+                new Label("Issue Title:"),
+                0,
+                0
+        );
+
+        form.add(
+                issueTitleField,
+                1,
+                0
+        );
+
+        form.add(
+                new Label("Category:"),
+                0,
+                1
+        );
+
+        form.add(
+                categoryBox,
+                1,
+                1
+        );
+
+        form.add(
+                new Label("Description:"),
+                0,
+                2
+        );
+
+        form.add(
+                descriptionArea,
+                1,
+                2
+        );
+
+        form.add(
+                new Label("Complainant:"),
+                0,
+                3
+        );
+
+        form.add(
+                complainantField,
+                1,
+                3
+        );
+
+        form.add(
+                new Label("Priority:"),
+                0,
+                4
+        );
+
+        form.add(
+                priorityBox,
+                1,
+                4
+        );
+
+        ButtonType createButton =
+                new ButtonType(
+                        "Create",
+                        ButtonBar.ButtonData.OK_DONE
+                );
+
+        ButtonType cancelButton =
+                new ButtonType(
+                        "Cancel",
+                        ButtonBar.ButtonData.CANCEL_CLOSE
+                );
+
+        dialog.getDialogPane()
+                .setContent(
+                        form
+                );
+
+        dialog.getDialogPane()
+                .getButtonTypes()
+                .addAll(
+                        createButton,
+                        cancelButton
+                );
+
+        dialog.showAndWait()
+                .ifPresent(
+                        result -> {
+
+                            if (
+                                    result == createButton
+                            ) {
+
+                                createComplaint(
+                                        issueTitleField.getText(),
+                                        categoryBox.getValue(),
+                                        descriptionArea.getText(),
+                                        complainantField.getText(),
+                                        priorityBox.getValue()
+                                );
+                            }
+                        }
+                );
     }
 
-    private void showInfo(String title, String content) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
+    private void createComplaint(
+            String issueTitle,
+            String category,
+            String description,
+            String complainant,
+            String priority) {
+
+        if (
+                issueTitle == null ||
+                issueTitle.trim().isEmpty()
+        ) {
+
+            showError(
+                    "Invalid Input",
+                    "Issue title is required."
+            );
+
+            return;
+        }
+
+        if (
+                category == null ||
+                category.trim().isEmpty()
+        ) {
+
+            showError(
+                    "Invalid Input",
+                    "Category is required."
+            );
+
+            return;
+        }
+
+        String ticketId =
+                "TKT-"
+                        + System.currentTimeMillis();
+
+        String createdDate =
+                LocalDateTime.now()
+                        .format(
+                                DATE_FORMATTER
+                        );
+
+        ComplaintModel complaint =
+                new ComplaintModel(
+                        ticketId,
+                        category.trim(),
+                        issueTitle.trim(),
+                        safe(description).trim(),
+                        safe(complainant).trim(),
+                        priority == null
+                                ? "MEDIUM"
+                                : priority,
+                        "OPEN",
+                        createdDate
+                );
+
+        try {
+
+            boolean success =
+                    moderationController
+                            .createComplaint(
+                                    complaint
+                            );
+
+            if (!success) {
+
+                showError(
+                        "Creation Failed",
+                        "Unable to create complaint."
+                );
+
+                return;
+            }
+
+            masterTicketData.add(
+                    0,
+                    complaint
+            );
+
+            populateFilters();
+
+            recalculateStats();
+
+            showInfo(
+                    "Ticket Created",
+                    "Ticket "
+                            + ticketId
+                            + " has been created successfully."
+            );
+
+        } catch (Exception e) {
+
+            showError(
+                    "Creation Failed",
+                    e.getMessage()
+            );
+        }
+    }
+
+    // ============================================================
+    // EXPORT ACTUAL FIRESTORE DATA
+    // ============================================================
+
+    private void exportComplaints() {
+
+        if (
+                masterTicketData == null ||
+                masterTicketData.isEmpty()
+        ) {
+
+            showInfo(
+                    "Nothing to Export",
+                    "There are no complaints available."
+            );
+
+            return;
+        }
+
+        FileChooser fileChooser =
+                new FileChooser();
+
+        fileChooser.setTitle(
+                "Export Complaint Report"
+        );
+
+        fileChooser.setInitialFileName(
+                "complaints-report.csv"
+        );
+
+        fileChooser.getExtensionFilters()
+                .add(
+                        new FileChooser.ExtensionFilter(
+                                "CSV Files",
+                                "*.csv"
+                        )
+                );
+
+        File file =
+                fileChooser.showSaveDialog(
+                        stage
+                );
+
+        if (file == null) {
+            return;
+        }
+
+        try (
+                FileWriter writer =
+                        new FileWriter(file)
+        ) {
+
+            writer.append(
+                    "Ticket ID,Category,Issue Title,Description,"
+                            + "Complainant,Priority,Status,Created Date\n"
+            );
+
+            for (
+                    ComplaintModel ticket :
+                    masterTicketData
+            ) {
+
+                writer.append(
+                        csv(ticket.getTicketId())
+                );
+
+                writer.append(",");
+
+                writer.append(
+                        csv(ticket.getCategory())
+                );
+
+                writer.append(",");
+
+                writer.append(
+                        csv(ticket.getIssueTitle())
+                );
+
+                writer.append(",");
+
+                writer.append(
+                        csv(ticket.getDescription())
+                );
+
+                writer.append(",");
+
+                writer.append(
+                        csv(ticket.getComplainant())
+                );
+
+                writer.append(",");
+
+                writer.append(
+                        csv(ticket.getPriority())
+                );
+
+                writer.append(",");
+
+                writer.append(
+                        csv(ticket.getStatus())
+                );
+
+                writer.append(",");
+
+                writer.append(
+                        csv(ticket.getCreatedDate())
+                );
+
+                writer.append("\n");
+            }
+
+            writer.flush();
+
+            showInfo(
+                    "Export Successful",
+                    "Complaint report exported successfully."
+            );
+
+        } catch (Exception e) {
+
+            showError(
+                    "Export Failed",
+                    e.getMessage()
+            );
+        }
+    }
+
+    private String csv(
+            String value) {
+
+        String safeValue =
+                safe(value)
+                        .replace(
+                                "\"",
+                                "\"\""
+                        );
+
+        return "\"" + safeValue + "\"";
+    }
+
+    // ============================================================
+    // HELPERS
+    // ============================================================
+
+    private String safe(
+            String value) {
+
+        return value == null
+                ? ""
+                : value;
+    }
+
+    private void showInfo(
+            String title,
+            String message) {
+
+        Alert alert =
+                new Alert(
+                        Alert.AlertType.INFORMATION
+                );
+
+        alert.setTitle(
+                title
+        );
+
+        alert.setHeaderText(
+                null
+        );
+
+        alert.setContentText(
+                message
+        );
+
         alert.showAndWait();
     }
 
-    // ------------------------------------------------------------------------
-    // DATA MODEL CLASS
-    // ------------------------------------------------------------------------
+    private void showError(
+            String title,
+            String message) {
 
-    public static class ComplaintModel {
-        private final String ticketId;
-        private final String category;
-        private final String issueTitle;
-        private final String description;
-        private final String complainant;
-        private final String priority;
-        private String status;
-        private final String createdDate;
+        Alert alert =
+                new Alert(
+                        Alert.AlertType.ERROR
+                );
 
-        public ComplaintModel(String ticketId, String category, String issueTitle, String description, String complainant, String priority, String status, String createdDate) {
-            this.ticketId = ticketId;
-            this.category = category;
-            this.issueTitle = issueTitle;
-            this.description = description;
-            this.complainant = complainant;
-            this.priority = priority;
-            this.status = status;
-            this.createdDate = createdDate;
-        }
+        alert.setTitle(
+                title
+        );
 
-        public String getTicketId() { return ticketId; }
-        public String getCategory() { return category; }
-        public String getIssueTitle() { return issueTitle; }
-        public String getDescription() { return description; }
-        public String getComplainant() { return complainant; }
-        public String getPriority() { return priority; }
-        public String getStatus() { return status; }
-        public void setStatus(String status) { this.status = status; }
-        public String getCreatedDate() { return createdDate; }
+        alert.setHeaderText(
+                null
+        );
+
+        alert.setContentText(
+                message == null ||
+                        message.trim().isEmpty()
+                        ? "An unexpected error occurred."
+                        : message
+        );
+
+        alert.showAndWait();
     }
 }

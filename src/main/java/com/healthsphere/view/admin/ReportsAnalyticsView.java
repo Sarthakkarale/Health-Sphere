@@ -1,7 +1,8 @@
 package com.healthsphere.view.admin;
 
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import com.healthsphere.controller.admin.ModerationController;
+import com.healthsphere.model.ComplaintModel;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -9,631 +10,2206 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.chart.*;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.PieChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ReportsAnalyticsView extends ScrollPane {
 
+    // ============================================================
+    // CONTROLLER
+    // ============================================================
+
+    private final ModerationController moderationController;
+
     private Stage primaryStage;
-    private TableView<ReportModel> reportTable;
-    private ObservableList<ReportModel> masterReportData;
-    private FilteredList<ReportModel> filteredData;
+
+    // ============================================================
+    // TABLE DATA
+    // ============================================================
+
+    private TableView<ComplaintModel> reportTable;
+
+    private ObservableList<ComplaintModel> masterReportData;
+
+    private FilteredList<ComplaintModel> filteredData;
+
+    // ============================================================
+    // KPI LABELS
+    // ============================================================
 
     private Label openTicketsLabel;
     private Label resolvedTicketsLabel;
+    private Label inReviewTicketsLabel;
     private Label avgSlaLabel;
-    
-    private LineChart<String, Number> activityLineChart;
+
+    // ============================================================
+    // CHARTS
+    // ============================================================
+
+    private BarChart<String, Number> statusBarChart;
+
     private PieChart categoryPieChart;
+
+    // ============================================================
+    // CONSTRUCTOR
+    // ============================================================
 
     public ReportsAnalyticsView() {
         this(null);
     }
 
     public ReportsAnalyticsView(Stage stage) {
+
         this.primaryStage = stage;
 
+        this.moderationController =
+                new ModerationController();
+
         setFitToWidth(true);
-        setStyle("-fx-background-color: #F8FAFC; -fx-background: #F8FAFC;");
 
-        VBox mainContainer = new VBox(25);
-        mainContainer.setPadding(new Insets(30));
-        mainContainer.setStyle("-fx-background-color: #F8FAFC;");
+        setStyle(
+                "-fx-background-color: #F8FAFC;" +
+                "-fx-background: #F8FAFC;" +
+                "-fx-border-color: transparent;"
+        );
 
-        // Safely encode CSS Data URI for modern JavaFX compatibility
-        try {
-            String cssData = getLightThemeCSS();
-            String encodedCss = URLEncoder.encode(cssData, StandardCharsets.UTF_8).replace("+", "%20");
-            this.getStylesheets().add("data:text/css," + encodedCss);
-        } catch (Exception e) {
-            System.err.println("Failed to load inline CSS stylesheet: " + e.getMessage());
-        }
+        VBox mainContainer =
+                new VBox(24);
 
-        // 1. Header Section
-        VBox header = createHeader();
+        mainContainer.setPadding(
+                new Insets(30)
+        );
 
-        // 2. Metrics & Dual Chart BI Telemetry Section
-        VBox biSection = createBITelemetrySection();
+        mainContainer.setStyle(
+                "-fx-background-color: #F8FAFC;"
+        );
 
-        // 3. Search & Category Filters
-        HBox filterBar = createFilterBar();
+        // ========================================================
+        // HEADER
+        // ========================================================
 
-        // 4. Data Table Container
-        VBox tableContainer = createTableContainer();
+        VBox header =
+                createHeader();
 
-        mainContainer.getChildren().addAll(header, biSection, filterBar, tableContainer);
+        // ========================================================
+        // KPI + CHARTS
+        // ========================================================
+
+        VBox analyticsSection =
+                createAnalyticsSection();
+
+        // ========================================================
+        // FILTER BAR
+        // ========================================================
+
+        HBox filterBar =
+                createFilterBar();
+
+        // ========================================================
+        // TABLE
+        // ========================================================
+
+        VBox tableContainer =
+                createTableContainer();
+
+        mainContainer.getChildren().addAll(
+                header,
+                analyticsSection,
+                filterBar,
+                tableContainer
+        );
+
         setContent(mainContainer);
 
-        // Load Initial Data
+        // ========================================================
+        // LOAD FIRESTORE DATA
+        // ========================================================
+
         loadReportData();
     }
+
+    // ============================================================
+    // VIEW
+    // ============================================================
 
     public Parent getView() {
         return this;
     }
 
-    // Renamed from getScene() to createScene() to avoid overriding Node.getScene()
     public Scene createScene() {
         return new Scene(this);
     }
 
+    // ============================================================
+    // HEADER
+    // ============================================================
+
     private VBox createHeader() {
-        VBox header = new VBox(6);
-        Label title = new Label("Reports, Moderation & Telemetry BI");
-        title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 26));
-        title.setTextFill(Color.web("#0F172A"));
 
-        Label subtitle = new Label("Monitor platform disputes, automated AI anomaly flags, medical malpractice inquiries, and support velocity.");
-        subtitle.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 14));
-        subtitle.setTextFill(Color.web("#64748B"));
+        VBox header =
+                new VBox(6);
 
-        header.getChildren().addAll(title, subtitle);
+        Label title =
+                new Label(
+                        "Reports, Moderation & Telemetry BI"
+                );
+
+        title.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        26
+                )
+        );
+
+        title.setTextFill(
+                Color.web("#0F172A")
+        );
+
+        Label subtitle =
+                new Label(
+                        "Live moderation analytics powered by Firestore complaint data."
+                );
+
+        subtitle.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.NORMAL,
+                        14
+                )
+        );
+
+        subtitle.setTextFill(
+                Color.web("#64748B")
+        );
+
+        header.getChildren().addAll(
+                title,
+                subtitle
+        );
+
         return header;
     }
 
-    private VBox createBITelemetrySection() {
-        VBox section = new VBox(20);
+    // ============================================================
+    // ANALYTICS SECTION
+    // ============================================================
 
-        HBox statsRow = new HBox(20);
-        statsRow.setAlignment(Pos.CENTER);
+    private VBox createAnalyticsSection() {
 
-        openTicketsLabel = new Label("00");
-        resolvedTicketsLabel = new Label("0");
-        avgSlaLabel = new Label("1.8 Hours");
+        VBox section =
+                new VBox(20);
 
-        VBox openCard = createStatCard("Active Incidents", openTicketsLabel, "⚡ 2 Critical Escalations", "#DC2626", "#FEF2F2");
-        VBox resolvedCard = createStatCard("Resolved Tickets", resolvedTicketsLabel, "✓ 94.8% SLA Clearance Rate", "#059669", "#ECFDF5");
-        VBox slaCard = createStatCard("Avg Resolution Velocity", avgSlaLabel, "⏱ -14 mins improvement w/o/w", "#4F46E5", "#EEF2FF");
+        // ========================================================
+        // KPI ROW
+        // ========================================================
 
-        HBox.setHgrow(openCard, Priority.ALWAYS);
-        HBox.setHgrow(resolvedCard, Priority.ALWAYS);
-        HBox.setHgrow(slaCard, Priority.ALWAYS);
+        HBox statsRow =
+                new HBox(20);
 
-        statsRow.getChildren().addAll(openCard, resolvedCard, slaCard);
+        statsRow.setAlignment(
+                Pos.CENTER
+        );
 
-        HBox chartsRow = new HBox(20);
+        openTicketsLabel =
+                new Label("0");
 
-        VBox lineChartCard = createCardContainer();
-        HBox.setHgrow(lineChartCard, Priority.ALWAYS);
+        resolvedTicketsLabel =
+                new Label("0");
 
-        Label lineTitle = new Label("Incident Influx vs Resolution Velocity");
-        lineTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 15));
-        lineTitle.setTextFill(Color.web("#0F172A"));
+        inReviewTicketsLabel =
+                new Label("0");
 
-        CategoryAxis xAxis = new CategoryAxis();
-        NumberAxis yAxis = new NumberAxis();
-        xAxis.setTickLabelFill(Color.web("#64748B"));
-        yAxis.setTickLabelFill(Color.web("#64748B"));
+        avgSlaLabel =
+                new Label("N/A");
 
-        activityLineChart = new LineChart<>(xAxis, yAxis);
-        activityLineChart.setPrefHeight(220);
-        activityLineChart.setLegendVisible(true);
-        activityLineChart.setAnimated(true);
+        VBox openCard =
+                createStatCard(
+                        "Open Tickets",
+                        openTicketsLabel,
+                        "Requires moderation action",
+                        "#DC2626",
+                        "#FEF2F2"
+                );
 
-        lineChartCard.getChildren().addAll(lineTitle, activityLineChart);
+        VBox resolvedCard =
+                createStatCard(
+                        "Resolved Tickets",
+                        resolvedTicketsLabel,
+                        "Completed complaints",
+                        "#059669",
+                        "#ECFDF5"
+                );
 
-        VBox pieChartCard = createCardContainer();
-        pieChartCard.setMinWidth(360);
+        VBox reviewCard =
+                createStatCard(
+                        "In Review",
+                        inReviewTicketsLabel,
+                        "Currently under investigation",
+                        "#D97706",
+                        "#FFFBEB"
+                );
 
-        Label pieTitle = new Label("Category Breakdown");
-        pieTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 15));
-        pieTitle.setTextFill(Color.web("#0F172A"));
+        VBox avgCard =
+                createStatCard(
+                        "Resolution Time",
+                        avgSlaLabel,
+                        "Available when resolution timestamps exist",
+                        "#4F46E5",
+                        "#EEF2FF"
+                );
 
-        categoryPieChart = new PieChart();
-        categoryPieChart.setPrefHeight(220);
-        categoryPieChart.setLegendVisible(false);
-        categoryPieChart.setLabelsVisible(true);
+        HBox.setHgrow(
+                openCard,
+                Priority.ALWAYS
+        );
 
-        pieChartCard.getChildren().addAll(pieTitle, categoryPieChart);
+        HBox.setHgrow(
+                resolvedCard,
+                Priority.ALWAYS
+        );
 
-        chartsRow.getChildren().addAll(lineChartCard, pieChartCard);
+        HBox.setHgrow(
+                reviewCard,
+                Priority.ALWAYS
+        );
 
-        section.getChildren().addAll(statsRow, chartsRow);
+        HBox.setHgrow(
+                avgCard,
+                Priority.ALWAYS
+        );
+
+        statsRow.getChildren().addAll(
+                openCard,
+                resolvedCard,
+                reviewCard,
+                avgCard
+        );
+
+        // ========================================================
+        // CHART ROW
+        // ========================================================
+
+        HBox chartsRow =
+                new HBox(20);
+
+        // ========================================================
+        // STATUS BAR CHART
+        // ========================================================
+
+        VBox statusChartCard =
+                createCardContainer();
+
+        HBox.setHgrow(
+                statusChartCard,
+                Priority.ALWAYS
+        );
+
+        Label statusTitle =
+                new Label(
+                        "Live Ticket Status"
+                );
+
+        statusTitle.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        15
+                )
+        );
+
+        statusTitle.setTextFill(
+                Color.web("#0F172A")
+        );
+
+        CategoryAxis xAxis =
+                new CategoryAxis();
+
+        NumberAxis yAxis =
+                new NumberAxis();
+
+        yAxis.setLabel(
+                "Tickets"
+        );
+
+        statusBarChart =
+                new BarChart<>(
+                        xAxis,
+                        yAxis
+                );
+
+        statusBarChart.setPrefHeight(
+                240
+        );
+
+        statusBarChart.setLegendVisible(
+                false
+        );
+
+        statusBarChart.setAnimated(
+                false
+        );
+
+        statusChartCard.getChildren().addAll(
+                statusTitle,
+                statusBarChart
+        );
+
+        // ========================================================
+        // CATEGORY PIE CHART
+        // ========================================================
+
+        VBox pieChartCard =
+                createCardContainer();
+
+        pieChartCard.setMinWidth(
+                400
+        );
+
+        Label pieTitle =
+                new Label(
+                        "Live Category Breakdown"
+                );
+
+        pieTitle.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        15
+                )
+        );
+
+        pieTitle.setTextFill(
+                Color.web("#0F172A")
+        );
+
+        categoryPieChart =
+                new PieChart();
+
+        categoryPieChart.setPrefHeight(
+                240
+        );
+
+        categoryPieChart.setLegendVisible(
+                true
+        );
+
+        categoryPieChart.setLabelsVisible(
+                true
+        );
+
+        categoryPieChart.setAnimated(
+                false
+        );
+
+        pieChartCard.getChildren().addAll(
+                pieTitle,
+                categoryPieChart
+        );
+
+        chartsRow.getChildren().addAll(
+                statusChartCard,
+                pieChartCard
+        );
+
+        section.getChildren().addAll(
+                statsRow,
+                chartsRow
+        );
+
         return section;
     }
 
-    private VBox createStatCard(String title, Label valueLabel, String subtext, String accentColor, String bgGlow) {
-        VBox card = new VBox(8);
-        card.setPadding(new Insets(18));
-        card.setStyle(
-            "-fx-background-color: " + bgGlow + "; " +
-            "-fx-background-radius: 12px; " +
-            "-fx-border-color: " + accentColor + "33; " +
-            "-fx-border-radius: 12px; " +
-            "-fx-border-width: 1px;"
+    // ============================================================
+    // STAT CARD
+    // ============================================================
+
+    private VBox createStatCard(
+            String title,
+            Label valueLabel,
+            String subtext,
+            String accentColor,
+            String backgroundColor) {
+
+        VBox card =
+                new VBox(8);
+
+        card.setPadding(
+                new Insets(18)
         );
 
-        Label titleLabel = new Label(title);
-        titleLabel.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 13));
-        titleLabel.setTextFill(Color.web("#64748B"));
+        card.setStyle(
+                "-fx-background-color: "
+                        + backgroundColor
+                        + ";" +
+                "-fx-background-radius: 12px;" +
+                "-fx-border-color: "
+                        + accentColor
+                        + "55;" +
+                "-fx-border-radius: 12px;" +
+                "-fx-border-width: 1px;"
+        );
 
-        valueLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 26));
-        valueLabel.setTextFill(Color.web("#0F172A"));
+        Label titleLabel =
+                new Label(title);
 
-        Label subLabel = new Label(subtext);
-        subLabel.setFont(Font.font("Segoe UI", FontWeight.MEDIUM, 11));
-        subLabel.setTextFill(Color.web(accentColor));
+        titleLabel.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.SEMI_BOLD,
+                        13
+                )
+        );
 
-        card.getChildren().addAll(titleLabel, valueLabel, subLabel);
+        titleLabel.setTextFill(
+                Color.web("#64748B")
+        );
+
+        valueLabel.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        26
+                )
+        );
+
+        valueLabel.setTextFill(
+                Color.web("#0F172A")
+        );
+
+        Label subLabel =
+                new Label(subtext);
+
+        subLabel.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.NORMAL,
+                        11
+                )
+        );
+
+        subLabel.setWrapText(true);
+
+        subLabel.setTextFill(
+                Color.web(accentColor)
+        );
+
+        card.getChildren().addAll(
+                titleLabel,
+                valueLabel,
+                subLabel
+        );
+
         return card;
     }
+
+    // ============================================================
+    // CARD
+    // ============================================================
 
     private VBox createCardContainer() {
-        VBox card = new VBox(12);
-        card.setPadding(new Insets(18));
-        card.setStyle(
-            "-fx-background-color: #FFFFFF; " +
-            "-fx-background-radius: 12px; " +
-            "-fx-border-color: #E2E8F0; " +
-            "-fx-border-radius: 12px;"
+
+        VBox card =
+                new VBox(12);
+
+        card.setPadding(
+                new Insets(18)
         );
+
+        card.setStyle(
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 12px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 12px;"
+        );
+
         return card;
     }
 
+    // ============================================================
+    // FILTER BAR
+    // ============================================================
+
     private HBox createFilterBar() {
-        HBox bar = new HBox(15);
-        bar.setAlignment(Pos.CENTER_LEFT);
-        bar.setPadding(new Insets(15));
+
+        HBox bar =
+                new HBox(15);
+
+        bar.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        bar.setPadding(
+                new Insets(15)
+        );
+
         bar.setStyle(
-            "-fx-background-color: #FFFFFF; " +
-            "-fx-background-radius: 10px; " +
-            "-fx-border-color: #E2E8F0; " +
-            "-fx-border-radius: 10px;"
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 10px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 10px;"
         );
 
-        TextField searchInput = new TextField();
-        searchInput.setPromptText("🔍 Search Ticket ID, Reporter, or Keyword...");
-        searchInput.setPrefWidth(320);
+        // ========================================================
+        // SEARCH
+        // ========================================================
+
+        TextField searchInput =
+                new TextField();
+
+        searchInput.setPromptText(
+                "🔍 Search Ticket ID, Complainant, Issue..."
+        );
+
+        searchInput.setPrefWidth(
+                330
+        );
+
         searchInput.setStyle(
-            "-fx-background-color: #F8FAFC; " +
-            "-fx-text-fill: #0F172A; " +
-            "-fx-border-color: #CBD5E1; " +
-            "-fx-border-radius: 6px; " +
-            "-fx-padding: 8px 12px;"
+                "-fx-background-color: #F8FAFC;" +
+                "-fx-text-fill: #0F172A;" +
+                "-fx-border-color: #CBD5E1;" +
+                "-fx-border-radius: 6px;" +
+                "-fx-padding: 8px 12px;"
         );
 
-        ComboBox<String> categoryFilter = new ComboBox<>();
-        categoryFilter.getItems().addAll("All Categories", "Billing Dispute", "Doctor Misbehavior", "App Bug", "Fake Profile");
-        categoryFilter.setValue("All Categories");
-        categoryFilter.setStyle("-fx-background-color: #F8FAFC; -fx-mark-color: #0F172A; -fx-border-color: #CBD5E1; -fx-border-radius: 6px;");
+        // ========================================================
+        // CATEGORY
+        // ========================================================
 
-        ComboBox<String> statusFilter = new ComboBox<>();
-        statusFilter.getItems().addAll("All Status", "OPEN", "IN_REVIEW", "RESOLVED");
-        statusFilter.setValue("All Status");
-        statusFilter.setStyle("-fx-background-color: #F8FAFC; -fx-mark-color: #0F172A; -fx-border-color: #CBD5E1; -fx-border-radius: 6px;");
+        ComboBox<String> categoryFilter =
+                new ComboBox<>();
 
-        Runnable applyFilter = () -> {
-            String query = searchInput.getText().toLowerCase().trim();
-            String cat = categoryFilter.getValue();
-            String status = statusFilter.getValue();
+        categoryFilter.getItems().addAll(
+                "All Categories",
+                "Billing Dispute",
+                "Provider Misconduct",
+                "Prescription Issue",
+                "Platform Bug"
+        );
 
-            filteredData.setPredicate(rep -> {
-                boolean matchesQuery = query.isEmpty() ||
-                        rep.getTicketId().toLowerCase().contains(query) ||
-                        rep.getReporterName().toLowerCase().contains(query) ||
-                        rep.getSubject().toLowerCase().contains(query);
+        categoryFilter.setValue(
+                "All Categories"
+        );
 
-                boolean matchesCat = "All Categories".equals(cat) || rep.getCategory().equalsIgnoreCase(cat);
-                boolean matchesStatus = "All Status".equals(status) || rep.getStatus().equalsIgnoreCase(status);
+        // ========================================================
+        // STATUS
+        // ========================================================
 
-                return matchesQuery && matchesCat && matchesStatus;
-            });
-        };
+        ComboBox<String> statusFilter =
+                new ComboBox<>();
 
-        searchInput.textProperty().addListener((obs, oldVal, newVal) -> applyFilter.run());
-        categoryFilter.valueProperty().addListener((obs, oldVal, newVal) -> applyFilter.run());
-        statusFilter.valueProperty().addListener((obs, oldVal, newVal) -> applyFilter.run());
+        statusFilter.getItems().addAll(
+                "All Status",
+                "OPEN",
+                "IN_REVIEW",
+                "RESOLVED"
+        );
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        statusFilter.setValue(
+                "All Status"
+        );
 
-        Button exportBtn = new Button("📥 Export BI Audit Trail");
-        exportBtn.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
+        // ========================================================
+        // FILTER FUNCTION
+        // ========================================================
+
+        Runnable applyFilter =
+                () -> {
+
+                    if (filteredData == null) {
+                        return;
+                    }
+
+                    String query =
+                            safe(
+                                    searchInput.getText()
+                            )
+                            .toLowerCase()
+                            .trim();
+
+                    String category =
+                            categoryFilter.getValue();
+
+                    String status =
+                            statusFilter.getValue();
+
+                    filteredData.setPredicate(
+                            complaint -> {
+
+                                String ticketId =
+                                        safe(
+                                                complaint.getTicketId()
+                                        );
+
+                                String complainant =
+                                        safe(
+                                                complaint.getComplainant()
+                                        );
+
+                                String issue =
+                                        safe(
+                                                complaint.getIssueTitle()
+                                        );
+
+                                String categoryValue =
+                                        safe(
+                                                complaint.getCategory()
+                                        );
+
+                                boolean matchesSearch =
+                                        query.isEmpty()
+                                        ||
+                                        ticketId
+                                                .toLowerCase()
+                                                .contains(query)
+                                        ||
+                                        complainant
+                                                .toLowerCase()
+                                                .contains(query)
+                                        ||
+                                        issue
+                                                .toLowerCase()
+                                                .contains(query)
+                                        ||
+                                        categoryValue
+                                                .toLowerCase()
+                                                .contains(query);
+
+                                boolean matchesCategory =
+                                        "All Categories"
+                                                .equals(category)
+                                        ||
+                                        categoryValue
+                                                .equalsIgnoreCase(
+                                                        category
+                                                );
+
+                                boolean matchesStatus =
+                                        "All Status"
+                                                .equals(status)
+                                        ||
+                                        safe(
+                                                complaint.getStatus()
+                                        )
+                                                .equalsIgnoreCase(
+                                                        status
+                                                );
+
+                                return matchesSearch
+                                        && matchesCategory
+                                        && matchesStatus;
+                            }
+                    );
+                };
+
+        searchInput.textProperty()
+                .addListener(
+                        (obs, oldValue, newValue) ->
+                                applyFilter.run()
+                );
+
+        categoryFilter.valueProperty()
+                .addListener(
+                        (obs, oldValue, newValue) ->
+                                applyFilter.run()
+                );
+
+        statusFilter.valueProperty()
+                .addListener(
+                        (obs, oldValue, newValue) ->
+                                applyFilter.run()
+                );
+
+        // ========================================================
+        // SPACER
+        // ========================================================
+
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        // ========================================================
+        // REFRESH
+        // ========================================================
+
+        Button refreshBtn =
+                new Button(
+                        "↻ Refresh Data"
+                );
+
+        refreshBtn.setStyle(
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-text-fill: #334155;" +
+                "-fx-border-color: #CBD5E1;" +
+                "-fx-border-radius: 6px;" +
+                "-fx-background-radius: 6px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-padding: 8px 14px;" +
+                "-fx-cursor: hand;"
+        );
+
+        refreshBtn.setOnAction(
+                e -> loadReportData()
+        );
+
+        // ========================================================
+        // EXPORT
+        // ========================================================
+
+        Button exportBtn =
+                new Button(
+                        "📥 Export BI Audit Trail"
+                );
+
+        exportBtn.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        13
+                )
+        );
+
         exportBtn.setStyle(
-            "-fx-background-color: #4F46E5; " +
-            "-fx-text-fill: white; " +
-            "-fx-background-radius: 6px; " +
-            "-fx-padding: 8px 16px; " +
-            "-fx-cursor: hand;"
+                "-fx-background-color: #4F46E5;" +
+                "-fx-text-fill: white;" +
+                "-fx-background-radius: 6px;" +
+                "-fx-padding: 8px 16px;" +
+                "-fx-cursor: hand;"
         );
-        exportBtn.setOnAction(e -> showExportConfirmation());
 
-        bar.getChildren().addAll(searchInput, categoryFilter, statusFilter, spacer, exportBtn);
+        exportBtn.setOnAction(
+                e -> exportAuditTrail()
+        );
+
+        bar.getChildren().addAll(
+                searchInput,
+                categoryFilter,
+                statusFilter,
+                spacer,
+                refreshBtn,
+                exportBtn
+        );
+
         return bar;
     }
 
+    // ============================================================
+    // TABLE
+    // ============================================================
+
     private VBox createTableContainer() {
-        VBox container = new VBox();
-        container.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 12px; -fx-border-color: #E2E8F0; -fx-border-radius: 12px;");
 
-        reportTable = new TableView<>();
-        reportTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        reportTable.setPrefHeight(420);
+        VBox container =
+                new VBox();
 
-        // Column 1: Ticket & Reporter
-        TableColumn<ReportModel, String> idCol = new TableColumn<>("Incident / Reporter");
-        idCol.setCellValueFactory(data -> data.getValue().ticketIdProperty());
-        idCol.setCellFactory(col -> new TableCell<>() {
-            @Override
-            protected void updateItem(String id, boolean empty) {
-                super.updateItem(id, empty);
-                if (empty || id == null) {
-                    setGraphic(null);
-                    setText(null);
-                } else {
-                    ReportModel rep = getTableRow() != null ? getTableRow().getItem() : null;
-                    if (rep == null) {
-                        setGraphic(null);
+        container.setStyle(
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 12px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 12px;"
+        );
+
+        reportTable =
+                new TableView<>();
+
+        reportTable.setColumnResizePolicy(
+                TableView.CONSTRAINED_RESIZE_POLICY
+        );
+
+        reportTable.setPrefHeight(
+                430
+        );
+
+        // ========================================================
+        // TICKET / COMPLAINANT
+        // ========================================================
+
+        TableColumn<ComplaintModel, String> ticketCol =
+                new TableColumn<>(
+                        "Incident / Complainant"
+                );
+
+        ticketCol.setCellValueFactory(
+                data ->
+                        new javafx.beans.property.SimpleStringProperty(
+                                safe(
+                                        data.getValue()
+                                                .getTicketId()
+                                )
+                        )
+        );
+
+        ticketCol.setCellFactory(
+                col -> new TableCell<>() {
+
+                    @Override
+                    protected void updateItem(
+                            String ticketId,
+                            boolean empty) {
+
+                        super.updateItem(
+                                ticketId,
+                                empty
+                        );
+
+                        if (
+                                empty ||
+                                ticketId == null
+                        ) {
+
+                            setGraphic(null);
+                            setText(null);
+                            return;
+                        }
+
+                        ComplaintModel complaint =
+                                getTableRow()
+                                        .getItem();
+
+                        if (complaint == null) {
+                            setGraphic(null);
+                            setText(null);
+                            return;
+                        }
+
+                        HBox box =
+                                new HBox(10);
+
+                        box.setAlignment(
+                                Pos.CENTER_LEFT
+                        );
+
+                        StackPane badge =
+                                createComplaintBadge(
+                                        complaint.getPriority()
+                                );
+
+                        VBox text =
+                                new VBox(2);
+
+                        Label idLabel =
+                                new Label(
+                                        ticketId
+                                                + " • "
+                                                + safe(
+                                                        complaint
+                                                                .getCategory()
+                                                )
+                                );
+
+                        idLabel.setFont(
+                                Font.font(
+                                        "Segoe UI",
+                                        FontWeight.BOLD,
+                                        13
+                                )
+                        );
+
+                        idLabel.setTextFill(
+                                Color.web("#0F172A")
+                        );
+
+                        Label complainantLabel =
+                                new Label(
+                                        "By: "
+                                                + safe(
+                                                        complaint
+                                                                .getComplainant()
+                                                )
+                                );
+
+                        complainantLabel.setFont(
+                                Font.font(
+                                        "Segoe UI",
+                                        FontWeight.NORMAL,
+                                        11
+                                )
+                        );
+
+                        complainantLabel.setTextFill(
+                                Color.web("#64748B")
+                        );
+
+                        text.getChildren().addAll(
+                                idLabel,
+                                complainantLabel
+                        );
+
+                        box.getChildren().addAll(
+                                badge,
+                                text
+                        );
+
+                        setGraphic(box);
                         setText(null);
-                        return;
                     }
-                    HBox box = new HBox(12);
-                    box.setAlignment(Pos.CENTER_LEFT);
-
-                    StackPane icon = createReportBadge(rep.getPriority());
-
-                    VBox textContainer = new VBox(2);
-                    Label idLbl = new Label(id + " • " + rep.getCategory());
-                    idLbl.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
-                    idLbl.setTextFill(Color.web("#0F172A"));
-
-                    Label repLbl = new Label("By: " + rep.getReporterName() + " (" + rep.getReporterRole() + ")");
-                    repLbl.setFont(Font.font("Segoe UI", FontWeight.NORMAL, 11));
-                    repLbl.setTextFill(Color.web("#64748B"));
-
-                    textContainer.getChildren().addAll(idLbl, repLbl);
-                    box.getChildren().addAll(icon, textContainer);
-                    setGraphic(box);
-                    setText(null);
                 }
-            }
-        });
+        );
 
-        // Column 2: Subject
-        TableColumn<ReportModel, String> subjectCol = new TableColumn<>("Incident Summary");
-        subjectCol.setCellValueFactory(data -> data.getValue().subjectProperty());
-        subjectCol.setCellFactory(col -> new TableCell<>() {
-            @Override
-            protected void updateItem(String subj, boolean empty) {
-                super.updateItem(subj, empty);
-                setGraphic(null);
-                if (empty || subj == null) {
-                    setText(null);
-                } else {
-                    setText(subj);
-                    setTextFill(Color.web("#334155"));
-                    setFont(Font.font("Segoe UI", FontWeight.NORMAL, 12));
-                }
-            }
-        });
+        // ========================================================
+        // ISSUE
+        // ========================================================
 
-        // Column 3: Priority
-        TableColumn<ReportModel, String> priorityCol = new TableColumn<>("Priority");
-        priorityCol.setCellValueFactory(data -> data.getValue().priorityProperty());
-        priorityCol.setCellFactory(col -> new TableCell<>() {
-            @Override
-            protected void updateItem(String prio, boolean empty) {
-                super.updateItem(prio, empty);
-                setText(null);
-                if (empty || prio == null) {
-                    setGraphic(null);
-                } else {
-                    Label badge = new Label(prio);
-                    badge.setPadding(new Insets(4, 10, 4, 10));
-                    badge.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
+        TableColumn<ComplaintModel, String> issueCol =
+                new TableColumn<>(
+                        "Incident Summary"
+                );
 
-                    switch (prio.toUpperCase()) {
-                        case "CRITICAL" -> badge.setStyle("-fx-background-color: #FFE4E6; -fx-text-fill: #9F1239; -fx-background-radius: 20px;");
-                        case "HIGH" -> badge.setStyle("-fx-background-color: #FFEDD5; -fx-text-fill: #9A3412; -fx-background-radius: 20px;");
-                        default -> badge.setStyle("-fx-background-color: #F1F5F9; -fx-text-fill: #475569; -fx-background-radius: 20px;");
+        issueCol.setCellValueFactory(
+                data ->
+                        new javafx.beans.property.SimpleStringProperty(
+                                safe(
+                                        data.getValue()
+                                                .getIssueTitle()
+                                )
+                        )
+        );
+
+        issueCol.setCellFactory(
+                col -> new TableCell<>() {
+
+                    @Override
+                    protected void updateItem(
+                            String issue,
+                            boolean empty) {
+
+                        super.updateItem(
+                                issue,
+                                empty
+                        );
+
+                        if (
+                                empty ||
+                                issue == null
+                        ) {
+
+                            setText(null);
+                            return;
+                        }
+
+                        setText(issue);
+
+                        setTextFill(
+                                Color.web("#334155")
+                        );
+
+                        setFont(
+                                Font.font(
+                                        "Segoe UI",
+                                        FontWeight.NORMAL,
+                                        12
+                                )
+                        );
                     }
-                    setGraphic(badge);
                 }
-            }
-        });
+        );
 
-        // Column 4: Status
-        TableColumn<ReportModel, String> statusCol = new TableColumn<>("Status");
-        statusCol.setCellValueFactory(data -> data.getValue().statusProperty());
-        statusCol.setCellFactory(col -> new TableCell<>() {
-            @Override
-            protected void updateItem(String status, boolean empty) {
-                super.updateItem(status, empty);
-                setText(null);
-                if (empty || status == null) {
-                    setGraphic(null);
-                } else {
-                    Label badge = new Label(status);
-                    badge.setPadding(new Insets(4, 10, 4, 10));
-                    badge.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
+        // ========================================================
+        // PRIORITY
+        // ========================================================
 
-                    switch (status.toUpperCase()) {
-                        case "RESOLVED" -> badge.setStyle("-fx-background-color: #D1FAE5; -fx-text-fill: #065F46; -fx-background-radius: 6px;");
-                        case "IN_REVIEW" -> badge.setStyle("-fx-background-color: #FEF3C7; -fx-text-fill: #92400E; -fx-background-radius: 6px;");
-                        default -> badge.setStyle("-fx-background-color: #FEE2E2; -fx-text-fill: #991B1B; -fx-background-radius: 6px;");
+        TableColumn<ComplaintModel, String> priorityCol =
+                new TableColumn<>(
+                        "Priority"
+                );
+
+        priorityCol.setCellValueFactory(
+                data ->
+                        new javafx.beans.property.SimpleStringProperty(
+                                safe(
+                                        data.getValue()
+                                                .getPriority()
+                                )
+                        )
+        );
+
+        priorityCol.setCellFactory(
+                col -> new TableCell<>() {
+
+                    @Override
+                    protected void updateItem(
+                            String priority,
+                            boolean empty) {
+
+                        super.updateItem(
+                                priority,
+                                empty
+                        );
+
+                        setText(null);
+
+                        if (
+                                empty ||
+                                priority == null
+                        ) {
+
+                            setGraphic(null);
+                            return;
+                        }
+
+                        Label badge =
+                                new Label(priority);
+
+                        badge.setPadding(
+                                new Insets(
+                                        4,
+                                        10,
+                                        4,
+                                        10
+                                )
+                        );
+
+                        badge.setFont(
+                                Font.font(
+                                        "Segoe UI",
+                                        FontWeight.BOLD,
+                                        11
+                                )
+                        );
+
+                        if (
+                                "CRITICAL"
+                                        .equalsIgnoreCase(priority)
+                        ) {
+
+                            badge.setStyle(
+                                    "-fx-background-color: #FFE4E6;" +
+                                    "-fx-text-fill: #9F1239;" +
+                                    "-fx-background-radius: 20px;"
+                            );
+
+                        } else if (
+                                "HIGH"
+                                        .equalsIgnoreCase(priority)
+                        ) {
+
+                            badge.setStyle(
+                                    "-fx-background-color: #FFEDD5;" +
+                                    "-fx-text-fill: #9A3412;" +
+                                    "-fx-background-radius: 20px;"
+                            );
+
+                        } else if (
+                                "MEDIUM"
+                                        .equalsIgnoreCase(priority)
+                        ) {
+
+                            badge.setStyle(
+                                    "-fx-background-color: #FEF3C7;" +
+                                    "-fx-text-fill: #92400E;" +
+                                    "-fx-background-radius: 20px;"
+                            );
+
+                        } else {
+
+                            badge.setStyle(
+                                    "-fx-background-color: #F1F5F9;" +
+                                    "-fx-text-fill: #475569;" +
+                                    "-fx-background-radius: 20px;"
+                            );
+                        }
+
+                        setGraphic(badge);
                     }
-                    setGraphic(badge);
                 }
-            }
-        });
+        );
 
-        // Column 5: Moderation Workflow Actions
-        TableColumn<ReportModel, Void> actionCol = new TableColumn<>("Moderation Action");
-        actionCol.setCellFactory(col -> new TableCell<>() {
-            private final Button inspectBtn = new Button("🔍 Investigate");
-            private final Button resolveBtn = new Button("✓ Resolve");
-            private final HBox btnGroup = new HBox(8, inspectBtn, resolveBtn);
+        // ========================================================
+        // STATUS
+        // ========================================================
 
-            {
-                btnGroup.setAlignment(Pos.CENTER);
-                inspectBtn.setStyle("-fx-background-color: #E2E8F0; -fx-text-fill: #1E293B; -fx-cursor: hand; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 5px 10px; -fx-background-radius: 4px;");
-                resolveBtn.setStyle("-fx-background-color: #059669; -fx-text-fill: #FFFFFF; -fx-cursor: hand; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 5px 10px; -fx-background-radius: 4px;");
+        TableColumn<ComplaintModel, String> statusCol =
+                new TableColumn<>(
+                        "Status"
+                );
 
-                inspectBtn.setOnAction(e -> {
-                    ReportModel rep = getTableRow() != null ? getTableRow().getItem() : null;
-                    if (rep != null) {
-                        showAdvancedInvestigationModal(rep);
+        statusCol.setCellValueFactory(
+                data ->
+                        new javafx.beans.property.SimpleStringProperty(
+                                safe(
+                                        data.getValue()
+                                                .getStatus()
+                                )
+                        )
+        );
+
+        statusCol.setCellFactory(
+                col -> new TableCell<>() {
+
+                    @Override
+                    protected void updateItem(
+                            String status,
+                            boolean empty) {
+
+                        super.updateItem(
+                                status,
+                                empty
+                        );
+
+                        setText(null);
+
+                        if (
+                                empty ||
+                                status == null
+                        ) {
+
+                            setGraphic(null);
+                            return;
+                        }
+
+                        Label badge =
+                                new Label(status);
+
+                        badge.setPadding(
+                                new Insets(
+                                        4,
+                                        10,
+                                        4,
+                                        10
+                                )
+                        );
+
+                        badge.setFont(
+                                Font.font(
+                                        "Segoe UI",
+                                        FontWeight.BOLD,
+                                        11
+                                )
+                        );
+
+                        if (
+                                "RESOLVED"
+                                        .equalsIgnoreCase(status)
+                        ) {
+
+                            badge.setStyle(
+                                    "-fx-background-color: #D1FAE5;" +
+                                    "-fx-text-fill: #065F46;" +
+                                    "-fx-background-radius: 6px;"
+                            );
+
+                        } else if (
+                                "IN_REVIEW"
+                                        .equalsIgnoreCase(status)
+                        ) {
+
+                            badge.setStyle(
+                                    "-fx-background-color: #FEF3C7;" +
+                                    "-fx-text-fill: #92400E;" +
+                                    "-fx-background-radius: 6px;"
+                            );
+
+                        } else {
+
+                            badge.setStyle(
+                                    "-fx-background-color: #FEE2E2;" +
+                                    "-fx-text-fill: #991B1B;" +
+                                    "-fx-background-radius: 6px;"
+                            );
+                        }
+
+                        setGraphic(badge);
                     }
-                });
-
-                resolveBtn.setOnAction(e -> {
-                    ReportModel rep = getTableRow() != null ? getTableRow().getItem() : null;
-                    if (rep != null) {
-                        rep.setStatus("RESOLVED");
-                        updateAnalyticsAndCharts();
-                    }
-                });
-            }
-
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(null);
-                if (empty) {
-                    setGraphic(null);
-                } else {
-                    setGraphic(btnGroup);
                 }
-            }
-        });
+        );
 
-        reportTable.getColumns().addAll(idCol, subjectCol, priorityCol, statusCol, actionCol);
-        container.getChildren().add(reportTable);
+        // ========================================================
+        // ACTIONS
+        // ========================================================
+
+        TableColumn<ComplaintModel, Void> actionCol =
+                new TableColumn<>(
+                        "Moderation Action"
+                );
+
+        actionCol.setCellFactory(
+                col -> new TableCell<>() {
+
+                    private final Button inspectBtn =
+                            new Button(
+                                    "🔍 Investigate"
+                            );
+
+                    private final Button actionBtn =
+                            new Button();
+
+                    private final HBox group =
+                            new HBox(
+                                    8,
+                                    inspectBtn,
+                                    actionBtn
+                            );
+
+                    {
+
+                        group.setAlignment(
+                                Pos.CENTER
+                        );
+
+                        inspectBtn.setStyle(
+                                "-fx-background-color: #E2E8F0;" +
+                                "-fx-text-fill: #1E293B;" +
+                                "-fx-cursor: hand;" +
+                                "-fx-font-size: 11px;" +
+                                "-fx-font-weight: bold;" +
+                                "-fx-padding: 5px 10px;" +
+                                "-fx-background-radius: 4px;"
+                        );
+
+                        inspectBtn.setOnAction(
+                                e -> {
+
+                                    ComplaintModel complaint =
+                                            getTableRow()
+                                                    .getItem();
+
+                                    if (complaint != null) {
+
+                                        showInvestigationModal(
+                                                complaint
+                                        );
+                                    }
+                                }
+                        );
+
+                        actionBtn.setOnAction(
+                                e -> {
+
+                                    ComplaintModel complaint =
+                                            getTableRow()
+                                                    .getItem();
+
+                                    if (complaint == null) {
+                                        return;
+                                    }
+
+                                    updateTicketStatus(
+                                            complaint
+                                    );
+                                }
+                        );
+                    }
+
+                    @Override
+                    protected void updateItem(
+                            Void item,
+                            boolean empty) {
+
+                        super.updateItem(
+                                item,
+                                empty
+                        );
+
+                        setText(null);
+
+                        if (empty) {
+
+                            setGraphic(null);
+
+                            return;
+                        }
+
+                        ComplaintModel complaint =
+                                getTableRow()
+                                        .getItem();
+
+                        if (complaint == null) {
+
+                            setGraphic(null);
+
+                            return;
+                        }
+
+                        String status =
+                                safe(
+                                        complaint.getStatus()
+                                );
+
+                        if (
+                                "OPEN"
+                                        .equalsIgnoreCase(status)
+                        ) {
+
+                            actionBtn.setText(
+                                    "✓ Review"
+                            );
+
+                            actionBtn.setStyle(
+                                    "-fx-background-color: #D97706;" +
+                                    "-fx-text-fill: white;" +
+                                    "-fx-font-weight: bold;" +
+                                    "-fx-padding: 5px 10px;" +
+                                    "-fx-background-radius: 4px;" +
+                                    "-fx-cursor: hand;"
+                            );
+
+                        } else if (
+                                "IN_REVIEW"
+                                        .equalsIgnoreCase(status)
+                        ) {
+
+                            actionBtn.setText(
+                                    "✓ Resolve"
+                            );
+
+                            actionBtn.setStyle(
+                                    "-fx-background-color: #059669;" +
+                                    "-fx-text-fill: white;" +
+                                    "-fx-font-weight: bold;" +
+                                    "-fx-padding: 5px 10px;" +
+                                    "-fx-background-radius: 4px;" +
+                                    "-fx-cursor: hand;"
+                            );
+
+                        } else {
+
+                            actionBtn.setText(
+                                    "↻ Re-open"
+                            );
+
+                            actionBtn.setStyle(
+                                    "-fx-background-color: #4F46E5;" +
+                                    "-fx-text-fill: white;" +
+                                    "-fx-font-weight: bold;" +
+                                    "-fx-padding: 5px 10px;" +
+                                    "-fx-background-radius: 4px;" +
+                                    "-fx-cursor: hand;"
+                            );
+                        }
+
+                        setGraphic(group);
+                    }
+                }
+        );
+
+        reportTable.getColumns().addAll(
+                ticketCol,
+                issueCol,
+                priorityCol,
+                statusCol,
+                actionCol
+        );
+
+        container.getChildren().add(
+                reportTable
+        );
+
         return container;
     }
 
-    private StackPane createReportBadge(String priority) {
-        Circle circle = new Circle(15);
-        if ("CRITICAL".equalsIgnoreCase(priority)) {
-            circle.setFill(Color.web("#FFE4E6"));
-            circle.setStroke(Color.web("#F43F5E"));
+    // ============================================================
+    // BADGE
+    // ============================================================
+
+    private StackPane createComplaintBadge(
+            String priority) {
+
+        Circle circle =
+                new Circle(15);
+
+        String firstLetter =
+                priority == null ||
+                priority.isEmpty()
+                        ? "?"
+                        : priority.substring(
+                                0,
+                                1
+                        );
+
+        if (
+                "CRITICAL"
+                        .equalsIgnoreCase(priority)
+        ) {
+
+            circle.setFill(
+                    Color.web("#FFE4E6")
+            );
+
+            circle.setStroke(
+                    Color.web("#F43F5E")
+            );
+
+        } else if (
+                "HIGH"
+                        .equalsIgnoreCase(priority)
+        ) {
+
+            circle.setFill(
+                    Color.web("#FFEDD5")
+            );
+
+            circle.setStroke(
+                    Color.web("#F97316")
+            );
+
         } else {
-            circle.setFill(Color.web("#F1F5F9"));
-            circle.setStroke(Color.web("#94A3B8"));
+
+            circle.setFill(
+                    Color.web("#F1F5F9")
+            );
+
+            circle.setStroke(
+                    Color.web("#94A3B8")
+            );
         }
-        circle.setStrokeWidth(1.5);
 
-        Label label = new Label(priority != null && !priority.isEmpty() ? priority.substring(0, 1) : "?");
-        label.setFont(Font.font("Segoe UI", FontWeight.BOLD, 11));
-        label.setTextFill("CRITICAL".equalsIgnoreCase(priority) ? Color.web("#9F1239") : Color.web("#475569"));
+        circle.setStrokeWidth(
+                1.5
+        );
 
-        return new StackPane(circle, label);
+        Label label =
+                new Label(
+                        firstLetter
+                );
+
+        label.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        11
+                )
+        );
+
+        label.setTextFill(
+                Color.web("#475569")
+        );
+
+        return new StackPane(
+                circle,
+                label
+        );
     }
+
+    // ============================================================
+    // FIRESTORE LOAD
+    // ============================================================
 
     private void loadReportData() {
-        masterReportData = FXCollections.observableArrayList(
-            new ReportModel("TKT-901", "Ananya Verma", "PATIENT", "Billing Dispute", "Incorrect consultation fee charged during online appointment", "CRITICAL", "OPEN", "2026-08-10"),
-            new ReportModel("TKT-902", "Saurabh Deshmukh", "PATIENT", "Doctor Misbehavior", "Doctor arrived 40 mins late without prior notice", "HIGH", "IN_REVIEW", "2026-08-09"),
-            new ReportModel("TKT-903", "Dr. Rajesh Sharma", "DOCTOR", "App Bug", "Prescription PDF download button unresponsive on Mobile Web", "LOW", "OPEN", "2026-08-11"),
-            new ReportModel("TKT-904", "Vikram Malhotra", "PATIENT", "Fake Profile", "Suspected unverified profile claiming to be specialist", "CRITICAL", "IN_REVIEW", "2026-08-08"),
-            new ReportModel("TKT-905", "Dr. Priya Nair", "DOCTOR", "Billing Dispute", "Hospital payout delayed for July consultation cycle", "HIGH", "RESOLVED", "2026-08-01")
-        );
 
-        filteredData = new FilteredList<>(masterReportData, p -> true);
-        reportTable.setItems(filteredData);
+        try {
 
-        updateAnalyticsAndCharts();
-        loadStaticActivityLineChart();
+            List<ComplaintModel> complaints =
+                    moderationController
+                            .getAllComplaints();
+
+            if (complaints == null) {
+
+                complaints =
+                        java.util.Collections.emptyList();
+            }
+
+            masterReportData =
+                    FXCollections.observableArrayList(
+                            complaints
+                    );
+
+            filteredData =
+                    new FilteredList<>(
+                            masterReportData,
+                            complaint -> true
+                    );
+
+            reportTable.setItems(
+                    filteredData
+            );
+
+            updateAnalyticsAndCharts();
+
+        } catch (Exception e) {
+
+            masterReportData =
+                    FXCollections.observableArrayList();
+
+            filteredData =
+                    new FilteredList<>(
+                            masterReportData,
+                            complaint -> true
+                    );
+
+            reportTable.setItems(
+                    filteredData
+            );
+
+            showError(
+                    "Firestore Error",
+                    "Unable to load moderation data.\n\n"
+                            + safe(e.getMessage())
+            );
+        }
     }
+
+    // ============================================================
+    // ANALYTICS
+    // ============================================================
 
     private void updateAnalyticsAndCharts() {
-        long openCount = masterReportData.stream().filter(r -> !r.getStatus().equalsIgnoreCase("RESOLVED")).count();
-        long resolvedCount = masterReportData.stream().filter(r -> r.getStatus().equalsIgnoreCase("RESOLVED")).count();
 
-        openTicketsLabel.setText(String.format("%02d", openCount));
-        resolvedTicketsLabel.setText(String.valueOf(342 + resolvedCount));
-
-        // Dynamically compute category distribution from active table data
-        Map<String, Long> categoryCounts = masterReportData.stream()
-                .collect(Collectors.groupingBy(ReportModel::getCategory, Collectors.counting()));
-
-        ObservableList<PieChart.Data> pieData = FXCollections.observableArrayList();
-        categoryCounts.forEach((cat, count) -> pieData.add(new PieChart.Data(cat, count)));
-        categoryPieChart.setData(pieData);
-    }
-
-    private void loadStaticActivityLineChart() {
-        XYChart.Series<String, Number> seriesOpened = new XYChart.Series<>();
-        seriesOpened.setName("Tickets Opened");
-        seriesOpened.getData().add(new XYChart.Data<>("May", 45));
-        seriesOpened.getData().add(new XYChart.Data<>("Jun", 52));
-        seriesOpened.getData().add(new XYChart.Data<>("Jul", 38));
-        seriesOpened.getData().add(new XYChart.Data<>("Aug", 24));
-
-        XYChart.Series<String, Number> seriesResolved = new XYChart.Series<>();
-        seriesResolved.setName("Tickets Resolved");
-        seriesResolved.getData().add(new XYChart.Data<>("May", 42));
-        seriesResolved.getData().add(new XYChart.Data<>("Jun", 50));
-        seriesResolved.getData().add(new XYChart.Data<>("Jul", 40));
-        seriesResolved.getData().add(new XYChart.Data<>("Aug", 22));
-
-        activityLineChart.getData().clear();
-        activityLineChart.getData().addAll(seriesOpened, seriesResolved);
-    }
-
-    private void showAdvancedInvestigationModal(ReportModel rep) {
-        Alert dialog = new Alert(Alert.AlertType.CONFIRMATION);
-        dialog.setTitle("HealthSphere Incident Intelligence Console");
-        dialog.setHeaderText("Incident File: " + rep.getTicketId() + " (" + rep.getCategory() + ")");
-
-        String content = String.format(
-            "👤 Reporter: %s [%s]\n" +
-            "📌 Subject: %s\n" +
-            "⚡ Escalation Priority: %s\n" +
-            "📅 Date Logged: %s\n\n" +
-            "--- AI TELEMETRY & AUDIT TRAIL ---\n" +
-            "• Anomaly Score: 0.88 (High Risk Flag)\n" +
-            "• Video/Chat Log Telemetry: Encrypted Chat Session #9921 Attached\n" +
-            "• Transaction Reference: TXN_881920_GATEWAY (Razorpay)\n\n" +
-            "Select Moderation Action below:",
-            rep.getReporterName(), rep.getReporterRole(), rep.getSubject(), rep.getPriority(), rep.getCreatedDate()
-        );
-
-        dialog.setContentText(content);
-
-        ButtonType refundBtn = new ButtonType("Issue Full Refund");
-        ButtonType warnBtn = new ButtonType("Issue Warning");
-        ButtonType dismissBtn = new ButtonType("Dismiss Case", ButtonBar.ButtonData.CANCEL_CLOSE);
-
-        dialog.getButtonTypes().setAll(refundBtn, warnBtn, dismissBtn);
-
-        dialog.showAndWait().ifPresent(type -> {
-            if (type == refundBtn) {
-                rep.setStatus("RESOLVED");
-                updateAnalyticsAndCharts();
-            } else if (type == warnBtn) {
-                rep.setStatus("IN_REVIEW");
-                updateAnalyticsAndCharts();
-            }
-        });
-    }
-
-    private void showExportConfirmation() {
-        Alert dialog = new Alert(Alert.AlertType.INFORMATION);
-        dialog.setTitle("BI Export System");
-        dialog.setHeaderText("Exporting Business Intelligence Audit Trail");
-        dialog.setContentText("Full platform BI telemetry log exported successfully to 'HealthSphere_BI_August2026.csv'.");
-        dialog.showAndWait();
-    }
-
-    private String getLightThemeCSS() {
-        return """
-            .table-view {
-                -fx-background-color: transparent;
-                -fx-base: #FFFFFF;
-                -fx-control-inner-background: #FFFFFF;
-                -fx-background-insets: 0;
-            }
-            .table-view .column-header-background {
-                -fx-background-color: #F8FAFC;
-            }
-            .table-view .column-header, .table-view .filler {
-                -fx-background-color: #F8FAFC;
-                -fx-border-color: #E2E8F0;
-                -fx-border-width: 0 0 1px 0;
-            }
-            .table-view .column-header .label {
-                -fx-text-fill: #64748B;
-                -fx-font-weight: bold;
-                -fx-alignment: CENTER-LEFT;
-            }
-            .table-row-cell {
-                -fx-background-color: #FFFFFF;
-                -fx-border-color: #F1F5F9;
-                -fx-border-width: 0 0 1px 0;
-            }
-            .table-row-cell:odd {
-                -fx-background-color: #F8FAFC;
-            }
-            .table-row-cell:selected {
-                -fx-background-color: #E2E8F0;
-            }
-            .scroll-bar:vertical, .scroll-bar:horizontal {
-                -fx-background-color: #F1F5F9;
-            }
-            .scroll-bar:vertical .thumb, .scroll-bar:horizontal .thumb {
-                -fx-background-color: #CBD5E1;
-                -fx-background-radius: 4px;
-            }
-            """;
-    }
-
-    // --- Inner Observable Model Class ---
-    public static class ReportModel {
-        private final StringProperty ticketId;
-        private final StringProperty reporterName;
-        private final StringProperty reporterRole;
-        private final StringProperty category;
-        private final StringProperty subject;
-        private final StringProperty priority;
-        private final StringProperty status;
-        private final StringProperty createdDate;
-
-        public ReportModel(String ticketId, String reporterName, String reporterRole, String category, String subject, String priority, String status, String createdDate) {
-            this.ticketId = new SimpleStringProperty(ticketId);
-            this.reporterName = new SimpleStringProperty(reporterName);
-            this.reporterRole = new SimpleStringProperty(reporterRole);
-            this.category = new SimpleStringProperty(category);
-            this.subject = new SimpleStringProperty(subject);
-            this.priority = new SimpleStringProperty(priority);
-            this.status = new SimpleStringProperty(status);
-            this.createdDate = new SimpleStringProperty(createdDate);
+        if (masterReportData == null) {
+            return;
         }
 
-        public String getTicketId() { return ticketId.get(); }
-        public StringProperty ticketIdProperty() { return ticketId; }
+        long openCount =
+                masterReportData.stream()
+                        .filter(
+                                complaint ->
+                                        "OPEN"
+                                                .equalsIgnoreCase(
+                                                        safe(
+                                                                complaint
+                                                                        .getStatus()
+                                                        )
+                                                )
+                        )
+                        .count();
 
-        public String getReporterName() { return reporterName.get(); }
-        public StringProperty reporterNameProperty() { return reporterName; }
+        long reviewCount =
+                masterReportData.stream()
+                        .filter(
+                                complaint ->
+                                        "IN_REVIEW"
+                                                .equalsIgnoreCase(
+                                                        safe(
+                                                                complaint
+                                                                        .getStatus()
+                                                        )
+                                                )
+                        )
+                        .count();
 
-        public String getReporterRole() { return reporterRole.get(); }
-        public StringProperty reporterRoleProperty() { return reporterRole; }
+        long resolvedCount =
+                masterReportData.stream()
+                        .filter(
+                                complaint ->
+                                        "RESOLVED"
+                                                .equalsIgnoreCase(
+                                                        safe(
+                                                                complaint
+                                                                        .getStatus()
+                                                        )
+                                                )
+                        )
+                        .count();
 
-        public String getCategory() { return category.get(); }
-        public StringProperty categoryProperty() { return category; }
+        // ========================================================
+        // KPI
+        // ========================================================
 
-        public String getSubject() { return subject.get(); }
-        public StringProperty subjectProperty() { return subject; }
+        openTicketsLabel.setText(
+                String.valueOf(openCount)
+        );
 
-        public String getPriority() { return priority.get(); }
-        public StringProperty priorityProperty() { return priority; }
+        resolvedTicketsLabel.setText(
+                String.valueOf(resolvedCount)
+        );
 
-        public String getStatus() { return status.get(); }
-        public StringProperty statusProperty() { return status; }
-        public void setStatus(String status) { this.status.set(status); }
+        inReviewTicketsLabel.setText(
+                String.valueOf(reviewCount)
+        );
 
-        public String getCreatedDate() { return createdDate.get(); }
-        public StringProperty createdDateProperty() { return createdDate; }
+        /*
+         * ComplaintModel currently provides createdDate,
+         * but no resolution timestamp.
+         *
+         * Therefore we deliberately DO NOT display a fake
+         * resolution time such as "1.8 Hours".
+         */
+
+        avgSlaLabel.setText(
+                "N/A"
+        );
+
+        // ========================================================
+        // UPDATE CHARTS
+        // ========================================================
+
+        updateStatusChart();
+
+        updateCategoryChart();
+    }
+
+    // ============================================================
+    // STATUS BAR CHART
+    // ============================================================
+
+    private void updateStatusChart() {
+
+        statusBarChart.getData().clear();
+
+        if (masterReportData == null) {
+            return;
+        }
+
+        long open =
+                masterReportData.stream()
+                        .filter(
+                                c ->
+                                        "OPEN"
+                                                .equalsIgnoreCase(
+                                                        safe(
+                                                                c.getStatus()
+                                                        )
+                                                )
+                        )
+                        .count();
+
+        long review =
+                masterReportData.stream()
+                        .filter(
+                                c ->
+                                        "IN_REVIEW"
+                                                .equalsIgnoreCase(
+                                                        safe(
+                                                                c.getStatus()
+                                                        )
+                                                )
+                        )
+                        .count();
+
+        long resolved =
+                masterReportData.stream()
+                        .filter(
+                                c ->
+                                        "RESOLVED"
+                                                .equalsIgnoreCase(
+                                                        safe(
+                                                                c.getStatus()
+                                                        )
+                                                )
+                        )
+                        .count();
+
+        XYChart.Series<String, Number> series =
+                new XYChart.Series<>();
+
+        series.setName(
+                "Complaints"
+        );
+
+        series.getData().add(
+                new XYChart.Data<>(
+                        "OPEN",
+                        open
+                )
+        );
+
+        series.getData().add(
+                new XYChart.Data<>(
+                        "IN REVIEW",
+                        review
+                )
+        );
+
+        series.getData().add(
+                new XYChart.Data<>(
+                        "RESOLVED",
+                        resolved
+                )
+        );
+
+        statusBarChart.getData().add(
+                series
+        );
+    }
+
+    // ============================================================
+    // CATEGORY PIE CHART
+    // ============================================================
+
+    private void updateCategoryChart() {
+
+        categoryPieChart.getData().clear();
+
+        if (masterReportData == null) {
+            return;
+        }
+
+        Map<String, Long> categoryCounts =
+                masterReportData.stream()
+                        .collect(
+                                Collectors.groupingBy(
+                                        complaint ->
+                                                safe(
+                                                        complaint
+                                                                .getCategory()
+                                                ).isEmpty()
+                                                        ? "Uncategorized"
+                                                        : safe(
+                                                                complaint
+                                                                        .getCategory()
+                                                        ),
+                                        Collectors.counting()
+                                )
+                        );
+
+        ObservableList<PieChart.Data> pieData =
+                FXCollections.observableArrayList();
+
+        categoryCounts.forEach(
+                (category, count) ->
+                        pieData.add(
+                                new PieChart.Data(
+                                        category,
+                                        count
+                                )
+                        )
+        );
+
+        categoryPieChart.setData(
+                pieData
+        );
+    }
+
+    // ============================================================
+    // UPDATE STATUS
+    // ============================================================
+
+    private void updateTicketStatus(
+            ComplaintModel complaint) {
+
+        String currentStatus =
+                safe(
+                        complaint.getStatus()
+                );
+
+        String newStatus;
+
+        if (
+                "OPEN"
+                        .equalsIgnoreCase(currentStatus)
+        ) {
+
+            newStatus =
+                    "IN_REVIEW";
+
+        } else if (
+                "IN_REVIEW"
+                        .equalsIgnoreCase(currentStatus)
+        ) {
+
+            newStatus =
+                    "RESOLVED";
+
+        } else {
+
+            newStatus =
+                    "OPEN";
+        }
+
+        try {
+
+            boolean success =
+                    moderationController
+                            .updateComplaintStatus(
+                                    complaint.getTicketId(),
+                                    newStatus
+                            );
+
+            if (success) {
+
+                complaint.setStatus(
+                        newStatus
+                );
+
+                reportTable.refresh();
+
+                updateAnalyticsAndCharts();
+
+            } else {
+
+                showError(
+                        "Update Failed",
+                        "Firestore could not update ticket status."
+                );
+            }
+
+        } catch (Exception e) {
+
+            showError(
+                    "Update Failed",
+                    safe(e.getMessage())
+            );
+        }
+    }
+
+    // ============================================================
+    // INVESTIGATION MODAL
+    // ============================================================
+
+    private void showInvestigationModal(
+            ComplaintModel complaint) {
+
+        Alert dialog =
+                new Alert(
+                        Alert.AlertType.CONFIRMATION
+                );
+
+        dialog.setTitle(
+                "HealthSphere Moderation Console"
+        );
+
+        dialog.setHeaderText(
+                "Ticket: "
+                        + safe(
+                                complaint.getTicketId()
+                        )
+                        + " | "
+                        + safe(
+                                complaint.getCategory()
+                        )
+        );
+
+        String content =
+                "Ticket ID: "
+                        + safe(
+                                complaint.getTicketId()
+                        )
+                        + "\n\n"
+
+                        + "Complainant: "
+                        + safe(
+                                complaint.getComplainant()
+                        )
+                        + "\n\n"
+
+                        + "Category: "
+                        + safe(
+                                complaint.getCategory()
+                        )
+                        + "\n\n"
+
+                        + "Issue: "
+                        + safe(
+                                complaint.getIssueTitle()
+                        )
+                        + "\n\n"
+
+                        + "Priority: "
+                        + safe(
+                                complaint.getPriority()
+                        )
+                        + "\n\n"
+
+                        + "Status: "
+                        + safe(
+                                complaint.getStatus()
+                        )
+                        + "\n\n"
+
+                        + "Created Date: "
+                        + safe(
+                                complaint.getCreatedDate()
+                        )
+                        + "\n\n"
+
+                        + "Description:\n"
+                        + safe(
+                                complaint.getDescription()
+                        );
+
+        dialog.setContentText(
+                content
+        );
+
+        ButtonType reviewBtn =
+                new ButtonType(
+                        "Move to Review"
+                );
+
+        ButtonType resolveBtn =
+                new ButtonType(
+                        "Resolve"
+                );
+
+        ButtonType closeBtn =
+                new ButtonType(
+                        "Close",
+                        ButtonBar.ButtonData.CANCEL_CLOSE
+                );
+
+        dialog.getButtonTypes().setAll(
+                reviewBtn,
+                resolveBtn,
+                closeBtn
+        );
+
+        dialog.showAndWait()
+                .ifPresent(
+                        button -> {
+
+                            if (
+                                    button == reviewBtn
+                            ) {
+
+                                setStatusFromModal(
+                                        complaint,
+                                        "IN_REVIEW"
+                                );
+
+                            } else if (
+                                    button == resolveBtn
+                            ) {
+
+                                setStatusFromModal(
+                                        complaint,
+                                        "RESOLVED"
+                                );
+                            }
+                        }
+                );
+    }
+
+    // ============================================================
+    // MODAL STATUS UPDATE
+    // ============================================================
+
+    private void setStatusFromModal(
+            ComplaintModel complaint,
+            String status) {
+
+        try {
+
+            boolean success =
+                    moderationController
+                            .updateComplaintStatus(
+                                    complaint.getTicketId(),
+                                    status
+                            );
+
+            if (success) {
+
+                complaint.setStatus(
+                        status
+                );
+
+                reportTable.refresh();
+
+                updateAnalyticsAndCharts();
+
+            } else {
+
+                showError(
+                        "Update Failed",
+                        "Unable to update ticket in Firestore."
+                );
+            }
+
+        } catch (Exception e) {
+
+            showError(
+                    "Update Failed",
+                    safe(e.getMessage())
+            );
+        }
+    }
+
+    // ============================================================
+    // EXPORT REAL DATA
+    // ============================================================
+
+    private void exportAuditTrail() {
+
+        if (
+                masterReportData == null ||
+                masterReportData.isEmpty()
+        ) {
+
+            showError(
+                    "Nothing to Export",
+                    "There are no complaint records available."
+            );
+
+            return;
+        }
+
+        FileChooser chooser =
+                new FileChooser();
+
+        chooser.setTitle(
+                "Export Moderation Audit Trail"
+        );
+
+        chooser.setInitialFileName(
+                "HealthSphere_Moderation_Audit.csv"
+        );
+
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter(
+                        "CSV Files",
+                        "*.csv"
+                )
+        );
+
+        File file =
+                chooser.showSaveDialog(
+                        primaryStage
+                );
+
+        if (file == null) {
+            return;
+        }
+
+        try (
+                PrintWriter writer =
+                        new PrintWriter(
+                                new FileWriter(file)
+                        )
+        ) {
+
+            writer.println(
+                    "Ticket ID,Complainant,Category,Issue,Priority,Status,Created Date"
+            );
+
+            for (
+                    ComplaintModel complaint :
+                    masterReportData
+            ) {
+
+                writer.println(
+                        csv(
+                                complaint.getTicketId()
+                        )
+                        + ","
+                        + csv(
+                                complaint.getComplainant()
+                        )
+                        + ","
+                        + csv(
+                                complaint.getCategory()
+                        )
+                        + ","
+                        + csv(
+                                complaint.getIssueTitle()
+                        )
+                        + ","
+                        + csv(
+                                complaint.getPriority()
+                        )
+                        + ","
+                        + csv(
+                                complaint.getStatus()
+                        )
+                        + ","
+                        + csv(
+                                complaint.getCreatedDate()
+                        )
+                );
+            }
+
+            showInfo(
+                    "Export Complete",
+                    "Actual Firestore complaint data exported successfully."
+            );
+
+        } catch (Exception e) {
+
+            showError(
+                    "Export Failed",
+                    safe(e.getMessage())
+            );
+        }
+    }
+
+    // ============================================================
+    // CSV ESCAPE
+    // ============================================================
+
+    private String csv(String value) {
+
+        String text =
+                safe(value)
+                        .replace(
+                                "\"",
+                                "\"\""
+                        );
+
+        return "\""
+                + text
+                + "\"";
+    }
+
+    // ============================================================
+    // SAFE
+    // ============================================================
+
+    private String safe(
+            String value) {
+
+        return value == null
+                ? ""
+                : value;
+    }
+
+    // ============================================================
+    // INFO
+    // ============================================================
+
+    private void showInfo(
+            String title,
+            String content) {
+
+        Alert alert =
+                new Alert(
+                        Alert.AlertType.INFORMATION
+                );
+
+        alert.setTitle(title);
+
+        alert.setHeaderText(null);
+
+        alert.setContentText(
+                content
+        );
+
+        alert.showAndWait();
+    }
+
+    // ============================================================
+    // ERROR
+    // ============================================================
+
+    private void showError(
+            String title,
+            String content) {
+
+        Alert alert =
+                new Alert(
+                        Alert.AlertType.ERROR
+                );
+
+        alert.setTitle(title);
+
+        alert.setHeaderText(null);
+
+        alert.setContentText(
+                content == null ||
+                content.trim().isEmpty()
+                        ? "An unexpected error occurred."
+                        : content
+        );
+
+        alert.showAndWait();
     }
 }
