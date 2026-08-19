@@ -2,6 +2,7 @@ package com.healthsphere.view.admin;
 
 import com.healthsphere.controller.admin.ApplicationReviewController;
 import com.healthsphere.model.ApplicationReview;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -16,6 +17,9 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
 import java.time.LocalDate;
@@ -25,20 +29,30 @@ import java.util.List;
 public class AppReviewDashboard {
 
     private final Stage stage;
+
     private final ApplicationReviewController applicationReviewController;
 
     public AppReviewDashboard(Stage stage) {
+
         this.stage = stage;
+
         this.applicationReviewController =
                 new ApplicationReviewController();
     }
 
     public Scene getScene() {
-        return new Scene(getContent());
+
+        return new Scene(
+                getContent()
+        );
     }
 
-    // UI model used by the existing JavaFX table.
+    // ============================================================
+    // REVIEW MODEL
+    // ============================================================
+
     public static class Review {
+
         private final String username;
         private final String userRole;
         private final int rating;
@@ -87,45 +101,85 @@ public class AppReviewDashboard {
         }
     }
 
+    // ============================================================
+    // DATA
+    // ============================================================
+
     private final ObservableList<Review> reviewData =
             FXCollections.observableArrayList();
 
     private FilteredList<Review> filteredData;
+
+    // ============================================================
+    // CONTENT
+    // ============================================================
 
     public Parent getContent() {
 
         // Load actual reviews from Firestore.
         loadReviewData();
 
-        VBox rootLayout = new VBox(20);
-        rootLayout.setPadding(new Insets(24));
-        rootLayout.setStyle("-fx-background-color: #F8FAFC;");
+        VBox rootLayout =
+                new VBox(20);
 
-        // Header Title Section
+        rootLayout.setPadding(
+                new Insets(28)
+        );
+
+        rootLayout.setStyle(
+                "-fx-background-color: #F8FAFC;"
+        );
+
+        // ========================================================
+        // HEADER
+        // ========================================================
+
         Label headerTitle =
-                new Label("Patient & Doctor Platform Reviews");
+                new Label(
+                        "Patient & Doctor Platform Reviews"
+                );
 
-        headerTitle.setStyle(
-                "-fx-font-size: 24px; " +
-                "-fx-font-weight: bold; " +
-                "-fx-text-fill: #0F172A;"
+        headerTitle.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        24
+                )
+        );
+
+        headerTitle.setTextFill(
+                Color.web("#0F172A")
         );
 
         Label headerSub =
                 new Label(
-                        "Monitor ratings, feedback, and system experience " +
-                        "across medical practitioners and patients."
+                        "Monitor ratings, feedback, and system experience "
+                                + "across medical practitioners and patients."
                 );
 
-        headerSub.setStyle(
-                "-fx-font-size: 13px; " +
-                "-fx-text-fill: #64748B;"
+        headerSub.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.NORMAL,
+                        13
+                )
+        );
+
+        headerSub.setTextFill(
+                Color.web("#64748B")
         );
 
         VBox headerBox =
-                new VBox(4, headerTitle, headerSub);
+                new VBox(
+                        4,
+                        headerTitle,
+                        headerSub
+                );
 
-        // Top Analytics Section
+        // ========================================================
+        // TOP ANALYTICS
+        // ========================================================
+
         HBox topAnalytics =
                 new HBox(
                         20,
@@ -133,12 +187,21 @@ public class AppReviewDashboard {
                         createRatingChart()
                 );
 
-        topAnalytics.setAlignment(Pos.CENTER_LEFT);
+        topAnalytics.setAlignment(
+                Pos.CENTER_LEFT
+        );
 
-        // Search and Filter Bar
-        HBox filterBar = createFilterBar();
+        // ========================================================
+        // FILTER BAR
+        // ========================================================
 
-        // Reviews Table View
+        HBox filterBar =
+                createFilterBar();
+
+        // ========================================================
+        // TABLE
+        // ========================================================
+
         TableView<Review> reviewTable =
                 createReviewTable();
 
@@ -155,18 +218,29 @@ public class AppReviewDashboard {
         );
 
         ScrollPane scrollPane =
-                new ScrollPane(rootLayout);
+                new ScrollPane(
+                        rootLayout
+                );
 
-        scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true);
+        scrollPane.setFitToWidth(
+                true
+        );
+
+        scrollPane.setFitToHeight(
+                true
+        );
 
         scrollPane.setStyle(
-                "-fx-background-color: transparent; " +
+                "-fx-background-color: transparent;" +
                 "-fx-background: #F8FAFC;"
         );
 
         return scrollPane;
     }
+
+    // ============================================================
+    // SUMMARY CARDS
+    // ============================================================
 
     private HBox createSummaryCards() {
 
@@ -174,21 +248,29 @@ public class AppReviewDashboard {
                 createCard(
                         "Average Rating",
                         calculateAverageRating(),
-                        "#2563EB"
+                        "#2563EB",
+                        "#EFF6FF",
+                        "★"
                 );
 
         VBox totalCard =
                 createCard(
                         "Total Feedback",
-                        String.valueOf(reviewData.size()),
-                        "#059669"
+                        String.valueOf(
+                                reviewData.size()
+                        ),
+                        "#059669",
+                        "#ECFDF5",
+                        "☷"
                 );
 
         VBox posCard =
                 createCard(
                         "Satisfaction Rate",
                         calculateSatisfactionRate(),
-                        "#7C3AED"
+                        "#7C3AED",
+                        "#F5F3FF",
+                        "✓"
                 );
 
         HBox cards =
@@ -206,58 +288,178 @@ public class AppReviewDashboard {
         return cards;
     }
 
+    // ============================================================
+    // KPI CARD
+    // ============================================================
+
     private VBox createCard(
             String title,
             String value,
-            String accentColor) {
+            String accentColor,
+            String backgroundColor,
+            String iconText) {
 
-        VBox card = new VBox(8);
+        VBox card =
+                new VBox(8);
 
         card.setPadding(
                 new Insets(16)
         );
 
         card.setPrefSize(
-                180,
-                100
+                185,
+                112
+        );
+
+        card.setMinSize(
+                175,
+                105
         );
 
         card.setStyle(
-                "-fx-background-color: #FFFFFF; " +
-                "-fx-background-radius: 12; " +
-                "-fx-border-color: #E2E8F0; " +
-                "-fx-border-radius: 12; " +
-                "-fx-effect: dropshadow(three-pass-box, " +
-                "rgba(0,0,0,0.03), 8, 0, 0, 2);"
+                "-fx-background-color: "
+                        + backgroundColor
+                        + ";" +
+                "-fx-background-radius: 15px;" +
+                "-fx-border-color: "
+                        + accentColor
+                        + ";" +
+                "-fx-border-width: 1px;" +
+                "-fx-border-radius: 15px;" +
+                "-fx-effect: dropshadow(" +
+                "three-pass-box, " +
+                "rgba(15,23,42,0.08), " +
+                "10, 0, 0, 3);"
+        );
+
+        // ========================================================
+        // TOP ROW
+        // ========================================================
+
+        HBox topRow =
+                new HBox();
+
+        topRow.setAlignment(
+                Pos.CENTER_LEFT
         );
 
         Label titleLabel =
-                new Label(title);
+                new Label(
+                        title
+                );
 
-        titleLabel.setStyle(
-                "-fx-font-size: 13px; " +
-                "-fx-text-fill: #64748B; " +
-                "-fx-font-weight: 500;"
+        titleLabel.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.SEMI_BOLD,
+                        12
+                )
         );
 
-        Label valueLabel =
-                new Label(value);
+        titleLabel.setTextFill(
+                Color.web("#475569")
+        );
 
-        valueLabel.setStyle(
-                "-fx-font-size: 26px; " +
-                "-fx-font-weight: bold; " +
-                "-fx-text-fill: " +
-                accentColor +
-                ";"
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        Label icon =
+                new Label(
+                        iconText
+                );
+
+        icon.setAlignment(
+                Pos.CENTER
+        );
+
+        icon.setMinSize(
+                28,
+                28
+        );
+
+        icon.setPrefSize(
+                28,
+                28
+        );
+
+        icon.setStyle(
+                "-fx-background-color: "
+                        + accentColor
+                        + ";" +
+                "-fx-background-radius: 50%;" +
+                "-fx-text-fill: white;" +
+                "-fx-font-size: 14px;" +
+                "-fx-font-weight: bold;"
+        );
+
+        topRow.getChildren().addAll(
+                titleLabel,
+                spacer,
+                icon
+        );
+
+        // ========================================================
+        // VALUE
+        // ========================================================
+
+        Label valueLabel =
+                new Label(
+                        value
+                );
+
+        valueLabel.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        27
+                )
+        );
+
+        valueLabel.setTextFill(
+                Color.web(
+                        accentColor
+                )
+        );
+
+        // ========================================================
+        // ACCENT LINE
+        // ========================================================
+
+        Region accentLine =
+                new Region();
+
+        accentLine.setPrefHeight(
+                3
+        );
+
+        accentLine.setMaxWidth(
+                48
+        );
+
+        accentLine.setStyle(
+                "-fx-background-color: "
+                        + accentColor
+                        + ";" +
+                "-fx-background-radius: 10px;"
         );
 
         card.getChildren().addAll(
-                titleLabel,
-                valueLabel
+                topRow,
+                valueLabel,
+                accentLine
         );
 
         return card;
     }
+
+    // ============================================================
+    // RATING CHART
+    // ============================================================
 
     private BarChart<Number, String> createRatingChart() {
 
@@ -267,8 +469,13 @@ public class AppReviewDashboard {
         CategoryAxis yAxis =
                 new CategoryAxis();
 
-        xAxis.setLabel("Count");
-        yAxis.setLabel("Stars");
+        xAxis.setLabel(
+                "Count"
+        );
+
+        yAxis.setLabel(
+                "Stars"
+        );
 
         BarChart<Number, String> chart =
                 new BarChart<>(
@@ -276,10 +483,17 @@ public class AppReviewDashboard {
                         yAxis
                 );
 
-        chart.setLegendVisible(false);
+        chart.setLegendVisible(
+                false
+        );
 
         chart.setPrefSize(
                 400,
+                165
+        );
+
+        chart.setMinSize(
+                380,
                 150
         );
 
@@ -287,26 +501,39 @@ public class AppReviewDashboard {
                 "Rating Breakdown"
         );
 
+        chart.setAnimated(
+                false
+        );
+
         chart.setStyle(
-                "-fx-background-color: #FFFFFF; " +
-                "-fx-background-radius: 12; " +
-                "-fx-border-color: #E2E8F0; " +
-                "-fx-border-radius: 12; " +
-                "-fx-padding: 10;"
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 14px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 14px;" +
+                "-fx-padding: 10px;" +
+                "-fx-effect: dropshadow(" +
+                "three-pass-box, " +
+                "rgba(15,23,42,0.05), " +
+                "8, 0, 0, 2);"
         );
 
         int[] ratingCounts =
                 new int[5];
 
-        for (Review review : reviewData) {
+        for (Review review :
+                reviewData) {
 
             int rating =
                     review.getRating();
 
-            if (rating >= 1 &&
-                    rating <= 5) {
+            if (
+                    rating >= 1 &&
+                    rating <= 5
+            ) {
 
-                ratingCounts[rating - 1]++;
+                ratingCounts[
+                        rating - 1
+                ]++;
             }
         }
 
@@ -355,13 +582,17 @@ public class AppReviewDashboard {
         return chart;
     }
 
+    // ============================================================
+    // FILTER BAR
+    // ============================================================
+
     private HBox createFilterBar() {
 
         TextField searchField =
                 new TextField();
 
         searchField.setPromptText(
-                "Search by keyword, name, or role..."
+                "🔍  Search by keyword, name, or role..."
         );
 
         searchField.setPrefWidth(
@@ -369,10 +600,12 @@ public class AppReviewDashboard {
         );
 
         searchField.setStyle(
-                "-fx-background-radius: 8; " +
-                "-fx-border-radius: 8; " +
-                "-fx-border-color: #CBD5E1; " +
-                "-fx-padding: 8 12;"
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 9px;" +
+                "-fx-border-radius: 9px;" +
+                "-fx-border-color: #CBD5E1;" +
+                "-fx-padding: 9px 12px;" +
+                "-fx-font-size: 12px;"
         );
 
         ComboBox<String> roleFilter =
@@ -389,8 +622,9 @@ public class AppReviewDashboard {
         );
 
         roleFilter.setStyle(
-                "-fx-background-radius: 8; " +
-                "-fx-border-radius: 8; " +
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 9px;" +
+                "-fx-border-radius: 9px;" +
                 "-fx-border-color: #CBD5E1;"
         );
 
@@ -411,8 +645,9 @@ public class AppReviewDashboard {
         );
 
         ratingFilter.setStyle(
-                "-fx-background-radius: 8; " +
-                "-fx-border-radius: 8; " +
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 9px;" +
+                "-fx-border-radius: 9px;" +
                 "-fx-border-color: #CBD5E1;"
         );
 
@@ -460,12 +695,27 @@ public class AppReviewDashboard {
                         ratingFilter
                 );
 
+        filterBar.setPadding(
+                new Insets(12)
+        );
+
         filterBar.setAlignment(
                 Pos.CENTER_LEFT
         );
 
+        filterBar.setStyle(
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 12px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 12px;"
+        );
+
         return filterBar;
     }
+
+    // ============================================================
+    // APPLY FILTER
+    // ============================================================
 
     private void applyFilter(
             String searchText,
@@ -515,7 +765,9 @@ public class AppReviewDashboard {
 
                     boolean matchesRole =
                             selectedRole == null ||
-                            selectedRole.equals("All Roles") ||
+                            selectedRole.equals(
+                                    "All Roles"
+                            ) ||
                             role.equalsIgnoreCase(
                                     selectedRole
                             );
@@ -523,10 +775,12 @@ public class AppReviewDashboard {
                     boolean matchesRating =
                             true;
 
-                    if (selectedRating != null &&
+                    if (
+                            selectedRating != null &&
                             !selectedRating.equals(
                                     "All Ratings"
-                            )) {
+                            )
+                    ) {
 
                         int targetStars =
                                 Integer.parseInt(
@@ -546,6 +800,10 @@ public class AppReviewDashboard {
         );
     }
 
+    // ============================================================
+    // REVIEW TABLE
+    // ============================================================
+
     private TableView<Review> createReviewTable() {
 
         TableView<Review> table =
@@ -560,11 +818,15 @@ public class AppReviewDashboard {
         );
 
         table.setStyle(
-                "-fx-background-color: #FFFFFF; " +
-                "-fx-background-radius: 12; " +
-                "-fx-border-color: #E2E8F0; " +
-                "-fx-border-radius: 12;"
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 12px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 12px;"
         );
+
+        // ========================================================
+        // USER
+        // ========================================================
 
         TableColumn<Review, String> userCol =
                 new TableColumn<>(
@@ -580,6 +842,10 @@ public class AppReviewDashboard {
         userCol.setPrefWidth(
                 130
         );
+
+        // ========================================================
+        // ROLE
+        // ========================================================
 
         TableColumn<Review, String> roleCol =
                 new TableColumn<>(
@@ -610,29 +876,35 @@ public class AppReviewDashboard {
                                         empty
                                 );
 
-                                if (empty ||
-                                        role == null) {
+                                if (
+                                        empty ||
+                                        role == null
+                                ) {
 
                                     setText(null);
                                     setStyle("");
 
                                 } else {
 
-                                    setText(role);
+                                    setText(
+                                            role
+                                    );
 
-                                    if (role.equalsIgnoreCase(
-                                            "Doctor"
-                                    )) {
+                                    if (
+                                            role.equalsIgnoreCase(
+                                                    "Doctor"
+                                            )
+                                    ) {
 
                                         setStyle(
-                                                "-fx-text-fill: #0284C7; " +
+                                                "-fx-text-fill: #0284C7;" +
                                                 "-fx-font-weight: bold;"
                                         );
 
                                     } else {
 
                                         setStyle(
-                                                "-fx-text-fill: #059669; " +
+                                                "-fx-text-fill: #059669;" +
                                                 "-fx-font-weight: bold;"
                                         );
                                     }
@@ -640,6 +912,10 @@ public class AppReviewDashboard {
                             }
                         }
         );
+
+        // ========================================================
+        // RATING
+        // ========================================================
 
         TableColumn<Review, Integer> ratingCol =
                 new TableColumn<>(
@@ -670,29 +946,37 @@ public class AppReviewDashboard {
                                         empty
                                 );
 
-                                if (empty ||
-                                        rating == null) {
+                                if (
+                                        empty ||
+                                        rating == null
+                                ) {
 
                                     setText(null);
 
                                 } else {
 
                                     setText(
-                                            "★".repeat(rating) +
+                                            "★".repeat(
+                                                    rating
+                                            ) +
                                             "☆".repeat(
                                                     5 - rating
                                             )
                                     );
 
                                     setStyle(
-                                            "-fx-text-fill: #F59E0B; " +
-                                            "-fx-font-weight: bold; " +
+                                            "-fx-text-fill: #F59E0B;" +
+                                            "-fx-font-weight: bold;" +
                                             "-fx-font-size: 14px;"
                                     );
                                 }
                             }
                         }
         );
+
+        // ========================================================
+        // COMMENT
+        // ========================================================
 
         TableColumn<Review, String> commentCol =
                 new TableColumn<>(
@@ -709,6 +993,10 @@ public class AppReviewDashboard {
                 340
         );
 
+        // ========================================================
+        // DATE
+        // ========================================================
+
         TableColumn<Review, LocalDate> dateCol =
                 new TableColumn<>(
                         "Date"
@@ -723,6 +1011,10 @@ public class AppReviewDashboard {
         dateCol.setPrefWidth(
                 100
         );
+
+        // ========================================================
+        // VERSION
+        // ========================================================
 
         TableColumn<Review, String> versionCol =
                 new TableColumn<>(
@@ -751,6 +1043,10 @@ public class AppReviewDashboard {
         return table;
     }
 
+    // ============================================================
+    // LOAD REVIEW DATA
+    // ============================================================
+
     /**
      * Load actual ApplicationReview records from Firestore.
      */
@@ -768,8 +1064,10 @@ public class AppReviewDashboard {
                 return;
             }
 
-            for (ApplicationReview review :
-                    reviews) {
+            for (
+                    ApplicationReview review :
+                    reviews
+            ) {
 
                 if (review == null) {
                     continue;
@@ -795,9 +1093,10 @@ public class AppReviewDashboard {
                                 review.getCreatedAt()
                         );
 
-                // The current ApplicationReview model
-                // does not contain an appVersion field.
-                String appVersion = "N/A";
+                // Current ApplicationReview model
+                // does not contain appVersion.
+                String appVersion =
+                        "N/A";
 
                 reviewData.add(
                         new Review(
@@ -817,11 +1116,16 @@ public class AppReviewDashboard {
 
             showAlert(
                     "Application Review Error",
-                    "Unable to load application reviews from Firestore.\n\n"
+                    "Unable to load application reviews "
+                            + "from Firestore.\n\n"
                             + e.getMessage()
             );
         }
     }
+
+    // ============================================================
+    // DATE CONVERSION
+    // ============================================================
 
     private LocalDate convertDate(
             LocalDateTime dateTime) {
@@ -833,6 +1137,10 @@ public class AppReviewDashboard {
         return dateTime.toLocalDate();
     }
 
+    // ============================================================
+    // AVERAGE RATING
+    // ============================================================
+
     private String calculateAverageRating() {
 
         if (reviewData.isEmpty()) {
@@ -841,20 +1149,27 @@ public class AppReviewDashboard {
 
         double total = 0;
 
-        for (Review review :
-                reviewData) {
+        for (
+                Review review :
+                reviewData
+        ) {
 
             total += review.getRating();
         }
 
         double average =
-                total / reviewData.size();
+                total /
+                reviewData.size();
 
         return String.format(
                 "%.1f ★",
                 average
         );
     }
+
+    // ============================================================
+    // SATISFACTION RATE
+    // ============================================================
 
     private String calculateSatisfactionRate() {
 
@@ -864,10 +1179,15 @@ public class AppReviewDashboard {
 
         int positive = 0;
 
-        for (Review review :
-                reviewData) {
+        for (
+                Review review :
+                reviewData
+        ) {
 
-            if (review.getRating() >= 4) {
+            if (
+                    review.getRating() >= 4
+            ) {
+
                 positive++;
             }
         }
@@ -882,12 +1202,21 @@ public class AppReviewDashboard {
         );
     }
 
-    private String safe(String value) {
+    // ============================================================
+    // SAFE STRING
+    // ============================================================
+
+    private String safe(
+            String value) {
 
         return value == null
                 ? ""
                 : value;
     }
+
+    // ============================================================
+    // ALERT
+    // ============================================================
 
     private void showAlert(
             String title,
@@ -898,9 +1227,17 @@ public class AppReviewDashboard {
                         Alert.AlertType.ERROR
                 );
 
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
+        alert.setTitle(
+                title
+        );
+
+        alert.setHeaderText(
+                null
+        );
+
+        alert.setContentText(
+                message
+        );
 
         alert.showAndWait();
     }

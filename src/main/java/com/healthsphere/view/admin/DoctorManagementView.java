@@ -25,6 +25,7 @@ import javafx.stage.Stage;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class DoctorManagementView extends ScrollPane {
@@ -34,7 +35,9 @@ public class DoctorManagementView extends ScrollPane {
     private final DoctorManagementController doctorManagementController;
 
     private TableView<DoctorModel> doctorTable;
+
     private ObservableList<DoctorModel> masterDoctorData;
+
     private FilteredList<DoctorModel> filteredData;
 
     private Label totalCountLabel;
@@ -43,6 +46,10 @@ public class DoctorManagementView extends ScrollPane {
     private Label surgeryCountLabel;
 
     private BarChart<String, Number> departmentBarChart;
+
+    // ========================================================
+    // CONSTRUCTOR
+    // ========================================================
 
     public DoctorManagementView() {
         this(null);
@@ -74,19 +81,31 @@ public class DoctorManagementView extends ScrollPane {
                 "-fx-background-color: #F8FAFC;"
         );
 
-        // 1. Header
+        // ====================================================
+        // 1. HEADER
+        // ====================================================
+
         HBox header =
                 createHeader();
 
-        // 2. Analytics
+        // ====================================================
+        // 2. ANALYTICS
+        // ====================================================
+
         HBox topAnalyticsSection =
                 createTopAnalyticsSection();
 
-        // 3. Filters
+        // ====================================================
+        // 3. FILTERS
+        // ====================================================
+
         HBox filterBar =
                 createFilterBar();
 
-        // 4. Table
+        // ====================================================
+        // 4. TABLE
+        // ====================================================
+
         VBox tableContainer =
                 createTableContainer();
 
@@ -99,7 +118,7 @@ public class DoctorManagementView extends ScrollPane {
 
         setContent(mainContainer);
 
-        // Load real doctor data from Firestore.
+        // Load doctors from Firestore
         loadDoctorData();
     }
 
@@ -111,9 +130,9 @@ public class DoctorManagementView extends ScrollPane {
         return new Scene(this);
     }
 
-    // ------------------------------------------------------------------------
+    // ========================================================
     // HEADER
-    // ------------------------------------------------------------------------
+    // ========================================================
 
     private HBox createHeader() {
 
@@ -174,6 +193,10 @@ public class DoctorManagementView extends ScrollPane {
                 Priority.ALWAYS
         );
 
+        // ====================================================
+        // EXPORT BUTTON
+        // ====================================================
+
         Button exportBtn =
                 new Button(
                         "Export Directory"
@@ -204,6 +227,10 @@ public class DoctorManagementView extends ScrollPane {
                 )
         );
 
+        /*
+         * Add Doctor button intentionally removed.
+         */
+
         HBox buttonGroup =
                 new HBox(
                         12,
@@ -223,9 +250,9 @@ public class DoctorManagementView extends ScrollPane {
         return header;
     }
 
-    // ------------------------------------------------------------------------
+    // ========================================================
     // ANALYTICS
-    // ------------------------------------------------------------------------
+    // ========================================================
 
     private HBox createTopAnalyticsSection() {
 
@@ -236,63 +263,84 @@ public class DoctorManagementView extends ScrollPane {
                 Pos.CENTER
         );
 
+        // ====================================================
+        // KPI GRID
+        // ====================================================
+
         GridPane statsGrid =
                 new GridPane();
 
         statsGrid.setHgap(16);
+
         statsGrid.setVgap(16);
 
-        // Total Doctors
+        // ====================================================
+        // TOTAL DOCTORS
+        // ====================================================
 
         VBox totalCard =
                 createStatCard(
                         "Total Doctors",
                         "0",
                         "Registered specialists",
-                        "#4F46E5"
+                        "#4F46E5",
+                        "#EEF2FF"
                 );
 
         totalCountLabel =
                 (Label) totalCard.getChildren().get(1);
 
-        // Active
+        // ====================================================
+        // ON DUTY
+        // ====================================================
 
         VBox activeCard =
                 createStatCard(
                         "On Duty",
                         "0",
                         "Currently available",
-                        "#16A34A"
+                        "#059669",
+                        "#ECFDF5"
                 );
 
         activeCountLabel =
                 (Label) activeCard.getChildren().get(1);
 
-        // Leave
+        // ====================================================
+        // ON LEAVE
+        // ====================================================
 
         VBox leaveCard =
                 createStatCard(
                         "On Leave",
                         "0",
                         "Currently unavailable",
-                        "#D97706"
+                        "#D97706",
+                        "#FFFBEB"
                 );
 
         leaveCountLabel =
                 (Label) leaveCard.getChildren().get(1);
 
-        // Surgery
+        // ====================================================
+        // IN SURGERY
+        // ====================================================
 
         VBox surgeryCard =
                 createStatCard(
                         "In Surgery",
                         "0",
                         "Currently operating",
-                        "#DC2626"
+                        "#DC2626",
+                        "#FEF2F2"
                 );
 
         surgeryCountLabel =
                 (Label) surgeryCard.getChildren().get(1);
+
+        // ====================================================
+        // 2 x 2 CARD LAYOUT
+        // ====================================================
 
         statsGrid.add(
                 totalCard,
@@ -317,6 +365,10 @@ public class DoctorManagementView extends ScrollPane {
                 1,
                 1
         );
+
+        // ====================================================
+        // DEPARTMENT GRAPH
+        // ====================================================
 
         CategoryAxis xAxis =
                 new CategoryAxis();
@@ -354,6 +406,10 @@ public class DoctorManagementView extends ScrollPane {
                 300
         );
 
+        // ====================================================
+        // CARDS + GRAPH
+        // ====================================================
+
         section.getChildren().addAll(
                 statsGrid,
                 departmentBarChart
@@ -362,14 +418,19 @@ public class DoctorManagementView extends ScrollPane {
         return section;
     }
 
+    // ========================================================
+    // KPI CARD
+    // ========================================================
+
     private VBox createStatCard(
             String title,
             String value,
             String subtitle,
-            String accentColor) {
+            String accentColor,
+            String backgroundColor) {
 
         VBox card =
-                new VBox(5);
+                new VBox(6);
 
         card.setPadding(
                 new Insets(16)
@@ -379,12 +440,22 @@ public class DoctorManagementView extends ScrollPane {
                 180
         );
 
+        card.setPrefHeight(
+                120
+        );
+
         card.setStyle(
-                "-fx-background-color: white; " +
+                "-fx-background-color: "
+                        + backgroundColor
+                        + "; " +
                 "-fx-background-radius: 10px; " +
                 "-fx-border-color: #E2E8F0; " +
                 "-fx-border-radius: 10px;"
         );
+
+        // ====================================================
+        // TITLE
+        // ====================================================
 
         Label titleLabel =
                 new Label(title);
@@ -401,6 +472,10 @@ public class DoctorManagementView extends ScrollPane {
                 Color.web("#64748B")
         );
 
+        // ====================================================
+        // VALUE
+        // ====================================================
+
         Label valueLabel =
                 new Label(value);
 
@@ -416,6 +491,10 @@ public class DoctorManagementView extends ScrollPane {
                 Color.web(accentColor)
         );
 
+        // ====================================================
+        // SUBTITLE
+        // ====================================================
+
         Label subtitleLabel =
                 new Label(subtitle);
 
@@ -428,7 +507,11 @@ public class DoctorManagementView extends ScrollPane {
         );
 
         subtitleLabel.setTextFill(
-                Color.web("#94A3B8")
+                Color.web("#64748B")
+        );
+
+        subtitleLabel.setWrapText(
+                true
         );
 
         card.getChildren().addAll(
@@ -440,9 +523,9 @@ public class DoctorManagementView extends ScrollPane {
         return card;
     }
 
-    // ------------------------------------------------------------------------
+    // ========================================================
     // FILTER BAR
-    // ------------------------------------------------------------------------
+    // ========================================================
 
     private HBox createFilterBar() {
 
@@ -554,8 +637,7 @@ public class DoctorManagementView extends ScrollPane {
         String query =
                 searchText == null
                         ? ""
-                        : searchText.trim()
-                        .toLowerCase();
+                        : searchText.trim().toLowerCase();
 
         filteredData.setPredicate(
                 doctor -> {
@@ -625,9 +707,9 @@ public class DoctorManagementView extends ScrollPane {
                         .contains(query);
     }
 
-    // ------------------------------------------------------------------------
+    // ========================================================
     // TABLE
-    // ------------------------------------------------------------------------
+    // ========================================================
 
     private VBox createTableContainer() {
 
@@ -675,7 +757,9 @@ public class DoctorManagementView extends ScrollPane {
                 )
         );
 
-        // Doctor Name Column
+        // ====================================================
+        // DOCTOR NAME
+        // ====================================================
 
         TableColumn<DoctorModel, String> nameCol =
                 new TableColumn<>(
@@ -773,7 +857,9 @@ public class DoctorManagementView extends ScrollPane {
                 }
         );
 
-        // Department Column
+        // ====================================================
+        // DEPARTMENT
+        // ====================================================
 
         TableColumn<DoctorModel, String> deptCol =
                 new TableColumn<>(
@@ -863,7 +949,9 @@ public class DoctorManagementView extends ScrollPane {
                 }
         );
 
-        // Contact Column
+        // ====================================================
+        // CONTACT
+        // ====================================================
 
         TableColumn<DoctorModel, String> contactCol =
                 new TableColumn<>(
@@ -952,7 +1040,9 @@ public class DoctorManagementView extends ScrollPane {
                 }
         );
 
-        // Verification Status
+        // ====================================================
+        // VERIFICATION STATUS
+        // ====================================================
 
         TableColumn<DoctorModel, String> verificationCol =
                 new TableColumn<>(
@@ -1011,6 +1101,7 @@ public class DoctorManagementView extends ScrollPane {
                             ) {
 
                                 case "VERIFIED" ->
+
                                         badge.setStyle(
                                                 "-fx-background-color: #DCFCE7; " +
                                                 "-fx-text-fill: #15803D; " +
@@ -1018,6 +1109,7 @@ public class DoctorManagementView extends ScrollPane {
                                         );
 
                                 case "PENDING" ->
+
                                         badge.setStyle(
                                                 "-fx-background-color: #FEF3C7; " +
                                                 "-fx-text-fill: #D97706; " +
@@ -1025,6 +1117,7 @@ public class DoctorManagementView extends ScrollPane {
                                         );
 
                                 default ->
+
                                         badge.setStyle(
                                                 "-fx-background-color: #FEE2E2; " +
                                                 "-fx-text-fill: #B91C1C; " +
@@ -1038,7 +1131,9 @@ public class DoctorManagementView extends ScrollPane {
                 }
         );
 
-        // Duty Status
+        // ====================================================
+        // DUTY STATUS
+        // ====================================================
 
         TableColumn<DoctorModel, String> statusCol =
                 new TableColumn<>(
@@ -1097,6 +1192,7 @@ public class DoctorManagementView extends ScrollPane {
                             ) {
 
                                 case "ON DUTY" ->
+
                                         badge.setStyle(
                                                 "-fx-background-color: #DCFCE7; " +
                                                 "-fx-text-fill: #15803D; " +
@@ -1104,6 +1200,7 @@ public class DoctorManagementView extends ScrollPane {
                                         );
 
                                 case "IN SURGERY" ->
+
                                         badge.setStyle(
                                                 "-fx-background-color: #FEE2E2; " +
                                                 "-fx-text-fill: #B91C1C; " +
@@ -1111,6 +1208,7 @@ public class DoctorManagementView extends ScrollPane {
                                         );
 
                                 default ->
+
                                         badge.setStyle(
                                                 "-fx-background-color: #FEF3C7; " +
                                                 "-fx-text-fill: #D97706; " +
@@ -1124,7 +1222,9 @@ public class DoctorManagementView extends ScrollPane {
                 }
         );
 
-        // Shift
+        // ====================================================
+        // SHIFT
+        // ====================================================
 
         TableColumn<DoctorModel, String> shiftCol =
                 new TableColumn<>(
@@ -1137,7 +1237,9 @@ public class DoctorManagementView extends ScrollPane {
                 )
         );
 
-        // Actions
+        // ====================================================
+        // ACTIONS
+        // ====================================================
 
         TableColumn<DoctorModel, Void> actionCol =
                 new TableColumn<>(
@@ -1183,6 +1285,14 @@ public class DoctorManagementView extends ScrollPane {
 
                         profileBtn.setOnAction(e -> {
 
+                            if (getIndex() < 0 ||
+                                    getIndex() >=
+                                            getTableView()
+                                                    .getItems()
+                                                    .size()) {
+                                return;
+                            }
+
                             DoctorModel doctor =
                                     getTableView()
                                             .getItems()
@@ -1194,6 +1304,14 @@ public class DoctorManagementView extends ScrollPane {
                         });
 
                         toggleStatusBtn.setOnAction(e -> {
+
+                            if (getIndex() < 0 ||
+                                    getIndex() >=
+                                            getTableView()
+                                                    .getItems()
+                                                    .size()) {
+                                return;
+                            }
 
                             DoctorModel doctor =
                                     getTableView()
@@ -1261,17 +1379,23 @@ public class DoctorManagementView extends ScrollPane {
                 doctorTable
         );
 
+        VBox.setVgrow(
+                doctorTable,
+                Priority.ALWAYS
+        );
+
         return container;
     }
 
-    // ------------------------------------------------------------------------
+    // ========================================================
     // AVATAR
-    // ------------------------------------------------------------------------
+    // ========================================================
 
     private StackPane createDoctorAvatar(
             String name) {
 
-        String initials = "DR";
+        String initials =
+                "DR";
 
         if (
                 name != null
@@ -1344,9 +1468,9 @@ public class DoctorManagementView extends ScrollPane {
         );
     }
 
-    // ------------------------------------------------------------------------
+    // ========================================================
     // DATA MANAGEMENT
-    // ------------------------------------------------------------------------
+    // ========================================================
 
     private void loadDoctorData() {
 
@@ -1416,12 +1540,6 @@ public class DoctorManagementView extends ScrollPane {
                             "N/A";
                 }
 
-                /*
-                 * DoctorProfile already contains hospital affiliation.
-                 *
-                 * We use that existing field here rather than creating
-                 * another Doctor model.
-                 */
                 String department =
                         safe(
                                 profile
@@ -1468,13 +1586,8 @@ public class DoctorManagementView extends ScrollPane {
                 }
 
                 /*
-                 * These fields are NOT currently part of DoctorProfile.
-                 *
-                 * We deliberately do not invent or fake Firestore values.
-                 *
-                 * They can be implemented later using a proper
-                 * doctor-specific model if the team agrees they are
-                 * persistent requirements.
+                 * These fields are not currently part
+                 * of DoctorProfile.
                  */
                 String opdRoom =
                         "Not configured";
@@ -1494,14 +1607,23 @@ public class DoctorManagementView extends ScrollPane {
                                         profile.getUid()
                                 );
 
-                if (verificationStatus == null ||
-                        verificationStatus.trim().isEmpty()) {
-                    verificationStatus = "PENDING";
+                if (
+                        verificationStatus == null
+                                ||
+                        verificationStatus
+                                .trim()
+                                .isEmpty()
+                ) {
+
+                    verificationStatus =
+                            "PENDING";
                 }
 
                 masterDoctorData.add(
                         new DoctorModel(
-                                safe(profile.getUid()),
+                                safe(
+                                        profile.getUid()
+                                ),
                                 doctorId,
                                 fullName,
                                 department,
@@ -1564,6 +1686,10 @@ public class DoctorManagementView extends ScrollPane {
                 : value.trim();
     }
 
+    // ========================================================
+    // COUNTERS + GRAPH
+    // ========================================================
+
     private void updateCountersAndChart() {
 
         if (masterDoctorData == null) {
@@ -1622,6 +1748,10 @@ public class DoctorManagementView extends ScrollPane {
                 String.valueOf(surgery)
         );
 
+        // ====================================================
+        // KEEP GRAPH
+        // ====================================================
+
         departmentBarChart
                 .getData()
                 .clear();
@@ -1653,9 +1783,9 @@ public class DoctorManagementView extends ScrollPane {
                 .add(series);
     }
 
-    // ------------------------------------------------------------------------
+    // ========================================================
     // DOCTOR PROFILE MODAL
-    // ------------------------------------------------------------------------
+    // ========================================================
 
     private void showDoctorProfileModal(
             DoctorModel doctor) {
@@ -1740,6 +1870,10 @@ public class DoctorManagementView extends ScrollPane {
                 Color.web("#0F172A")
         );
 
+        // ====================================================
+        // VERIFY
+        // ====================================================
+
         Button verifyBtn =
                 new Button(
                         "✓ Verify & Approve"
@@ -1757,6 +1891,10 @@ public class DoctorManagementView extends ScrollPane {
                 "-fx-padding: 8px; " +
                 "-fx-background-radius: 6px;"
         );
+
+        // ====================================================
+        // PENDING
+        // ====================================================
 
         Button pendingBtn =
                 new Button(
@@ -1776,6 +1914,10 @@ public class DoctorManagementView extends ScrollPane {
                 "-fx-background-radius: 6px;"
         );
 
+        // ====================================================
+        // REJECT
+        // ====================================================
+
         Button rejectBtn =
                 new Button(
                         "✕ Reject Verification"
@@ -1794,10 +1936,15 @@ public class DoctorManagementView extends ScrollPane {
                 "-fx-background-radius: 6px;"
         );
 
+        // ====================================================
+        // VERIFY ACTION
+        // ====================================================
+
         verifyBtn.setOnAction(
                 e -> {
 
                     try {
+
                         boolean success =
                                 doctorManagementController
                                         .verifyDoctor(
@@ -1805,6 +1952,7 @@ public class DoctorManagementView extends ScrollPane {
                                         );
 
                         if (success) {
+
                             doctor.setVerificationStatus(
                                     "VERIFIED"
                             );
@@ -1818,7 +1966,9 @@ public class DoctorManagementView extends ScrollPane {
                             );
 
                             dialog.close();
+
                         } else {
+
                             showAlert(
                                     "Verification Failed",
                                     "Unable to verify "
@@ -1826,8 +1976,11 @@ public class DoctorManagementView extends ScrollPane {
                                             + ". Please try again."
                             );
                         }
+
                     } catch (Exception ex) {
+
                         ex.printStackTrace();
+
                         showAlert(
                                 "Verification Error",
                                 "An error occurred while verifying the doctor.\n\n"
@@ -1837,10 +1990,15 @@ public class DoctorManagementView extends ScrollPane {
                 }
         );
 
+        // ====================================================
+        // PENDING ACTION
+        // ====================================================
+
         pendingBtn.setOnAction(
                 e -> {
 
                     try {
+
                         boolean success =
                                 doctorManagementController
                                         .setDoctorPending(
@@ -1848,6 +2006,7 @@ public class DoctorManagementView extends ScrollPane {
                                         );
 
                         if (success) {
+
                             doctor.setVerificationStatus(
                                     "PENDING"
                             );
@@ -1861,7 +2020,9 @@ public class DoctorManagementView extends ScrollPane {
                             );
 
                             dialog.close();
+
                         } else {
+
                             showAlert(
                                     "Update Failed",
                                     "Unable to update "
@@ -1869,8 +2030,11 @@ public class DoctorManagementView extends ScrollPane {
                                             + " verification status."
                             );
                         }
+
                     } catch (Exception ex) {
+
                         ex.printStackTrace();
+
                         showAlert(
                                 "Update Error",
                                 "An error occurred while updating the doctor status.\n\n"
@@ -1880,10 +2044,15 @@ public class DoctorManagementView extends ScrollPane {
                 }
         );
 
+        // ====================================================
+        // REJECT ACTION
+        // ====================================================
+
         rejectBtn.setOnAction(
                 e -> {
 
                     try {
+
                         boolean success =
                                 doctorManagementController
                                         .rejectDoctor(
@@ -1891,6 +2060,7 @@ public class DoctorManagementView extends ScrollPane {
                                         );
 
                         if (success) {
+
                             doctor.setVerificationStatus(
                                     "REJECTED"
                             );
@@ -1904,7 +2074,9 @@ public class DoctorManagementView extends ScrollPane {
                             );
 
                             dialog.close();
+
                         } else {
+
                             showAlert(
                                     "Rejection Failed",
                                     "Unable to reject "
@@ -1912,8 +2084,11 @@ public class DoctorManagementView extends ScrollPane {
                                             + " verification."
                             );
                         }
+
                     } catch (Exception ex) {
+
                         ex.printStackTrace();
+
                         showAlert(
                                 "Rejection Error",
                                 "An error occurred while rejecting the doctor.\n\n"
@@ -1944,9 +2119,9 @@ public class DoctorManagementView extends ScrollPane {
         dialog.showAndWait();
     }
 
-    // ------------------------------------------------------------------------
+    // ========================================================
     // ALERT
-    // ------------------------------------------------------------------------
+    // ========================================================
 
     private void showAlert(
             String title,
@@ -1972,9 +2147,9 @@ public class DoctorManagementView extends ScrollPane {
         alert.showAndWait();
     }
 
-    // ------------------------------------------------------------------------
+    // ========================================================
     // UI MODEL
-    // ------------------------------------------------------------------------
+    // ========================================================
 
     public static class DoctorModel {
 

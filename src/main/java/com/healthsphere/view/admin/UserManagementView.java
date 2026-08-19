@@ -30,6 +30,9 @@ public class UserManagementView {
     private VBox userTableContainer;
 
     private Label totalUsersLabel;
+    private Label activeUsersLabel;
+    private Label inactiveUsersLabel;
+    private Label suspendedUsersLabel;
 
     // ============================================================
     // CONSTRUCTORS
@@ -109,22 +112,41 @@ public class UserManagementView {
     private ScrollPane buildUserDirectory() {
 
         VBox root =
-                new VBox(20);
+                new VBox(22);
 
         root.setPadding(
                 new Insets(
                         28,
                         32,
-                        28,
+                        32,
                         32
                 )
         );
+
+        root.setStyle(
+                "-fx-background-color: #F8FAFC;"
+        );
+
+        // ========================================================
+        // HEADER
+        // ========================================================
 
         HBox header =
                 createHeader(
                         "User Directory Management",
                         "Manage user profiles, account statuses, and system access."
                 );
+
+        // ========================================================
+        // STATISTICS
+        // ========================================================
+
+        HBox statistics =
+                createStatisticsSection();
+
+        // ========================================================
+        // MAIN DIRECTORY CARD
+        // ========================================================
 
         VBox card =
                 new VBox(16);
@@ -134,11 +156,16 @@ public class UserManagementView {
         );
 
         card.setStyle(
-                "-fx-background-color: #FFFFFF; " +
-                "-fx-background-radius: 12px; " +
-                "-fx-border-color: #E2E8F0; " +
-                "-fx-border-radius: 12px;"
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 16px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 16px;" +
+                "-fx-effect: dropshadow(gaussian, rgba(15,23,42,0.07), 18, 0.15, 0, 5);"
         );
+
+        // ========================================================
+        // TOP BAR
+        // ========================================================
 
         HBox topBar =
                 new HBox(12);
@@ -147,17 +174,45 @@ public class UserManagementView {
                 Pos.CENTER_LEFT
         );
 
-        totalUsersLabel =
+        VBox sectionTitle =
+                new VBox(3);
+
+        Label directoryTitle =
                 new Label(
                         "Registered Users"
                 );
 
-        totalUsersLabel.setFont(
+        directoryTitle.setFont(
                 Font.font(
                         "Segoe UI",
                         FontWeight.BOLD,
-                        16
+                        17
                 )
+        );
+
+        directoryTitle.setTextFill(
+                Color.web("#0F172A")
+        );
+
+        Label directorySubtitle =
+                new Label(
+                        "Monitor account access and current user status"
+                );
+
+        directorySubtitle.setFont(
+                Font.font(
+                        "Segoe UI",
+                        11
+                )
+        );
+
+        directorySubtitle.setTextFill(
+                Color.web("#64748B")
+        );
+
+        sectionTitle.getChildren().addAll(
+                directoryTitle,
+                directorySubtitle
         );
 
         Region spacer =
@@ -168,72 +223,95 @@ public class UserManagementView {
                 Priority.ALWAYS
         );
 
+        // ========================================================
+        // SEARCH
+        // ========================================================
+
         TextField search =
                 new TextField();
 
         search.setPromptText(
-                "🔍 Search User ID, Email, Role..."
+                "🔍  Search User ID, Email, Role..."
         );
 
         search.setPrefWidth(
-                280
+                300
+        );
+
+        search.setMinHeight(
+                38
         );
 
         search.setStyle(
-                "-fx-background-color: #F1F5F9; " +
-                "-fx-background-radius: 8px; " +
-                "-fx-padding: 8 12;"
+                "-fx-background-color: #F8FAFC;" +
+                "-fx-border-color: #CBD5E1;" +
+                "-fx-border-radius: 8px;" +
+                "-fx-background-radius: 8px;" +
+                "-fx-padding: 8 12;" +
+                "-fx-font-size: 12px;"
         );
+
+        // ========================================================
+        // REFRESH
+        // ========================================================
 
         Button refreshButton =
                 new Button(
-                        "↻ Refresh"
+                        "↻  Refresh"
                 );
 
+        refreshButton.setMinHeight(
+                38
+        );
+
         refreshButton.setStyle(
-                "-fx-background-color: #E0E7FF; " +
-                "-fx-text-fill: #3730A3; " +
-                "-fx-font-weight: bold; " +
-                "-fx-background-radius: 8px; " +
-                "-fx-padding: 8 14; " +
+                "-fx-background-color: #EEF2FF;" +
+                "-fx-text-fill: #4338CA;" +
+                "-fx-font-size: 12px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-radius: 8px;" +
+                "-fx-border-color: #C7D2FE;" +
+                "-fx-border-radius: 8px;" +
+                "-fx-padding: 8 15;" +
                 "-fx-cursor: hand;"
         );
 
         refreshButton.setOnAction(
-                e -> loadUsers()
-        );
+                e -> {
 
-        Button addUserButton =
-                new Button(
-                        "+ Register User"
-                );
+                    refreshButton.setDisable(true);
 
-        addUserButton.setStyle(
-                "-fx-background-color: #2563EB; " +
-                "-fx-text-fill: white; " +
-                "-fx-font-weight: bold; " +
-                "-fx-background-radius: 8px; " +
-                "-fx-padding: 8 14; " +
-                "-fx-cursor: hand;"
-        );
+                    try {
 
-        addUserButton.setOnAction(
-                e -> showInformationAlert(
-                        "Register User",
-                        "User registration is handled through the existing authentication and registration workflow."
-                )
+                        loadUsers();
+
+                    } finally {
+
+                        refreshButton.setDisable(false);
+                    }
+                }
         );
 
         topBar.getChildren().addAll(
-                totalUsersLabel,
+                sectionTitle,
                 spacer,
                 search,
-                refreshButton,
-                addUserButton
+                refreshButton
         );
 
+        // ========================================================
+        // TABLE HEADER
+        // ========================================================
+
+        HBox tableHeader =
+                createTableHeader();
+
+        // ========================================================
+        // USER ROW CONTAINER
+        // ========================================================
+
         userTableContainer =
-                new VBox(10);
+                new VBox(8);
 
         loadUsers();
 
@@ -245,17 +323,355 @@ public class UserManagementView {
 
         card.getChildren().addAll(
                 topBar,
+                tableHeader,
                 userTableContainer
         );
 
         root.getChildren().addAll(
                 header,
+                statistics,
                 card
         );
 
         return wrapInScrollPane(
                 root
         );
+    }
+
+    // ============================================================
+    // STATISTICS SECTION
+    // ============================================================
+
+    private HBox createStatisticsSection() {
+
+        HBox section =
+                new HBox(14);
+
+        section.setAlignment(
+                Pos.CENTER
+        );
+
+        totalUsersLabel =
+                new Label("0");
+
+        activeUsersLabel =
+                new Label("0");
+
+        inactiveUsersLabel =
+                new Label("0");
+
+        suspendedUsersLabel =
+                new Label("0");
+
+        VBox totalCard =
+                createStatCard(
+                        "Total Users",
+                        totalUsersLabel,
+                        "Registered accounts",
+                        "#4F46E5",
+                        "#EEF2FF",
+                        "👥"
+                );
+
+        VBox activeCard =
+                createStatCard(
+                        "Active",
+                        activeUsersLabel,
+                        "Currently enabled",
+                        "#059669",
+                        "#ECFDF5",
+                        "✓"
+                );
+
+        VBox inactiveCard =
+                createStatCard(
+                        "Inactive",
+                        inactiveUsersLabel,
+                        "Currently disabled",
+                        "#64748B",
+                        "#F1F5F9",
+                        "○"
+                );
+
+        VBox suspendedCard =
+                createStatCard(
+                        "Suspended",
+                        suspendedUsersLabel,
+                        "Access restricted",
+                        "#DC2626",
+                        "#FEF2F2",
+                        "!"
+                );
+
+        HBox.setHgrow(
+                totalCard,
+                Priority.ALWAYS
+        );
+
+        HBox.setHgrow(
+                activeCard,
+                Priority.ALWAYS
+        );
+
+        HBox.setHgrow(
+                inactiveCard,
+                Priority.ALWAYS
+        );
+
+        HBox.setHgrow(
+                suspendedCard,
+                Priority.ALWAYS
+        );
+
+        section.getChildren().addAll(
+                totalCard,
+                activeCard,
+                inactiveCard,
+                suspendedCard
+        );
+
+        return section;
+    }
+
+    // ============================================================
+    // STAT CARD
+    // ============================================================
+
+    private VBox createStatCard(
+            String title,
+            Label valueLabel,
+            String subtitle,
+            String accent,
+            String background,
+            String iconText) {
+
+        VBox card =
+                new VBox(7);
+
+        card.setPadding(
+                new Insets(16)
+        );
+
+        card.setMinHeight(
+                105
+        );
+
+        card.setPrefHeight(
+                112
+        );
+
+        card.setStyle(
+                "-fx-background-color: "
+                        + background
+                        + ";" +
+                "-fx-background-radius: 14px;" +
+                "-fx-border-color: "
+                        + accent
+                        + ";" +
+                "-fx-border-width: 1px;" +
+                "-fx-border-radius: 14px;"
+        );
+
+        HBox top =
+                new HBox();
+
+        top.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        Label titleLabel =
+                new Label(
+                        title
+                );
+
+        titleLabel.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.SEMI_BOLD,
+                        12
+                )
+        );
+
+        titleLabel.setTextFill(
+                Color.web("#475569")
+        );
+
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        Label icon =
+                new Label(
+                        iconText
+                );
+
+        icon.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        13
+                )
+        );
+
+        icon.setTextFill(
+                Color.web(accent)
+        );
+
+        top.getChildren().addAll(
+                titleLabel,
+                spacer,
+                icon
+        );
+
+        valueLabel.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        25
+                )
+        );
+
+        valueLabel.setTextFill(
+                Color.web(accent)
+        );
+
+        Label sub =
+                new Label(
+                        subtitle
+                );
+
+        sub.setFont(
+                Font.font(
+                        "Segoe UI",
+                        10
+                )
+        );
+
+        sub.setTextFill(
+                Color.web("#64748B")
+        );
+
+        card.getChildren().addAll(
+                top,
+                valueLabel,
+                sub
+        );
+
+        return card;
+    }
+
+    // ============================================================
+    // TABLE HEADER
+    // ============================================================
+
+    private HBox createTableHeader() {
+
+        HBox header =
+                new HBox(12);
+
+        header.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        header.setPadding(
+                new Insets(
+                        10,
+                        12,
+                        10,
+                        12
+                )
+        );
+
+        header.setStyle(
+                "-fx-background-color: #F8FAFC;" +
+                "-fx-background-radius: 8px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 8px;"
+        );
+
+        Label id =
+                createHeaderLabel(
+                        "USER ID",
+                        180
+                );
+
+        Label name =
+                createHeaderLabel(
+                        "USER",
+                        160
+                );
+
+        Label role =
+                createHeaderLabel(
+                        "ROLE",
+                        100
+                );
+
+        Label email =
+                createHeaderLabel(
+                        "EMAIL",
+                        -1
+                );
+
+        HBox.setHgrow(
+                email,
+                Priority.ALWAYS
+        );
+
+        Label status =
+                createHeaderLabel(
+                        "STATUS",
+                        110
+                );
+
+        Label action =
+                createHeaderLabel(
+                        "ACTION",
+                        100
+                );
+
+        header.getChildren().addAll(
+                id,
+                name,
+                role,
+                email,
+                status,
+                action
+        );
+
+        return header;
+    }
+
+    private Label createHeaderLabel(
+            String text,
+            double width) {
+
+        Label label =
+                new Label(
+                        text
+                );
+
+        label.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        10
+                )
+        );
+
+        label.setTextFill(
+                Color.web("#64748B")
+        );
+
+        if (width > 0) {
+            label.setPrefWidth(width);
+        }
+
+        return label;
     }
 
     // ============================================================
@@ -425,20 +841,78 @@ public class UserManagementView {
                         .isEmpty()
         ) {
 
-            Label noMatch =
+            VBox emptyBox =
+                    new VBox(8);
+
+            emptyBox.setAlignment(
+                    Pos.CENTER
+            );
+
+            emptyBox.setPadding(
+                    new Insets(30)
+            );
+
+            Label icon =
                     new Label(
-                            "⚠️ No matching user records found."
+                            "⌕"
                     );
 
-            noMatch.setStyle(
-                    "-fx-text-fill: #94A3B8; " +
-                    "-fx-font-size: 13px; " +
-                    "-fx-padding: 10;"
+            icon.setFont(
+                    Font.font(
+                            "Segoe UI",
+                            FontWeight.BOLD,
+                            28
+                    )
+            );
+
+            icon.setTextFill(
+                    Color.web("#94A3B8")
+            );
+
+            Label noMatch =
+                    new Label(
+                            "No matching user records found"
+                    );
+
+            noMatch.setFont(
+                    Font.font(
+                            "Segoe UI",
+                            FontWeight.SEMI_BOLD,
+                            13
+                    )
+            );
+
+            noMatch.setTextFill(
+                    Color.web("#64748B")
+            );
+
+            Label hint =
+                    new Label(
+                            "Try searching with a different User ID, email, or role."
+                    );
+
+            hint.setFont(
+                    Font.font(
+                            "Segoe UI",
+                            11
+                    )
+            );
+
+            hint.setTextFill(
+                    Color.web("#94A3B8")
+            );
+
+            emptyBox.getChildren().addAll(
+                    icon,
+                    noMatch,
+                    hint
             );
 
             userTableContainer
                     .getChildren()
-                    .add(noMatch);
+                    .add(
+                            emptyBox
+                    );
         }
     }
 
@@ -457,15 +931,28 @@ public class UserManagementView {
         );
 
         row.setPadding(
-                new Insets(12)
+                new Insets(
+                        13,
+                        12,
+                        13,
+                        12
+                )
+        );
+
+        row.setMinHeight(
+                62
         );
 
         row.setStyle(
-                "-fx-background-color: #F8FAFC; " +
-                "-fx-background-radius: 8px; " +
-                "-fx-border-color: #E2E8F0; " +
-                "-fx-border-radius: 8px;"
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 10px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 10px;"
         );
+
+        // ========================================================
+        // USER ID
+        // ========================================================
 
         Label idLabel =
                 new Label(
@@ -481,11 +968,56 @@ public class UserManagementView {
         );
 
         idLabel.setTextFill(
-                Color.web("#2563EB")
+                Color.web("#4F46E5")
         );
 
         idLabel.setPrefWidth(
                 180
+        );
+
+        // ========================================================
+        // USER
+        // ========================================================
+
+        HBox userBox =
+                new HBox(9);
+
+        userBox.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        Label avatar =
+                new Label(
+                        getAvatarLetter(user.id)
+                );
+
+        avatar.setAlignment(
+                Pos.CENTER
+        );
+
+        avatar.setMinSize(
+                32,
+                32
+        );
+
+        avatar.setPrefSize(
+                32,
+                32
+        );
+
+        avatar.setMaxSize(
+                32,
+                32
+        );
+
+        avatar.setStyle(
+                "-fx-background-color: #EEF2FF;" +
+                "-fx-background-radius: 50%;" +
+                "-fx-border-color: #C7D2FE;" +
+                "-fx-border-radius: 50%;" +
+                "-fx-text-fill: #4338CA;" +
+                "-fx-font-weight: bold;" +
+                "-fx-font-size: 12px;"
         );
 
         Label nameLabel =
@@ -497,13 +1029,26 @@ public class UserManagementView {
                 Font.font(
                         "Segoe UI",
                         FontWeight.BOLD,
-                        13
+                        12
                 )
         );
 
-        nameLabel.setPrefWidth(
+        nameLabel.setTextFill(
+                Color.web("#0F172A")
+        );
+
+        userBox.getChildren().addAll(
+                avatar,
+                nameLabel
+        );
+
+        userBox.setPrefWidth(
                 160
         );
+
+        // ========================================================
+        // ROLE
+        // ========================================================
 
         Label roleLabel =
                 new Label(
@@ -513,18 +1058,22 @@ public class UserManagementView {
         roleLabel.setFont(
                 Font.font(
                         "Segoe UI",
-                        FontWeight.NORMAL,
-                        12
+                        FontWeight.SEMI_BOLD,
+                        11
                 )
         );
 
         roleLabel.setTextFill(
-                Color.web("#64748B")
+                Color.web("#475569")
         );
 
         roleLabel.setPrefWidth(
                 100
         );
+
+        // ========================================================
+        // EMAIL
+        // ========================================================
 
         Label emailLabel =
                 new Label(
@@ -534,15 +1083,22 @@ public class UserManagementView {
         emailLabel.setFont(
                 Font.font(
                         "Segoe UI",
-                        FontWeight.NORMAL,
-                        12
+                        11
                 )
+        );
+
+        emailLabel.setTextFill(
+                Color.web("#64748B")
         );
 
         HBox.setHgrow(
                 emailLabel,
                 Priority.ALWAYS
         );
+
+        // ========================================================
+        // STATUS
+        // ========================================================
 
         Label statusLabel =
                 createStatusLabel(
@@ -553,14 +1109,22 @@ public class UserManagementView {
                 110
         );
 
+        // ========================================================
+        // ACTION
+        // ========================================================
+
         Button actionButton =
                 createStatusButton(
                         user
                 );
 
+        actionButton.setPrefWidth(
+                92
+        );
+
         row.getChildren().addAll(
                 idLabel,
-                nameLabel,
+                userBox,
                 roleLabel,
                 emailLabel,
                 statusLabel,
@@ -580,19 +1144,27 @@ public class UserManagementView {
         String normalized =
                 normalizeStatus(status);
 
-        String displayStatus =
-                normalized;
-
         Label label =
-                new Label(
-                        displayStatus
-                );
+                new Label();
 
         label.setFont(
                 Font.font(
                         "Segoe UI",
                         FontWeight.BOLD,
-                        11
+                        10
+                )
+        );
+
+        label.setAlignment(
+                Pos.CENTER
+        );
+
+        label.setPadding(
+                new Insets(
+                        6,
+                        10,
+                        6,
+                        10
                 )
         );
 
@@ -604,11 +1176,16 @@ public class UserManagementView {
         ) {
 
             label.setText(
-                    "🟢 Active"
+                    "● Active"
             );
 
             label.setTextFill(
-                    Color.web("#059669")
+                    Color.web("#047857")
+            );
+
+            label.setStyle(
+                    "-fx-background-color: #D1FAE5;" +
+                    "-fx-background-radius: 20px;"
             );
 
         } else if (
@@ -619,11 +1196,16 @@ public class UserManagementView {
         ) {
 
             label.setText(
-                    "⚪ Inactive"
+                    "○ Inactive"
             );
 
             label.setTextFill(
-                    Color.web("#64748B")
+                    Color.web("#475569")
+            );
+
+            label.setStyle(
+                    "-fx-background-color: #E2E8F0;" +
+                    "-fx-background-radius: 20px;"
             );
 
         } else if (
@@ -634,21 +1216,31 @@ public class UserManagementView {
         ) {
 
             label.setText(
-                    "🔴 Suspended"
+                    "● Suspended"
             );
 
             label.setTextFill(
-                    Color.web("#DC2626")
+                    Color.web("#B91C1C")
+            );
+
+            label.setStyle(
+                    "-fx-background-color: #FEE2E2;" +
+                    "-fx-background-radius: 20px;"
             );
 
         } else {
 
             label.setText(
-                    "🟡 " + normalized
+                    "● " + normalized
             );
 
             label.setTextFill(
-                    Color.web("#D97706")
+                    Color.web("#B45309")
+            );
+
+            label.setStyle(
+                    "-fx-background-color: #FEF3C7;" +
+                    "-fx-background-radius: 20px;"
             );
         }
 
@@ -683,16 +1275,24 @@ public class UserManagementView {
         button.setStyle(
                 active
                         ?
-                        "-fx-background-color: #FEE2E2; " +
-                        "-fx-text-fill: #DC2626; " +
-                        "-fx-font-weight: bold; " +
-                        "-fx-background-radius: 6px; " +
+                        "-fx-background-color: #FEF2F2;" +
+                        "-fx-text-fill: #DC2626;" +
+                        "-fx-font-size: 11px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-background-radius: 7px;" +
+                        "-fx-border-color: #FECACA;" +
+                        "-fx-border-radius: 7px;" +
+                        "-fx-padding: 7 11;" +
                         "-fx-cursor: hand;"
                         :
-                        "-fx-background-color: #D1FAE5; " +
-                        "-fx-text-fill: #059669; " +
-                        "-fx-font-weight: bold; " +
-                        "-fx-background-radius: 6px; " +
+                        "-fx-background-color: #ECFDF5;" +
+                        "-fx-text-fill: #059669;" +
+                        "-fx-font-size: 11px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-background-radius: 7px;" +
+                        "-fx-border-color: #A7F3D0;" +
+                        "-fx-border-radius: 7px;" +
+                        "-fx-padding: 7 11;" +
                         "-fx-cursor: hand;"
         );
 
@@ -700,6 +1300,10 @@ public class UserManagementView {
                 e -> {
 
                     boolean success;
+
+                    button.setDisable(
+                            true
+                    );
 
                     if (active) {
 
@@ -714,7 +1318,10 @@ public class UserManagementView {
                             user.status =
                                     "SUSPENDED";
 
+                            updateUserCount();
+
                             renderUserRows("");
+
                         }
 
                     } else {
@@ -730,9 +1337,16 @@ public class UserManagementView {
                             user.status =
                                     "ACTIVE";
 
+                            updateUserCount();
+
                             renderUserRows("");
+
                         }
                     }
+
+                    button.setDisable(
+                            false
+                    );
 
                     if (!success) {
 
@@ -764,7 +1378,7 @@ public class UserManagementView {
         );
 
         VBox titleBox =
-                new VBox(4);
+                new VBox(6);
 
         Label title =
                 new Label(
@@ -775,7 +1389,7 @@ public class UserManagementView {
                 Font.font(
                         "Segoe UI",
                         FontWeight.BOLD,
-                        24
+                        25
                 )
         );
 
@@ -828,16 +1442,21 @@ public class UserManagementView {
                 true
         );
 
+        scrollPane.setHbarPolicy(
+                ScrollPane.ScrollBarPolicy.NEVER
+        );
+
         scrollPane.setStyle(
-                "-fx-background-color: transparent; " +
-                "-fx-background: #F8FAFC;"
+                "-fx-background-color: transparent;" +
+                "-fx-background: #F8FAFC;" +
+                "-fx-border-color: transparent;"
         );
 
         return scrollPane;
     }
 
     // ============================================================
-    // USER COUNT
+    // USER COUNT + STATISTICS
     // ============================================================
 
     private void updateUserCount() {
@@ -846,11 +1465,81 @@ public class UserManagementView {
             return;
         }
 
+        int total =
+                userData.size();
+
+        int active =
+                0;
+
+        int inactive =
+                0;
+
+        int suspended =
+                0;
+
+        for (
+                UserRecord user :
+                userData
+        ) {
+
+            String status =
+                    normalizeStatus(
+                            user.status
+                    );
+
+            if (
+                    "ACTIVE"
+                            .equalsIgnoreCase(
+                                    status
+                            )
+            ) {
+
+                active++;
+
+            } else if (
+                    "INACTIVE"
+                            .equalsIgnoreCase(
+                                    status
+                            )
+            ) {
+
+                inactive++;
+
+            } else if (
+                    "SUSPENDED"
+                            .equalsIgnoreCase(
+                                    status
+                            )
+            ) {
+
+                suspended++;
+            }
+        }
+
         totalUsersLabel.setText(
-                "Registered Users ("
-                        + userData.size()
-                        + " Total)"
+                String.valueOf(total)
         );
+
+        if (activeUsersLabel != null) {
+
+            activeUsersLabel.setText(
+                    String.valueOf(active)
+            );
+        }
+
+        if (inactiveUsersLabel != null) {
+
+            inactiveUsersLabel.setText(
+                    String.valueOf(inactive)
+            );
+        }
+
+        if (suspendedUsersLabel != null) {
+
+            suspendedUsersLabel.setText(
+                    String.valueOf(suspended)
+            );
+        }
     }
 
     // ============================================================
@@ -887,10 +1576,42 @@ public class UserManagementView {
                                 "🟡",
                                 ""
                         )
+                        .replace(
+                                "●",
+                                ""
+                        )
+                        .replace(
+                                "○",
+                                ""
+                        )
                         .trim()
                         .toUpperCase();
 
         return normalized;
+    }
+
+    // ============================================================
+    // AVATAR LETTER
+    // ============================================================
+
+    private String getAvatarLetter(
+            String value) {
+
+        if (
+                value == null ||
+                value.trim().isEmpty()
+        ) {
+
+            return "U";
+        }
+
+        return value
+                .trim()
+                .substring(
+                        0,
+                        1
+                )
+                .toUpperCase();
     }
 
     // ============================================================
