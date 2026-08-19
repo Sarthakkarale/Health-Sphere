@@ -289,7 +289,7 @@ public class DoctorEditProfileView {
         grid.setHgap(20);
         grid.setVgap(16);
 
-        TextField nameField = new TextField("Dr. Julian Smith");
+        TextField nameField = new TextField("Dr. Sarah");
         TextField titleField = new TextField("Senior Cardiologist");
         TextField emailField = new TextField("dr.julian@healthsphere.com");
         TextField phoneField = new TextField("+1 (555) 123-4567");

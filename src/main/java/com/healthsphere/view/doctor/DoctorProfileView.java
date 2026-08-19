@@ -291,7 +291,7 @@ public class DoctorProfileView {
         VBox infoBox = new VBox(6);
         infoBox.setAlignment(Pos.CENTER_LEFT);
 
-        Label docName = new Label("Dr. Julian");
+        Label docName = new Label("Dr. Sarah");
         docName.getStyleClass().add("banner-doc-name");
 
         Label docTitle = new Label("Senior Cardiologist");
@@ -414,7 +414,7 @@ public class DoctorProfileView {
         detailsGrid.setVgap(16);
 
         // Row 1: Full Name & Email Address
-        detailsGrid.add(createDetailItem("FULL NAME", "Dr. Julian Smith"), 0, 0);
+        detailsGrid.add(createDetailItem("FULL NAME", "Dr. Sarah Joshi"), 0, 0);
         detailsGrid.add(createDetailItem("EMAIL ADDRESS", "dr.julian@healthsphere.com"), 1, 0);
 
         // Row 2: Phone Number & Languages Spoken
@@ -539,7 +539,7 @@ public class DoctorProfileView {
                 "Sarah Jenkins",
                 "2 weeks ago",
                 5,
-                "\"Dr. Julian is exceptional. He took the time to explain my condition thoroughly and made me feel completely at ease during my consultation.\""
+                "\"Dr. Sarah is exceptional. He took the time to explain my condition thoroughly and made me feel completely at ease during my consultation.\""
         );
 
         // Review 2
