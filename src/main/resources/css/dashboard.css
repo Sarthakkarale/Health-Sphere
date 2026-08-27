@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /* Color Palette */
 /* Primary Blue: #3498DB */
 /* Premium White: #FFFFFF */
@@ -382,4 +383,136 @@
 
 .pill-info {
     -fx-background-color: rgba(149, 165, 166, 0.1);
+=======
+/* Root Container */
+.root {
+    -fx-background-color: #FAFAFC;
+    -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+/* Header Bar */
+.header-bar {
+    -fx-background-color: #FFFFFF;
+    -fx-padding: 16px 32px;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 0 0 1 0;
+    -fx-alignment: center-left;
+}
+
+.brand-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-fill: #0256D0;
+}
+
+/* Primary Button (Sign Up) */
+.btn-primary {
+    -fx-background-color: #0256D0;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-size: 15px;
+    -fx-background-radius: 8px;
+    -fx-padding: 12px 32px;
+    -fx-cursor: hand;
+}
+
+.btn-primary:hover {
+    -fx-background-color: #0143A3;
+}
+
+/* Teal / Success Button (Register) */
+.btn-teal {
+    -fx-background-color: #00695C;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-size: 15px;
+    -fx-background-radius: 8px;
+    -fx-padding: 12px 32px;
+    -fx-cursor: hand;
+}
+
+.btn-teal:hover {
+    -fx-background-color: #004D40;
+}
+
+/* Icon Buttons */
+.icon-btn {
+    -fx-background-color: transparent;
+    -fx-padding: 6px;
+    -fx-cursor: hand;
+}
+
+/* Profile Avatar */
+.avatar-circle {
+    -fx-background-color: #CBD5E1;
+    -fx-background-radius: 50%;
+    -fx-min-width: 32px;
+    -fx-min-height: 32px;
+    -fx-alignment: center;
+}
+
+/* Hero Typography */
+.hero-title-dark {
+    -fx-font-size: 42px;
+    -fx-font-weight: 800;
+    -fx-fill: #0F172A;
+}
+
+.hero-title-blue {
+    -fx-font-size: 42px;
+    -fx-font-weight: 800;
+    -fx-fill: #0256D0;
+}
+
+.hero-description {
+    -fx-font-size: 15px;
+    -fx-text-fill: #64748B;
+}
+
+/* Floating Card Component */
+.floating-card {
+    -fx-background-color: rgba(255, 255, 255, 0.92);
+    -fx-background-radius: 12px;
+    -fx-padding: 16px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.12), 16, 0, 0, 8);
+    -fx-border-color: rgba(255, 255, 255, 0.6);
+    -fx-border-radius: 12px;
+}
+
+.floating-card-title {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-fill: #1E293B;
+}
+
+/* Footer Styles */
+.footer-bar {
+    -fx-background-color: #F8FAFC;
+    -fx-padding: 16px 32px;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 1 0 0 0;
+}
+
+.footer-brand {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-fill: #0F172A;
+}
+
+.footer-text {
+    -fx-font-size: 12px;
+    -fx-text-fill: #64748B;
+}
+
+.footer-link {
+    -fx-font-size: 12px;
+    -fx-text-fill: #475569;
+    -fx-background-color: transparent;
+    -fx-padding: 0 4px;
+    -fx-cursor: hand;
+}
+
+.footer-link:hover {
+    -fx-text-fill: #0F172A;
+>>>>>>> develop
 }

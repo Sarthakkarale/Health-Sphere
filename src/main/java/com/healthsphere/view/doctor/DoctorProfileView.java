@@ -6,6 +6,10 @@ import com.healthsphere.util.ResourceImage;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.AreaChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -324,7 +328,6 @@ public class DoctorProfileView {
         HBox actionBtns = new HBox(12);
         actionBtns.setAlignment(Pos.CENTER_RIGHT);
 
-        // Image Icon placed directly on the left of "Account Settings"
         ImageView settingsBtnIcon = new ImageView(ResourceImage.load("/images/icons/ic_settings.png"));
         settingsBtnIcon.setFitWidth(16);
         settingsBtnIcon.setFitHeight(16);
@@ -342,7 +345,6 @@ public class DoctorProfileView {
         editProfileBtn.getStyleClass().add("btn-primary-action");
         editProfileBtn.setOnAction(e -> Navigation.goTo(stage, () -> new DoctorEditProfileView(stage).getScene()));
 
-        // Added settingsIconButton directly before accountSettingsBtn
         actionBtns.getChildren().addAll(settingsIconButton, accountSettingsBtn, editProfileBtn);
 
         banner.getChildren().addAll(doctorImage, infoBox, spacer, actionBtns);
@@ -361,17 +363,132 @@ public class DoctorProfileView {
         leftColumn.getChildren().add(createQualificationCard());
         leftColumn.getChildren().add(createPatientReviewsCard());
 
-        // Right Column (Consultation Details, Weekly Availability & Side Banner)
+        // Right Column (Account Balance & Revenue Growth Chart, Consultation Details, Weekly Availability & Side Banner)
         VBox rightColumn = new VBox(20);
         rightColumn.setMinWidth(320);
         rightColumn.setMaxWidth(340);
 
+        rightColumn.getChildren().add(createAccountBalanceCard());
         rightColumn.getChildren().add(createConsultationDetailsCard());
         rightColumn.getChildren().add(createWeeklyAvailabilityCard());
         rightColumn.getChildren().add(createSideImageCard());
 
         body.getChildren().addAll(leftColumn, rightColumn);
         return body;
+    }
+
+    /** Account Balance & Revenue Growth Right-Column Card */
+    private VBox createAccountBalanceCard() {
+        VBox card = new VBox(16);
+        card.getStyleClass().add("panel-card");
+        card.setPadding(new Insets(20));
+
+        // Header Title
+        HBox cardTitleBox = new HBox(8);
+        cardTitleBox.setAlignment(Pos.CENTER_LEFT);
+        ImageView walletIcon = new ImageView(ResourceImage.load("/images/icons/ic_card_white.png"));
+        walletIcon.setFitWidth(18); walletIcon.setFitHeight(18);
+        Label title = new Label("Account Balance");
+        title.getStyleClass().add("card-title");
+        cardTitleBox.getChildren().addAll(walletIcon, title);
+
+        Separator sep = new Separator();
+
+        // Main Balance Display Box with Growth Tag
+        VBox balanceBox = new VBox(6);
+        balanceBox.setStyle("-fx-background-color: #F8FAFC; -fx-padding: 14px; -fx-background-radius: 8px; -fx-border-color: #E2E8F0; -fx-border-radius: 8px;");
+
+        Label balLabel = new Label("TOTAL AVAILABLE BALANCE");
+        balLabel.setStyle("-fx-text-fill: #64748B; -fx-font-size: 11px; -fx-font-weight: bold;");
+
+        HBox amountGrowthBox = new HBox(10);
+        amountGrowthBox.setAlignment(Pos.BASELINE_LEFT);
+
+        Label balAmount = new Label("$3,450.00");
+        balAmount.setStyle("-fx-text-fill: #1E293B; -fx-font-size: 24px; -fx-font-weight: bold;");
+
+        Label growthBadge = new Label("+14.5% ↑");
+        growthBadge.setStyle("-fx-background-color: #D1FAE5; -fx-text-fill: #059669; -fx-font-weight: bold; -fx-font-size: 11px; -fx-padding: 2px 8px; -fx-background-radius: 12px;");
+
+        amountGrowthBox.getChildren().addAll(balAmount, growthBadge);
+        balanceBox.getChildren().addAll(balLabel, amountGrowthBox);
+
+        // Revenue Growth Chart Container
+        VBox chartBox = new VBox(4);
+        Label chartHeader = new Label("Monthly Revenue Growth");
+        chartHeader.setStyle("-fx-text-fill: #0F172A; -fx-font-size: 12px; -fx-font-weight: bold;");
+
+        AreaChart<String, Number> revenueChart = createRevenueChart();
+        chartBox.getChildren().addAll(chartHeader, revenueChart);
+
+        // Recent Payments / Earnings Summary
+        VBox recentTxBox = new VBox(10);
+
+        Label recentHeader = new Label("Recent Patient Payments");
+        recentHeader.setStyle("-fx-text-fill: #0F172A; -fx-font-size: 12px; -fx-font-weight: bold;");
+
+        recentTxBox.getChildren().add(recentHeader);
+        recentTxBox.getChildren().add(createTransactionRow("Robert Chen", "Video Consultation", "+$150.00"));
+        recentTxBox.getChildren().add(createTransactionRow("Elena Smith", "In-Person Checkup", "+$150.00"));
+        recentTxBox.getChildren().add(createTransactionRow("Sarah Jenkins", "Follow-up", "+$150.00"));
+
+        // Action Button: Withdraw / View Details
+        Button withdrawBtn = new Button("Withdraw Funds");
+        withdrawBtn.getStyleClass().add("btn-primary-action");
+        withdrawBtn.setMaxWidth(Double.MAX_VALUE);
+        withdrawBtn.setOnAction(e -> System.out.println("Initiating withdrawal process..."));
+
+        card.getChildren().addAll(cardTitleBox, sep, balanceBox, chartBox, recentTxBox, withdrawBtn);
+        return card;
+    }
+
+    /** Creates a compact Area Chart showing upward revenue growth trends */
+    private AreaChart<String, Number> createRevenueChart() {
+        CategoryAxis xAxis = new CategoryAxis();
+        NumberAxis yAxis = new NumberAxis();
+
+        xAxis.setAnimated(false);
+        yAxis.setAnimated(false);
+        yAxis.setVisible(false); // Hide y-axis for clean aesthetic
+        yAxis.setOpacity(0);
+
+        AreaChart<String, Number> areaChart = new AreaChart<>(xAxis, yAxis);
+        areaChart.setLegendVisible(false);
+        areaChart.setCreateSymbols(true);
+        areaChart.setPrefHeight(130);
+        areaChart.setMaxWidth(280);
+        areaChart.setStyle("-fx-padding: 0; -fx-background-color: transparent;");
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.getData().add(new XYChart.Data<>("May", 1800));
+        series.getData().add(new XYChart.Data<>("Jun", 2200));
+        series.getData().add(new XYChart.Data<>("Jul", 2700));
+        series.getData().add(new XYChart.Data<>("Aug", 3450));
+
+        areaChart.getData().add(series);
+        return areaChart;
+    }
+
+    private BorderPane createTransactionRow(String patientName, String type, String amount) {
+        BorderPane row = new BorderPane();
+
+        VBox left = new VBox(2);
+        Label nameLbl = new Label(patientName);
+        nameLbl.setStyle("-fx-text-fill: #334155; -fx-font-size: 12px; -fx-font-weight: bold;");
+
+        Label typeLbl = new Label(type);
+        typeLbl.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 11px;");
+
+        left.getChildren().addAll(nameLbl, typeLbl);
+
+        Label amtLbl = new Label(amount);
+        amtLbl.setStyle("-fx-text-fill: #10B981; -fx-font-size: 12px; -fx-font-weight: bold;");
+
+        row.setLeft(left);
+        row.setRight(amtLbl);
+        BorderPane.setAlignment(amtLbl, Pos.CENTER_RIGHT);
+
+        return row;
     }
 
     /** Side Promo Banner Card below Weekly Availability */
@@ -537,7 +654,7 @@ public class DoctorProfileView {
         // Review 1
         VBox review1 = createReviewItem(
                 "Sarah Jenkins",
-                "2 weeks ago",
+                "2 weeks ago", 
                 5,
                 "\"Dr. Sarah is exceptional. He took the time to explain my condition thoroughly and made me feel completely at ease during my consultation.\""
         );

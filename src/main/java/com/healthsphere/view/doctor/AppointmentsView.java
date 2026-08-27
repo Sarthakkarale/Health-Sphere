@@ -484,8 +484,21 @@ public class AppointmentsView {
         notesRow.getChildren().add(notesLbl);
 
         // Actions Row
-        HBox actionRow = new HBox(10);
+        HBox actionRow = new HBox(6);
         actionRow.setPadding(new Insets(10, 0, 0, 0));
+
+        Button completeBtn = new Button("Complete");
+        completeBtn.getStyleClass().add("btn-card-complete");
+        completeBtn.setStyle("-fx-background-color: #10B981; -fx-text-fill: white; -fx-background-radius: 6px; -fx-font-weight: bold; -fx-font-size: 11px; -fx-cursor: hand;");
+        HBox.setHgrow(completeBtn, Priority.ALWAYS);
+        completeBtn.setMaxWidth(Double.MAX_VALUE);
+        completeBtn.setOnAction(e -> {
+            data.status = "Completed";
+            data.filterCategory = "Completed";
+            data.statusClass = "pill-status-completed";
+            showInformationAlert("Appointment Completed", "Appointment " + data.aptId + " marked as completed.");
+            renderFilteredAppointments("All");
+        });
 
         Button rescheduleBtn = new Button("Reschedule");
         rescheduleBtn.getStyleClass().add("btn-card-reschedule");
@@ -498,7 +511,7 @@ public class AppointmentsView {
         detailsBtn.setMaxWidth(Double.MAX_VALUE);
         detailsBtn.setOnAction(e -> Navigation.goTo(stage, () -> new PatientDetailsView(stage).getScene()));
 
-        actionRow.getChildren().addAll(rescheduleBtn, detailsBtn);
+        actionRow.getChildren().addAll(completeBtn, rescheduleBtn, detailsBtn);
 
         card.getChildren().addAll(topRow, profileRow, timeRow, notesRow, actionRow);
         return card;

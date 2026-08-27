@@ -134,16 +134,18 @@ public class AvailabilityScheduleView {
             ImageView icon = new ImageView(ResourceImage.load("/images/icons/" + icons[i] + ".png"));
             icon.setFitWidth(18);
             icon.setFitHeight(18);
+            icon.setMouseTransparent(true);
 
             Label tabLabel = new Label(tabs[i]);
             tabLabel.getStyleClass().add("nav-text");
+            tabLabel.setMouseTransparent(true);
 
             if (i == 5) { // Active Highlight: Availability & Schedule
                 navTab.getStyleClass().add("nav-tab-active");
-                navTab.setStyle("-fx-background-color: #3B82F6; -fx-background-radius: 8px;");
+                navTab.setStyle("-fx-background-color: #3B82F6; -fx-background-radius: 8px; -fx-cursor: hand;");
                 tabLabel.setStyle("-fx-text-fill: #FFFFFF; -fx-font-weight: bold;");
             } else {
-                navTab.setStyle("-fx-background-color: transparent; -fx-background-radius: 8px;");
+                navTab.setStyle("-fx-background-color: transparent; -fx-background-radius: 8px; -fx-cursor: hand;");
                 tabLabel.setStyle("-fx-text-fill: #94A3B8;");
             }
 
@@ -174,8 +176,10 @@ public class AvailabilityScheduleView {
         profileAvatar.setFitHeight(36);
         Circle profileClip = new Circle(18, 18, 18);
         profileAvatar.setClip(profileClip);
+        profileAvatar.setMouseTransparent(true);
 
         VBox profileTexts = new VBox(2);
+        profileTexts.setMouseTransparent(true);
         Label profSubText = new Label("Doctor Profile");
         profSubText.setStyle("-fx-text-fill: #64748B; -fx-font-size: 11px;");
         Label profName = new Label("Dr. Sarah");
@@ -196,10 +200,12 @@ public class AvailabilityScheduleView {
         ImageView logoutIcon = new ImageView(ResourceImage.load("/images/icons/ic_logout.png"));
         logoutIcon.setFitWidth(18);
         logoutIcon.setFitHeight(18);
+        logoutIcon.setMouseTransparent(true);
 
         Label logoutLabel = new Label("Logout");
         logoutLabel.getStyleClass().add("nav-text");
         logoutLabel.setStyle("-fx-text-fill: #94A3B8;");
+        logoutLabel.setMouseTransparent(true);
 
         logoutTab.getChildren().addAll(logoutIcon, logoutLabel);
         logoutTab.setOnMouseClicked(e -> System.out.println("Logging out..."));
@@ -233,6 +239,9 @@ public class AvailabilityScheduleView {
         breadcrumbs.setAlignment(Pos.CENTER_LEFT);
         Label p1 = new Label("Patients");
         p1.getStyleClass().add("breadcrumb-inactive");
+        p1.setStyle("-fx-cursor: hand;");
+        p1.setOnMouseClicked(e -> Navigation.goTo(stage, () -> new PatientDetailsView(stage).getScene()));
+
         Label sep = new Label("›");
         sep.getStyleClass().add("breadcrumb-separator");
         Label p2 = new Label("Availability & Schedule");
@@ -255,6 +264,7 @@ public class AvailabilityScheduleView {
         TextField searchInput = new TextField();
         searchInput.setPromptText("Search appointments...");
         searchInput.getStyleClass().add("search-text-field");
+        searchInput.setOnAction(e -> System.out.println("Searching appointments for: " + searchInput.getText()));
         HBox.setHgrow(searchInput, Priority.ALWAYS);
 
         searchField.getChildren().addAll(searchIcon, searchInput);
@@ -268,24 +278,30 @@ public class AvailabilityScheduleView {
         ImageView bellIcon = new ImageView(ResourceImage.load("/images/icons/ic_bell.png"));
         bellIcon.setFitWidth(18);
         bellIcon.setFitHeight(18);
+        bellIcon.setMouseTransparent(true);
 
         Circle badge = new Circle(4, Color.web("#EF4444"));
+        badge.setMouseTransparent(true);
         StackPane.setAlignment(badge, Pos.TOP_RIGHT);
         notificationBox.getChildren().addAll(bellIcon, badge);
         notificationBox.getStyleClass().add("clickable-icon");
+        notificationBox.setStyle("-fx-cursor: hand;");
         notificationBox.setOnMouseClicked(e -> System.out.println("Opening notifications..."));
 
         HBox userProfile = new HBox(10);
         userProfile.setAlignment(Pos.CENTER_LEFT);
         userProfile.getStyleClass().add("clickable-icon");
+        userProfile.setStyle("-fx-cursor: hand;");
 
         ImageView userAvatar = new ImageView(ResourceImage.load("/images/doctor/portrait-3d-male-doctor.png"));
         userAvatar.setFitWidth(36);
         userAvatar.setFitHeight(36);
         Circle clip = new Circle(18, 18, 18);
         userAvatar.setClip(clip);
+        userAvatar.setMouseTransparent(true);
 
         VBox userDetails = new VBox(0);
+        userDetails.setMouseTransparent(true);
         Label docName = new Label("Dr. Sarah Jenkins");
         docName.getStyleClass().add("profile-name");
         Label docDept = new Label("Cardiology");
@@ -293,6 +309,8 @@ public class AvailabilityScheduleView {
         userDetails.getChildren().addAll(docName, docDept);
 
         userProfile.getChildren().addAll(userAvatar, userDetails);
+        userProfile.setOnMouseClicked(e -> Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()));
+
         rightIcons.getChildren().addAll(notificationBox, userProfile);
 
         topBar.getChildren().addAll(breadcrumbs, spacer, searchField, rightIcons);
@@ -379,6 +397,19 @@ public class AvailabilityScheduleView {
         weekBtn.getStyleClass().addAll("segmented-btn", "segmented-btn-active");
         Button monthBtn = new Button("Month");
         monthBtn.getStyleClass().add("segmented-btn");
+
+        weekBtn.setOnAction(e -> {
+            weekBtn.getStyleClass().add("segmented-btn-active");
+            monthBtn.getStyleClass().remove("segmented-btn-active");
+            System.out.println("Switched to Week view.");
+        });
+
+        monthBtn.setOnAction(e -> {
+            monthBtn.getStyleClass().add("segmented-btn-active");
+            weekBtn.getStyleClass().remove("segmented-btn-active");
+            System.out.println("Switched to Month view.");
+        });
+
         toggleGroup.getChildren().addAll(weekBtn, monthBtn);
 
         calHeader.setLeft(calTitle);
@@ -392,10 +423,17 @@ public class AvailabilityScheduleView {
         dateNav.setAlignment(Pos.CENTER_LEFT);
         Label prevArrow = new Label("‹");
         prevArrow.getStyleClass().add("nav-arrow-btn");
+        prevArrow.setStyle("-fx-cursor: hand;");
+        prevArrow.setOnMouseClicked(e -> System.out.println("Navigated to previous week."));
+
         Label dateRange = new Label("October 2023, Week 4");
         dateRange.getStyleClass().add("nav-date-label");
+
         Label nextArrow = new Label("›");
         nextArrow.getStyleClass().add("nav-arrow-btn");
+        nextArrow.setStyle("-fx-cursor: hand;");
+        nextArrow.setOnMouseClicked(e -> System.out.println("Navigated to next week."));
+
         dateNav.getChildren().addAll(prevArrow, dateRange, nextArrow);
 
         HBox legends = new HBox(16);
@@ -458,6 +496,10 @@ public class AvailabilityScheduleView {
                 Pane emptyCell = new Pane();
                 emptyCell.getStyleClass().add("calendar-slot-cell");
                 emptyCell.setPrefHeight(60);
+                emptyCell.setStyle("-fx-cursor: hand;");
+                final int selectedCol = col;
+                final int selectedRow = row;
+                emptyCell.setOnMouseClicked(e -> System.out.println("Clicked time slot slot cell at Row: " + (selectedRow + 1) + ", Col: " + selectedCol));
                 grid.add(emptyCell, col, row + 1);
             }
         }
@@ -498,12 +540,15 @@ public class AvailabilityScheduleView {
         VBox block = new VBox();
         block.getStyleClass().addAll("calendar-block", styleClass);
         block.setPadding(new Insets(8));
+        block.setStyle("-fx-cursor: hand;");
 
         Label lbl = new Label(text);
         lbl.getStyleClass().add("calendar-block-text");
         lbl.setWrapText(true);
+        lbl.setMouseTransparent(true);
 
         block.getChildren().add(lbl);
+        block.setOnMouseClicked(e -> System.out.println("Clicked schedule block: " + text.replace("\n", " ")));
         return block;
     }
 
@@ -530,7 +575,7 @@ public class AvailabilityScheduleView {
 
         Hyperlink optLink = new Hyperlink("View Optimization Suggestions →");
         optLink.getStyleClass().add("ai-card-link");
-        optLink.setOnAction(e -> System.out.println("Opening AI Suggestions..."));
+        optLink.setOnAction(e -> Navigation.goTo(stage, () -> new AIHealthAssistantView(stage).getScene()));
 
         card.getChildren().addAll(titleBox, suggestion, optLink);
         return card;
@@ -550,6 +595,8 @@ public class AvailabilityScheduleView {
         gearIcon.setFitWidth(16);
         gearIcon.setFitHeight(16);
         gearIcon.getStyleClass().add("clickable-icon");
+        gearIcon.setStyle("-fx-cursor: hand;");
+        gearIcon.setOnMouseClicked(e -> System.out.println("Opening Working Hours Settings..."));
 
         header.setLeft(title);
         header.setRight(gearIcon);
@@ -572,6 +619,7 @@ public class AvailabilityScheduleView {
         slotCombo.setValue("30 Minutes");
         slotCombo.setMaxWidth(Double.MAX_VALUE);
         slotCombo.getStyleClass().add("input-select");
+        slotCombo.setOnAction(e -> System.out.println("Appointment slot duration changed to: " + slotCombo.getValue()));
 
         slotBox.getChildren().addAll(slotLabel, slotCombo);
 
@@ -587,12 +635,14 @@ public class AvailabilityScheduleView {
         cb.setSelected(isChecked);
         cb.getStyleClass().add("day-checkbox");
         cb.setPrefWidth(54);
+        cb.setOnAction(e -> System.out.println(day + " availability toggled: " + cb.isSelected()));
 
         if (isChecked) {
             ComboBox<String> startCombo = new ComboBox<>();
             startCombo.setValue(startTime);
             startCombo.getStyleClass().add("time-select");
             startCombo.setPrefWidth(95);
+            startCombo.setOnAction(e -> System.out.println(day + " start time changed to: " + startCombo.getValue()));
 
             Label sep = new Label("-");
             sep.getStyleClass().add("time-separator");
@@ -601,6 +651,7 @@ public class AvailabilityScheduleView {
             endCombo.setValue(endTime);
             endCombo.getStyleClass().add("time-select");
             endCombo.setPrefWidth(95);
+            endCombo.setOnAction(e -> System.out.println(day + " end time changed to: " + endCombo.getValue()));
 
             row.getChildren().addAll(cb, startCombo, sep, endCombo);
         } else {
@@ -631,6 +682,7 @@ public class AvailabilityScheduleView {
         ToggleButton toggle = new ToggleButton();
         toggle.setSelected(true);
         toggle.getStyleClass().add("switch-toggle");
+        toggle.setOnAction(e -> System.out.println("Emergency Availability toggled to: " + toggle.isSelected()));
 
         header.setLeft(left);
         header.setRight(toggle);

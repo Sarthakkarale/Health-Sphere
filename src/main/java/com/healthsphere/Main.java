@@ -1,38 +1,72 @@
 package com.healthsphere;
 
-import com.healthsphere.view.doctor.DoctorDashboardView;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.google.cloud.firestore.Firestore;
+import com.healthsphere.config.FirebaseConfig;
+import com.healthsphere.view.authentication.View;
+
 import javafx.application.Application;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public class Main extends Application {
 
-    // One common public static Stage
-    public static Stage primaryStage;
-
     @Override
-    public void start(Stage stage) {
+    public void start(Stage stage) throws Exception {
 
-        primaryStage = stage;
+        try {
+            System.out.println("Initializing Firebase...");
 
-        // Create Doctor Dashboard
-        DoctorDashboardView dashboardView =
-                new DoctorDashboardView(primaryStage);
+            FirebaseConfig.initialize();
 
-        // Get dashboard scene
-        Scene dashboardScene = dashboardView.getScene();
+            System.out.println("Firebase initialized successfully!");
 
-        // Set scene
-        primaryStage.setScene(dashboardScene);
+            Firestore db = FirebaseConfig.getFirestore();
 
-        // Window settings
-        primaryStage.setTitle("Health-Sphere - Doctor Dashboard");
-        primaryStage.setMinWidth(1200);
-        primaryStage.setMinHeight(700);
+            Map<String, Object> testData = new HashMap<>();
 
-        // Show application
-        primaryStage.setMaximized(true);
-        primaryStage.show();
+            testData.put("message", "Health-Sphere Firebase Test");
+            testData.put("status", "SUCCESS");
+
+            db.collection("connection_test")
+                    .document("test")
+                    .set(testData)
+                    .get();
+
+            System.out.println("Firestore WRITE successful!");
+
+        } catch (Exception e) {
+
+            System.out.println("Firebase/Firestore test failed!");
+            e.printStackTrace();
+
+            return;
+        }
+
+        /*
+         * Start the authentication View.
+         *
+         * IMPORTANT:
+         * Do not use:
+         *
+         * Application.launch(View.class, stage);
+         *
+         * because launch() accepts String arguments, not Stage.
+         */
+
+        View view = new View();
+
+        /*
+         * If View contains its own JavaFX UI initialization,
+         * call the appropriate method from View here.
+         *
+         * For example:
+         *
+         * view.start(stage);
+         */
+
+        view.start(stage);
     }
 
     public static void main(String[] args) {
