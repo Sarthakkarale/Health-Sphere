@@ -1,0 +1,304 @@
+/* Health-Sphere Appointments Theme */
+.root-pane {
+    -fx-background-color: #F4F6F9;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    -fx-background-color: #252A31;
+}
+
+.logo-icon-box {
+    -fx-background-color: #0052CC;
+    -fx-background-radius: 6;
+    -fx-min-width: 32; -fx-min-height: 32;
+    -fx-alignment: center;
+}
+
+.logo-icon-text {
+    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 13px;
+}
+
+.logo-name {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 16px;
+    -fx-text-fill: white;
+}
+
+.logo-subtext {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 11px;
+    -fx-text-fill: #8C9BAE;
+}
+
+.nav-tab {
+    -fx-padding: 10 12;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-alignment: center-left;
+}
+
+.nav-tab:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+}
+
+.nav-tab-active {
+    -fx-background-color: rgba(255, 255, 255, 0.12);
+    -fx-border-color: #0052CC;
+    -fx-border-width: 0 0 0 3;
+}
+
+.nav-text {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 13px;
+    -fx-text-fill: #A6B4C9;
+}
+
+.nav-tab-active .nav-text {
+    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+}
+
+.nav-text-logout {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 13px;
+    -fx-text-fill: #E53935;
+}
+
+.sidebar-profile {
+    -fx-background-color: rgba(255, 255, 255, 0.04);
+    -fx-background-radius: 6;
+    -fx-padding: 8 10;
+    -fx-cursor: hand;
+}
+
+.sidebar-profile:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-profile-name {
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: white;
+}
+
+/* Header & Search Bar */
+.search-input-box {
+    -fx-background-color: white;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-padding: 6 14;
+    -fx-min-width: 280;
+}
+
+.search-text-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 12px;
+}
+
+.clickable-icon {
+    -fx-cursor: hand;
+}
+
+/* Page Header & Primary Action */
+.page-title {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 24px;
+    -fx-text-fill: #172B4D;
+}
+
+.page-subtitle {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 13px;
+    -fx-text-fill: #5E6C84;
+}
+
+.btn-primary-action {
+    -fx-background-color: #0052CC;
+    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 13px;
+    -fx-background-radius: 6;
+    -fx-padding: 10 20;
+    -fx-cursor: hand;
+}
+
+.btn-primary-action:hover {
+    -fx-background-color: #0043A8;
+}
+
+/* Filter Section */
+.filter-container-card {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 6, 0, 0, 2);
+}
+
+.filter-pill {
+    -fx-background-color: transparent;
+    -fx-border-color: #DFE1E6;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-text-fill: #5E6C84;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-padding: 6 18;
+    -fx-cursor: hand;
+}
+
+.filter-pill:hover {
+    -fx-background-color: #F4F5F7;
+}
+
+.filter-pill-active {
+    -fx-background-color: #0052CC;
+    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-background-radius: 20;
+    -fx-padding: 6 18;
+    -fx-cursor: hand;
+}
+
+.custom-date-picker {
+    -fx-background-color: white;
+    -fx-border-color: #DFE1E6;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+.btn-icon-filter {
+    -fx-background-color: white;
+    -fx-border-color: #DFE1E6;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 6 10;
+    -fx-cursor: hand;
+}
+
+.btn-icon-filter:hover {
+    -fx-background-color: #F4F5F7;
+}
+
+/* Appointments Cards */
+.appointment-card {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-color: #EBECF0;
+    -fx-border-radius: 10;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.03), 8, 0, 0, 2);
+}
+
+.appointment-card-active {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-color: #0052CC;
+    -fx-border-width: 0 0 0 4;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.06), 10, 0, 0, 3);
+}
+
+.apt-id-label {
+    -fx-background-color: #F4F5F7;
+    -fx-text-fill: #5E6C84;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 11px;
+    -fx-padding: 3 8;
+    -fx-background-radius: 4;
+}
+
+/* Status Pills */
+.pill-status {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 11px;
+    -fx-padding: 4 10;
+    -fx-background-radius: 12;
+}
+
+.pill-status-confirmed {
+    -fx-background-color: #E6F0FF;
+    -fx-text-fill: #0052CC;
+}
+
+.pill-status-inprogress {
+    -fx-background-color: #E3FCEF;
+    -fx-text-fill: #00875A;
+}
+
+.pill-status-pending {
+    -fx-background-color: #F4F5F7;
+    -fx-text-fill: #5E6C84;
+}
+
+/* Card Patient Info */
+.card-patient-name {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 15px;
+    -fx-text-fill: #172B4D;
+}
+
+.card-consult-type {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #5E6C84;
+}
+
+.initials-avatar-large {
+    -fx-background-color: #B3D4FF;
+    -fx-background-radius: 21;
+    -fx-min-width: 42; -fx-min-height: 42;
+    -fx-alignment: center;
+}
+
+.initials-text-large {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 14px;
+    -fx-text-fill: #0052CC;
+}
+
+.card-time-text {
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #172B4D;
+}
+
+.card-notes-text {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #5E6C84;
+}
+
+/* Buttons inside Cards */
+.btn-card-reschedule {
+    -fx-background-color: white;
+    -fx-border-color: #DFE1E6;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: #42526E;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-padding: 8 0;
+    -fx-cursor: hand;
+}
+
+.btn-card-reschedule:hover {
+    -fx-background-color: #F4F5F7;
+}
+
+.btn-card-details {
+    -fx-background-color: #0052CC;
+    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-background-radius: 6;
+    -fx-padding: 8 0;
+    -fx-cursor: hand;
+}
+
+.btn-card-details:hover {
+    -fx-background-color: #0043A8;
+}

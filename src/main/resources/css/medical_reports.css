@@ -1,0 +1,349 @@
+/* Health-Sphere Medical Reports & Prescription Theme */
+.root-pane {
+    -fx-background-color: #F4F6F9;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    -fx-background-color: #2D323E;
+}
+
+.logo-icon-box {
+    -fx-background-color: #1A56DB;
+    -fx-background-radius: 6;
+    -fx-min-width: 32; -fx-min-height: 32;
+    -fx-alignment: center;
+}
+
+.logo-icon-text {
+    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 14px;
+}
+
+.logo-name {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 16px;
+    -fx-text-fill: white;
+}
+
+.logo-subtext {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 11px;
+    -fx-text-fill: #9CA3AF;
+}
+
+.nav-tab {
+    -fx-padding: 10 12;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-alignment: center-left;
+}
+
+.nav-tab:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+}
+
+.nav-tab-active {
+    -fx-background-color: rgba(255, 255, 255, 0.12);
+    -fx-border-color: #1A56DB;
+    -fx-border-width: 0 0 0 3;
+}
+
+.nav-text {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 13px;
+    -fx-text-fill: #D1D5DB;
+}
+
+.nav-tab-active .nav-text {
+    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+}
+
+.nav-text-logout {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 13px;
+    -fx-text-fill: #EF4444;
+}
+
+.sidebar-profile {
+    -fx-background-color: rgba(255, 255, 255, 0.04);
+    -fx-background-radius: 6;
+    -fx-padding: 8 10;
+    -fx-cursor: hand;
+}
+
+.sidebar-profile:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-profile-name {
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: white;
+}
+
+/* Header Elements */
+.header-title {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 20px;
+    -fx-text-fill: #1E293B;
+}
+
+.search-input-box {
+    -fx-background-color: #EDF2F7;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-padding: 6 14;
+    -fx-min-width: 280;
+}
+
+.search-text-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 12px;
+}
+
+.clickable-icon {
+    -fx-cursor: hand;
+}
+
+/* Patient Header */
+.patient-name-title {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 22px;
+    -fx-text-fill: #1E293B;
+}
+
+.patient-sub-details {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 13px;
+    -fx-text-fill: #64748B;
+}
+
+.tag-follow-up {
+    -fx-background-color: #E0F2FE;
+    -fx-text-fill: #0284C7;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 11px;
+    -fx-padding: 2 8;
+    -fx-background-radius: 12;
+}
+
+.btn-secondary-action {
+    -fx-background-color: white;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: #334155;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
+}
+
+.btn-secondary-action:hover {
+    -fx-background-color: #F8FAFC;
+}
+
+.btn-primary-action {
+    -fx-background-color: #1A56DB;
+    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-background-radius: 6;
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
+}
+
+.btn-primary-action:hover {
+    -fx-background-color: #1E40AF;
+}
+
+/* Cards & Panels */
+.panel-card {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 10;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 6, 0, 0, 2);
+}
+
+.section-card-title {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 16px;
+    -fx-text-fill: #1E293B;
+}
+
+.link-add-medication {
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #1A56DB;
+    -fx-border-color: transparent;
+}
+
+/* Medication Form Box */
+.med-form-box {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.med-name {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 14px;
+    -fx-text-fill: #1E293B;
+}
+
+.med-dose {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 14px;
+    -fx-text-fill: #64748B;
+}
+
+.med-category {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 10px;
+    -fx-text-fill: #94A3B8;
+}
+
+.btn-close-med {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 14px;
+    -fx-text-fill: #EF4444;
+    -fx-cursor: hand;
+}
+
+.input-label {
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 11px;
+    -fx-text-fill: #64748B;
+}
+
+.input-field {
+    -fx-background-color: white;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 12px;
+    -fx-padding: 6 10;
+}
+
+.input-select {
+    -fx-background-color: white;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+.notes-text-area {
+    -fx-background-color: white;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 12px;
+}
+
+/* Upload Drop Card */
+.upload-drop-card {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #CBD5E0;
+    -fx-border-style: dashed;
+    -fx-border-width: 2;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+}
+
+.cloud-icon-bg {
+    -fx-background-color: #E0EAFF;
+    -fx-background-radius: 20;
+    -fx-min-width: 40; -fx-min-height: 40;
+    -fx-alignment: center;
+}
+
+.upload-title {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 14px;
+    -fx-text-fill: #1E293B;
+}
+
+.upload-subtext {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #64748B;
+}
+
+.btn-browse-files {
+    -fx-background-color: white;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: #1A56DB;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-padding: 6 16;
+    -fx-cursor: hand;
+}
+
+/* Clinical Assistant Sidebar */
+.assistant-card {
+    -fx-background-color: #F0F5FF;
+    -fx-border-color: #BFDBFE;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+}
+
+.assistant-title {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 15px;
+    -fx-text-fill: #1E293B;
+}
+
+.assistant-alert-box {
+    -fx-background-color: white;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+.alert-warning-title {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #C2410C;
+}
+
+.alert-info-title {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #1D4ED8;
+}
+
+.assistant-alert-desc {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 11px;
+    -fx-text-fill: #475569;
+}
+
+/* Recent History */
+.history-date-text {
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 11px;
+    -fx-text-fill: #94A3B8;
+}
+
+.history-item-heading {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #1E293B;
+}
+
+.history-item-subtext {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 11px;
+    -fx-text-fill: #64748B;
+}

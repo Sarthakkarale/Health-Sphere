@@ -1,0 +1,291 @@
+/* Health-Sphere Doctor Profile Theme */
+.root-pane {
+    -fx-background-color: #F8FAFC;
+}
+
+/* Sidebar Navigation Styling */
+.sidebar {
+    -fx-background-color: #384252;
+}
+
+.logo-icon-box {
+    -fx-background-color: #2563EB;
+    -fx-background-radius: 6;
+    -fx-min-width: 32; -fx-min-height: 32;
+    -fx-alignment: center;
+}
+
+.logo-name {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 15px;
+    -fx-text-fill: white;
+}
+
+.logo-subtext {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 11px;
+    -fx-text-fill: #94A3B8;
+}
+
+.nav-tab {
+    -fx-padding: 8 12;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-alignment: center-left;
+}
+
+.nav-tab:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.06);
+}
+
+.nav-tab-active {
+    -fx-background-color: rgba(255, 255, 255, 0.12);
+    -fx-border-color: #2563EB;
+    -fx-border-width: 0 0 0 3;
+}
+
+.nav-text {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 13px;
+    -fx-text-fill: #CBD5E1;
+}
+
+.nav-tab-active .nav-text {
+    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+}
+
+/* Top Header */
+.search-input-box {
+    -fx-background-color: #EFF4FB;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 6 12;
+    -fx-min-width: 260;
+}
+
+.search-text-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 12px;
+}
+
+.clickable-icon {
+    -fx-cursor: hand;
+}
+
+/* Hero Banner Card */
+.profile-banner-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 12;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 4, 0, 0, 1);
+}
+
+.banner-doc-name {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 22px;
+    -fx-text-fill: #0F172A;
+}
+
+.banner-doc-title {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 14px;
+    -fx-text-fill: #1D4ED8;
+}
+
+.banner-subtext {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #64748B;
+}
+
+.banner-rating-bold {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #0F172A;
+}
+
+.btn-secondary-action {
+    -fx-background-color: white;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: #334155;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-padding: 7 14;
+    -fx-cursor: hand;
+}
+
+.btn-primary-action {
+    -fx-background-color: #2563EB;
+    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-background-radius: 6;
+    -fx-padding: 7 14;
+    -fx-cursor: hand;
+}
+
+/* Panel Card Container */
+.panel-card {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 10;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 4, 0, 0, 1);
+}
+
+.card-title {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 15px;
+    -fx-text-fill: #0F172A;
+}
+
+.card-link {
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #2563EB;
+    -fx-border-color: transparent;
+}
+
+/* Field Details */
+.detail-field-label {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 10px;
+    -fx-text-fill: #64748B;
+}
+
+.detail-field-value {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 13px;
+    -fx-text-fill: #1E293B;
+}
+
+/* Qualification Circular Icons */
+.blue-icon-circle {
+    -fx-background-color: #EFF6FF;
+    -fx-background-radius: 20;
+    -fx-min-width: 32; -fx-min-height: 32;
+    -fx-alignment: center;
+}
+
+.green-icon-circle {
+    -fx-background-color: #ECFDF5;
+    -fx-background-radius: 20;
+    -fx-min-width: 32; -fx-min-height: 32;
+    -fx-alignment: center;
+}
+
+.item-header-title {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 13px;
+    -fx-text-fill: #0F172A;
+}
+
+/* Reviews Box */
+.review-box {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.review-author {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #0F172A;
+}
+
+.review-time {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 10px;
+    -fx-text-fill: #64748B;
+}
+
+.review-comment {
+    -fx-font-family: "Segoe UI Italic", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #334155;
+}
+
+/* Consultation Blue Banner Card */
+.consultation-card {
+    -fx-background-color: #0265DC;
+    -fx-background-radius: 10;
+}
+
+.consultation-title {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 15px;
+    -fx-text-fill: white;
+}
+
+.consultation-label {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #E0F2FE;
+}
+
+.consultation-value-bold {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 20px;
+    -fx-text-fill: white;
+}
+
+.consultation-value-medium {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 13px;
+    -fx-text-fill: white;
+}
+
+.consultation-separator {
+    -fx-opacity: 0.2;
+}
+
+.telehealth-badge {
+    -fx-background-color: rgba(255, 255, 255, 0.2);
+    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 11px;
+    -fx-padding: 3 8;
+    -fx-background-radius: 4;
+}
+
+/* Weekly Availability Box */
+.avail-day-label {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #334155;
+}
+
+.avail-time-badge {
+    -fx-background-color: #F1F5F9;
+    -fx-text-fill: #1E293B;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 11px;
+    -fx-padding: 4 8;
+    -fx-background-radius: 4;
+}
+
+.avail-unavailable-text {
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 11px;
+    -fx-text-fill: #EF4444;
+}
+
+.btn-outline-full {
+    -fx-background-color: white;
+    -fx-border-color: #2563EB;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: #2563EB;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-padding: 7 14;
+    -fx-cursor: hand;
+}

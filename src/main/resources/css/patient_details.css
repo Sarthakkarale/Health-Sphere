@@ -1,0 +1,103 @@
+/* Core Page Layout */
+.root-pane { -fx-background-color: #F8FAFC; }
+.sidebar { -fx-background-color: #333D51; }
+.content-area { -fx-background-color: #F8FAFC; }
+.content-scrollpane { -fx-background-color: transparent; -fx-background: transparent; -fx-fit-to-width: true; }
+
+/* Sidebar Navigation */
+.logo-icon-box { -fx-background-color: #2563EB; -fx-background-radius: 8px; -fx-min-width: 36px; -fx-min-height: 36px; }
+.logo-icon-text { -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; }
+.logo-name { -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16px; }
+.logo-subtext { -fx-text-fill: #94A3B8; -fx-font-size: 11px; }
+
+.nav-tab { -fx-padding: 10px 14px; -fx-background-radius: 8px; -fx-cursor: hand; }
+.nav-tab:hover { -fx-background-color: #404B61; }
+.nav-tab-active { -fx-background-color: #404B61; -fx-background-radius: 8px; }
+.nav-text { -fx-text-fill: #CBD5E1; -fx-font-size: 13px; }
+.nav-tab-active .nav-text { -fx-text-fill: white; -fx-font-weight: bold; }
+
+/* Card Panels */
+.panel-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12px;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 12px;
+    -fx-border-width: 1px;
+}
+
+/* Header & Controls */
+.search-input-box {
+    -fx-background-color: white;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 6px 12px;
+}
+.search-text-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-pref-width: 240px;
+    -fx-font-size: 12px;
+}
+.clickable-icon { -fx-cursor: hand; }
+
+/* Other Patients Quick Switcher Bar */
+.section-mini-title { -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #64748B; }
+.patient-avatar-active { -fx-padding: 2px; -fx-border-color: #2563EB; -fx-border-radius: 22px; -fx-border-width: 2px; }
+.patient-name-active { -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #2563EB; }
+.patient-name-inactive { -fx-font-size: 11px; -fx-text-fill: #64748B; }
+.add-patient-circle { -fx-background-color: #F1F5F9; -fx-background-radius: 20px; -fx-min-width: 38px; -fx-min-height: 38px; -fx-cursor: hand; }
+.add-patient-plus { -fx-text-fill: #64748B; -fx-font-size: 16px; -fx-font-weight: bold; }
+
+/* Selected Patient Main Header */
+.patient-header-name { -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #0F172A; }
+.patient-header-meta { -fx-font-size: 13px; -fx-text-fill: #475569; }
+.btn-edit-patient {
+    -fx-background-color: #EFF6FF;
+    -fx-border-color: #BFDBFE;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-text-fill: #1D4ED8;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 8px 16px;
+    -fx-cursor: hand;
+}
+
+/* Summary Cards (Allergies, Chronic Diseases, Vitals) */
+.card-header-title { -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #0F172A; }
+.tag-pill {
+    -fx-background-color: #F1F5F9;
+    -fx-text-fill: #334155;
+    -fx-font-size: 12px;
+    -fx-padding: 6px 14px;
+    -fx-background-radius: 6px;
+    -fx-min-width: 70px;
+    -fx-alignment: center;
+}
+
+.vital-label { -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #64748B; }
+.vital-value { -fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1E293B; }
+.vital-unit { -fx-font-size: 11px; -fx-text-fill: #64748B; }
+
+/* Timeline Medical History */
+.section-card-title { -fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: #0F172A; }
+.timeline-line { -fx-background-color: #E2E8F0; -fx-min-width: 2px; -fx-max-width: 2px; }
+.timeline-badge { -fx-background-radius: 16px; -fx-min-width: 30px; -fx-min-height: 30px; -fx-alignment: center; }
+.history-item-box {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+.history-item-title { -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #0F172A; }
+.history-item-date { -fx-font-size: 11px; -fx-text-fill: #64748B; }
+.history-item-desc { -fx-font-size: 12px; -fx-text-fill: #475569; }
+
+/* Previous Appointments Table */
+.table-header-text { -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #64748B; }
+.pill-status { -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 4px 12px; -fx-background-radius: 12px; }
+.pill-completed { -fx-background-color: #059669; -fx-text-fill: white; }
+
+/* Footer Links */
+.link-view-all { -fx-text-fill: #2563EB; -fx-font-size: 12px; -fx-font-weight: bold; -fx-underline: false; }

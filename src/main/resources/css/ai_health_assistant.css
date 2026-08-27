@@ -1,0 +1,297 @@
+/* Health-Sphere AI Assistant Theme */
+.root-pane {
+    -fx-background-color: #F8FAFC;
+}
+
+/* Sidebar Navigation */
+.sidebar {
+    -fx-background-color: #2B323D;
+}
+
+.logo-icon-box {
+    -fx-background-color: #2563EB;
+    -fx-background-radius: 6;
+    -fx-min-width: 32; -fx-min-height: 32;
+    -fx-alignment: center;
+}
+
+.logo-badge-text {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 13px;
+    -fx-text-fill: white;
+}
+
+.logo-name {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 15px;
+    -fx-text-fill: white;
+}
+
+.logo-subtext {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 11px;
+    -fx-text-fill: #94A3B8;
+}
+
+.nav-tab {
+    -fx-padding: 8 12;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-alignment: center-left;
+}
+
+.nav-tab:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.06);
+}
+
+.nav-tab-active {
+    -fx-background-color: #2563EB;
+    -fx-background-radius: 6;
+}
+
+.nav-text {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 13px;
+    -fx-text-fill: #CBD5E1;
+}
+
+.nav-tab-active .nav-text {
+    -fx-text-fill: white;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+}
+
+/* Header */
+.module-header-title {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 18px;
+    -fx-text-fill: #1E293B;
+}
+
+.header-profile-link {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 13px;
+    -fx-text-fill: #64748B;
+    -fx-cursor: hand;
+}
+
+.clickable-icon {
+    -fx-cursor: hand;
+}
+
+/* Main Cards */
+.panel-card {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 10;
+}
+
+.chat-header-title {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 14px;
+    -fx-text-fill: #0F172A;
+}
+
+.chat-header-subtitle {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 11px;
+    -fx-text-fill: #64748B;
+}
+
+.ai-avatar-circle {
+    -fx-background-color: #2563EB;
+    -fx-background-radius: 16;
+    -fx-min-width: 32; -fx-min-height: 32;
+    -fx-alignment: center;
+}
+
+.btn-history {
+    -fx-background-color: white;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: #475569;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 11px;
+    -fx-padding: 5 12;
+    -fx-cursor: hand;
+}
+
+/* Chat Scroll & Message Bubbles */
+.chat-scrollpane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.chat-scrollpane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.mini-bot-avatar {
+    -fx-background-color: #2563EB;
+    -fx-background-radius: 14;
+    -fx-min-width: 28; -fx-min-height: 28;
+    -fx-alignment: center;
+}
+
+.bot-bubble {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+}
+
+.user-bubble {
+    -fx-background-color: #0265DC;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+}
+
+.chat-body-text {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #334155;
+}
+
+.user-chat-text {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: white;
+}
+
+/* Abnormalities Card Inside Chat */
+.abnormalities-card {
+    -fx-background-color: #F1F5F9;
+    -fx-background-radius: 6;
+}
+
+.abnormalities-title {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 11px;
+    -fx-text-fill: #1E293B;
+}
+
+.bullet-text {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 11px;
+    -fx-text-fill: #475569;
+}
+
+/* Suggestion Chips & Inputs */
+.suggestion-chip {
+    -fx-background-color: #E0E7FF;
+    -fx-text-fill: #3730A3;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 11px;
+    -fx-background-radius: 14;
+    -fx-padding: 6 12;
+    -fx-cursor: hand;
+}
+
+.suggestion-chip:hover {
+    -fx-background-color: #C7D2FE;
+}
+
+.chat-input-box {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.prompt-text-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 12px;
+}
+
+/* Clinical Decision Support Panel Right */
+.cds-panel {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 8;
+}
+
+.cds-header-title {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 14px;
+    -fx-text-fill: #0F172A;
+}
+
+.cds-card {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 8;
+}
+
+.cds-card-title {
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #1E293B;
+}
+
+.diagnosis-row {
+    -fx-background-color: #F8FAFC;
+    -fx-background-radius: 6;
+}
+
+.diagnosis-name {
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 11px;
+    -fx-text-fill: #334155;
+}
+
+.high-prob-badge {
+    -fx-background-color: #FEE2E2;
+    -fx-text-fill: #991B1B;
+    -fx-font-family: "Segoe UI Bold", sans-serif;
+    -fx-font-size: 10px;
+    -fx-padding: 4 8;
+    -fx-background-radius: 12;
+}
+
+.mod-prob-badge {
+    -fx-background-color: #EEF2FF;
+    -fx-text-fill: #3730A3;
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 10px;
+    -fx-padding: 4 8;
+    -fx-background-radius: 12;
+}
+
+.recommendation-callout {
+    -fx-background-color: #ECFEFF;
+    -fx-border-color: #A5F3FC;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+.recommendation-text {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 11px;
+    -fx-text-fill: #0E7490;
+}
+
+.recommendation-link {
+    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-font-size: 11px;
+    -fx-text-fill: #0284C7;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.lookup-search-box {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #CBD5E0;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+.lookup-input-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 11px;
+}
