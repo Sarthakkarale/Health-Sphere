@@ -1,385 +1,131 @@
-/* Color Palette */
-/* Primary Blue: #3498DB */
-/* Premium White: #FFFFFF */
-/* Light Gray: #ECF0F1 */
-/* Background: #141724 (Sidebar), #FBFCFC (Content Area) */
-/* Typography Gray: #2C3E50 (Primary), #7F8C8D (Secondary) */
-/* Success Green: #2ECC71 */
-/* Error Red: #E74C3C */
-
-.root-pane {
-    -fx-background-color: #FBFCFC;
+/* Root Container */
+.root {
+    -fx-background-color: #FAFAFC;
+    -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
 }
 
-/* --- Sidebar --- */
-.sidebar {
-    -fx-background-color: #141724;
-}
-
-.logo-name {
-    -fx-font-family: "Segoe UI Semibold", sans-serif;
-    -fx-font-size: 18px;
-    -fx-text-fill: white;
-}
-
-.logo-subtext {
-    -fx-font-family: "Segoe UI", sans-serif;
-    -fx-font-size: 11px;
-    -fx-text-fill: #ECF0F1;
-}
-
-.nav-tab {
-    -fx-padding: 10 15;
-    -fx-background-radius: 8;
-    -fx-cursor: hand;
+/* Header Bar */
+.header-bar {
+    -fx-background-color: #FFFFFF;
+    -fx-padding: 16px 32px;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 0 0 1 0;
     -fx-alignment: center-left;
 }
 
-.nav-tab:hover {
-    -fx-background-color: rgba(52, 152, 219, 0.1);
+.brand-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-fill: #0256D0;
 }
 
-.nav-tab-active {
-    -fx-background-color: #3498DB;
-}
-
-.nav-text {
-    -fx-font-family: "Segoe UI", sans-serif;
-    -fx-font-size: 14px;
-    -fx-text-fill: #ECF0F1;
-}
-
-.nav-tab-active .nav-text {
-    -fx-text-fill: white;
-    -fx-font-family: "Segoe UI Semibold", sans-serif;
-}
-
-.sidebar-profile {
-    -fx-background-color: rgba(236, 240, 241, 0.05);
-    -fx-background-radius: 8;
-    -fx-padding: 10;
-}
-
-.sidebar-profile-name {
-    -fx-font-family: "Segoe UI Semibold", sans-serif;
-    -fx-font-size: 14px;
-    -fx-text-fill: white;
-}
-
-.sidebar-profile-role {
-    -fx-font-family: "Segoe UI", sans-serif;
-    -fx-font-size: 11px;
-    -fx-text-fill: #7F8C8D;
-}
-
-/* --- Content Area --- */
-.content-area {
-    -fx-background-color: #FBFCFC;
-}
-
-.content-scrollpane {
-    -fx-background-color: transparent;
-    -fx-fit-to-width: true;
-}
-
-.content-scrollpane .viewport {
-    -fx-background-color: transparent;
-}
-
-.breadcrumb {
-    -fx-font-family: "Segoe UI", sans-serif;
-    -fx-font-size: 18px;
-    -fx-text-fill: #7F8C8D;
-}
-
-/* Search Bar */
-.search-bar {
-    -fx-border-color: #ECF0F1;
-    -fx-border-radius: 20;
-    -fx-padding: 5 10;
-    -fx-background-color: white;
-    -fx-background-radius: 20;
-}
-
-.search-field {
-    -fx-background-color: transparent;
-    -fx-font-family: "Segoe UI", sans-serif;
-    -fx-font-size: 13px;
-    -fx-prompt-text-fill: #7F8C8D;
-}
-
-/* Welcome Banner */
-.welcome-banner {
-    -fx-background-color: #3498DB;
-    -fx-background-radius: 12;
-}
-
-.welcome-greeting {
-    -fx-font-family: "Segoe UI Semibold", sans-serif;
-    -fx-font-size: 24px;
-    -fx-text-fill: white;
-}
-
-.welcome-summary {
-    -fx-font-family: "Segoe UI", sans-serif;
-    -fx-font-size: 14px;
-    -fx-text-fill: white;
-}
-
+/* Primary Button (Sign Up) */
 .btn-primary {
-    -fx-background-color: white;
-    -fx-text-fill: #3498DB;
-    -fx-background-radius: 20;
-    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-background-color: #0256D0;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-size: 15px;
+    -fx-background-radius: 8px;
+    -fx-padding: 12px 32px;
     -fx-cursor: hand;
 }
 
-.btn-secondary {
+.btn-primary:hover {
+    -fx-background-color: #0143A3;
+}
+
+/* Teal / Success Button (Register) */
+.btn-teal {
+    -fx-background-color: #00695C;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-size: 15px;
+    -fx-background-radius: 8px;
+    -fx-padding: 12px 32px;
+    -fx-cursor: hand;
+}
+
+.btn-teal:hover {
+    -fx-background-color: #004D40;
+}
+
+/* Icon Buttons */
+.icon-btn {
     -fx-background-color: transparent;
-    -fx-text-fill: white;
-    -fx-border-color: white;
-    -fx-border-radius: 20;
-    -fx-font-family: "Segoe UI Semibold", sans-serif;
+    -fx-padding: 6px;
     -fx-cursor: hand;
 }
 
-/* Stat Cards */
-.stat-card {
-    -fx-background-color: white;
-    -fx-background-radius: 12;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);
-}
-
-.stat-title {
-    -fx-font-family: "Segoe UI Semibold", sans-serif;
-    -fx-font-size: 12px;
-    -fx-text-fill: #7F8C8D;
-}
-
-.stat-value {
-    -fx-font-family: "Segoe UI Semibold", sans-serif;
-    -fx-font-size: 32px;
-    -fx-text-fill: #2C3E50;
-}
-
-.stat-detail {
-    -fx-font-family: "Segoe UI", sans-serif;
-    -fx-font-size: 11px;
-    -fx-text-fill: #7F8C8D;
-}
-
-.stat-progress .track {
-    -fx-background-color: #ECF0F1;
-}
-
-.stat-progress .bar {
-    -fx-background-color: #3498DB;
-}
-
-/* Appointments Card */
-.app-card {
-    -fx-background-color: white;
-    -fx-background-radius: 12;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);
-}
-
-.app-card-title {
-    -fx-font-family: "Segoe UI Semibold", sans-serif;
-    -fx-font-size: 16px;
-    -fx-text-fill: #2C3E50;
-}
-
-.app-card-link {
-    -fx-font-family: "Segoe UI", sans-serif;
-    -fx-font-size: 12px;
-    -fx-text-fill: #3498DB;
-    -fx-cursor: hand;
-}
-
-.app-card-link:hover {
-    -fx-underline: true;
-}
-
-.appt-entry {
-    -fx-cursor: hand;
-    -fx-background-radius: 8;
-}
-
-.appt-entry:hover {
-    -fx-background-color: #ECF0F1;
-}
-
-.appt-entry-highlight {
-    -fx-background-color: rgba(52, 152, 219, 0.05);
-    -fx-border-color: #3498DB;
-    -fx-border-radius: 8;
-    -fx-border-width: 1;
-}
-
-.appt-time {
-    -fx-font-family: "Segoe UI", sans-serif;
-    -fx-font-size: 13px;
-    -fx-text-fill: #7F8C8D;
-}
-
-.appt-time-highlight {
-    -fx-font-family: "Segoe UI Semibold", sans-serif;
-    -fx-text-fill: #3498DB;
-}
-
-.appt-name {
-    -fx-font-family: "Segoe UI Semibold", sans-serif;
-    -fx-font-size: 14px;
-    -fx-text-fill: #2C3E50;
-}
-
-.appt-purpose {
-    -fx-font-family: "Segoe UI", sans-serif;
-    -fx-font-size: 12px;
-    -fx-text-fill: #7F8C8D;
-}
-
-/* AI Card */
-.ai-card {
-    -fx-background-color: #ECF0F1;
-    -fx-background-radius: 12;
-}
-
-.ai-card-title {
-    -fx-font-family: "Segoe UI Semibold", sans-serif;
-    -fx-font-size: 16px;
-    -fx-text-fill: #2C3E50;
-}
-
-.ai-entry {
-    -fx-background-color: white;
-    -fx-background-radius: 8;
-    -fx-cursor: hand;
-}
-
-.ai-entry-alert {
-    -fx-border-color: #E74C3C;
-    -fx-border-radius: 8;
-    -fx-border-width: 0 0 0 4; /* Left border highlight */
-}
-
-.ai-entry-info {
-    -fx-border-color: #3498DB;
-    -fx-border-radius: 8;
-    -fx-border-width: 0 0 0 4; /* Left border highlight */
-}
-
-.ai-entry-label {
-    -fx-font-family: "Segoe UI Semibold", sans-serif;
-    -fx-font-size: 13px;
-    -fx-text-fill: #2C3E50;
-}
-
-.ai-entry-desc {
-    -fx-font-family: "Segoe UI", sans-serif;
-    -fx-font-size: 12px;
-    -fx-text-fill: #7F8C8D;
-}
-
-.ai-entry-link {
-    -fx-font-family: "Segoe UI", sans-serif;
-    -fx-font-size: 12px;
-    -fx-text-fill: #3498DB;
-    -fx-cursor: hand;
-    -fx-padding: 0 0 5 0;
-}
-
-.ai-entry-link:hover {
-    -fx-underline: true;
-}
-
-/* Recent Activity Table */
-.activity-container {
-    -fx-background-color: white;
-    -fx-background-radius: 12;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);
-}
-
-.activity-title {
-    -fx-font-family: "Segoe UI Semibold", sans-serif;
-    -fx-font-size: 16px;
-    -fx-text-fill: #2C3E50;
-}
-
-.activity-link {
-    -fx-font-family: "Segoe UI", sans-serif;
-    -fx-font-size: 12px;
-    -fx-text-fill: #3498DB;
-    -fx-cursor: hand;
-}
-
-.activity-link:hover {
-    -fx-underline: true;
-}
-
-.table-header {
-    -fx-border-color: transparent transparent #ECF0F1 transparent; /* Bottom border */
-    -fx-border-width: 1;
-}
-
-.table-col-header {
-    -fx-font-family: "Segoe UI Semibold", sans-serif;
-    -fx-font-size: 11px;
-    -fx-text-fill: #7F8C8D;
-    -fx-opacity: 0.7;
-}
-
-.table-row {
-    -fx-cursor: hand;
-}
-
-.table-row:hover {
-    -fx-background-color: #FBFCFC;
-}
-
-.table-avatar {
-    -fx-font-family: "Segoe UI Semibold", sans-serif;
-    -fx-font-size: 12px;
-    -fx-text-fill: white;
-    -fx-background-color: rgba(52, 152, 219, 0.1);
-    -fx-background-radius: 20;
-    -fx-min-width: 25; -fx-min-height: 25;
+/* Profile Avatar */
+.avatar-circle {
+    -fx-background-color: #CBD5E1;
+    -fx-background-radius: 50%;
+    -fx-min-width: 32px;
+    -fx-min-height: 32px;
     -fx-alignment: center;
 }
 
-.table-patient-name {
-    -fx-font-family: "Segoe UI Semibold", sans-serif;
-    -fx-font-size: 13px;
-    -fx-text-fill: #2C3E50;
+/* Hero Typography */
+.hero-title-dark {
+    -fx-font-size: 42px;
+    -fx-font-weight: 800;
+    -fx-fill: #0F172A;
 }
 
-.table-action {
-    -fx-font-family: "Segoe UI", sans-serif;
-    -fx-font-size: 12px;
-    -fx-text-fill: #7F8C8D;
+.hero-title-blue {
+    -fx-font-size: 42px;
+    -fx-font-weight: 800;
+    -fx-fill: #0256D0;
 }
 
-.table-time {
-    -fx-font-family: "Segoe UI", sans-serif;
-    -fx-font-size: 12px;
-    -fx-text-fill: #7F8C8D;
+.hero-description {
+    -fx-font-size: 15px;
+    -fx-text-fill: #64748B;
 }
 
-/* Status Pills */
-.status-pill {
-    -fx-background-radius: 20;
-    -fx-font-family: "Segoe UI", sans-serif;
+/* Floating Card Component */
+.floating-card {
+    -fx-background-color: rgba(255, 255, 255, 0.92);
+    -fx-background-radius: 12px;
+    -fx-padding: 16px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.12), 16, 0, 0, 8);
+    -fx-border-color: rgba(255, 255, 255, 0.6);
+    -fx-border-radius: 12px;
+}
+
+.floating-card-title {
     -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-fill: #1E293B;
 }
 
-.pill-completed {
-    -fx-background-color: rgba(46, 204, 113, 0.1);
+/* Footer Styles */
+.footer-bar {
+    -fx-background-color: #F8FAFC;
+    -fx-padding: 16px 32px;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 1 0 0 0;
 }
 
-.pill-inprogress {
-    -fx-background-color: rgba(52, 152, 219, 0.1);
+.footer-brand {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-fill: #0F172A;
 }
 
-.pill-info {
-    -fx-background-color: rgba(149, 165, 166, 0.1);
+.footer-text {
+    -fx-font-size: 12px;
+    -fx-text-fill: #64748B;
+}
+
+.footer-link {
+    -fx-font-size: 12px;
+    -fx-text-fill: #475569;
+    -fx-background-color: transparent;
+    -fx-padding: 0 4px;
+    -fx-cursor: hand;
+}
+
+.footer-link:hover {
+    -fx-text-fill: #0F172A;
 }
