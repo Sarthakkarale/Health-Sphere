@@ -1,5 +1,4 @@
 package com.healthsphere.controller.patient;
-
 import java.util.List;
 
 import com.healthsphere.dao.patient.AppointmentDAO;
@@ -11,7 +10,7 @@ public class AppointmentController {
 
     private final AppointmentDAO appointmentDAO;
     private final PatientController patientController;
-
+    private final NotificationController notificationController;
     public AppointmentController() {
 
         this.appointmentDAO =
@@ -19,6 +18,8 @@ public class AppointmentController {
 
         this.patientController =
                 new PatientController();
+                this.notificationController =
+            new NotificationController();
     }
 
     // ============================================================
@@ -85,9 +86,26 @@ public class AppointmentController {
                 "Upcoming"
         );
 
-        return appointmentDAO.createAppointment(
+       Appointment savedAppointment =
+        appointmentDAO.createAppointment(
                 appointment
         );
+
+notificationController.createNotification(
+        "Appointment Booked",
+        "Your appointment with Dr. "
+                + appointment.getDoctorName()
+                + " at "
+                + appointment.getHospital()
+                + " has been successfully booked for "
+                + appointment.getAppointmentDate()
+                + " at "
+                + appointment.getAppointmentTime()
+                + ".",
+        "APPOINTMENT"
+);
+
+return savedAppointment;
     }
 
     // ============================================================

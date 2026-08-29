@@ -14,7 +14,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -86,8 +85,13 @@ public class ProfileSettings {
                 new Insets(5)
         );
 
+        content.setFillWidth(true);
+
+        content.setMinWidth(0);
+        content.setMaxWidth(Double.MAX_VALUE);
+
         // =====================================================
-        // PROFILE IMAGE
+        // PROFILE IMAGE BANNER
         // =====================================================
 
         VBox profileBanner =
@@ -100,6 +104,9 @@ public class ProfileSettings {
         profileBanner.setPadding(
                 new Insets(20)
         );
+
+        profileBanner.setMinWidth(0);
+        profileBanner.setMaxWidth(Double.MAX_VALUE);
 
         profileBanner.setStyle(
                 "-fx-background-color: white;" +
@@ -143,6 +150,9 @@ public class ProfileSettings {
                 Pos.CENTER_LEFT
         );
 
+        profileCard.setMinWidth(0);
+        profileCard.setMaxWidth(Double.MAX_VALUE);
+
         profileCard.setStyle(
                 "-fx-background-color: #f5f3ff;" +
                 "-fx-background-radius: 16;" +
@@ -160,12 +170,17 @@ public class ProfileSettings {
         VBox profileInformation =
                 new VBox(7);
 
+        profileInformation.setMinWidth(0);
+        profileInformation.setMaxWidth(Double.MAX_VALUE);
+
         Label name =
                 new Label(
                         fullName.isBlank()
                                 ? "Patient"
                                 : fullName
                 );
+
+        name.setWrapText(true);
 
         name.setStyle(
                 "-fx-font-size: 22px;" +
@@ -187,6 +202,8 @@ public class ProfileSettings {
                                 )
                 );
 
+        patientId.setWrapText(true);
+
         patientId.setStyle(
                 "-fx-text-fill: #64748b;"
         );
@@ -207,6 +224,11 @@ public class ProfileSettings {
                 status
         );
 
+        HBox.setHgrow(
+                profileInformation,
+                Priority.ALWAYS
+        );
+
         profileCard.getChildren().addAll(
                 profileImage,
                 profileInformation
@@ -221,6 +243,9 @@ public class ProfileSettings {
                         "👤  Personal Information"
                 );
 
+        personal.setMinWidth(0);
+        personal.setMaxWidth(Double.MAX_VALUE);
+
         GridPane personalGrid =
                 new GridPane();
 
@@ -231,6 +256,9 @@ public class ProfileSettings {
         personalGrid.setVgap(
                 12
         );
+
+        personalGrid.setMinWidth(0);
+        personalGrid.setMaxWidth(Double.MAX_VALUE);
 
         // =====================================================
         // FORM FIELDS
@@ -311,7 +339,7 @@ public class ProfileSettings {
         );
 
         // =====================================================
-        // ADDRESS / CITY
+        // CITY
         // =====================================================
 
         personalGrid.add(
@@ -339,6 +367,9 @@ public class ProfileSettings {
                         "💜  Health & Wellness"
                 );
 
+        imageCards.setMinWidth(0);
+        imageCards.setMaxWidth(Double.MAX_VALUE);
+
         HBox images =
                 new HBox(18);
 
@@ -346,17 +377,24 @@ public class ProfileSettings {
                 Pos.CENTER_LEFT
         );
 
-        images.getChildren().addAll(
+        images.setMinWidth(0);
+        images.setMaxWidth(Double.MAX_VALUE);
 
+        VBox healthyLifestyle =
                 imageCard(
                         "/images/profile/profile3.jpg",
                         "Healthy Lifestyle"
-                ),
+                );
 
+        VBox personalHealth =
                 imageCard(
                         "/images/profile/profile4.jpg",
                         "Personal Health"
-                )
+                );
+
+        images.getChildren().addAll(
+                healthyLifestyle,
+                personalHealth
         );
 
         imageCards.getChildren().add(
@@ -372,10 +410,13 @@ public class ProfileSettings {
                         "⚙  Account Preferences"
                 );
 
+        preferences.setMinWidth(0);
+        preferences.setMaxWidth(Double.MAX_VALUE);
+
         /*
-         * Notifications:
-         * Clicking Manage opens Notifications.java
+         * Notifications
          */
+
         preferences.getChildren().add(
                 setting(
                         "Notifications",
@@ -388,9 +429,9 @@ public class ProfileSettings {
         );
 
         /*
-         * Health Insights:
-         * Clicking Manage opens HealthPassport.java
+         * Health Insights
          */
+
         preferences.getChildren().add(
                 setting(
                         "Health Insights",
@@ -401,10 +442,6 @@ public class ProfileSettings {
                         )
                 )
         );
-
-        /*
-         * Privacy option intentionally removed.
-         */
 
         // =====================================================
         // SAVE BUTTON
@@ -438,7 +475,7 @@ public class ProfileSettings {
                                 );
 
                 // -------------------------------------------------
-                // Update the profile card immediately
+                // UPDATE PROFILE CARD
                 // -------------------------------------------------
 
                 String updatedName =
@@ -462,7 +499,7 @@ public class ProfileSettings {
                 );
 
                 // -------------------------------------------------
-                // Update form fields
+                // UPDATE FORM FIELDS
                 // -------------------------------------------------
 
                 nameField.setText(
@@ -581,6 +618,9 @@ public class ProfileSettings {
                 Pos.CENTER_LEFT
         );
 
+        buttons.setMinWidth(0);
+        buttons.setMaxWidth(Double.MAX_VALUE);
+
         buttons.getChildren().addAll(
                 save,
                 back,
@@ -588,7 +628,7 @@ public class ProfileSettings {
         );
 
         // =====================================================
-        // ADD EVERYTHING TO CONTENT
+        // ADD EVERYTHING
         // =====================================================
 
         content.getChildren().addAll(
@@ -606,56 +646,45 @@ public class ProfileSettings {
                 buttons
         );
 
-        // =====================================================
-        // SCROLL
-        // =====================================================
-
-        ScrollPane scroll =
-                new ScrollPane(
-                        content
-                );
-
-        scroll.setFitToWidth(
-                true
-        );
-
-        scroll.setHbarPolicy(
-                ScrollPane.ScrollBarPolicy.NEVER
-        );
-
-        scroll.setVbarPolicy(
-                ScrollPane.ScrollBarPolicy.AS_NEEDED
-        );
-
-        scroll.setStyle(
-                "-fx-background-color: transparent;" +
-                "-fx-background: transparent;"
-        );
-
-        // =====================================================
-        // WRAPPER
-        // =====================================================
-
-        VBox wrapper =
-                new VBox(
-                        scroll
-                );
-
-        VBox.setVgrow(
-                scroll,
-                Priority.ALWAYS
-        );
-
-        // =====================================================
-        // RETURN SHARED PATIENT SCENE
-        // =====================================================
+        /*
+         * =====================================================
+         * IMPORTANT FIX
+         * =====================================================
+         *
+         * DO NOT create a ScrollPane here.
+         *
+         * PatientUI.createScene() already creates the
+         * single shared ScrollPane for every Patient page.
+         *
+         * The old code had:
+         *
+         * ProfileSettings
+         *      ↓
+         * ScrollPane
+         *      ↓
+         * wrapper
+         *      ↓
+         * PatientUI ScrollPane
+         *
+         * That caused TWO scrollbars.
+         *
+         * Now:
+         *
+         * ProfileSettings
+         *      ↓
+         * content
+         *      ↓
+         * PatientUI ScrollPane
+         *
+         * Therefore there is only ONE scrollbar.
+         */
 
         return PatientUI.createScene(
                 stage,
                 "Profile & Settings",
                 "Profile & Settings",
                 "Manage your personal information, preferences and account settings.",
-                wrapper
+                content
         );
     }
 
@@ -829,6 +858,9 @@ public class ProfileSettings {
                 new Insets(20)
         );
 
+        box.setMinWidth(0);
+        box.setMaxWidth(Double.MAX_VALUE);
+
         box.setStyle(
                 "-fx-background-color: white;" +
                 "-fx-background-radius: 16;" +
@@ -840,6 +872,8 @@ public class ProfileSettings {
                 new Label(
                         title
                 );
+
+        heading.setWrapText(true);
 
         heading.setStyle(
                 "-fx-font-size: 19px;" +
@@ -919,9 +953,7 @@ public class ProfileSettings {
                 360
         );
 
-        box.setMaxWidth(
-                Double.MAX_VALUE
-        );
+        box.setMinWidth(0);
 
         box.setCursor(
                 Cursor.HAND
@@ -1043,6 +1075,9 @@ public class ProfileSettings {
                 new Insets(10)
         );
 
+        row.setMinWidth(0);
+        row.setMaxWidth(Double.MAX_VALUE);
+
         row.setStyle(
                 "-fx-background-color: #faf5ff;" +
                 "-fx-background-radius: 10;" +
@@ -1052,6 +1087,9 @@ public class ProfileSettings {
 
         VBox text =
                 new VBox(4);
+
+        text.setMinWidth(0);
+        text.setMaxWidth(Double.MAX_VALUE);
 
         Label titleLabel =
                 new Label(
@@ -1100,12 +1138,13 @@ public class ProfileSettings {
                 "-fx-cursor: hand;"
         );
 
-        // =====================================================
-        // NAVIGATION ACTION
-        // =====================================================
-
         configure.setOnAction(
-                e -> action.run()
+                e -> {
+
+                    if (action != null) {
+                        action.run();
+                    }
+                }
         );
 
         row.getChildren().addAll(

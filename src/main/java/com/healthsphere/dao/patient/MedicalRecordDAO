@@ -2,6 +2,7 @@ package com.healthsphere.dao.patient;
 
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.QuerySnapshot;
 import com.healthsphere.config.FirebaseConfig;
 import com.healthsphere.exceptions.DatabaseException;
 import com.healthsphere.model.MedicalRecord;
@@ -18,9 +19,9 @@ public class MedicalRecordDAO {
         this.db = FirebaseConfig.getFirestore();
     }
 
-    // ============================================================
+    // =========================================================
     // CREATE MEDICAL RECORD
-    // ============================================================
+    // =========================================================
 
     public void createMedicalRecord(
             MedicalRecord medicalRecord) {
@@ -33,7 +34,14 @@ public class MedicalRecordDAO {
                 );
             }
 
-            // Generate ID if one does not exist
+            if (medicalRecord.getPatientUid() == null ||
+                    medicalRecord.getPatientUid().isBlank()) {
+
+                throw new DatabaseException(
+                        "Patient UID is missing."
+                );
+            }
+
             if (medicalRecord.getRecordId() == null ||
                     medicalRecord.getRecordId().isBlank()) {
 
@@ -51,11 +59,23 @@ public class MedicalRecordDAO {
                     "Medical record created successfully."
             );
 
+            System.out.println(
+                    "Record ID: "
+                            + medicalRecord.getRecordId()
+            );
+
+            System.out.println(
+                    "Patient UID: "
+                            + medicalRecord.getPatientUid()
+            );
+
         } catch (DatabaseException e) {
 
             throw e;
 
         } catch (Exception e) {
+
+            e.printStackTrace();
 
             throw new DatabaseException(
                     "Unable to create medical record.",
@@ -64,9 +84,9 @@ public class MedicalRecordDAO {
         }
     }
 
-    // ============================================================
+    // =========================================================
     // GET ALL MEDICAL RECORDS FOR PATIENT
-    // ============================================================
+    // =========================================================
 
     public List<MedicalRecord> getMedicalRecords(
             String patientUid) {
@@ -81,20 +101,50 @@ public class MedicalRecordDAO {
                 );
             }
 
-            List<MedicalRecord> records =
-                    new ArrayList<>();
+            System.out.println(
+                    "================================================"
+            );
 
-            var documents =
+            System.out.println(
+                    "MedicalRecordDAO: Fetching records"
+            );
+
+            System.out.println(
+                    "Collection: medicalRecords"
+            );
+
+            System.out.println(
+                    "Searching patientUid: " + patientUid
+            );
+
+            System.out.println(
+                    "================================================"
+            );
+
+            QuerySnapshot snapshot =
                     db.collection("medicalRecords")
                             .whereEqualTo(
                                     "patientUid",
                                     patientUid
                             )
                             .get()
-                            .get()
-                            .getDocuments();
+                            .get();
 
-            for (DocumentSnapshot document : documents) {
+            List<MedicalRecord> records =
+                    new ArrayList<>();
+
+            System.out.println(
+                    "Firestore documents returned: "
+                            + snapshot.getDocuments().size()
+            );
+
+            for (DocumentSnapshot document :
+                    snapshot.getDocuments()) {
+
+                System.out.println(
+                        "Reading document: "
+                                + document.getId()
+                );
 
                 MedicalRecord record =
                         document.toObject(
@@ -103,7 +153,6 @@ public class MedicalRecordDAO {
 
                 if (record != null) {
 
-                    // Make sure the ID is available
                     if (record.getRecordId() == null ||
                             record.getRecordId().isBlank()) {
 
@@ -112,9 +161,24 @@ public class MedicalRecordDAO {
                         );
                     }
 
+                    System.out.println(
+                            "Record title: "
+                                    + record.getTitle()
+                    );
+
+                    System.out.println(
+                            "Record patientUid: "
+                                    + record.getPatientUid()
+                    );
+
                     records.add(record);
                 }
             }
+
+            System.out.println(
+                    "Total medical records: "
+                            + records.size()
+            );
 
             return records;
 
@@ -133,9 +197,9 @@ public class MedicalRecordDAO {
         }
     }
 
-    // ============================================================
+    // =========================================================
     // GET SINGLE MEDICAL RECORD
-    // ============================================================
+    // =========================================================
 
     public MedicalRecord getMedicalRecord(
             String patientUid,
@@ -184,8 +248,6 @@ public class MedicalRecordDAO {
                 );
             }
 
-            // Security check:
-            // make sure this record belongs to this patient
             if (record.getPatientUid() == null ||
                     !record.getPatientUid().equals(patientUid)) {
 
@@ -210,6 +272,8 @@ public class MedicalRecordDAO {
 
         } catch (Exception e) {
 
+            e.printStackTrace();
+
             throw new DatabaseException(
                     "Unable to retrieve medical record.",
                     e
@@ -217,9 +281,9 @@ public class MedicalRecordDAO {
         }
     }
 
-    // ============================================================
+    // =========================================================
     // UPDATE MEDICAL RECORD
-    // ============================================================
+    // =========================================================
 
     public void updateMedicalRecord(
             MedicalRecord medicalRecord) {
@@ -258,6 +322,8 @@ public class MedicalRecordDAO {
 
         } catch (Exception e) {
 
+            e.printStackTrace();
+
             throw new DatabaseException(
                     "Unable to update medical record.",
                     e
@@ -265,9 +331,9 @@ public class MedicalRecordDAO {
         }
     }
 
-    // ============================================================
+    // =========================================================
     // DELETE MEDICAL RECORD
-    // ============================================================
+    // =========================================================
 
     public void deleteMedicalRecord(
             String patientUid,
@@ -275,7 +341,6 @@ public class MedicalRecordDAO {
 
         try {
 
-            // First verify ownership
             getMedicalRecord(
                     patientUid,
                     recordId
@@ -295,6 +360,8 @@ public class MedicalRecordDAO {
             throw e;
 
         } catch (Exception e) {
+
+            e.printStackTrace();
 
             throw new DatabaseException(
                     "Unable to delete medical record.",

@@ -1,7 +1,7 @@
 package com.healthsphere.controller.patient;
 
 import java.util.List;
-
+//import com.healthsphere.dao.patient.MedicalRecordDAO;
 import com.healthsphere.model.MedicalRecord;
 import com.healthsphere.util.SessionManager;
 
@@ -10,9 +10,7 @@ public class MedicalRecordController {
     private final MedicalRecordDAO medicalRecordDAO;
 
     public MedicalRecordController() {
-
-        this.medicalRecordDAO =
-                new MedicalRecordDAO();
+        this.medicalRecordDAO = new MedicalRecordDAO();
     }
 
     // =========================================================
@@ -22,9 +20,14 @@ public class MedicalRecordController {
     private String getCurrentPatientUid() {
 
         if (!SessionManager.isLoggedIn()) {
-
             throw new IllegalStateException(
                     "No active user session."
+            );
+        }
+
+        if (SessionManager.getCurrentUser() == null) {
+            throw new IllegalStateException(
+                    "Current user is null."
             );
         }
 
@@ -33,13 +36,16 @@ public class MedicalRecordController {
                         .getCurrentUser()
                         .getUid();
 
-        if (uid == null ||
-                uid.isBlank()) {
-
+        if (uid == null || uid.isBlank()) {
             throw new IllegalStateException(
                     "Current user UID is missing."
             );
         }
+
+        System.out.println(
+                "MedicalRecordController - Current Patient UID: "
+                        + uid
+        );
 
         return uid;
     }
@@ -48,32 +54,37 @@ public class MedicalRecordController {
     // GET CURRENT PATIENT MEDICAL RECORDS
     // =========================================================
 
-    public List<MedicalRecord>
-    getCurrentPatientRecords() {
+    public List<MedicalRecord> getCurrentPatientRecords() {
 
-        String uid =
-                getCurrentPatientUid();
+        String uid = getCurrentPatientUid();
 
-        return medicalRecordDAO
-                .getMedicalRecords(uid);
+        System.out.println(
+                "Fetching medical records for UID: " + uid
+        );
+
+        List<MedicalRecord> records =
+                medicalRecordDAO.getMedicalRecords(uid);
+
+        System.out.println(
+                "Medical records found: " + records.size()
+        );
+
+        return records;
     }
 
     // =========================================================
     // GET SINGLE CURRENT PATIENT RECORD
     // =========================================================
 
-    public MedicalRecord
-    getCurrentPatientRecord(
+    public MedicalRecord getCurrentPatientRecord(
             String recordId) {
 
-        String uid =
-                getCurrentPatientUid();
+        String uid = getCurrentPatientUid();
 
-        return medicalRecordDAO
-                .getMedicalRecord(
-                        uid,
-                        recordId
-                );
+        return medicalRecordDAO.getMedicalRecord(
+                uid,
+                recordId
+        );
     }
 
     // =========================================================
@@ -86,8 +97,7 @@ public class MedicalRecordController {
             String date,
             String description) {
 
-        String uid =
-                getCurrentPatientUid();
+        String uid = getCurrentPatientUid();
 
         validate(
                 title,
@@ -108,8 +118,7 @@ public class MedicalRecordController {
                         : description.trim()
         );
 
-        medicalRecordDAO
-                .createMedicalRecord(record);
+        medicalRecordDAO.createMedicalRecord(record);
     }
 
     // =========================================================
@@ -121,25 +130,19 @@ public class MedicalRecordController {
             String type,
             String date) {
 
-        if (title == null ||
-                title.isBlank()) {
-
+        if (title == null || title.isBlank()) {
             throw new IllegalArgumentException(
                     "Medical record title cannot be empty."
             );
         }
 
-        if (type == null ||
-                type.isBlank()) {
-
+        if (type == null || type.isBlank()) {
             throw new IllegalArgumentException(
                     "Medical record type cannot be empty."
             );
         }
 
-        if (date == null ||
-                date.isBlank()) {
-
+        if (date == null || date.isBlank()) {
             throw new IllegalArgumentException(
                     "Medical record date cannot be empty."
             );

@@ -9,19 +9,16 @@ import com.healthsphere.model.MedicalRecord;
  */
 public class MedicalRecordDAO {
 
-    public List<MedicalRecord> getMedicalRecords(String uid) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getMedicalRecords'");
+    List<MedicalRecord> getMedicalRecords(String uid) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    public MedicalRecord getMedicalRecord(String uid, String recordId) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getMedicalRecord'");
+    void createMedicalRecord(MedicalRecord record) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    public void createMedicalRecord(MedicalRecord record) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'createMedicalRecord'");
+    MedicalRecord getMedicalRecord(String uid, String recordId) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
 }
