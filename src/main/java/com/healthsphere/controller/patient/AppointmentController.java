@@ -1,8 +1,13 @@
 package com.healthsphere.controller.patient;
+
 import java.util.List;
 
+import com.healthsphere.dao.authentication.DoctorDAO;
+import com.healthsphere.dao.authentication.HospitalDAO;
 import com.healthsphere.dao.patient.AppointmentDAO;
 import com.healthsphere.model.Appointment;
+import com.healthsphere.model.DoctorProfile;
+import com.healthsphere.model.HospitalProfile;
 import com.healthsphere.model.PatientProfile;
 import com.healthsphere.util.SessionManager;
 
@@ -11,6 +16,10 @@ public class AppointmentController {
     private final AppointmentDAO appointmentDAO;
     private final PatientController patientController;
     private final NotificationController notificationController;
+
+    private final DoctorDAO doctorDAO;
+    private final HospitalDAO hospitalDAO;
+
     public AppointmentController() {
 
         this.appointmentDAO =
@@ -18,33 +27,88 @@ public class AppointmentController {
 
         this.patientController =
                 new PatientController();
-                this.notificationController =
-            new NotificationController();
+
+        this.notificationController =
+                new NotificationController();
+
+        this.doctorDAO =
+                new DoctorDAO();
+
+        this.hospitalDAO =
+                new HospitalDAO();
     }
 
-    // ============================================================
-    // CREATE CURRENT PATIENT APPOINTMENT
-    // ============================================================
+    // =========================================================
+    // GET REAL DOCTORS
+    // =========================================================
 
-    public Appointment createAppointment(
+    public List<DoctorProfile> getAllDoctors() {
+
+        return doctorDAO.getAllDoctors();
+    }
+
+    // =========================================================
+    // GET REAL HOSPITALS
+    // =========================================================
+
+    public List<HospitalProfile> getAllHospitals() {
+
+        return hospitalDAO.getAllHospitals();
+    }
+
+    // =========================================================
+    // CREATE DOCTOR APPOINTMENT
+    // =========================================================
+
+    public Appointment createDoctorAppointment(
+
+            String doctorUid,
             String doctorName,
             String specialty,
-            String hospital,
             String appointmentDate,
             String appointmentTime,
             String reason) {
 
         validateSession();
 
-        validateAppointmentInput(
-                doctorName,
-                specialty,
-                hospital,
+        // -----------------------------------------------------
+        // VALIDATION
+        // -----------------------------------------------------
+
+        if (doctorUid == null ||
+                doctorUid.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Please select a doctor."
+            );
+        }
+
+        if (doctorName == null ||
+                doctorName.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Doctor name is missing."
+            );
+        }
+
+        if (specialty == null ||
+                specialty.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Doctor specialization is missing."
+            );
+        }
+
+        validateDateAndTime(
                 appointmentDate,
                 appointmentTime
         );
 
-        String uid =
+        // -----------------------------------------------------
+        // CURRENT PATIENT
+        // -----------------------------------------------------
+
+        String patientUid =
                 SessionManager
                         .getCurrentUser()
                         .getUid();
@@ -56,26 +120,53 @@ public class AppointmentController {
         String patientName =
                 buildPatientName(profile);
 
+        // -----------------------------------------------------
+        // CREATE APPOINTMENT
+        // -----------------------------------------------------
+
         Appointment appointment =
                 new Appointment();
 
-        appointment.setPatientUid(uid);
-        appointment.setPatientName(patientName);
+        appointment.setPatientUid(
+                patientUid
+        );
+
+        appointment.setPatientName(
+                patientName
+        );
+
+        appointment.setBookingType(
+                "DOCTOR"
+        );
+
+        appointment.setDoctorUid(
+                doctorUid.trim()
+        );
+
         appointment.setDoctorName(
                 doctorName.trim()
         );
+
+        appointment.setHospitalId(
+                null
+        );
+
+        appointment.setHospitalName(
+                null
+        );
+
         appointment.setSpecialty(
                 specialty.trim()
         );
-        appointment.setHospital(
-                hospital.trim()
-        );
+
         appointment.setAppointmentDate(
                 appointmentDate.trim()
         );
+
         appointment.setAppointmentTime(
                 appointmentTime.trim()
         );
+
         appointment.setReason(
                 reason == null
                         ? ""
@@ -83,51 +174,208 @@ public class AppointmentController {
         );
 
         appointment.setStatus(
-                "Upcoming"
+                "PENDING"
         );
 
-       Appointment savedAppointment =
-        appointmentDAO.createAppointment(
-                appointment
+        // -----------------------------------------------------
+        // SAVE
+        // -----------------------------------------------------
+
+        Appointment savedAppointment =
+                appointmentDAO.createAppointment(
+                        appointment
+                );
+
+        // -----------------------------------------------------
+        // NOTIFICATION
+        // -----------------------------------------------------
+
+        notificationController.createNotification(
+
+                "Doctor Appointment Booked",
+
+                "Your appointment with "
+                        + doctorName
+                        + " has been booked for "
+                        + appointmentDate
+                        + " at "
+                        + appointmentTime
+                        + ".",
+
+                "APPOINTMENT"
         );
 
-notificationController.createNotification(
-        "Appointment Booked",
-        "Your appointment with Dr. "
-                + appointment.getDoctorName()
-                + " at "
-                + appointment.getHospital()
-                + " has been successfully booked for "
-                + appointment.getAppointmentDate()
-                + " at "
-                + appointment.getAppointmentTime()
-                + ".",
-        "APPOINTMENT"
-);
-
-return savedAppointment;
+        return savedAppointment;
     }
 
-    // ============================================================
-    // GET CURRENT PATIENT APPOINTMENTS
-    // ============================================================
+    // =========================================================
+    // CREATE HOSPITAL APPOINTMENT
+    // =========================================================
 
-    public List<Appointment> getCurrentPatientAppointments() {
+    public Appointment createHospitalAppointment(
+
+            String hospitalId,
+            String hospitalName,
+            String appointmentDate,
+            String appointmentTime,
+            String reason) {
 
         validateSession();
 
-        String uid =
+        // -----------------------------------------------------
+        // VALIDATION
+        // -----------------------------------------------------
+
+        if (hospitalId == null ||
+                hospitalId.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Please select a hospital."
+            );
+        }
+
+        if (hospitalName == null ||
+                hospitalName.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Hospital name is missing."
+            );
+        }
+
+        validateDateAndTime(
+                appointmentDate,
+                appointmentTime
+        );
+
+        // -----------------------------------------------------
+        // CURRENT PATIENT
+        // -----------------------------------------------------
+
+        String patientUid =
+                SessionManager
+                        .getCurrentUser()
+                        .getUid();
+
+        PatientProfile profile =
+                patientController
+                        .getCurrentPatientProfile();
+
+        String patientName =
+                buildPatientName(profile);
+
+        // -----------------------------------------------------
+        // CREATE APPOINTMENT
+        // -----------------------------------------------------
+
+        Appointment appointment =
+                new Appointment();
+
+        appointment.setPatientUid(
+                patientUid
+        );
+
+        appointment.setPatientName(
+                patientName
+        );
+
+        appointment.setBookingType(
+                "HOSPITAL"
+        );
+
+        // Hospital relationship
+        appointment.setHospitalId(
+                hospitalId.trim()
+        );
+
+        appointment.setHospitalName(
+                hospitalName.trim()
+        );
+
+        // Doctor will be assigned later
+        appointment.setDoctorUid(
+                null
+        );
+
+        appointment.setDoctorName(
+                null
+        );
+
+        appointment.setSpecialty(
+                null
+        );
+
+        appointment.setAppointmentDate(
+                appointmentDate.trim()
+        );
+
+        appointment.setAppointmentTime(
+                appointmentTime.trim()
+        );
+
+        appointment.setReason(
+                reason == null
+                        ? ""
+                        : reason.trim()
+        );
+
+        appointment.setStatus(
+                "PENDING_ASSIGNMENT"
+        );
+
+        // -----------------------------------------------------
+        // SAVE
+        // -----------------------------------------------------
+
+        Appointment savedAppointment =
+                appointmentDAO.createAppointment(
+                        appointment
+                );
+
+        // -----------------------------------------------------
+        // NOTIFICATION
+        // -----------------------------------------------------
+
+        notificationController.createNotification(
+
+                "Hospital Appointment Booked",
+
+                "Your appointment request at "
+                        + hospitalName
+                        + " has been submitted for "
+                        + appointmentDate
+                        + " at "
+                        + appointmentTime
+                        + ".",
+
+                "APPOINTMENT"
+        );
+
+        return savedAppointment;
+    }
+
+    // =========================================================
+    // GET CURRENT PATIENT APPOINTMENTS
+    // =========================================================
+
+    public List<Appointment>
+            getCurrentPatientAppointments() {
+
+        validateSession();
+
+        String patientUid =
                 SessionManager
                         .getCurrentUser()
                         .getUid();
 
         return appointmentDAO
-                .getPatientAppointments(uid);
+                .getPatientAppointments(
+                        patientUid
+                );
     }
 
-    // ============================================================
-    // PATIENT NAME
-    // ============================================================
+    // =========================================================
+    // BUILD PATIENT NAME
+    // =========================================================
 
     private String buildPatientName(
             PatientProfile profile) {
@@ -139,12 +387,16 @@ return savedAppointment;
         String firstName =
                 profile.getFirstName() == null
                         ? ""
-                        : profile.getFirstName().trim();
+                        : profile
+                                .getFirstName()
+                                .trim();
 
         String lastName =
                 profile.getLastName() == null
                         ? ""
-                        : profile.getLastName().trim();
+                        : profile
+                                .getLastName()
+                                .trim();
 
         String fullName =
                 (firstName + " " + lastName)
@@ -155,9 +407,9 @@ return savedAppointment;
                 : fullName;
     }
 
-    // ============================================================
+    // =========================================================
     // SESSION VALIDATION
-    // ============================================================
+    // =========================================================
 
     private void validateSession() {
 
@@ -170,7 +422,12 @@ return savedAppointment;
 
         if (SessionManager
                 .getCurrentUser()
-                .getUid() == null) {
+                .getUid() == null ||
+
+                SessionManager
+                        .getCurrentUser()
+                        .getUid()
+                        .isBlank()) {
 
             throw new IllegalStateException(
                     "Current user UID is missing."
@@ -178,40 +435,14 @@ return savedAppointment;
         }
     }
 
-    // ============================================================
-    // INPUT VALIDATION
-    // ============================================================
+    // =========================================================
+    // DATE AND TIME VALIDATION
+    // =========================================================
 
-    private void validateAppointmentInput(
-            String doctorName,
-            String specialty,
-            String hospital,
+    private void validateDateAndTime(
+
             String appointmentDate,
             String appointmentTime) {
-
-        if (doctorName == null ||
-                doctorName.isBlank()) {
-
-            throw new IllegalArgumentException(
-                    "Please select a doctor."
-            );
-        }
-
-        if (specialty == null ||
-                specialty.isBlank()) {
-
-            throw new IllegalArgumentException(
-                    "Please select a specialty."
-            );
-        }
-
-        if (hospital == null ||
-                hospital.isBlank()) {
-
-            throw new IllegalArgumentException(
-                    "Please select a hospital."
-            );
-        }
 
         if (appointmentDate == null ||
                 appointmentDate.isBlank()) {

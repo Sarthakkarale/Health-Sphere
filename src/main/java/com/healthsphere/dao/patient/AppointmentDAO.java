@@ -1,5 +1,6 @@
 package com.healthsphere.dao.patient;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -20,9 +21,9 @@ public class AppointmentDAO {
         this.db = FirebaseConfig.getFirestore();
     }
 
-    // ============================================================
+    // =========================================================
     // CREATE APPOINTMENT
-    // ============================================================
+    // =========================================================
 
     public Appointment createAppointment(
             Appointment appointment) {
@@ -42,6 +43,17 @@ public class AppointmentDAO {
                         appointmentId
                 );
             }
+
+            String currentTime =
+                    LocalDateTime.now().toString();
+
+            appointment.setCreatedAt(
+                    currentTime
+            );
+
+            appointment.setUpdatedAt(
+                    currentTime
+            );
 
             db.collection("appointments")
                     .document(appointmentId)
@@ -63,9 +75,9 @@ public class AppointmentDAO {
         }
     }
 
-    // ============================================================
+    // =========================================================
     // GET PATIENT APPOINTMENTS
-    // ============================================================
+    // =========================================================
 
     public List<Appointment> getPatientAppointments(
             String patientUid) {
@@ -96,6 +108,16 @@ public class AppointmentDAO {
 
                 if (appointment != null) {
 
+                    // Ensure ID is available even if
+                    // old documents don't contain it.
+                    if (appointment.getAppointmentId() == null ||
+                            appointment.getAppointmentId().isBlank()) {
+
+                        appointment.setAppointmentId(
+                                document.getId()
+                        );
+                    }
+
                     appointments.add(
                             appointment
                     );
@@ -113,9 +135,9 @@ public class AppointmentDAO {
         }
     }
 
-    // ============================================================
+    // =========================================================
     // GET SINGLE APPOINTMENT
-    // ============================================================
+    // =========================================================
 
     public Appointment getAppointment(
             String appointmentId) {
@@ -135,9 +157,21 @@ public class AppointmentDAO {
                 );
             }
 
-            return document.toObject(
-                    Appointment.class
-            );
+            Appointment appointment =
+                    document.toObject(
+                            Appointment.class
+                    );
+
+            if (appointment != null &&
+                    (appointment.getAppointmentId() == null ||
+                            appointment.getAppointmentId().isBlank())) {
+
+                appointment.setAppointmentId(
+                        document.getId()
+                );
+            }
+
+            return appointment;
 
         } catch (DatabaseException e) {
 
@@ -152,14 +186,27 @@ public class AppointmentDAO {
         }
     }
 
-    // ============================================================
+    // =========================================================
     // UPDATE APPOINTMENT
-    // ============================================================
+    // =========================================================
 
     public void updateAppointment(
             Appointment appointment) {
 
         try {
+
+            if (appointment == null ||
+                    appointment.getAppointmentId() == null ||
+                    appointment.getAppointmentId().isBlank()) {
+
+                throw new IllegalArgumentException(
+                        "Appointment ID is required."
+                );
+            }
+
+            appointment.setUpdatedAt(
+                    LocalDateTime.now().toString()
+            );
 
             db.collection("appointments")
                     .document(

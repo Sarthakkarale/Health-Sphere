@@ -1,9 +1,15 @@
 package com.healthsphere.view.Patient;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.healthsphere.controller.patient.AppointmentController;
 import com.healthsphere.controller.patient.PatientController;
+import com.healthsphere.dao.doctor.DoctorDAO;
+import com.healthsphere.dao.hospital.HospitalDAO;
+import com.healthsphere.model.DoctorProfile;
+import com.healthsphere.model.HospitalProfile;
 import com.healthsphere.model.PatientProfile;
 
 import javafx.geometry.Insets;
@@ -13,13 +19,11 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -30,6 +34,15 @@ public class BookAppointment {
     private final AppointmentController appointmentController;
     private final PatientController patientController;
 
+    private final HospitalDAO hospitalDAO;
+    private final DoctorDAO doctorDAO;
+
+    private List<HospitalProfile> hospitals =
+            new ArrayList<>();
+
+    private List<DoctorProfile> doctors =
+            new ArrayList<>();
+
     public BookAppointment(Stage stage) {
 
         this.stage = stage;
@@ -39,6 +52,12 @@ public class BookAppointment {
 
         this.patientController =
                 new PatientController();
+
+        this.hospitalDAO =
+                new HospitalDAO();
+
+        this.doctorDAO =
+                new DoctorDAO();
     }
 
     // =========================================================
@@ -46,6 +65,13 @@ public class BookAppointment {
     // =========================================================
 
     public Scene getScene() {
+
+        // =====================================================
+        // LOAD DATA
+        // =====================================================
+
+        loadHospitals();
+        loadDoctors();
 
         VBox content =
                 new VBox(22);
@@ -106,10 +132,6 @@ public class BookAppointment {
                 patientName
         );
 
-        /*
-         * Patient name comes from the logged-in user's
-         * PatientProfile and must not be manually changed.
-         */
         patientName.setEditable(false);
 
         patientName.setStyle(
@@ -121,19 +143,33 @@ public class BookAppointment {
         );
 
         // =====================================================
+        // BOOKING TYPE
+        // =====================================================
+
+        ComboBox<String> bookingType =
+                new ComboBox<>();
+
+        bookingType.getItems().addAll(
+                "Book a Doctor",
+                "Book a Hospital"
+        );
+
+        bookingType.setPromptText(
+                "Select booking type"
+        );
+
+        bookingType.setPrefHeight(43);
+
+        bookingType.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        // =====================================================
         // DOCTOR
         // =====================================================
 
         ComboBox<String> doctor =
                 new ComboBox<>();
-
-        doctor.getItems().addAll(
-
-                "Dr. Sarah Jenkins",
-                "Dr. Michael Brown",
-                "Dr. Emily Wilson",
-                "Dr. Robert Smith"
-        );
 
         doctor.setPromptText(
                 "Select doctor"
@@ -145,6 +181,22 @@ public class BookAppointment {
                 Double.MAX_VALUE
         );
 
+        for (DoctorProfile doctorProfile :
+                doctors) {
+
+            String doctorName =
+                    getDoctorFullName(
+                            doctorProfile
+                    );
+
+            if (!doctorName.isBlank()) {
+
+                doctor.getItems().add(
+                        doctorName
+                );
+            }
+        }
+
         // =====================================================
         // SPECIALTY
         // =====================================================
@@ -152,18 +204,8 @@ public class BookAppointment {
         ComboBox<String> specialty =
                 new ComboBox<>();
 
-        specialty.getItems().addAll(
-
-                "Cardiology",
-                "General Medicine",
-                "Dermatology",
-                "Orthopedics",
-                "Neurology",
-                "Pediatrics"
-        );
-
         specialty.setPromptText(
-                "Select specialty"
+                "Specialty"
         );
 
         specialty.setPrefHeight(43);
@@ -172,20 +214,14 @@ public class BookAppointment {
                 Double.MAX_VALUE
         );
 
+        specialty.setDisable(true);
+
         // =====================================================
         // HOSPITAL
         // =====================================================
 
         ComboBox<String> hospital =
                 new ComboBox<>();
-
-        hospital.getItems().addAll(
-
-                "Apollo Hospitals",
-                "Care Hospitals",
-                "Yashoda Hospitals",
-                "KIMS Hospitals"
-        );
 
         hospital.setPromptText(
                 "Select hospital"
@@ -196,6 +232,22 @@ public class BookAppointment {
         hospital.setMaxWidth(
                 Double.MAX_VALUE
         );
+
+        for (HospitalProfile hospitalProfile :
+                hospitals) {
+
+            String hospitalName =
+                    hospitalProfile
+                            .getHospitalName();
+
+            if (hospitalName != null &&
+                    !hospitalName.isBlank()) {
+
+                hospital.getItems().add(
+                        hospitalName
+                );
+            }
+        }
 
         // =====================================================
         // DATE
@@ -214,31 +266,31 @@ public class BookAppointment {
                 Double.MAX_VALUE
         );
 
-        /*
-         * Prevent selecting a date in the past.
-         */
         date.setDayCellFactory(
-                picker -> new javafx.scene.control.DateCell() {
+                picker ->
+                        new javafx.scene.control.DateCell() {
 
-                    @Override
-                    public void updateItem(
-                            LocalDate item,
-                            boolean empty) {
+                            @Override
+                            public void updateItem(
+                                    LocalDate item,
+                                    boolean empty) {
 
-                        super.updateItem(
-                                item,
-                                empty
-                        );
+                                super.updateItem(
+                                        item,
+                                        empty
+                                );
 
-                        if (!empty &&
-                                item.isBefore(
-                                        LocalDate.now()
-                                )) {
+                                if (!empty &&
+                                        item.isBefore(
+                                                LocalDate.now()
+                                        )) {
 
-                            setDisable(true);
+                                    setDisable(
+                                            true
+                                    );
+                                }
+                            }
                         }
-                    }
-                }
         );
 
         // =====================================================
@@ -286,7 +338,9 @@ public class BookAppointment {
 
         reason.setPrefRowCount(4);
 
-        reason.setWrapText(true);
+        reason.setWrapText(
+                true
+        );
 
         reason.setStyle(
                 "-fx-background-color: #f8fafc;" +
@@ -296,66 +350,206 @@ public class BookAppointment {
         );
 
         // =====================================================
-        // LEFT FORM
+        // DOCTOR SECTION
         // =====================================================
 
-        VBox left =
+        VBox doctorSection =
                 new VBox(
                         7,
 
-                        label("Patient Name"),
-                        patientName,
-
                         label("Doctor"),
+
                         doctor,
 
                         label("Specialty"),
+
                         specialty
                 );
 
         // =====================================================
-        // RIGHT FORM
+        // HOSPITAL SECTION
         // =====================================================
 
-        VBox right =
+        VBox hospitalSection =
                 new VBox(
                         7,
 
                         label("Hospital"),
-                        hospital,
 
-                        label("Date"),
-                        date,
-
-                        label("Time"),
-                        time
+                        hospital
                 );
 
-        HBox.setHgrow(
-                left,
-                Priority.ALWAYS
+        // Initially hidden
+        doctorSection.setVisible(
+                false
         );
 
-        HBox.setHgrow(
-                right,
-                Priority.ALWAYS
+        doctorSection.setManaged(
+                false
         );
 
-        HBox row =
-                new HBox(20);
+        hospitalSection.setVisible(
+                false
+        );
 
-        row.getChildren().addAll(
-                left,
-                right
+        hospitalSection.setManaged(
+                false
         );
 
         // =====================================================
-        // REASON LABEL
+        // DOCTOR SELECTION
         // =====================================================
 
-        Label reasonLabel =
-                label(
-                        "Reason for Visit"
+        doctor.setOnAction(
+                event -> {
+
+                    String selectedDoctorName =
+                            doctor.getValue();
+
+                    specialty.getItems().clear();
+
+                    specialty.setValue(
+                            null
+                    );
+
+                    if (selectedDoctorName == null) {
+
+                        return;
+                    }
+
+                    DoctorProfile selectedDoctor =
+                            findDoctorByName(
+                                    selectedDoctorName
+                            );
+
+                    if (selectedDoctor != null) {
+
+                        String specialization =
+                                selectedDoctor
+                                        .getSpecialization();
+
+                        if (specialization != null &&
+                                !specialization.isBlank()) {
+
+                            specialty.getItems().add(
+                                    specialization
+                            );
+
+                            specialty.setValue(
+                                    specialization
+                            );
+                        }
+                    }
+                }
+        );
+
+        // =====================================================
+        // BOOKING TYPE CHANGE
+        // =====================================================
+
+        bookingType.setOnAction(
+                event -> {
+
+                    String selectedType =
+                            bookingType.getValue();
+
+                    if (selectedType == null) {
+
+                        doctorSection.setVisible(
+                                false
+                        );
+
+                        doctorSection.setManaged(
+                                false
+                        );
+
+                        hospitalSection.setVisible(
+                                false
+                        );
+
+                        hospitalSection.setManaged(
+                                false
+                        );
+
+                        return;
+                    }
+
+                    if (selectedType.equals(
+                            "Book a Doctor"
+                    )) {
+
+                        // Show doctor section
+                        doctorSection.setVisible(
+                                true
+                        );
+
+                        doctorSection.setManaged(
+                                true
+                        );
+
+                        // Hide hospital section
+                        hospitalSection.setVisible(
+                                false
+                        );
+
+                        hospitalSection.setManaged(
+                                false
+                        );
+
+                        // Clear hospital
+                        hospital.setValue(
+                                null
+                        );
+
+                    } else if (selectedType.equals(
+                            "Book a Hospital"
+                    )) {
+
+                        // Hide doctor section
+                        doctorSection.setVisible(
+                                false
+                        );
+
+                        doctorSection.setManaged(
+                                false
+                        );
+
+                        // Show hospital section
+                        hospitalSection.setVisible(
+                                true
+                        );
+
+                        hospitalSection.setManaged(
+                                true
+                        );
+
+                        // Clear doctor data
+                        doctor.setValue(
+                                null
+                        );
+
+                        specialty.setValue(
+                                null
+                        );
+                    }
+                }
+        );
+
+        // =====================================================
+        // DATE + TIME SECTION
+        // =====================================================
+
+        VBox scheduleSection =
+                new VBox(
+                        7,
+
+                        label("Appointment Date"),
+
+                        date,
+
+                        label("Appointment Time"),
+
+                        time
                 );
 
         // =====================================================
@@ -364,37 +558,74 @@ public class BookAppointment {
 
         Button confirm =
                 PatientUI.button(
+
                         "Confirm Appointment",
+
                         () -> confirmAppointment(
 
-                                patientName,
+                                bookingType,
+
                                 doctor,
+
                                 specialty,
+
                                 hospital,
+
                                 date,
+
                                 time,
+
                                 reason
                         )
                 );
 
         Button cancel =
                 PatientUI.secondaryButton(
+
                         "Cancel",
+
                         this::showAppointments
                 );
 
         HBox actions =
                 new HBox(
                         12,
+
                         confirm,
+
                         cancel
                 );
 
+        // =====================================================
+        // ADD FORM CONTENT
+        // =====================================================
+
         form.getChildren().addAll(
 
-                row,
-                reasonLabel,
+                label(
+                        "Patient Name"
+                ),
+
+                patientName,
+
+                label(
+                        "Booking Type"
+                ),
+
+                bookingType,
+
+                doctorSection,
+
+                hospitalSection,
+
+                scheduleSection,
+
+                label(
+                        "Reason for Visit"
+                ),
+
                 reason,
+
                 actions
         );
 
@@ -405,36 +636,12 @@ public class BookAppointment {
         content.getChildren().addAll(
 
                 images,
+
                 form
         );
 
         // =====================================================
-        // SCROLL
-        // =====================================================
-
-        ScrollPane scroll =
-                new ScrollPane(content);
-
-        scroll.setFitToWidth(true);
-
-        scroll.setHbarPolicy(
-                ScrollPane.ScrollBarPolicy.NEVER
-        );
-
-        scroll.setVbarPolicy(
-                ScrollPane.ScrollBarPolicy.AS_NEEDED
-        );
-
-        scroll.setStyle(
-                "-fx-background-color: transparent;" +
-                "-fx-background: transparent;"
-        );
-
-        VBox wrapper =
-                new VBox(scroll);
-
-        // =====================================================
-        // COMMON PATIENT HEADER
+        // RETURN COMMON PATIENT UI
         // =====================================================
 
         return PatientUI.createScene(
@@ -445,19 +652,435 @@ public class BookAppointment {
 
                 "Book Appointment",
 
-                "Choose a doctor, hospital, date and convenient time.",
+                "Choose a doctor or hospital, date and convenient time.",
 
-                wrapper
+                content
         );
     }
 
     // =========================================================
-    // LOAD LOGGED-IN PATIENT NAME
+    // CONFIRM APPOINTMENT
+    // =========================================================
+
+    private void confirmAppointment(
+
+            ComboBox<String> bookingType,
+
+            ComboBox<String> doctor,
+
+            ComboBox<String> specialty,
+
+            ComboBox<String> hospital,
+
+            DatePicker date,
+
+            ComboBox<String> time,
+
+            TextArea reason) {
+
+        // =====================================================
+        // BOOKING TYPE VALIDATION
+        // =====================================================
+
+        if (bookingType.getValue() == null) {
+
+            showError(
+                    "Please select a booking type."
+            );
+
+            return;
+        }
+
+        // =====================================================
+        // DATE VALIDATION
+        // =====================================================
+
+        if (date.getValue() == null) {
+
+            showError(
+                    "Please select an appointment date."
+            );
+
+            return;
+        }
+
+        if (date.getValue().isBefore(
+                LocalDate.now()
+        )) {
+
+            showError(
+                    "Appointment date cannot be in the past."
+            );
+
+            return;
+        }
+
+        // =====================================================
+        // TIME VALIDATION
+        // =====================================================
+
+        if (time.getValue() == null) {
+
+            showError(
+                    "Please select an appointment time."
+            );
+
+            return;
+        }
+
+        try {
+
+            // =================================================
+            // DOCTOR APPOINTMENT
+            // =================================================
+
+            if (bookingType.getValue().equals(
+                    "Book a Doctor"
+            )) {
+
+                if (doctor.getValue() == null) {
+
+                    showError(
+                            "Please select a doctor."
+                    );
+
+                    return;
+                }
+
+                DoctorProfile selectedDoctor =
+                        findDoctorByName(
+                                doctor.getValue()
+                        );
+
+                if (selectedDoctor == null) {
+
+                    showError(
+                            "Selected doctor could not be found."
+                    );
+
+                    return;
+                }
+
+                String doctorUid =
+                        selectedDoctor.getUid();
+
+                if (doctorUid == null ||
+                        doctorUid.isBlank()) {
+
+                    showError(
+                            "Selected doctor UID is missing."
+                    );
+
+                    return;
+                }
+
+                String doctorName =
+                        getDoctorFullName(
+                                selectedDoctor
+                        );
+
+                String doctorSpecialty =
+                        selectedDoctor
+                                .getSpecialization();
+
+                appointmentController
+                        .createDoctorAppointment(
+
+                                doctorUid,
+
+                                doctorName,
+
+                                doctorSpecialty,
+
+                                date.getValue()
+                                        .toString(),
+
+                                time.getValue(),
+
+                                reason.getText()
+                        );
+            }
+
+            // =================================================
+            // HOSPITAL APPOINTMENT
+            // =================================================
+
+            else if (bookingType.getValue().equals(
+                    "Book a Hospital"
+            )) {
+
+                if (hospital.getValue() == null) {
+
+                    showError(
+                            "Please select a hospital."
+                    );
+
+                    return;
+                }
+
+                HospitalProfile selectedHospital =
+                        findHospitalByName(
+                                hospital.getValue()
+                        );
+
+                if (selectedHospital == null) {
+
+                    showError(
+                            "Selected hospital could not be found."
+                    );
+
+                    return;
+                }
+
+                String hospitalId =
+                        selectedHospital.getUid();
+
+                if (hospitalId == null ||
+                        hospitalId.isBlank()) {
+
+                    showError(
+                            "Selected hospital UID is missing."
+                    );
+
+                    return;
+                }
+
+                String hospitalName =
+                        selectedHospital
+                                .getHospitalName();
+
+                appointmentController
+                        .createHospitalAppointment(
+
+                                hospitalId,
+
+                                hospitalName,
+
+                                date.getValue()
+                                        .toString(),
+
+                                time.getValue(),
+
+                                reason.getText()
+                        );
+            }
+
+            // =================================================
+            // SUCCESS
+            // =================================================
+
+            showSuccess();
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            showError(
+
+                    "Unable to book the appointment.\n\n"
+
+                            + e.getMessage()
+            );
+        }
+    }
+
+    // =========================================================
+    // LOAD HOSPITALS
+    // =========================================================
+
+    private void loadHospitals() {
+
+        try {
+
+            hospitals =
+                    hospitalDAO
+                            .getAllHospitals();
+
+            System.out.println(
+                    "Hospitals loaded: "
+                            + hospitals.size()
+            );
+
+            for (HospitalProfile hospital :
+                    hospitals) {
+
+                System.out.println(
+
+                        "Hospital: "
+                                + hospital.getHospitalName()
+
+                                + " | UID: "
+                                + hospital.getUid()
+                );
+
+            }
+
+        } catch (Exception e) {
+
+            System.err.println(
+
+                    "Unable to load hospitals: "
+                            + e.getMessage()
+            );
+
+            e.printStackTrace();
+
+            hospitals =
+                    new ArrayList<>();
+        }
+    }
+
+    // =========================================================
+    // LOAD DOCTORS
+    // =========================================================
+
+    private void loadDoctors() {
+
+        try {
+
+            doctors =
+                    doctorDAO
+                            .getAllDoctors();
+
+            System.out.println(
+                    "Doctors loaded: "
+                            + doctors.size()
+            );
+
+            for (DoctorProfile doctor :
+                    doctors) {
+
+                System.out.println(
+
+                        "Doctor: "
+                                + getDoctorFullName(
+                                        doctor
+                                )
+
+                                + " | UID: "
+                                + doctor.getUid()
+
+                                + " | Specialization: "
+                                + doctor.getSpecialization()
+                );
+            }
+
+        } catch (Exception e) {
+
+            System.err.println(
+
+                    "Unable to load doctors: "
+                            + e.getMessage()
+            );
+
+            e.printStackTrace();
+
+            doctors =
+                    new ArrayList<>();
+        }
+    }
+
+    // =========================================================
+    // FIND DOCTOR BY NAME
+    // =========================================================
+
+    private DoctorProfile findDoctorByName(
+            String doctorName) {
+
+        if (doctorName == null) {
+            return null;
+        }
+
+        for (DoctorProfile doctor :
+                doctors) {
+
+            String fullName =
+                    getDoctorFullName(
+                            doctor
+                    );
+
+            if (fullName.equalsIgnoreCase(
+                    doctorName
+            )) {
+
+                return doctor;
+            }
+        }
+
+        return null;
+    }
+
+    // =========================================================
+    // FIND HOSPITAL BY NAME
+    // =========================================================
+
+    private HospitalProfile findHospitalByName(
+            String hospitalName) {
+
+        if (hospitalName == null) {
+            return null;
+        }
+
+        for (HospitalProfile hospital :
+                hospitals) {
+
+            String name =
+                    hospital.getHospitalName();
+
+            if (name != null &&
+                    name.equalsIgnoreCase(
+                            hospitalName
+                    )) {
+
+                return hospital;
+            }
+        }
+
+        return null;
+    }
+
+    // =========================================================
+    // GET DOCTOR FULL NAME
+    // =========================================================
+
+    private String getDoctorFullName(
+            DoctorProfile doctor) {
+
+        if (doctor == null) {
+            return "";
+        }
+
+        String firstName =
+                doctor.getFirstName() == null
+                        ? ""
+                        : doctor
+                                .getFirstName()
+                                .trim();
+
+        String lastName =
+                doctor.getLastName() == null
+                        ? ""
+                        : doctor
+                                .getLastName()
+                                .trim();
+
+        String fullName =
+                (firstName + " " + lastName)
+                        .trim();
+
+        if (fullName.isBlank()) {
+            return "";
+        }
+
+        return "Dr. " + fullName;
+    }
+
+    // =========================================================
+    // LOAD PATIENT NAME
     // =========================================================
 
     private void loadPatientName(
-            TextField patientName
-    ) {
+            TextField patientName) {
 
         try {
 
@@ -477,156 +1100,38 @@ public class BookAppointment {
             String firstName =
                     profile.getFirstName() == null
                             ? ""
-                            : profile.getFirstName().trim();
+                            : profile
+                                    .getFirstName()
+                                    .trim();
 
             String lastName =
                     profile.getLastName() == null
                             ? ""
-                            : profile.getLastName().trim();
+                            : profile
+                                    .getLastName()
+                                    .trim();
 
             String fullName =
                     (firstName + " " + lastName)
                             .trim();
 
-            if (fullName.isBlank()) {
+            patientName.setText(
 
-                patientName.setText(
-                        "Patient"
-                );
-
-            } else {
-
-                patientName.setText(
-                        fullName
-                );
-            }
+                    fullName.isBlank()
+                            ? "Patient"
+                            : fullName
+            );
 
         } catch (Exception e) {
 
             System.err.println(
+
                     "Unable to load patient name: "
                             + e.getMessage()
             );
 
             patientName.setText(
                     "Patient"
-            );
-        }
-    }
-
-    // =========================================================
-    // CONFIRM APPOINTMENT
-    // =========================================================
-
-    private void confirmAppointment(
-
-            TextField patientName,
-
-            ComboBox<String> doctor,
-
-            ComboBox<String> specialty,
-
-            ComboBox<String> hospital,
-
-            DatePicker date,
-
-            ComboBox<String> time,
-
-            TextArea reason
-    ) {
-
-        // =====================================================
-        // VALIDATION
-        // =====================================================
-
-        if (doctor.getValue() == null) {
-
-            showError(
-                    "Please select a doctor."
-            );
-
-            return;
-        }
-
-        if (specialty.getValue() == null) {
-
-            showError(
-                    "Please select a specialty."
-            );
-
-            return;
-        }
-
-        if (hospital.getValue() == null) {
-
-            showError(
-                    "Please select a hospital."
-            );
-
-            return;
-        }
-
-        if (date.getValue() == null) {
-
-            showError(
-                    "Please select an appointment date."
-            );
-
-            return;
-        }
-
-        if (date.getValue().isBefore(
-                LocalDate.now())) {
-
-            showError(
-                    "Appointment date cannot be in the past."
-            );
-
-            return;
-        }
-
-        if (time.getValue() == null) {
-
-            showError(
-                    "Please select an appointment time."
-            );
-
-            return;
-        }
-
-        // =====================================================
-        // SAVE TO FIREBASE
-        // =====================================================
-
-        try {
-
-            appointmentController.createAppointment(
-
-                    doctor.getValue(),
-
-                    specialty.getValue(),
-
-                    hospital.getValue(),
-
-                    date.getValue().toString(),
-
-                    time.getValue(),
-
-                    reason.getText()
-            );
-
-            showSuccess();
-
-        } catch (Exception e) {
-
-            System.err.println(
-                    "Unable to create appointment: "
-                            + e.getMessage()
-            );
-
-            showError(
-                    "Unable to book the appointment.\n\n"
-                            + e.getMessage()
             );
         }
     }
@@ -670,7 +1175,7 @@ public class BookAppointment {
 
         Label description =
                 new Label(
-                        "Your appointment has been successfully saved."
+                        "Your appointment request has been successfully saved."
                 );
 
         description.setStyle(
@@ -680,15 +1185,20 @@ public class BookAppointment {
 
         Button appointments =
                 PatientUI.button(
+
                         "View Appointments",
+
                         this::showAppointments
                 );
 
         content.getChildren().addAll(
 
                 icon,
+
                 title,
+
                 description,
+
                 appointments
         );
 
@@ -719,12 +1229,11 @@ public class BookAppointment {
     }
 
     // =========================================================
-    // ERROR MESSAGE
+    // ERROR SCREEN
     // =========================================================
 
     private void showError(
-            String message
-    ) {
+            String message) {
 
         VBox content =
                 new VBox(18);
@@ -760,9 +1269,13 @@ public class BookAppointment {
         Label description =
                 new Label(message);
 
-        description.setWrapText(true);
+        description.setWrapText(
+                true
+        );
 
-        description.setMaxWidth(600);
+        description.setMaxWidth(
+                600
+        );
 
         description.setStyle(
                 "-fx-font-size: 15px;" +
@@ -771,15 +1284,20 @@ public class BookAppointment {
 
         Button back =
                 PatientUI.secondaryButton(
+
                         "Back",
+
                         this::showBookAppointment
                 );
 
         content.getChildren().addAll(
 
                 icon,
+
                 title,
+
                 description,
+
                 back
         );
 
@@ -810,12 +1328,11 @@ public class BookAppointment {
     }
 
     // =========================================================
-    // FORM FIELD
+    // TEXT FIELD
     // =========================================================
 
     private TextField field(
-            String prompt
-    ) {
+            String prompt) {
 
         TextField field =
                 new TextField();
@@ -824,7 +1341,9 @@ public class BookAppointment {
                 prompt
         );
 
-        field.setPrefHeight(43);
+        field.setPrefHeight(
+                43
+        );
 
         field.setStyle(
                 "-fx-background-color: #f8fafc;" +
@@ -841,8 +1360,7 @@ public class BookAppointment {
     // =========================================================
 
     private Label label(
-            String text
-    ) {
+            String text) {
 
         Label label =
                 new Label(text);
@@ -860,8 +1378,7 @@ public class BookAppointment {
     // =========================================================
 
     private VBox imageCard(
-            String path
-    ) {
+            String path) {
 
         VBox box =
                 new VBox();
@@ -894,14 +1411,14 @@ public class BookAppointment {
     private ImageView loadImage(
             String path,
             double width,
-            double height
-    ) {
+            double height) {
 
         ImageView view =
                 new ImageView();
 
         var resource =
-                getClass().getResource(path);
+                getClass()
+                        .getResource(path);
 
         if (resource == null) {
 
@@ -910,8 +1427,13 @@ public class BookAppointment {
                             + path
             );
 
-            view.setFitWidth(width);
-            view.setFitHeight(height);
+            view.setFitWidth(
+                    width
+            );
+
+            view.setFitHeight(
+                    height
+            );
 
             return view;
         }
@@ -921,12 +1443,21 @@ public class BookAppointment {
                         resource.toExternalForm()
                 );
 
-        view.setImage(image);
+        view.setImage(
+                image
+        );
 
-        view.setFitWidth(width);
-        view.setFitHeight(height);
+        view.setFitWidth(
+                width
+        );
 
-        view.setPreserveRatio(false);
+        view.setFitHeight(
+                height
+        );
+
+        view.setPreserveRatio(
+                false
+        );
 
         return view;
     }
@@ -938,6 +1469,7 @@ public class BookAppointment {
     private void showAppointments() {
 
         stage.setScene(
+
                 new Appointments(stage)
                         .getScene()
         );
@@ -948,6 +1480,7 @@ public class BookAppointment {
     private void showBookAppointment() {
 
         stage.setScene(
+
                 new BookAppointment(stage)
                         .getScene()
         );

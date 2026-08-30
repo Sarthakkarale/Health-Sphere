@@ -23,7 +23,6 @@ import javafx.stage.Stage;
 public class Appointments {
 
     private final Stage stage;
-
     private final AppointmentController appointmentController;
 
     public Appointments(Stage stage) {
@@ -39,22 +38,6 @@ public class Appointments {
     // =========================================================
 
     public Scene getScene() {
-
-        /*
-         * IMPORTANT:
-         *
-         * This class creates ONLY the page content.
-         *
-         * PatientUI creates:
-         *
-         * - Sidebar
-         * - Header
-         * - ONE ScrollPane
-         * - Full available width
-         * - Full available height
-         *
-         * DO NOT create another ScrollPane here.
-         */
 
         VBox content =
                 new VBox(20);
@@ -72,7 +55,7 @@ public class Appointments {
         );
 
         // =====================================================
-        // APPOINTMENT IMAGES
+        // IMAGES
         // =====================================================
 
         HBox imageRow =
@@ -90,85 +73,135 @@ public class Appointments {
                 Double.MAX_VALUE
         );
 
-        ImageView image1 =
+        imageRow.getChildren().addAll(
+
                 createImage(
                         "/images/appointments/appointment1.jpg",
                         250,
                         165
-                );
+                ),
 
-        ImageView image2 =
                 createImage(
                         "/images/appointments/appointment2.jpg",
                         250,
                         165
-                );
+                ),
 
-        ImageView image3 =
                 createImage(
                         "/images/appointments/appointment3.jpg",
                         250,
                         165
-                );
+                ),
 
-        ImageView image4 =
                 createImage(
                         "/images/appointments/appointment4.jpg",
                         250,
                         165
-                );
-
-        imageRow.getChildren().addAll(
-                image1,
-                image2,
-                image3,
-                image4
+                )
         );
 
         // =====================================================
-        // BOOK APPOINTMENT
+        // BOOKING OPTIONS
         // =====================================================
 
-        VBox booking =
+        HBox bookingOptions =
+                new HBox(20);
+
+        bookingOptions.setFillHeight(true);
+
+        bookingOptions.setMinWidth(0);
+
+        bookingOptions.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        VBox hospitalBooking =
                 PatientUI.card(
-                        "Book a New Appointment"
+                        "Hospital Appointment"
                 );
 
-        booking.setMinWidth(0);
+        hospitalBooking.setMinWidth(0);
 
-        booking.setMaxWidth(
+        hospitalBooking.setMaxWidth(
                 Double.MAX_VALUE
         );
 
-        Label bookingText =
+        HBox.setHgrow(
+                hospitalBooking,
+                Priority.ALWAYS
+        );
+
+        Label hospitalText =
                 new Label(
-                        "Need to see a doctor? Find an available specialist and book your appointment."
+                        "Book an appointment directly with a hospital. " +
+                        "No doctor selection is required."
                 );
 
-        bookingText.setWrapText(true);
+        hospitalText.setWrapText(true);
 
-        bookingText.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        bookingText.setStyle(
+        hospitalText.setStyle(
                 "-fx-text-fill: #64748b;" +
                 "-fx-font-size: 14px;"
         );
 
-        Button book =
+        Button hospitalButton =
                 PatientUI.button(
-                        "Book Appointment",
-                        this::showBookAppointment
+                        "Book Hospital Appointment",
+                        this::showHospitalBooking
                 );
 
-        booking.getChildren().addAll(
-                bookingText,
-                book
+        hospitalBooking.getChildren().addAll(
+                hospitalText,
+                hospitalButton
+        );
+
+        VBox doctorBooking =
+                PatientUI.card(
+                        "Doctor Appointment"
+                );
+
+        doctorBooking.setMinWidth(0);
+
+        doctorBooking.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        HBox.setHgrow(
+                doctorBooking,
+                Priority.ALWAYS
+        );
+
+        Label doctorText =
+                new Label(
+                        "Book an appointment directly with a doctor. " +
+                        "No hospital selection is required."
+                );
+
+        doctorText.setWrapText(true);
+
+        doctorText.setStyle(
+                "-fx-text-fill: #64748b;" +
+                "-fx-font-size: 14px;"
+        );
+
+        Button doctorButton =
+                PatientUI.button(
+                        "Book Doctor Appointment",
+                        this::showDoctorBooking
+                );
+
+        doctorBooking.getChildren().addAll(
+                doctorText,
+                doctorButton
+        );
+
+        bookingOptions.getChildren().addAll(
+                hospitalBooking,
+                doctorBooking
         );
 
         // =====================================================
-        // APPOINTMENT DATA
+        // LOAD APPOINTMENTS
         // =====================================================
 
         List<Appointment> appointments =
@@ -200,12 +233,12 @@ public class Appointments {
         }
 
         // =====================================================
-        // UPCOMING APPOINTMENT
+        // UPCOMING
         // =====================================================
 
         VBox upcoming =
                 PatientUI.card(
-                        "Upcoming Appointment"
+                        "Upcoming Appointments"
                 );
 
         upcoming.setMinWidth(0);
@@ -260,7 +293,7 @@ public class Appointments {
         }
 
         // =====================================================
-        // PREVIOUS APPOINTMENTS
+        // PREVIOUS
         // =====================================================
 
         VBox previous =
@@ -323,54 +356,27 @@ public class Appointments {
         // =====================================================
 
         content.getChildren().addAll(
-
                 imageRow,
-
-                booking,
-
+                bookingOptions,
                 upcoming,
-
                 previous
         );
 
-        /*
-         * =====================================================
-         * IMPORTANT
-         * =====================================================
-         *
-         * There is NO ScrollPane here.
-         *
-         * PatientUI.createScene() creates the ONLY ScrollPane.
-         *
-         * This fixes:
-         *
-         * - nested scrollbars
-         * - content being trapped inside another viewport
-         * - inconsistent screen sizing
-         * - scrolling only after manual maximize
-         */
-
         return PatientUI.createScene(
-
                 stage,
-
                 "Appointments",
-
                 "Appointments",
-
-                "Manage your upcoming and previous healthcare appointments.",
-
+                "Manage your hospital and doctor appointments.",
                 content
         );
     }
 
     // =========================================================
-    // GET UPCOMING APPOINTMENTS
+    // UPCOMING APPOINTMENTS
     // =========================================================
 
     private List<Appointment> getUpcomingAppointments(
-            List<Appointment> appointments
-    ) {
+            List<Appointment> appointments) {
 
         List<Appointment> result =
                 new ArrayList<>();
@@ -379,7 +385,6 @@ public class Appointments {
                 LocalDate.now();
 
         if (appointments == null) {
-
             return result;
         }
 
@@ -387,22 +392,18 @@ public class Appointments {
                 appointments) {
 
             if (appointment == null) {
-
                 continue;
             }
 
             LocalDate appointmentDate =
                     parseDate(
-                            appointment
-                                    .getAppointmentDate()
+                            appointment.getAppointmentDate()
                     );
 
             if (appointmentDate != null
                     && !appointmentDate.isBefore(today)) {
 
-                result.add(
-                        appointment
-                );
+                result.add(appointment);
             }
         }
 
@@ -423,12 +424,11 @@ public class Appointments {
     }
 
     // =========================================================
-    // GET PREVIOUS APPOINTMENTS
+    // PREVIOUS APPOINTMENTS
     // =========================================================
 
     private List<Appointment> getPreviousAppointments(
-            List<Appointment> appointments
-    ) {
+            List<Appointment> appointments) {
 
         List<Appointment> result =
                 new ArrayList<>();
@@ -437,7 +437,6 @@ public class Appointments {
                 LocalDate.now();
 
         if (appointments == null) {
-
             return result;
         }
 
@@ -445,22 +444,18 @@ public class Appointments {
                 appointments) {
 
             if (appointment == null) {
-
                 continue;
             }
 
             LocalDate appointmentDate =
                     parseDate(
-                            appointment
-                                    .getAppointmentDate()
+                            appointment.getAppointmentDate()
                     );
 
             if (appointmentDate != null
                     && appointmentDate.isBefore(today)) {
 
-                result.add(
-                        appointment
-                );
+                result.add(appointment);
             }
         }
 
@@ -481,38 +476,11 @@ public class Appointments {
     }
 
     // =========================================================
-    // PARSE DATE
-    // =========================================================
-
-    private LocalDate parseDate(
-            String date
-    ) {
-
-        if (date == null
-                || date.isBlank()) {
-
-            return null;
-        }
-
-        try {
-
-            return LocalDate.parse(
-                    date
-            );
-
-        } catch (Exception e) {
-
-            return null;
-        }
-    }
-
-    // =========================================================
-    // UPCOMING APPOINTMENT CARD
+    // APPOINTMENT CARD
     // =========================================================
 
     private HBox appointmentCard(
-            Appointment appointment
-    ) {
+            Appointment appointment) {
 
         HBox box =
                 new HBox(18);
@@ -538,20 +506,27 @@ public class Appointments {
                 "-fx-border-radius: 12;"
         );
 
-        // =====================================================
-        // IMAGE
-        // =====================================================
+        ImageView image;
 
-        ImageView image =
-                createImage(
-                        "/images/appointments/appointment1.jpg",
-                        165,
-                        110
-                );
+        if ("HOSPITAL".equalsIgnoreCase(
+                appointment.getBookingType())) {
 
-        // =====================================================
-        // INFORMATION
-        // =====================================================
+            image =
+                    createImage(
+                            "/images/appointments/appointment2.jpg",
+                            165,
+                            110
+                    );
+
+        } else {
+
+            image =
+                    createImage(
+                            "/images/appointments/appointment1.jpg",
+                            165,
+                            110
+                    );
+        }
 
         VBox information =
                 new VBox(7);
@@ -562,33 +537,76 @@ public class Appointments {
                 Double.MAX_VALUE
         );
 
-        Label doctor =
+        Label type =
                 new Label(
-                        safe(
-                                appointment.getDoctorName(),
-                                "Doctor"
+                        "HOSPITAL".equalsIgnoreCase(
+                                appointment.getBookingType()
                         )
+                                ? "Hospital Appointment"
+                                : "Doctor Appointment"
                 );
 
-        doctor.setWrapText(true);
+        type.setStyle(
+                "-fx-font-size: 12px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #2563eb;"
+        );
 
-        doctor.setStyle(
+        Label mainName;
+
+        if ("HOSPITAL".equalsIgnoreCase(
+                appointment.getBookingType())) {
+
+            mainName =
+                    new Label(
+                            safe(
+                                    appointment.getHospitalName(),
+                                    "Hospital"
+                            )
+                    );
+
+        } else {
+
+            mainName =
+                    new Label(
+                            safe(
+                                    appointment.getDoctorName(),
+                                    "Doctor"
+                            )
+                    );
+        }
+
+        mainName.setWrapText(true);
+
+        mainName.setStyle(
                 "-fx-font-size: 18px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #0f172a;"
         );
 
-        Label speciality =
-                new Label(
-                        safe(
-                                appointment.getSpecialty(),
-                                "Specialty"
-                        )
-                );
+        Label specialty =
+                new Label();
 
-        speciality.setWrapText(true);
+        if ("HOSPITAL".equalsIgnoreCase(
+                appointment.getBookingType())) {
 
-        speciality.setStyle(
+            specialty.setText(
+                    "Hospital booking"
+            );
+
+        } else {
+
+            specialty.setText(
+                    safe(
+                            appointment.getSpecialty(),
+                            "Specialty"
+                    )
+            );
+        }
+
+        specialty.setWrapText(true);
+
+        specialty.setStyle(
                 "-fx-text-fill: #2563eb;" +
                 "-fx-font-weight: bold;"
         );
@@ -598,31 +616,17 @@ public class Appointments {
                         formatDate(
                                 appointment.getAppointmentDate()
                         )
-                        + " • "
-                        + safe(
-                                appointment.getAppointmentTime(),
-                                "Time"
-                        )
+                                + " • "
+                                + safe(
+                                        appointment.getAppointmentTime(),
+                                        "Time"
+                                )
                 );
 
         date.setWrapText(true);
 
         date.setStyle(
                 "-fx-text-fill: #475569;"
-        );
-
-        Label hospital =
-                new Label(
-                        safe(
-                                appointment.getHospital(),
-                                "Hospital"
-                        )
-                );
-
-        hospital.setWrapText(true);
-
-        hospital.setStyle(
-                "-fx-text-fill: #64748b;"
         );
 
         Label status =
@@ -633,23 +637,16 @@ public class Appointments {
                         )
                 );
 
-        status.setWrapText(true);
-
         status.setStyle(
                 "-fx-text-fill: #16a34a;" +
                 "-fx-font-weight: bold;"
         );
 
         information.getChildren().addAll(
-
-                doctor,
-
-                speciality,
-
+                type,
+                mainName,
+                specialty,
                 date,
-
-                hospital,
-
                 status
         );
 
@@ -657,10 +654,6 @@ public class Appointments {
                 information,
                 Priority.ALWAYS
         );
-
-        // =====================================================
-        // VIEW BUTTON
-        // =====================================================
 
         Button view =
                 PatientUI.button(
@@ -672,11 +665,8 @@ public class Appointments {
                 );
 
         box.getChildren().addAll(
-
                 image,
-
                 information,
-
                 view
         );
 
@@ -688,8 +678,7 @@ public class Appointments {
     // =========================================================
 
     private HBox previousAppointment(
-            Appointment appointment
-    ) {
+            Appointment appointment) {
 
         HBox box =
                 new HBox(15);
@@ -731,33 +720,47 @@ public class Appointments {
                 Double.MAX_VALUE
         );
 
-        Label doctor =
-                new Label(
-                        safe(
-                                appointment.getDoctorName(),
-                                "Doctor"
-                        )
-                );
+        String displayName;
 
-        doctor.setWrapText(true);
+        if ("HOSPITAL".equalsIgnoreCase(
+                appointment.getBookingType())) {
 
-        doctor.setStyle(
+            displayName =
+                    safe(
+                            appointment.getHospitalName(),
+                            "Hospital"
+                    );
+
+        } else {
+
+            displayName =
+                    safe(
+                            appointment.getDoctorName(),
+                            "Doctor"
+                    );
+        }
+
+        Label name =
+                new Label(displayName);
+
+        name.setWrapText(true);
+
+        name.setStyle(
                 "-fx-font-size: 16px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #0f172a;"
         );
 
-        Label speciality =
+        Label type =
                 new Label(
-                        safe(
-                                appointment.getSpecialty(),
-                                "Specialty"
+                        "HOSPITAL".equalsIgnoreCase(
+                                appointment.getBookingType()
                         )
+                                ? "Hospital Appointment"
+                                : "Doctor Appointment"
                 );
 
-        speciality.setWrapText(true);
-
-        speciality.setStyle(
+        type.setStyle(
                 "-fx-text-fill: #2563eb;"
         );
 
@@ -768,18 +771,13 @@ public class Appointments {
                         )
                 );
 
-        date.setWrapText(true);
-
         date.setStyle(
                 "-fx-text-fill: #64748b;"
         );
 
         information.getChildren().addAll(
-
-                doctor,
-
-                speciality,
-
+                name,
+                type,
                 date
         );
 
@@ -796,19 +794,14 @@ public class Appointments {
                         )
                 );
 
-        status.setWrapText(true);
-
         status.setStyle(
                 "-fx-text-fill: #16a34a;" +
                 "-fx-font-weight: bold;"
         );
 
         box.getChildren().addAll(
-
                 image,
-
                 information,
-
                 status
         );
 
@@ -816,12 +809,11 @@ public class Appointments {
     }
 
     // =========================================================
-    // APPOINTMENT DETAILS
+    // DETAILS
     // =========================================================
 
     private void showAppointmentDetails(
-            Appointment appointment
-    ) {
+            Appointment appointment) {
 
         VBox content =
                 new VBox(15);
@@ -845,57 +837,78 @@ public class Appointments {
                         "Appointment Details"
                 );
 
-        title.setWrapText(true);
-
         title.setStyle(
                 "-fx-font-size: 26px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #0f172a;"
         );
 
-        Label doctor =
-                detailLabel(
-                        "Doctor",
-                        appointment.getDoctorName()
-                );
+        String bookingType =
+                "HOSPITAL".equalsIgnoreCase(
+                        appointment.getBookingType()
+                )
+                        ? "Hospital Appointment"
+                        : "Doctor Appointment";
 
-        Label specialty =
+        content.getChildren().add(
                 detailLabel(
-                        "Specialty",
-                        appointment.getSpecialty()
-                );
+                        "Type",
+                        bookingType
+                )
+        );
 
-        Label hospital =
-                detailLabel(
-                        "Hospital",
-                        appointment.getHospital()
-                );
+        if ("HOSPITAL".equalsIgnoreCase(
+                appointment.getBookingType())) {
 
-        Label date =
+            content.getChildren().add(
+                    detailLabel(
+                            "Hospital",
+                            appointment.getHospitalName()
+                    )
+            );
+
+        } else {
+
+            content.getChildren().addAll(
+
+                    detailLabel(
+                            "Doctor",
+                            appointment.getDoctorName()
+                    ),
+
+                    detailLabel(
+                            "Specialty",
+                            appointment.getSpecialty()
+                    )
+            );
+        }
+
+        content.getChildren().addAll(
+
+                title,
+
                 detailLabel(
                         "Date",
                         formatDate(
                                 appointment.getAppointmentDate()
                         )
-                );
+                ),
 
-        Label time =
                 detailLabel(
                         "Time",
                         appointment.getAppointmentTime()
-                );
+                ),
 
-        Label reason =
                 detailLabel(
                         "Reason",
                         appointment.getReason()
-                );
+                ),
 
-        Label status =
                 detailLabel(
                         "Status",
                         appointment.getStatus()
-                );
+                )
+        );
 
         Button back =
                 PatientUI.secondaryButton(
@@ -903,60 +916,23 @@ public class Appointments {
                         this::showAppointments
                 );
 
-        content.getChildren().addAll(
-
-                title,
-
-                doctor,
-
-                specialty,
-
-                hospital,
-
-                date,
-
-                time,
-
-                reason,
-
-                status,
-
+        content.getChildren().add(
                 back
         );
 
-        /*
-         * IMPORTANT:
-         *
-         * No ScrollPane here.
-         *
-         * PatientUI will provide the single
-         * application-wide ScrollPane.
-         */
-
         stage.setScene(
-
                 PatientUI.createScene(
-
                         stage,
-
                         "Appointment Details",
-
                         "Appointment Details",
-
                         "View your appointment information.",
-
                         content
                 )
         );
 
         stage.show();
 
-        /*
-         * Keep the Patient module maximized.
-         */
-
         if (!stage.isMaximized()) {
-
             stage.setMaximized(true);
         }
     }
@@ -967,8 +943,7 @@ public class Appointments {
 
     private Label detailLabel(
             String title,
-            String value
-    ) {
+            String value) {
 
         Label label =
                 new Label(
@@ -995,12 +970,11 @@ public class Appointments {
     }
 
     // =========================================================
-    // EMPTY MESSAGE
+    // EMPTY
     // =========================================================
 
     private Label emptyLabel(
-            String message
-    ) {
+            String message) {
 
         Label label =
                 new Label(message);
@@ -1016,12 +990,11 @@ public class Appointments {
     }
 
     // =========================================================
-    // ERROR MESSAGE
+    // ERROR
     // =========================================================
 
     private Label errorLabel(
-            String message
-    ) {
+            String message) {
 
         Label label =
                 new Label(message);
@@ -1041,16 +1014,15 @@ public class Appointments {
     }
 
     // =========================================================
-    // SAFE STRING
+    // SAFE
     // =========================================================
 
     private String safe(
             String value,
-            String fallback
-    ) {
+            String fallback) {
 
-        if (value == null
-                || value.isBlank()) {
+        if (value == null ||
+                value.isBlank()) {
 
             return fallback;
         }
@@ -1059,15 +1031,37 @@ public class Appointments {
     }
 
     // =========================================================
-    // FORMAT DATE
+    // DATE PARSER
+    // =========================================================
+
+    private LocalDate parseDate(
+            String date) {
+
+        if (date == null ||
+                date.isBlank()) {
+
+            return null;
+        }
+
+        try {
+
+            return LocalDate.parse(date);
+
+        } catch (Exception e) {
+
+            return null;
+        }
+    }
+
+    // =========================================================
+    // DATE FORMAT
     // =========================================================
 
     private String formatDate(
-            String date
-    ) {
+            String date) {
 
-        if (date == null
-                || date.isBlank()) {
+        if (date == null ||
+                date.isBlank()) {
 
             return "Date not available";
         }
@@ -1085,7 +1079,7 @@ public class Appointments {
             month =
                     month.substring(0, 1)
                             + month.substring(1)
-                                    .toLowerCase();
+                            .toLowerCase();
 
             return localDate.getDayOfMonth()
                     + " "
@@ -1100,14 +1094,13 @@ public class Appointments {
     }
 
     // =========================================================
-    // IMAGE LOADER
+    // IMAGE
     // =========================================================
 
     private ImageView createImage(
             String path,
             double width,
-            double height
-    ) {
+            double height) {
 
         ImageView view =
                 new ImageView();
@@ -1123,7 +1116,6 @@ public class Appointments {
             );
 
             view.setFitWidth(width);
-
             view.setFitHeight(height);
 
             return view;
@@ -1146,23 +1138,44 @@ public class Appointments {
     }
 
     // =========================================================
-    // NAVIGATION
+    // HOSPITAL BOOKING
     // =========================================================
 
-    private void showBookAppointment() {
+    private void showHospitalBooking() {
 
         stage.setScene(
-                new BookAppointment(stage)
+                new HospitalBooking(stage)
                         .getScene()
         );
 
         stage.show();
 
         if (!stage.isMaximized()) {
-
             stage.setMaximized(true);
         }
     }
+
+    // =========================================================
+    // DOCTOR BOOKING
+    // =========================================================
+
+    private void showDoctorBooking() {
+
+        stage.setScene(
+                new DoctorBooking(stage)
+                        .getScene()
+        );
+
+        stage.show();
+
+        if (!stage.isMaximized()) {
+            stage.setMaximized(true);
+        }
+    }
+
+    // =========================================================
+    // BACK
+    // =========================================================
 
     private void showAppointments() {
 
@@ -1174,7 +1187,6 @@ public class Appointments {
         stage.show();
 
         if (!stage.isMaximized()) {
-
             stage.setMaximized(true);
         }
     }
