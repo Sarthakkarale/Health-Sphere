@@ -58,8 +58,8 @@ public class View extends Application {
         );
 
         // Attach Stylesheet safely
-        String cssPath = getClass().getResource("/css/dashboard.css") != null
-                ? getClass().getResource("/css/dashboard.css").toExternalForm()
+        String cssPath = getClass().getResource("/css/view.css") != null
+                ? getClass().getResource("/css/view.css").toExternalForm()
                 : null;
 
         if (cssPath != null) {

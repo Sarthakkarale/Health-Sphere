@@ -1,131 +1,611 @@
-/* Root Container */
-.root {
-    -fx-background-color: #FAFAFC;
-    -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+/* ============================================================
+   HEALTH-SPHERE
+   DOCTOR DASHBOARD
+   ============================================================ */
+
+
+/* ============================================================
+   ROOT
+   ============================================================ */
+
+.root-pane {
+    -fx-background-color: #F8FAFC;
+    -fx-font-family: "Segoe UI", Helvetica, Arial, sans-serif;
 }
 
-/* Header Bar */
-.header-bar {
-    -fx-background-color: #FFFFFF;
-    -fx-padding: 16px 32px;
-    -fx-border-color: #E2E8F0;
-    -fx-border-width: 0 0 1 0;
-    -fx-alignment: center-left;
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+
+.sidebar {
+    -fx-background-color: #0F172A;
+    -fx-border-color: #1E293B;
+    -fx-border-width: 0 1px 0 0;
 }
 
-.brand-title {
-    -fx-font-size: 20px;
+.logo-name {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 16px;
     -fx-font-weight: bold;
-    -fx-fill: #0256D0;
 }
 
-/* Primary Button (Sign Up) */
-.btn-primary {
-    -fx-background-color: #0256D0;
+.logo-subtext {
+    -fx-text-fill: #94A3B8;
+    -fx-font-size: 12px;
+}
+
+
+/* ============================================================
+   SIDEBAR NAVIGATION
+   ============================================================ */
+
+.nav-tab {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-cursor: hand;
+}
+
+.nav-tab:hover {
+    -fx-background-color: #1E293B;
+}
+
+.nav-tab-active {
+    -fx-background-color: #2563EB;
+    -fx-background-radius: 8px;
+}
+
+.nav-tab-active:hover {
+    -fx-background-color: #1D4ED8;
+}
+
+.nav-text {
+    -fx-text-fill: #CBD5E1;
+    -fx-font-size: 13px;
+}
+
+.nav-tab-active .nav-text {
     -fx-text-fill: #FFFFFF;
     -fx-font-weight: bold;
-    -fx-font-size: 15px;
+}
+
+
+/* ============================================================
+   SIDEBAR PROFILE
+   ============================================================ */
+
+.sidebar-profile {
+    -fx-background-color: #1E293B;
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+    -fx-cursor: hand;
+}
+
+.sidebar-profile:hover {
+    -fx-background-color: #273449;
+}
+
+.sidebar-profile-role {
+    -fx-text-fill: #94A3B8;
+    -fx-font-size: 11px;
+}
+
+.sidebar-profile-name {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+
+.content-area {
+    -fx-background-color: #F8FAFC;
+}
+
+
+/* ============================================================
+   SCROLL PANE
+   ============================================================ */
+
+.content-scrollpane {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: transparent;
+}
+
+.content-scrollpane > .viewport {
+    -fx-background-color: #F8FAFC;
+}
+
+.content-scrollpane .scroll-bar:vertical {
+    -fx-background-color: transparent;
+}
+
+.content-scrollpane .scroll-bar:vertical .track {
+    -fx-background-color: transparent;
+}
+
+.content-scrollpane .scroll-bar:vertical .thumb {
+    -fx-background-color: #CBD5E1;
+    -fx-background-radius: 5px;
+}
+
+.content-scrollpane .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #94A3B8;
+}
+
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+
+.breadcrumb {
+    -fx-text-fill: #0F172A;
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+}
+
+.search-bar {
+    -fx-background-color: #FFFFFF;
     -fx-background-radius: 8px;
-    -fx-padding: 12px 32px;
+    -fx-border-color: #CBD5E1;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+}
+
+.search-bar:focused-within {
+    -fx-border-color: #2563EB;
+}
+
+.search-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: #334155;
+    -fx-prompt-text-fill: #94A3B8;
+    -fx-font-size: 13px;
+}
+
+.search-field:focused {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+
+/* ============================================================
+   WELCOME BANNER
+   ============================================================ */
+
+.welcome-banner {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 12px;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-effect: dropshadow(
+        three-pass-box,
+        rgba(15, 23, 42, 0.06),
+        12,
+        0,
+        0,
+        3
+    );
+}
+
+.welcome-greeting {
+    -fx-text-fill: #0F172A;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+.welcome-summary {
+    -fx-text-fill: #64748B;
+    -fx-font-size: 13px;
+    -fx-line-spacing: 3px;
+}
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.btn-primary {
+    -fx-background-color: #2563EB;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-padding: 10px 22px;
     -fx-cursor: hand;
 }
 
 .btn-primary:hover {
-    -fx-background-color: #0143A3;
+    -fx-background-color: #1D4ED8;
 }
 
-/* Teal / Success Button (Register) */
-.btn-teal {
-    -fx-background-color: #00695C;
-    -fx-text-fill: #FFFFFF;
-    -fx-font-weight: bold;
-    -fx-font-size: 15px;
+.btn-primary:pressed {
+    -fx-background-color: #1E40AF;
+}
+
+
+.btn-secondary {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #334155;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
     -fx-background-radius: 8px;
-    -fx-padding: 12px 32px;
+    -fx-border-color: #CBD5E1;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-padding: 10px 18px;
     -fx-cursor: hand;
 }
 
-.btn-teal:hover {
-    -fx-background-color: #004D40;
+.btn-secondary:hover {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #94A3B8;
 }
 
-/* Icon Buttons */
-.icon-btn {
+
+/* ============================================================
+   STAT CARDS
+   ============================================================ */
+
+.stat-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 10px;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+    -fx-effect: dropshadow(
+        three-pass-box,
+        rgba(15, 23, 42, 0.04),
+        8,
+        0,
+        0,
+        2
+    );
+}
+
+.stat-card:hover {
+    -fx-border-color: #CBD5E1;
+}
+
+.stat-title {
+    -fx-text-fill: #64748B;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.stat-value {
+    -fx-text-fill: #0F172A;
+    -fx-font-size: 25px;
+    -fx-font-weight: bold;
+}
+
+.stat-detail {
+    -fx-text-fill: #64748B;
+    -fx-font-size: 11px;
+}
+
+
+/* ============================================================
+   PROGRESS BAR
+   ============================================================ */
+
+.stat-progress {
+    -fx-pref-height: 6px;
+    -fx-background-radius: 5px;
+}
+
+.stat-progress > .track {
+    -fx-background-color: #E2E8F0;
+    -fx-background-radius: 5px;
+}
+
+.stat-progress > .bar {
+    -fx-background-color: #2563EB;
+    -fx-background-radius: 5px;
+}
+
+
+/* ============================================================
+   APPOINTMENTS CARD
+   ============================================================ */
+
+.app-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 10px;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+    -fx-effect: dropshadow(
+        three-pass-box,
+        rgba(15, 23, 42, 0.04),
+        8,
+        0,
+        0,
+        2
+    );
+}
+
+.app-card-title {
+    -fx-text-fill: #0F172A;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.app-card-link {
+    -fx-text-fill: #2563EB;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-cursor: hand;
+}
+
+.app-card-link:hover {
+    -fx-text-fill: #1D4ED8;
+}
+
+
+/* ============================================================
+   APPOINTMENT ENTRIES
+   ============================================================ */
+
+.appt-entry {
     -fx-background-color: transparent;
-    -fx-padding: 6px;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
     -fx-cursor: hand;
 }
 
-/* Profile Avatar */
-.avatar-circle {
-    -fx-background-color: #CBD5E1;
+.appt-entry:hover {
+    -fx-background-color: #F8FAFC;
+}
+
+.appt-entry-highlight {
+    -fx-background-color: #EFF6FF;
+    -fx-border-color: #DBEAFE;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+}
+
+.appt-entry-highlight:hover {
+    -fx-background-color: #DBEAFE;
+}
+
+.appt-time {
+    -fx-text-fill: #334155;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+}
+
+.appt-name {
+    -fx-text-fill: #0F172A;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+}
+
+.appt-purpose {
+    -fx-text-fill: #64748B;
+    -fx-font-size: 11px;
+}
+
+
+/* ============================================================
+   STATUS PILLS
+   ============================================================ */
+
+.status-pill {
+    -fx-background-radius: 20px;
+    -fx-border-radius: 20px;
+}
+
+.pill-completed {
+    -fx-background-color: #ECFDF5;
+}
+
+.pill-inprogress {
+    -fx-background-color: #EFF6FF;
+}
+
+.pill-info {
+    -fx-background-color: #F1F5F9;
+}
+
+
+/* ============================================================
+   AI INSIGHTS CARD
+   ============================================================ */
+
+.ai-card {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 10px;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+    -fx-effect: dropshadow(
+        three-pass-box,
+        rgba(15, 23, 42, 0.04),
+        8,
+        0,
+        0,
+        2
+    );
+}
+
+.ai-card-title {
+    -fx-text-fill: #0F172A;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.ai-entry {
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+}
+
+.ai-entry-alert {
+    -fx-background-color: #FFF7ED;
+    -fx-border-color: #FED7AA;
+    -fx-border-width: 1px;
+}
+
+.ai-entry-info {
+    -fx-background-color: #EFF6FF;
+    -fx-border-color: #BFDBFE;
+    -fx-border-width: 1px;
+}
+
+.ai-entry-label {
+    -fx-text-fill: #334155;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.ai-entry-desc {
+    -fx-text-fill: #64748B;
+    -fx-font-size: 11px;
+    -fx-line-spacing: 2px;
+}
+
+.ai-entry-link {
+    -fx-text-fill: #2563EB;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.ai-entry-link:hover {
+    -fx-text-fill: #1D4ED8;
+}
+
+
+/* ============================================================
+   RECENT PATIENT ACTIVITY
+   ============================================================ */
+
+.activity-container {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 10px;
+    -fx-border-color: #E2E8F0;
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+    -fx-effect: dropshadow(
+        three-pass-box,
+        rgba(15, 23, 42, 0.04),
+        8,
+        0,
+        0,
+        2
+    );
+}
+
+.activity-title {
+    -fx-text-fill: #0F172A;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.activity-link {
+    -fx-text-fill: #2563EB;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-cursor: hand;
+}
+
+.activity-link:hover {
+    -fx-text-fill: #1D4ED8;
+}
+
+
+/* ============================================================
+   TABLE HEADER
+   ============================================================ */
+
+.table-header {
+    -fx-background-color: #F8FAFC;
+    -fx-background-radius: 6px;
+}
+
+.table-col-header {
+    -fx-text-fill: #64748B;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+
+
+/* ============================================================
+   TABLE ROW
+   ============================================================ */
+
+.table-row {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 8px;
+    -fx-border-color: #F1F5F9;
+    -fx-border-width: 0 0 1px 0;
+    -fx-cursor: hand;
+}
+
+.table-row:hover {
+    -fx-background-color: #F8FAFC;
+}
+
+.table-avatar {
+    -fx-background-color: #E0F2FE;
+    -fx-text-fill: #0369A1;
     -fx-background-radius: 50%;
     -fx-min-width: 32px;
     -fx-min-height: 32px;
+    -fx-max-width: 32px;
+    -fx-max-height: 32px;
     -fx-alignment: center;
-}
-
-/* Hero Typography */
-.hero-title-dark {
-    -fx-font-size: 42px;
-    -fx-font-weight: 800;
-    -fx-fill: #0F172A;
-}
-
-.hero-title-blue {
-    -fx-font-size: 42px;
-    -fx-font-weight: 800;
-    -fx-fill: #0256D0;
-}
-
-.hero-description {
-    -fx-font-size: 15px;
-    -fx-text-fill: #64748B;
-}
-
-/* Floating Card Component */
-.floating-card {
-    -fx-background-color: rgba(255, 255, 255, 0.92);
-    -fx-background-radius: 12px;
-    -fx-padding: 16px;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.12), 16, 0, 0, 8);
-    -fx-border-color: rgba(255, 255, 255, 0.6);
-    -fx-border-radius: 12px;
-}
-
-.floating-card-title {
     -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-fill: #1E293B;
 }
 
-/* Footer Styles */
-.footer-bar {
-    -fx-background-color: #F8FAFC;
-    -fx-padding: 16px 32px;
-    -fx-border-color: #E2E8F0;
-    -fx-border-width: 1 0 0 0;
-}
-
-.footer-brand {
-    -fx-font-size: 13px;
-    -fx-font-weight: bold;
-    -fx-fill: #0F172A;
-}
-
-.footer-text {
-    -fx-font-size: 12px;
-    -fx-text-fill: #64748B;
-}
-
-.footer-link {
-    -fx-font-size: 12px;
-    -fx-text-fill: #475569;
-    -fx-background-color: transparent;
-    -fx-padding: 0 4px;
-    -fx-cursor: hand;
-}
-
-.footer-link:hover {
+.table-patient-name {
     -fx-text-fill: #0F172A;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+}
+
+.table-action {
+    -fx-text-fill: #475569;
+    -fx-font-size: 12px;
+}
+
+.table-time {
+    -fx-text-fill: #94A3B8;
+    -fx-font-size: 11px;
+}
+
+
+/* ============================================================
+   FOCUS / DISABLED STATES
+   ============================================================ */
+
+.button:focused {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.text-field:focused {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.button:disabled {
+    -fx-opacity: 0.6;
+}
+
+
+/* ============================================================
+   GENERAL LABEL NORMALIZATION
+   ============================================================ */
+
+.label {
+    -fx-font-family: "Segoe UI", Helvetica, Arial, sans-serif;
 }
