@@ -10,23 +10,9 @@ import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Separator;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
@@ -38,24 +24,6 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Department Management View
- *
- * Architecture:
- *
- * JavaFX View
- *      ↓
- * DepartmentController
- *      ↓
- * DepartmentDAO
- *      ↓
- * Firebase Firestore
- *
- * This view does not directly access Firestore.
- *
- * Department data is stored in the HospitalDepartment model.
- * The inner Department class is only a presentation/UI model.
- */
 public class DepartmentManagementView {
 
     // =========================================================
@@ -72,13 +40,11 @@ public class DepartmentManagementView {
     private static final String CARD_BG = "#FFFFFF";
     private static final String BORDER = "#E2E8F0";
 
-    // Dark Sidebar
     private static final String SIDEBAR_BG = "#0F172A";
     private static final String SIDEBAR_HOVER = "#1E293B";
     private static final String SIDEBAR_TEXT_MUTED = "#94A3B8";
     private static final String SIDEBAR_BORDER = "#1E293B";
 
-    // Status colors
     private static final String SUCCESS_GREEN = "#059669";
     private static final String SUCCESS_LIGHT = "#ECFDF5";
 
@@ -95,27 +61,12 @@ public class DepartmentManagementView {
     // CONTROLLER
     // =========================================================
 
-    /*
-     * IMPORTANT:
-     *
-     * This is intentionally NOT final.
-     *
-     * We initialize the controller inside createScene()
-     * after the user session has already been established.
-     *
-     * This prevents premature Firebase/session access.
-     */
-    private DepartmentController departmentController;
+    private final DepartmentController departmentController;
 
     // =========================================================
-    // UI APPOINTMENT MODEL
+    // UI PRESENTATION MODEL
     // =========================================================
 
-    /**
-     * Appointment is currently a UI-only presentation object.
-     *
-     * Appointment persistence belongs to the Appointment module.
-     */
     public static class Appointment {
 
         private String id;
@@ -159,22 +110,11 @@ public class DepartmentManagementView {
         }
     }
 
-    // =========================================================
-    // UI DEPARTMENT MODEL
-    // =========================================================
-
-    /**
-     * UI presentation model.
+    /*
+     * UI-only presentation model.
      *
      * HospitalDepartment is the actual Firestore model.
-     *
-     * This class contains additional UI-only information:
-     *
-     * - doctor count
-     * - patient count
-     * - theme color
-     * - icon
-     * - embedded appointments
+     * Additional UI information remains here.
      */
     public static class Department {
 
@@ -276,24 +216,12 @@ public class DepartmentManagementView {
             return themeColor;
         }
 
-        public void setThemeColor(String themeColor) {
-            this.themeColor = themeColor;
-        }
-
         public String getThemeBgColor() {
             return themeBgColor;
         }
 
-        public void setThemeBgColor(String themeBgColor) {
-            this.themeBgColor = themeBgColor;
-        }
-
         public String getIcon() {
             return icon;
-        }
-
-        public void setIcon(String icon) {
-            this.icon = icon;
         }
 
         public boolean isIs247() {
@@ -344,14 +272,8 @@ public class DepartmentManagementView {
 
     public DepartmentManagementView() {
 
-        /*
-         * Do not initialize DepartmentController here.
-         *
-         * SessionManager may not contain the current hospital
-         * before login has completed.
-         *
-         * Controller is created inside createScene().
-         */
+        departmentController =
+                new DepartmentController();
     }
 
     // =========================================================
@@ -360,36 +282,12 @@ public class DepartmentManagementView {
 
     public Scene createScene(Stage stage) {
 
-        // -----------------------------------------------------
-        // SESSION CHECK
-        // -----------------------------------------------------
-
         if (!SessionManager.isLoggedIn()) {
 
-            showAlert(
-                    "Session Expired",
-                    "No active hospital session was found. Please log in again."
-            );
-
-            return new Scene(
-                    new StackPane(
-                            new Label("Session expired. Please log in again.")
-                    ),
-                    1000,
-                    700
+            throw new IllegalStateException(
+                    "No active hospital session."
             );
         }
-
-        // -----------------------------------------------------
-        // INITIALIZE CONTROLLER
-        // -----------------------------------------------------
-
-        departmentController =
-                new DepartmentController();
-
-        // -----------------------------------------------------
-        // LOAD FIRESTORE DATA
-        // -----------------------------------------------------
 
         try {
 
@@ -411,10 +309,6 @@ public class DepartmentManagementView {
             );
         }
 
-        // -----------------------------------------------------
-        // ROOT
-        // -----------------------------------------------------
-
         BorderPane root =
                 new BorderPane();
 
@@ -424,25 +318,13 @@ public class DepartmentManagementView {
                         + ";"
         );
 
-        // -----------------------------------------------------
-        // SIDEBAR
-        // -----------------------------------------------------
-
         root.setLeft(
                 createSidebar(stage)
         );
 
-        // -----------------------------------------------------
-        // TOP BAR
-        // -----------------------------------------------------
-
         root.setTop(
                 createTopBar()
         );
-
-        // -----------------------------------------------------
-        // MAIN CONTENT
-        // -----------------------------------------------------
 
         ScrollPane scrollPane =
                 new ScrollPane(
@@ -459,31 +341,17 @@ public class DepartmentManagementView {
 
         root.setCenter(scrollPane);
 
-        // -----------------------------------------------------
-        // INITIAL UI REFRESH
-        // -----------------------------------------------------
-
         applyFiltersAndRefreshUI();
-
-        double width =
-                stage.getWidth() > 0
-                        ? stage.getWidth()
-                        : 1200;
-
-        double height =
-                stage.getHeight() > 0
-                        ? stage.getHeight()
-                        : 800;
 
         return new Scene(
                 root,
-                width,
-                height
+                stage.getWidth(),
+                stage.getHeight()
         );
     }
 
     // =========================================================
-    // LOAD DEPARTMENTS FROM FIRESTORE
+    // LOAD REAL FIRESTORE DATA
     // =========================================================
 
     private void loadDepartmentsFromFirestore() {
@@ -492,17 +360,6 @@ public class DepartmentManagementView {
 
         List<HospitalDepartment> departments =
                 departmentController.getAllDepartments();
-
-        if (departments == null) {
-
-            filteredDepartmentList =
-                    new FilteredList<>(
-                            masterDepartmentList,
-                            p -> true
-                    );
-
-            return;
-        }
 
         for (HospitalDepartment hospitalDepartment :
                 departments) {
@@ -548,25 +405,11 @@ public class DepartmentManagementView {
             category = "Clinical";
         }
 
-        category =
-                category.trim();
-
-        String name =
-                hospitalDepartment.getName();
-
-        if (name == null
-                || name.trim().isEmpty()) {
-
-            name = "Unnamed Department";
-        }
-
-        String headDoctorId =
+        String head =
                 hospitalDepartment.getHeadDoctorId();
 
-        String head;
-
-        if (headDoctorId == null
-                || headDoctorId.trim().isEmpty()) {
+        if (head == null
+                || head.trim().isEmpty()) {
 
             head = "Not Assigned";
 
@@ -574,39 +417,72 @@ public class DepartmentManagementView {
 
             head =
                     "Doctor ID: "
-                            + headDoctorId.trim();
+                            + head;
         }
 
         String themeColor =
-                getCategoryColor(category);
+                PRIMARY_BLUE;
 
-        String themeBackground =
-                getCategoryBackground(category);
+        String themeBgColor =
+                PRIMARY_LIGHT;
 
         String icon =
-                getCategoryIcon(category);
+                "✚";
 
-        /*
-         * Doctor and patient counts are intentionally 0.
-         *
-         * HospitalDepartment does not store these counts.
-         *
-         * They should later be calculated from the real
-         * HospitalDoctor / Appointment collections.
-         */
-        int doctorCount = 0;
+        if ("Surgical".equalsIgnoreCase(category)) {
 
-        int patientCount = 0;
+            themeColor =
+                    SUCCESS_GREEN;
+
+            themeBgColor =
+                    SUCCESS_LIGHT;
+
+            icon =
+                    "⌁";
+
+        } else if ("Diagnostic".equalsIgnoreCase(category)) {
+
+            themeColor =
+                    PURPLE;
+
+            themeBgColor =
+                    PURPLE_LIGHT;
+
+            icon =
+                    "◉";
+
+        } else if ("Emergency".equalsIgnoreCase(category)) {
+
+            themeColor =
+                    ERROR_RED;
+
+            themeBgColor =
+                    ERROR_LIGHT;
+
+            icon =
+                    "!";
+
+        } else if ("Support".equalsIgnoreCase(category)) {
+
+            themeColor =
+                    WARNING_ORANGE;
+
+            themeBgColor =
+                    WARNING_LIGHT;
+
+            icon =
+                    "♧";
+        }
 
         return new Department(
                 hospitalDepartment.getDepartmentId(),
-                name.trim(),
+                hospitalDepartment.getName(),
                 head,
-                doctorCount,
-                patientCount,
+                0,
+                0,
                 category,
                 themeColor,
-                themeBackground,
+                themeBgColor,
                 icon,
                 hospitalDepartment.is24x7(),
                 hospitalDepartment.isActive()
@@ -614,104 +490,10 @@ public class DepartmentManagementView {
     }
 
     // =========================================================
-    // CATEGORY COLOR
-    // =========================================================
-
-    private String getCategoryColor(
-            String category) {
-
-        if (category == null) {
-            return PRIMARY_BLUE;
-        }
-
-        switch (category.toLowerCase()) {
-
-            case "surgical":
-                return ERROR_RED;
-
-            case "diagnostic":
-                return PURPLE;
-
-            case "emergency":
-                return WARNING_ORANGE;
-
-            case "support":
-                return SUCCESS_GREEN;
-
-            case "clinical":
-            default:
-                return PRIMARY_BLUE;
-        }
-    }
-
-    // =========================================================
-    // CATEGORY BACKGROUND
-    // =========================================================
-
-    private String getCategoryBackground(
-            String category) {
-
-        if (category == null) {
-            return PRIMARY_LIGHT;
-        }
-
-        switch (category.toLowerCase()) {
-
-            case "surgical":
-                return ERROR_LIGHT;
-
-            case "diagnostic":
-                return PURPLE_LIGHT;
-
-            case "emergency":
-                return WARNING_LIGHT;
-
-            case "support":
-                return SUCCESS_LIGHT;
-
-            case "clinical":
-            default:
-                return PRIMARY_LIGHT;
-        }
-    }
-
-    // =========================================================
-    // CATEGORY ICON
-    // =========================================================
-
-    private String getCategoryIcon(
-            String category) {
-
-        if (category == null) {
-            return "✚";
-        }
-
-        switch (category.toLowerCase()) {
-
-            case "surgical":
-                return "✚";
-
-            case "diagnostic":
-                return "◉";
-
-            case "emergency":
-                return "⚠";
-
-            case "support":
-                return "✓";
-
-            case "clinical":
-            default:
-                return "✚";
-        }
-    }
-
-    // =========================================================
     // SIDEBAR
     // =========================================================
 
-    private VBox createSidebar(
-            Stage stage) {
+    private VBox createSidebar(Stage stage) {
 
         VBox sidebar =
                 new VBox(6);
@@ -788,7 +570,7 @@ public class DepartmentManagementView {
         );
 
         // -----------------------------------------------------
-        // NAVIGATION BUTTONS
+        // NAVIGATION
         // -----------------------------------------------------
 
         Button dashboardButton =
@@ -951,12 +733,8 @@ public class DepartmentManagementView {
                         false
                 );
 
-        helpButton.setOnAction(
-                event ->
-                        showAlert(
-                                "Help Center",
-                                "For assistance, please contact support@healthsphere.com"
-                        )
+        sidebar.getChildren().add(
+                helpButton
         );
 
         // -----------------------------------------------------
@@ -971,12 +749,29 @@ public class DepartmentManagementView {
                 );
 
         logoutButton.setOnAction(
-                event ->
-                        handleLogout(stage)
+                event -> {
+
+                    SessionManager.clearSession();
+
+                    try {
+
+                        stage.setScene(
+                                new com.healthsphere.view.authentication.LoginView(
+                                        stage
+                                ).getScene()
+                        );
+
+                    } catch (Exception e) {
+
+                        showAlert(
+                                "Logout Error",
+                                "Unable to return to login screen."
+                        );
+                    }
+                }
         );
 
-        sidebar.getChildren().addAll(
-                helpButton,
+        sidebar.getChildren().add(
                 logoutButton
         );
 
@@ -993,13 +788,13 @@ public class DepartmentManagementView {
             boolean selected) {
 
         Button button =
-                new Button();
+                new Button(
+                        icon + "    " + text
+                );
 
         button.setMaxWidth(
                 Double.MAX_VALUE
         );
-
-        button.setPrefHeight(42);
 
         button.setAlignment(
                 Pos.CENTER_LEFT
@@ -1007,56 +802,11 @@ public class DepartmentManagementView {
 
         button.setPadding(
                 new Insets(
-                        0,
                         12,
-                        0,
-                        12
+                        14,
+                        12,
+                        14
                 )
-        );
-
-        Label iconLabel =
-                new Label(icon);
-
-        iconLabel.setStyle(
-                "-fx-font-size: 16px;"
-                        + "-fx-text-fill: "
-                        + (selected
-                        ? "#FFFFFF"
-                        : SIDEBAR_TEXT_MUTED)
-                        + ";"
-        );
-
-        Label textLabel =
-                new Label(text);
-
-        textLabel.setStyle(
-                "-fx-font-size: 13px;"
-                        + "-fx-font-weight: "
-                        + (selected
-                        ? "bold"
-                        : "500")
-                        + ";"
-                        + "-fx-text-fill: "
-                        + (selected
-                        ? "#FFFFFF"
-                        : SIDEBAR_TEXT_MUTED)
-                        + ";"
-        );
-
-        HBox content =
-                new HBox(12);
-
-        content.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        content.getChildren().addAll(
-                iconLabel,
-                textLabel
-        );
-
-        button.setGraphic(
-                content
         );
 
         String normalStyle;
@@ -1067,14 +817,22 @@ public class DepartmentManagementView {
                     "-fx-background-color: "
                             + PRIMARY_BLUE
                             + ";"
+                            + "-fx-text-fill: white;"
                             + "-fx-background-radius: 8;"
+                            + "-fx-font-size: 12px;"
+                            + "-fx-font-weight: bold;"
                             + "-fx-cursor: hand;";
 
         } else {
 
             normalStyle =
                     "-fx-background-color: transparent;"
+                            + "-fx-text-fill: "
+                            + SIDEBAR_TEXT_MUTED
+                            + ";"
                             + "-fx-background-radius: 8;"
+                            + "-fx-font-size: 12px;"
+                            + "-fx-font-weight: 600;"
                             + "-fx-cursor: hand;";
         }
 
@@ -1085,18 +843,21 @@ public class DepartmentManagementView {
         if (!selected) {
 
             button.setOnMouseEntered(
-                    event ->
+                    e ->
                             button.setStyle(
                                     "-fx-background-color: "
                                             + SIDEBAR_HOVER
                                             + ";"
+                                            + "-fx-text-fill: white;"
                                             + "-fx-background-radius: 8;"
+                                            + "-fx-font-size: 12px;"
+                                            + "-fx-font-weight: 600;"
                                             + "-fx-cursor: hand;"
                             )
             );
 
             button.setOnMouseExited(
-                    event ->
+                    e ->
                             button.setStyle(
                                     normalStyle
                             )
@@ -1107,89 +868,13 @@ public class DepartmentManagementView {
     }
 
     // =========================================================
-    // SAFE NAVIGATION
-    // =========================================================
-
-    private void navigateSafely(
-            Stage stage,
-            SceneSupplier sceneSupplier) {
-
-        try {
-
-            stage.setScene(
-                    sceneSupplier.get()
-            );
-
-        } catch (Exception e) {
-
-            showAlert(
-                    "Navigation Error",
-                    getErrorMessage(e)
-            );
-        }
-    }
-
-    @FunctionalInterface
-    private interface SceneSupplier {
-
-        Scene get();
-    }
-
-    // =========================================================
-    // LOGOUT
-    // =========================================================
-
-    private void handleLogout(
-            Stage stage) {
-
-        Alert confirmation =
-                new Alert(
-                        Alert.AlertType.CONFIRMATION
-                );
-
-        confirmation.setTitle(
-                "Logout"
-        );
-
-        confirmation.setHeaderText(
-                "Are you sure you want to logout?"
-        );
-
-        confirmation.setContentText(
-                "Your current hospital session will be cleared."
-        );
-
-        Optional<ButtonType> result =
-                confirmation.showAndWait();
-
-        if (result.isPresent()
-                && result.get() == ButtonType.OK) {
-
-            SessionManager.clearSession();
-
-            showAlert(
-                    "Logout",
-                    "Logged out successfully."
-            );
-
-            /*
-             * We only clear the shared session here.
-             *
-             * Login-screen navigation depends on the existing
-             * authentication/navigation implementation.
-             */
-            stage.close();
-        }
-    }
-
-    // =========================================================
     // TOP BAR
     // =========================================================
 
     private HBox createTopBar() {
 
         HBox topBar =
-                new HBox();
+                new HBox(16);
 
         topBar.setAlignment(
                 Pos.CENTER_LEFT
@@ -1197,9 +882,9 @@ public class DepartmentManagementView {
 
         topBar.setPadding(
                 new Insets(
-                        16,
+                        14,
                         24,
-                        16,
+                        14,
                         24
                 )
         );
@@ -1214,10 +899,6 @@ public class DepartmentManagementView {
                         + "-fx-border-width: 0 0 1 0;"
         );
 
-        // -----------------------------------------------------
-        // SEARCH
-        // -----------------------------------------------------
-
         Label searchIcon =
                 new Label("⌕");
 
@@ -1228,23 +909,31 @@ public class DepartmentManagementView {
                         + ";"
         );
 
-        TextField topSearch =
+        TextField topSearchField =
                 new TextField();
 
-        topSearch.setPromptText(
+        topSearchField.setPromptText(
                 "Search departments..."
         );
 
-        topSearch.setStyle(
+        topSearchField.setStyle(
                 "-fx-background-color: transparent;"
-                        + "-fx-prompt-text-fill: #94A3B8;"
+                        + "-fx-border-width: 0;"
                         + "-fx-font-size: 13px;"
-                        + "-fx-text-inner-color: "
+                        + "-fx-text-fill: "
                         + DARK_TEXT
+                        + ";"
+                        + "-fx-prompt-text-fill: "
+                        + SIDEBAR_TEXT_MUTED
                         + ";"
         );
 
-        topSearch.textProperty()
+        HBox.setHgrow(
+                topSearchField,
+                Priority.ALWAYS
+        );
+
+        topSearchField.textProperty()
                 .addListener(
                         (obs, oldValue, newValue) -> {
 
@@ -1257,11 +946,6 @@ public class DepartmentManagementView {
                         }
                 );
 
-        HBox.setHgrow(
-                topSearch,
-                Priority.ALWAYS
-        );
-
         HBox searchBox =
                 new HBox(8);
 
@@ -1269,9 +953,13 @@ public class DepartmentManagementView {
                 Pos.CENTER_LEFT
         );
 
-        searchBox.setPrefWidth(360);
+        searchBox.setPrefWidth(
+                360
+        );
 
-        searchBox.setPrefHeight(40);
+        searchBox.setPrefHeight(
+                40
+        );
 
         searchBox.setPadding(
                 new Insets(
@@ -1295,12 +983,8 @@ public class DepartmentManagementView {
 
         searchBox.getChildren().addAll(
                 searchIcon,
-                topSearch
+                topSearchField
         );
-
-        // -----------------------------------------------------
-        // SPACER
-        // -----------------------------------------------------
 
         Region spacer =
                 new Region();
@@ -1310,47 +994,25 @@ public class DepartmentManagementView {
                 Priority.ALWAYS
         );
 
-        // -----------------------------------------------------
-        // NOTIFICATION
-        // -----------------------------------------------------
-
         Label notification =
                 new Label("🔔");
 
         notification.setStyle(
                 "-fx-font-size: 16px;"
-                        + "-fx-cursor: hand;"
                         + "-fx-text-fill: "
                         + SECONDARY_TEXT
                         + ";"
         );
-
-        notification.setOnMouseClicked(
-                event ->
-                        showAlert(
-                                "Notifications",
-                                "You have 0 new notifications."
-                        )
-        );
-
-        // -----------------------------------------------------
-        // SETTINGS
-        // -----------------------------------------------------
 
         Label settings =
                 new Label("⚙");
 
         settings.setStyle(
                 "-fx-font-size: 18px;"
-                        + "-fx-cursor: hand;"
                         + "-fx-text-fill: "
                         + SECONDARY_TEXT
                         + ";"
         );
-
-        // -----------------------------------------------------
-        // USER INFO
-        // -----------------------------------------------------
 
         Label administrator =
                 new Label(
@@ -1389,10 +1051,6 @@ public class DepartmentManagementView {
                 administrator,
                 role
         );
-
-        // -----------------------------------------------------
-        // AVATAR
-        // -----------------------------------------------------
 
         Circle avatar =
                 new Circle(18);
@@ -1528,7 +1186,9 @@ public class DepartmentManagementView {
                         "＋ Add Department"
                 );
 
-        addDepartment.setPrefHeight(42);
+        addDepartment.setPrefHeight(
+                42
+        );
 
         addDepartment.setPadding(
                 new Insets(
@@ -1554,7 +1214,7 @@ public class DepartmentManagementView {
         );
 
         addDepartment.setOnMouseEntered(
-                event ->
+                e ->
                         addDepartment.setStyle(
                                 actionBtnStyle
                                         + "-fx-background-color: #1550B0;"
@@ -1562,14 +1222,14 @@ public class DepartmentManagementView {
         );
 
         addDepartment.setOnMouseExited(
-                event ->
+                e ->
                         addDepartment.setStyle(
                                 actionBtnStyle
                         )
         );
 
         addDepartment.setOnAction(
-                event ->
+                e ->
                         showAddDepartmentDialog(
                                 stage
                         )
@@ -1592,11 +1252,6 @@ public class DepartmentManagementView {
 
         HBox statistics =
                 new HBox(18);
-
-        HBox.setHgrow(
-                statistics,
-                Priority.ALWAYS
-        );
 
         VBox totalCard =
                 createStatisticCard(
@@ -1687,16 +1342,18 @@ public class DepartmentManagementView {
             String subtitle,
             String icon,
             String color,
-            String backgroundColor) {
+            String bgColor) {
 
         VBox card =
-                new VBox(6);
+                new VBox(10);
 
         card.setPadding(
-                new Insets(18)
+                new Insets(20)
         );
 
-        card.setMinHeight(115);
+        card.setPrefHeight(
+                120
+        );
 
         applyCardStyle(card);
 
@@ -1726,43 +1383,41 @@ public class DepartmentManagementView {
                 Priority.ALWAYS
         );
 
-        Circle iconCircle =
-                new Circle(17);
-
-        iconCircle.setFill(
-                Color.web(
-                        backgroundColor
-                )
-        );
-
         Label iconLabel =
                 new Label(icon);
 
+        iconLabel.setPrefSize(
+                36,
+                36
+        );
+
+        iconLabel.setAlignment(
+                Pos.CENTER
+        );
+
         iconLabel.setStyle(
-                "-fx-font-size: 13px;"
-                        + "-fx-font-weight: bold;"
+                "-fx-background-color: "
+                        + bgColor
+                        + ";"
+                        + "-fx-background-radius: 8;"
                         + "-fx-text-fill: "
                         + color
                         + ";"
+                        + "-fx-font-size: 16px;"
+                        + "-fx-font-weight: bold;"
         );
-
-        StackPane iconBox =
-                new StackPane(
-                        iconCircle,
-                        iconLabel
-                );
 
         top.getChildren().addAll(
                 titleLabel,
                 spacer,
-                iconBox
+                iconLabel
         );
 
         Label valueLabel =
                 new Label(value);
 
         valueLabel.setStyle(
-                "-fx-font-size: 25px;"
+                "-fx-font-size: 26px;"
                         + "-fx-font-weight: 800;"
                         + "-fx-text-fill: "
                         + DARK_TEXT
@@ -1789,42 +1444,33 @@ public class DepartmentManagementView {
     }
 
     // =========================================================
-    // SEARCH + FILTER BAR
+    // SEARCH BAR
     // =========================================================
 
     private HBox createSearchBar(
             Stage stage) {
 
         HBox container =
-                new HBox(10);
+                new HBox(12);
 
         container.setAlignment(
                 Pos.CENTER_LEFT
         );
 
-        container.setPadding(
-                new Insets(
-                        4,
-                        0,
-                        4,
-                        0
-                )
-        );
-
-        // -----------------------------------------------------
-        // SEARCH FIELD
-        // -----------------------------------------------------
-
         searchField =
                 new TextField();
 
         searchField.setPromptText(
-                "Search by department name or head..."
+                "Search department or head doctor..."
         );
 
-        searchField.setPrefHeight(40);
+        searchField.setPrefHeight(
+                40
+        );
 
-        searchField.setPrefWidth(300);
+        searchField.setPrefWidth(
+                300
+        );
 
         searchField.setStyle(
                 "-fx-background-color: "
@@ -1836,7 +1482,6 @@ public class DepartmentManagementView {
                         + "-fx-border-radius: 8;"
                         + "-fx-background-radius: 8;"
                         + "-fx-font-size: 12px;"
-                        + "-fx-padding: 0 12px;"
         );
 
         searchField.textProperty()
@@ -1844,10 +1489,6 @@ public class DepartmentManagementView {
                         (obs, oldValue, newValue) ->
                                 applyFiltersAndRefreshUI()
                 );
-
-        // -----------------------------------------------------
-        // CATEGORY FILTER
-        // -----------------------------------------------------
 
         categoryFilter =
                 new ComboBox<>();
@@ -1865,19 +1506,19 @@ public class DepartmentManagementView {
                 "All Departments"
         );
 
-        categoryFilter.setPrefHeight(40);
+        categoryFilter.setPrefHeight(
+                40
+        );
 
-        categoryFilter.setPrefWidth(180);
+        categoryFilter.setPrefWidth(
+                180
+        );
 
         categoryFilter.valueProperty()
                 .addListener(
                         (obs, oldValue, newValue) ->
                                 applyFiltersAndRefreshUI()
                 );
-
-        // -----------------------------------------------------
-        // SPACER
-        // -----------------------------------------------------
 
         Region spacer =
                 new Region();
@@ -1887,16 +1528,14 @@ public class DepartmentManagementView {
                 Priority.ALWAYS
         );
 
-        // -----------------------------------------------------
-        // RESET BUTTON
-        // -----------------------------------------------------
-
         Button filterButton =
                 new Button(
                         "☷  Reset Filters"
                 );
 
-        filterButton.setPrefHeight(40);
+        filterButton.setPrefHeight(
+                40
+        );
 
         filterButton.setStyle(
                 "-fx-background-color: "
@@ -1916,7 +1555,7 @@ public class DepartmentManagementView {
         );
 
         filterButton.setOnAction(
-                event -> {
+                e -> {
 
                     searchField.clear();
 
@@ -1928,16 +1567,14 @@ public class DepartmentManagementView {
                 }
         );
 
-        // -----------------------------------------------------
-        // EXPORT BUTTON
-        // -----------------------------------------------------
-
         Button exportButton =
                 new Button(
                         "↓  Export"
                 );
 
-        exportButton.setPrefHeight(40);
+        exportButton.setPrefHeight(
+                40
+        );
 
         exportButton.setPadding(
                 new Insets(
@@ -1962,7 +1599,7 @@ public class DepartmentManagementView {
         );
 
         exportButton.setOnAction(
-                event ->
+                e ->
                         exportDepartmentDataToCSV(
                                 stage
                         )
@@ -1980,7 +1617,7 @@ public class DepartmentManagementView {
     }
 
     // =========================================================
-    // DEPARTMENT GRID SECTION
+    // GRID SECTION
     // =========================================================
 
     private VBox createDepartmentGridSection(
@@ -2040,19 +1677,15 @@ public class DepartmentManagementView {
                 heading
         );
 
-        // -----------------------------------------------------
-        // FLOW GRID
-        // -----------------------------------------------------
-
         departmentGridPane =
                 new FlowPane();
 
-        departmentGridPane.setHgap(18);
+        departmentGridPane.setHgap(
+                18
+        );
 
-        departmentGridPane.setVgap(18);
-
-        departmentGridPane.setPrefWrapLength(
-                800
+        departmentGridPane.setVgap(
+                18
         );
 
         container.getChildren().add(
@@ -2063,7 +1696,7 @@ public class DepartmentManagementView {
     }
 
     // =========================================================
-    // FILTER AND REFRESH
+    // FILTER
     // =========================================================
 
     private void applyFiltersAndRefreshUI() {
@@ -2081,12 +1714,12 @@ public class DepartmentManagementView {
                 searchField != null
                         && searchField.getText() != null
                         ? searchField
-                        .getText()
-                        .toLowerCase()
-                        .trim()
+                                .getText()
+                                .toLowerCase()
+                                .trim()
                         : "";
 
-        String category =
+        String categoryValue =
                 categoryFilter != null
                         && categoryFilter.getValue() != null
                         ? categoryFilter.getValue()
@@ -2096,38 +1729,38 @@ public class DepartmentManagementView {
                 department -> {
 
                     String name =
-                            safeString(
-                                    department.getName()
-                            ).toLowerCase();
+                            department.getName() == null
+                                    ? ""
+                                    : department
+                                            .getName()
+                                            .toLowerCase();
 
                     String head =
-                            safeString(
-                                    department.getHead()
-                            ).toLowerCase();
-
-                    String departmentCategory =
-                            safeString(
-                                    department.getCategory()
-                            );
+                            department.getHead() == null
+                                    ? ""
+                                    : department
+                                            .getHead()
+                                            .toLowerCase();
 
                     boolean matchesSearch =
                             searchText.isEmpty()
                                     || name.contains(
-                                    searchText
-                            )
+                                            searchText
+                                    )
                                     || head.contains(
-                                    searchText
-                            );
+                                            searchText
+                                    );
 
                     boolean matchesCategory =
                             "All Departments"
-                                    .equalsIgnoreCase(
-                                            category
+                                    .equals(
+                                            categoryValue
                                     )
-                                    || departmentCategory
-                                    .equalsIgnoreCase(
-                                            category
-                                    );
+                                    || department
+                                            .getCategory()
+                                            .equalsIgnoreCase(
+                                                    categoryValue
+                                            );
 
                     return matchesSearch
                             && matchesCategory;
@@ -2140,7 +1773,7 @@ public class DepartmentManagementView {
     }
 
     // =========================================================
-    // REBUILD DEPARTMENT GRID
+    // REBUILD GRID
     // =========================================================
 
     private void rebuildDepartmentGrid() {
@@ -2149,12 +1782,9 @@ public class DepartmentManagementView {
             return;
         }
 
-        departmentGridPane
-                .getChildren()
-                .clear();
+        departmentGridPane.getChildren().clear();
 
-        if (filteredDepartmentList == null
-                || filteredDepartmentList.isEmpty()) {
+        if (filteredDepartmentList.isEmpty()) {
 
             Label emptyLabel =
                     new Label(
@@ -2169,11 +1799,9 @@ public class DepartmentManagementView {
                             + "-fx-padding: 24;"
             );
 
-            departmentGridPane
-                    .getChildren()
-                    .add(
-                            emptyLabel
-                    );
+            departmentGridPane.getChildren().add(
+                    emptyLabel
+            );
 
             return;
         }
@@ -2186,20 +1814,18 @@ public class DepartmentManagementView {
                             department
                     );
 
-            card.setPrefWidth(375);
-
-            card.setMinWidth(350);
+            card.setPrefWidth(
+                    375
+            );
 
             departmentGridPane
                     .getChildren()
-                    .add(
-                            card
-                    );
+                    .add(card);
         }
     }
 
     // =========================================================
-    // UPDATE STATISTICS
+    // STATISTICS UPDATE
     // =========================================================
 
     private void updateStatistics() {
@@ -2207,30 +1833,28 @@ public class DepartmentManagementView {
         int totalDepartments =
                 masterDepartmentList.size();
 
-        int totalDoctors =
-                0;
+        int totalDoctors = 0;
 
         int activeDepartments =
-                0;
+                masterDepartmentList.size();
 
-        int emergencyDepartments =
-                0;
+        int emergencyDepartments = 0;
 
         for (Department department :
                 masterDepartmentList) {
 
+            /*
+             * Doctor count will become dynamic when department
+             * ↔ doctor statistics are integrated.
+             */
             totalDoctors +=
                     department.getDoctorCount();
 
-            if (department.isActive()) {
-
-                activeDepartments++;
-            }
-
             if (department.isIs247()
-                    || "Emergency".equalsIgnoreCase(
-                    department.getCategory()
-            )) {
+                    || "Emergency"
+                    .equalsIgnoreCase(
+                            department.getCategory()
+                    )) {
 
                 emergencyDepartments++;
             }
@@ -2274,18 +1898,9 @@ public class DepartmentManagementView {
 
         if (departmentCountHeaderLabel != null) {
 
-            int count =
-                    filteredDepartmentList == null
-                            ? 0
-                            : filteredDepartmentList.size();
-
             departmentCountHeaderLabel.setText(
-                    count
-                            + (
-                            count == 1
-                                    ? " Department"
-                                    : " Departments"
-                    )
+                    filteredDepartmentList.size()
+                            + " Departments"
             );
         }
     }
@@ -2305,29 +1920,6 @@ public class DepartmentManagementView {
         );
 
         applyCardStyle(card);
-
-        // -----------------------------------------------------
-        // HOVER
-        // -----------------------------------------------------
-
-        card.setOnMouseEntered(
-                event ->
-                        card.setStyle(
-                                "-fx-background-color: "
-                                        + CARD_BG
-                                        + ";"
-                                        + "-fx-background-radius: 12;"
-                                        + "-fx-border-color: "
-                                        + PRIMARY_BLUE
-                                        + ";"
-                                        + "-fx-border-radius: 12;"
-                        )
-        );
-
-        card.setOnMouseExited(
-                event ->
-                        applyCardStyle(card)
-        );
 
         // -----------------------------------------------------
         // TOP SECTION
@@ -2402,6 +1994,16 @@ public class DepartmentManagementView {
                 typeLabel
         );
 
+        HBox.setMargin(
+                nameBox,
+                new Insets(
+                        0,
+                        0,
+                        0,
+                        10
+                )
+        );
+
         Region spacer =
                 new Region();
 
@@ -2410,22 +2012,12 @@ public class DepartmentManagementView {
                 Priority.ALWAYS
         );
 
-        Button addAppointmentButton =
+        Button addAppointment =
                 new Button(
-                        "＋"
+                        "+ Appointment"
                 );
 
-        addAppointmentButton.setTooltip(
-                new javafx.scene.control.Tooltip(
-                        "Schedule Appointment"
-                )
-        );
-
-        addAppointmentButton.setPrefWidth(32);
-
-        addAppointmentButton.setPrefHeight(30);
-
-        addAppointmentButton.setStyle(
+        addAppointment.setStyle(
                 "-fx-background-color: "
                         + PRIMARY_LIGHT
                         + ";"
@@ -2433,13 +2025,13 @@ public class DepartmentManagementView {
                         + PRIMARY_BLUE
                         + ";"
                         + "-fx-background-radius: 6;"
-                        + "-fx-font-size: 14px;"
+                        + "-fx-font-size: 10px;"
                         + "-fx-font-weight: bold;"
                         + "-fx-cursor: hand;"
         );
 
-        addAppointmentButton.setOnAction(
-                event ->
+        addAppointment.setOnAction(
+                e ->
                         showAddAppointmentDialog(
                                 dept
                         )
@@ -2449,7 +2041,7 @@ public class DepartmentManagementView {
                 iconBox,
                 nameBox,
                 spacer,
-                addAppointmentButton
+                addAppointment
         );
 
         // -----------------------------------------------------
@@ -2467,9 +2059,7 @@ public class DepartmentManagementView {
                 new VBox(2);
 
         Label headTitle =
-                new Label(
-                        "Head"
-                );
+                new Label("Head");
 
         headTitle.setStyle(
                 "-fx-font-size: 10px;"
@@ -2482,14 +2072,6 @@ public class DepartmentManagementView {
                 new Label(
                         dept.getHead()
                 );
-
-        headName.setWrapText(
-                true
-        );
-
-        headName.setMaxWidth(
-                170
-        );
 
         headName.setStyle(
                 "-fx-font-size: 12px;"
@@ -2527,14 +2109,14 @@ public class DepartmentManagementView {
                         + "-fx-font-weight: 600;"
         );
 
-        Label patsIconLabel =
+        Label patientsIconLabel =
                 new Label(
                         "👤 "
                                 + dept.getPatientCount()
                                 + " Patients"
                 );
 
-        patsIconLabel.setStyle(
+        patientsIconLabel.setStyle(
                 "-fx-font-size: 11px;"
                         + "-fx-text-fill: "
                         + SECONDARY_TEXT
@@ -2546,44 +2128,8 @@ public class DepartmentManagementView {
                 headBox,
                 infoSpacer,
                 docsIconLabel,
-                patsIconLabel
+                patientsIconLabel
         );
-
-        // -----------------------------------------------------
-        // 24/7 BADGE
-        // -----------------------------------------------------
-
-        HBox statusBox =
-                new HBox();
-
-        statusBox.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        if (dept.isIs247()) {
-
-            Label emergencyLabel =
-                    new Label(
-                            "24/7 Operational"
-                    );
-
-            emergencyLabel.setStyle(
-                    "-fx-background-color: "
-                            + WARNING_LIGHT
-                            + ";"
-                            + "-fx-text-fill: "
-                            + WARNING_ORANGE
-                            + ";"
-                            + "-fx-background-radius: 6;"
-                            + "-fx-padding: 4 8 4 8;"
-                            + "-fx-font-size: 9px;"
-                            + "-fx-font-weight: bold;"
-            );
-
-            statusBox.getChildren().add(
-                    emergencyLabel
-            );
-        }
 
         // -----------------------------------------------------
         // APPOINTMENTS
@@ -2625,14 +2171,14 @@ public class DepartmentManagementView {
                 );
 
         edit.setOnAction(
-                event ->
+                e ->
                         showEditDepartmentDialog(
                                 dept
                         )
         );
 
         delete.setOnAction(
-                event ->
+                e ->
                         handleDeleteDepartment(
                                 dept
                         )
@@ -2643,24 +2189,10 @@ public class DepartmentManagementView {
                 delete
         );
 
-        // -----------------------------------------------------
-        // ADD TO CARD
-        // -----------------------------------------------------
-
         card.getChildren().addAll(
                 top,
                 new Separator(),
-                infoBox
-        );
-
-        if (!statusBox.getChildren().isEmpty()) {
-
-            card.getChildren().add(
-                    statusBox
-            );
-        }
-
-        card.getChildren().addAll(
+                infoBox,
                 new Separator(),
                 appointmentsSection,
                 actions
@@ -2683,24 +2215,18 @@ public class DepartmentManagementView {
                 "-fx-background-color: #F8FAFC;"
                         + "-fx-padding: 8;"
                         + "-fx-background-radius: 8;"
-                        + "-fx-border-color: "
-                        + BORDER
-                        + ";"
-                        + "-fx-border-radius: 8;"
         );
 
         Label title =
                 new Label(
-                        "Appointments ("
-                                + dept.getAppointments().size()
-                                + ")"
+                        "Recent Appointments"
                 );
 
         title.setStyle(
-                "-fx-font-size: 11px;"
+                "-fx-font-size: 10px;"
                         + "-fx-font-weight: bold;"
                         + "-fx-text-fill: "
-                        + DARK_TEXT
+                        + SECONDARY_TEXT
                         + ";"
         );
 
@@ -2726,151 +2252,94 @@ public class DepartmentManagementView {
                     empty
             );
 
-        } else {
+            return box;
+        }
 
-            int displayCount =
-                    Math.min(
-                            dept.getAppointments().size(),
-                            3
+        for (Appointment appointment :
+                dept.getAppointments()) {
+
+            HBox appointmentRow =
+                    new HBox(6);
+
+            appointmentRow.setAlignment(
+                    Pos.CENTER_LEFT
+            );
+
+            Label time =
+                    new Label(
+                            appointment.getTimeSlot()
                     );
 
-            for (int i = 0;
-                 i < displayCount;
-                 i++) {
+            time.setStyle(
+                    "-fx-font-size: 9px;"
+                            + "-fx-font-weight: bold;"
+                            + "-fx-text-fill: "
+                            + PRIMARY_BLUE
+                            + ";"
+            );
 
-                Appointment appointment =
-                        dept.getAppointments()
-                                .get(i);
+            Label patient =
+                    new Label(
+                            appointment.getPatientName()
+                    );
 
-                HBox appointmentRow =
-                        new HBox(6);
+            patient.setStyle(
+                    "-fx-font-size: 10px;"
+                            + "-fx-text-fill: "
+                            + DARK_TEXT
+                            + ";"
+            );
 
-                appointmentRow.setAlignment(
-                        Pos.CENTER_LEFT
-                );
+            Region spacer =
+                    new Region();
 
-                Label time =
-                        new Label(
-                                appointment
-                                        .getTimeSlot()
-                        );
+            HBox.setHgrow(
+                    spacer,
+                    Priority.ALWAYS
+            );
 
-                time.setStyle(
-                        "-fx-font-size: 10px;"
-                                + "-fx-font-weight: bold;"
-                                + "-fx-text-fill: "
-                                + PRIMARY_BLUE
-                                + ";"
-                );
+            String statusValue =
+                    appointment.getStatus();
 
-                Label patient =
-                        new Label(
-                                appointment
-                                        .getPatientName()
-                        );
+            String statusColor =
+                    "Scheduled".equalsIgnoreCase(
+                            statusValue
+                    )
+                            ? WARNING_ORANGE
+                            : "In-Progress"
+                            .equalsIgnoreCase(
+                                    statusValue
+                            )
+                            ? PRIMARY_BLUE
+                            : SUCCESS_GREEN;
 
-                patient.setStyle(
-                        "-fx-font-size: 10px;"
-                                + "-fx-text-fill: "
-                                + DARK_TEXT
-                                + ";"
-                );
+            Label status =
+                    new Label(
+                            statusValue
+                    );
 
-                Region spacer =
-                        new Region();
+            status.setStyle(
+                    "-fx-font-size: 9px;"
+                            + "-fx-font-weight: bold;"
+                            + "-fx-text-fill: "
+                            + statusColor
+                            + ";"
+            );
 
-                HBox.setHgrow(
-                        spacer,
-                        Priority.ALWAYS
-                );
+            appointmentRow.getChildren().addAll(
+                    time,
+                    new Label("•"),
+                    patient,
+                    spacer,
+                    status
+            );
 
-                String statusColor =
-                        getAppointmentStatusColor(
-                                appointment.getStatus()
-                        );
-
-                Label status =
-                        new Label(
-                                appointment.getStatus()
-                        );
-
-                status.setStyle(
-                        "-fx-font-size: 9px;"
-                                + "-fx-font-weight: bold;"
-                                + "-fx-text-fill: "
-                                + statusColor
-                                + ";"
-                );
-
-                appointmentRow
-                        .getChildren()
-                        .addAll(
-                                time,
-                                new Label("•"),
-                                patient,
-                                spacer,
-                                status
-                        );
-
-                box.getChildren().add(
-                        appointmentRow
-                );
-            }
-
-            if (dept.getAppointments().size() > 3) {
-
-                Label more =
-                        new Label(
-                                "+"
-                                        + (
-                                        dept.getAppointments()
-                                                .size()
-                                                - 3
-                                )
-                                        + " more appointments"
-                        );
-
-                more.setStyle(
-                        "-fx-font-size: 9px;"
-                                + "-fx-text-fill: "
-                                + SECONDARY_TEXT
-                                + ";"
-                );
-
-                box.getChildren().add(
-                        more
-                );
-            }
+            box.getChildren().add(
+                    appointmentRow
+            );
         }
 
         return box;
-    }
-
-    // =========================================================
-    // APPOINTMENT STATUS COLOR
-    // =========================================================
-
-    private String getAppointmentStatusColor(
-            String status) {
-
-        if (status == null) {
-            return DARK_TEXT;
-        }
-
-        switch (status.toLowerCase()) {
-
-            case "scheduled":
-                return WARNING_ORANGE;
-
-            case "in-progress":
-                return PRIMARY_BLUE;
-
-            case "completed":
-                return SUCCESS_GREEN;
-
-            default:
-                return SECONDARY_TEXT;
-        }
     }
 
     // =========================================================
@@ -2880,12 +2349,14 @@ public class DepartmentManagementView {
     private Button createSmallButton(
             String text,
             String color,
-            String backgroundColor) {
+            String bgColor) {
 
         Button button =
                 new Button(text);
 
-        button.setPrefHeight(32);
+        button.setPrefHeight(
+                32
+        );
 
         button.setMaxWidth(
                 Double.MAX_VALUE
@@ -2898,7 +2369,7 @@ public class DepartmentManagementView {
 
         String style =
                 "-fx-background-color: "
-                        + backgroundColor
+                        + bgColor
                         + ";"
                         + "-fx-text-fill: "
                         + color
@@ -2913,23 +2384,17 @@ public class DepartmentManagementView {
         );
 
         button.setOnMouseEntered(
-                event ->
+                e ->
                         button.setStyle(
-                                "-fx-background-color: "
-                                        + color
-                                        + "25;"
-                                        + "-fx-text-fill: "
-                                        + color
-                                        + ";"
-                                        + "-fx-background-radius: 6;"
-                                        + "-fx-font-size: 11px;"
-                                        + "-fx-font-weight: bold;"
-                                        + "-fx-cursor: hand;"
+                                style.replace(
+                                        bgColor,
+                                        color + "25"
+                                )
                         )
         );
 
         button.setOnMouseExited(
-                event ->
+                e ->
                         button.setStyle(
                                 style
                         )
@@ -2984,51 +2449,24 @@ public class DepartmentManagementView {
                         + ";"
         );
 
-        // -----------------------------------------------------
-        // NAME
-        // -----------------------------------------------------
-
-        Label nameLabel =
-                new Label(
-                        "Department Name:"
-                );
-
         TextField nameInput =
                 new TextField();
 
         nameInput.setPromptText(
-                "e.g. Oncology"
+                "Department Name (e.g. Oncology)"
         );
-
-        // -----------------------------------------------------
-        // HEAD DOCTOR UID
-        // -----------------------------------------------------
-
-        Label headLabel =
-                new Label(
-                        "Head Doctor UID:"
-                );
 
         TextField headInput =
                 new TextField();
 
         headInput.setPromptText(
-                "Optional Doctor UID"
+                "Head Doctor UID (optional)"
         );
 
-        // -----------------------------------------------------
-        // CATEGORY
-        // -----------------------------------------------------
-
-        Label categoryLabel =
-                new Label(
-                        "Category:"
-                );
-
-        ComboBox<String> categoryInput =
+        ComboBox<String> catInput =
                 new ComboBox<>();
 
-        categoryInput.getItems().addAll(
+        catInput.getItems().addAll(
                 "Clinical",
                 "Surgical",
                 "Diagnostic",
@@ -3036,26 +2474,18 @@ public class DepartmentManagementView {
                 "Support"
         );
 
-        categoryInput.setValue(
+        catInput.setValue(
                 "Clinical"
         );
 
-        categoryInput.setMaxWidth(
+        catInput.setMaxWidth(
                 Double.MAX_VALUE
         );
 
-        // -----------------------------------------------------
-        // 24/7
-        // -----------------------------------------------------
-
         CheckBox is247Check =
                 new CheckBox(
-                        "Operates 24/7 Emergency"
+                        "Operates 24/7"
                 );
-
-        // -----------------------------------------------------
-        // SAVE
-        // -----------------------------------------------------
 
         Button saveButton =
                 new Button(
@@ -3067,7 +2497,7 @@ public class DepartmentManagementView {
         );
 
         saveButton.setPrefHeight(
-                38
+                36
         );
 
         saveButton.setStyle(
@@ -3075,8 +2505,8 @@ public class DepartmentManagementView {
                         + PRIMARY_BLUE
                         + ";"
                         + "-fx-text-fill: white;"
-                        + "-fx-background-radius: 7;"
                         + "-fx-font-weight: bold;"
+                        + "-fx-background-radius: 6;"
                         + "-fx-cursor: hand;"
         );
 
@@ -3096,7 +2526,7 @@ public class DepartmentManagementView {
                                         .trim();
 
                         String category =
-                                categoryInput
+                                catInput
                                         .getValue();
 
                         if (name.isEmpty()) {
@@ -3104,17 +2534,6 @@ public class DepartmentManagementView {
                             showAlert(
                                     "Validation Error",
                                     "Department name is required."
-                            );
-
-                            return;
-                        }
-
-                        if (category == null
-                                || category.trim().isEmpty()) {
-
-                            showAlert(
-                                    "Validation Error",
-                                    "Department category is required."
                             );
 
                             return;
@@ -3129,12 +2548,12 @@ public class DepartmentManagementView {
 
                         reloadDepartments();
 
-                        dialog.close();
-
                         showAlert(
                                 "Success",
-                                "Department created successfully."
+                                "Department added successfully."
                         );
+
+                        dialog.close();
 
                     } catch (Exception e) {
 
@@ -3149,14 +2568,23 @@ public class DepartmentManagementView {
         layout.getChildren().addAll(
                 dialogTitle,
 
-                nameLabel,
+                new Label(
+                        "Department Name:"
+                ),
+
                 nameInput,
 
-                headLabel,
+                new Label(
+                        "Head Doctor UID:"
+                ),
+
                 headInput,
 
-                categoryLabel,
-                categoryInput,
+                new Label(
+                        "Category:"
+                ),
+
+                catInput,
 
                 is247Check,
 
@@ -3167,7 +2595,7 @@ public class DepartmentManagementView {
                 new Scene(
                         layout,
                         380,
-                        390
+                        400
                 )
         );
 
@@ -3217,27 +2645,22 @@ public class DepartmentManagementView {
                         + ";"
         );
 
-        // -----------------------------------------------------
-        // NAME
-        // -----------------------------------------------------
-
-        Label nameLabel =
+        Label idLabel =
                 new Label(
-                        "Department Name:"
+                        "Department ID: "
+                                + dept.getDepartmentId()
                 );
+
+        idLabel.setStyle(
+                "-fx-font-size: 10px;"
+                        + "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+        );
 
         TextField nameInput =
                 new TextField(
                         dept.getName()
-                );
-
-        // -----------------------------------------------------
-        // HEAD DOCTOR UID
-        // -----------------------------------------------------
-
-        Label headLabel =
-                new Label(
-                        "Head Doctor UID:"
                 );
 
         TextField headInput =
@@ -3248,8 +2671,8 @@ public class DepartmentManagementView {
 
         if (currentHead != null
                 && currentHead.startsWith(
-                "Doctor ID: "
-        )) {
+                        "Doctor ID: "
+                )) {
 
             currentHead =
                     currentHead.substring(
@@ -3257,8 +2680,7 @@ public class DepartmentManagementView {
                     );
         }
 
-        if (currentHead == null
-                || "Not Assigned"
+        if ("Not Assigned"
                 .equalsIgnoreCase(
                         currentHead
                 )) {
@@ -3269,19 +2691,6 @@ public class DepartmentManagementView {
         headInput.setText(
                 currentHead
         );
-
-        headInput.setPromptText(
-                "Optional Doctor UID"
-        );
-
-        // -----------------------------------------------------
-        // CATEGORY
-        // -----------------------------------------------------
-
-        Label categoryLabel =
-                new Label(
-                        "Category:"
-                );
 
         ComboBox<String> categoryInput =
                 new ComboBox<>();
@@ -3302,22 +2711,14 @@ public class DepartmentManagementView {
                 Double.MAX_VALUE
         );
 
-        // -----------------------------------------------------
-        // 24/7
-        // -----------------------------------------------------
-
         CheckBox is247Check =
                 new CheckBox(
-                        "Operates 24/7 Emergency"
+                        "Operates 24/7"
                 );
 
         is247Check.setSelected(
                 dept.isIs247()
         );
-
-        // -----------------------------------------------------
-        // SAVE
-        // -----------------------------------------------------
 
         Button saveButton =
                 new Button(
@@ -3329,7 +2730,7 @@ public class DepartmentManagementView {
         );
 
         saveButton.setPrefHeight(
-                38
+                36
         );
 
         saveButton.setStyle(
@@ -3337,8 +2738,8 @@ public class DepartmentManagementView {
                         + PRIMARY_BLUE
                         + ";"
                         + "-fx-text-fill: white;"
-                        + "-fx-background-radius: 7;"
                         + "-fx-font-weight: bold;"
+                        + "-fx-background-radius: 6;"
                         + "-fx-cursor: hand;"
         );
 
@@ -3371,12 +2772,12 @@ public class DepartmentManagementView {
 
                         reloadDepartments();
 
-                        dialog.close();
-
                         showAlert(
                                 "Success",
                                 "Department updated successfully."
                         );
+
+                        dialog.close();
 
                     } catch (Exception e) {
 
@@ -3390,14 +2791,24 @@ public class DepartmentManagementView {
 
         layout.getChildren().addAll(
                 title,
+                idLabel,
 
-                nameLabel,
+                new Label(
+                        "Department Name:"
+                ),
+
                 nameInput,
 
-                headLabel,
+                new Label(
+                        "Head Doctor UID:"
+                ),
+
                 headInput,
 
-                categoryLabel,
+                new Label(
+                        "Category:"
+                ),
+
                 categoryInput,
 
                 is247Check,
@@ -3409,7 +2820,7 @@ public class DepartmentManagementView {
                 new Scene(
                         layout,
                         380,
-                        390
+                        430
                 )
         );
 
@@ -3422,17 +2833,6 @@ public class DepartmentManagementView {
 
     private void showAddAppointmentDialog(
             Department dept) {
-
-        /*
-         * IMPORTANT:
-         *
-         * Appointment persistence does NOT belong here.
-         *
-         * The Appointment module will later use
-         * AppointmentController / AppointmentDAO.
-         *
-         * For now, this maintains the existing UI behavior.
-         */
 
         Stage dialog =
                 new Stage();
@@ -3453,10 +2853,6 @@ public class DepartmentManagementView {
                 new Insets(20)
         );
 
-        layout.setStyle(
-                "-fx-background-color: white;"
-        );
-
         Label title =
                 new Label(
                         "Schedule for "
@@ -3471,20 +2867,12 @@ public class DepartmentManagementView {
                         + ";"
         );
 
-        // -----------------------------------------------------
-        // PATIENT
-        // -----------------------------------------------------
-
         TextField patientInput =
                 new TextField();
 
         patientInput.setPromptText(
                 "Patient Full Name"
         );
-
-        // -----------------------------------------------------
-        // DOCTOR
-        // -----------------------------------------------------
 
         TextField doctorInput =
                 new TextField();
@@ -3493,20 +2881,12 @@ public class DepartmentManagementView {
                 "Assigned Doctor Name"
         );
 
-        // -----------------------------------------------------
-        // TIME
-        // -----------------------------------------------------
-
         TextField timeInput =
                 new TextField();
 
         timeInput.setPromptText(
                 "Time Slot (e.g. 11:30 AM)"
         );
-
-        // -----------------------------------------------------
-        // STATUS
-        // -----------------------------------------------------
 
         ComboBox<String> statusInput =
                 new ComboBox<>();
@@ -3521,14 +2901,6 @@ public class DepartmentManagementView {
                 "Scheduled"
         );
 
-        statusInput.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        // -----------------------------------------------------
-        // SAVE
-        // -----------------------------------------------------
-
         Button saveButton =
                 new Button(
                         "Confirm Appointment"
@@ -3538,61 +2910,38 @@ public class DepartmentManagementView {
                 Double.MAX_VALUE
         );
 
-        saveButton.setPrefHeight(
-                38
-        );
-
         saveButton.setStyle(
                 "-fx-background-color: "
                         + PRIMARY_BLUE
                         + ";"
                         + "-fx-text-fill: white;"
-                        + "-fx-background-radius: 7;"
                         + "-fx-font-weight: bold;"
-                        + "-fx-cursor: hand;"
         );
 
         saveButton.setOnAction(
                 event -> {
 
-                    String patientName =
-                            patientInput
-                                    .getText()
-                                    .trim();
+                    if (patientInput
+                            .getText()
+                            .trim()
+                            .isEmpty()
+                            || timeInput
+                            .getText()
+                            .trim()
+                            .isEmpty()) {
+
+                        showAlert(
+                                "Validation Error",
+                                "Patient Name and Time Slot are required."
+                        );
+
+                        return;
+                    }
 
                     String doctorName =
                             doctorInput
                                     .getText()
                                     .trim();
-
-                    String timeSlot =
-                            timeInput
-                                    .getText()
-                                    .trim();
-
-                    String status =
-                            statusInput
-                                    .getValue();
-
-                    if (patientName.isEmpty()) {
-
-                        showAlert(
-                                "Validation Error",
-                                "Patient name is required."
-                        );
-
-                        return;
-                    }
-
-                    if (timeSlot.isEmpty()) {
-
-                        showAlert(
-                                "Validation Error",
-                                "Time slot is required."
-                        );
-
-                        return;
-                    }
 
                     if (doctorName.isEmpty()) {
 
@@ -3602,10 +2951,9 @@ public class DepartmentManagementView {
 
                     String appointmentId =
                             "APT-"
-                                    + (
-                                    100
-                                            + dept
-                                            .getAppointments()
+                                    + String.format(
+                                    "%03d",
+                                    dept.getAppointments()
                                             .size()
                                             + 1
                             );
@@ -3613,10 +2961,15 @@ public class DepartmentManagementView {
                     Appointment appointment =
                             new Appointment(
                                     appointmentId,
-                                    patientName,
+                                    patientInput
+                                            .getText()
+                                            .trim(),
                                     doctorName,
-                                    timeSlot,
-                                    status
+                                    timeInput
+                                            .getText()
+                                            .trim(),
+                                    statusInput
+                                            .getValue()
                             );
 
                     dept.getAppointments()
@@ -3625,10 +2978,9 @@ public class DepartmentManagementView {
                             );
 
                     /*
-                     * UI-only count.
-                     *
-                     * This will eventually be calculated from
-                     * the actual appointment collection.
+                     * Appointment backend is separate.
+                     * This remains UI-only until AppointmentController
+                     * is integrated.
                      */
                     dept.setPatientCount(
                             dept.getPatientCount()
@@ -3674,8 +3026,8 @@ public class DepartmentManagementView {
         dialog.setScene(
                 new Scene(
                         layout,
-                        360,
-                        400
+                        350,
+                        380
                 )
         );
 
@@ -3683,39 +3035,39 @@ public class DepartmentManagementView {
     }
 
     // =========================================================
-    // DELETE / DEACTIVATE DEPARTMENT
+    // DELETE / DEACTIVATE
     // =========================================================
 
     private void handleDeleteDepartment(
             Department dept) {
 
-        Alert confirmation =
+        Alert alert =
                 new Alert(
                         Alert.AlertType.CONFIRMATION
                 );
 
-        confirmation.setTitle(
+        alert.setTitle(
                 "Confirm Department Removal"
         );
 
-        confirmation.setHeaderText(
+        alert.setHeaderText(
                 "Delete "
                         + dept.getName()
                         + " Department?"
         );
 
-        confirmation.setContentText(
+        alert.setContentText(
                 "Are you sure you want to remove this department?"
-                        + "\n\n"
-                        + "The department will be deactivated "
+                        + "\n\nThe department will be deactivated "
                         + "rather than permanently deleted."
         );
 
         Optional<ButtonType> result =
-                confirmation.showAndWait();
+                alert.showAndWait();
 
         if (result.isPresent()
-                && result.get() == ButtonType.OK) {
+                && result.get()
+                == ButtonType.OK) {
 
             try {
 
@@ -3811,48 +3163,37 @@ public class DepartmentManagementView {
                             + "Appointments Count"
             );
 
-            if (filteredDepartmentList == null) {
-                return;
-            }
-
-            for (Department department :
+            for (Department dept :
                     filteredDepartmentList) {
 
                 writer.printf(
                         "\"%s\",\"%s\",\"%s\",\"%s\",%s,%d,%d,%d%n",
 
                         escapeCSV(
-                                department
-                                        .getDepartmentId()
+                                dept.getDepartmentId()
                         ),
 
                         escapeCSV(
-                                department
-                                        .getName()
+                                dept.getName()
                         ),
 
                         escapeCSV(
-                                department
-                                        .getHead()
+                                dept.getHead()
                         ),
 
                         escapeCSV(
-                                department
-                                        .getCategory()
+                                dept.getCategory()
                         ),
 
-                        department.isIs247()
+                        dept.isIs247()
                                 ? "Yes"
                                 : "No",
 
-                        department
-                                .getDoctorCount(),
+                        dept.getDoctorCount(),
 
-                        department
-                                .getPatientCount(),
+                        dept.getPatientCount(),
 
-                        department
-                                .getAppointments()
+                        dept.getAppointments()
                                 .size()
                 );
             }
@@ -3867,15 +3208,11 @@ public class DepartmentManagementView {
 
             showAlert(
                     "Export Error",
-                    "Could not export data:\n"
+                    "Could not export data: "
                             + getErrorMessage(e)
             );
         }
     }
-
-    // =========================================================
-    // CSV ESCAPE
-    // =========================================================
 
     private String escapeCSV(
             String value) {
@@ -3888,6 +3225,73 @@ public class DepartmentManagementView {
                 "\"",
                 "\"\""
         );
+    }
+
+    // =========================================================
+    // CARD STYLE
+    // =========================================================
+
+    private void applyCardStyle(
+            Region region) {
+
+        region.setStyle(
+                "-fx-background-color: "
+                        + CARD_BG
+                        + ";"
+                        + "-fx-background-radius: 12;"
+                        + "-fx-border-color: "
+                        + BORDER
+                        + ";"
+                        + "-fx-border-radius: 12;"
+        );
+
+        DropShadow shadow =
+                new DropShadow();
+
+        shadow.setRadius(8);
+
+        shadow.setOffsetY(2);
+
+        shadow.setColor(
+                Color.rgb(
+                        15,
+                        23,
+                        42,
+                        0.06
+                )
+        );
+
+        region.setEffect(
+                shadow
+        );
+    }
+
+    // =========================================================
+    // SAFE NAVIGATION
+    // =========================================================
+
+    private void navigateSafely(
+            Stage stage,
+            SceneSupplier sceneSupplier) {
+
+        try {
+
+            stage.setScene(
+                    sceneSupplier.get()
+            );
+
+        } catch (Exception e) {
+
+            showAlert(
+                    "Navigation Error",
+                    getErrorMessage(e)
+            );
+        }
+    }
+
+    @FunctionalInterface
+    private interface SceneSupplier {
+        Scene get();
     }
 
     // =========================================================
@@ -3919,34 +3323,6 @@ public class DepartmentManagementView {
     }
 
     // =========================================================
-    // ERROR ALERT
-    // =========================================================
-
-    private void showErrorAlert(
-            String title,
-            String message) {
-
-        Alert alert =
-                new Alert(
-                        Alert.AlertType.ERROR
-                );
-
-        alert.setTitle(
-                title
-        );
-
-        alert.setHeaderText(
-                null
-        );
-
-        alert.setContentText(
-                message
-        );
-
-        alert.showAndWait();
-    }
-
-    // =========================================================
     // ERROR MESSAGE
     // =========================================================
 
@@ -3954,7 +3330,6 @@ public class DepartmentManagementView {
             Exception exception) {
 
         if (exception == null) {
-
             return "Unknown error.";
         }
 
@@ -3967,77 +3342,22 @@ public class DepartmentManagementView {
                     cause.getCause();
         }
 
-        String message =
-                cause.getMessage();
+        if (cause.getMessage() != null
+                && !cause.getMessage()
+                .trim()
+                .isEmpty()) {
 
-        if (message == null
-                || message.trim().isEmpty()) {
-
-            message =
-                    exception.getMessage();
+            return cause.getMessage();
         }
 
-        if (message == null
-                || message.trim().isEmpty()) {
+        if (exception.getMessage() != null
+                && !exception.getMessage()
+                .trim()
+                .isEmpty()) {
 
-            return "An unexpected error occurred.";
+            return exception.getMessage();
         }
 
-        return message;
-    }
-
-    // =========================================================
-    // SAFE STRING
-    // =========================================================
-
-    private String safeString(
-            String value) {
-
-        return value == null
-                ? ""
-                : value;
-    }
-
-    // =========================================================
-    // CARD STYLE
-    // =========================================================
-
-    private void applyCardStyle(
-            javafx.scene.layout.Pane pane) {
-
-        pane.setStyle(
-                "-fx-background-color: "
-                        + CARD_BG
-                        + ";"
-                        + "-fx-background-radius: 12;"
-                        + "-fx-border-color: "
-                        + BORDER
-                        + ";"
-                        + "-fx-border-radius: 12;"
-        );
-
-        DropShadow shadow =
-                new DropShadow();
-
-        shadow.setColor(
-                Color.rgb(
-                        15,
-                        23,
-                        42,
-                        0.04
-                )
-        );
-
-        shadow.setRadius(
-                10
-        );
-
-        shadow.setOffsetY(
-                3
-        );
-
-        pane.setEffect(
-                shadow
-        );
+        return "An unexpected error occurred.";
     }
 }

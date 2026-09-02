@@ -3,6 +3,7 @@ package com.healthsphere.dao.hospital;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.cloud.firestore.WriteResult;
 import com.healthsphere.config.FirebaseConfig;
 import com.healthsphere.exceptions.DatabaseException;
 import com.healthsphere.model.HospitalDepartment;
@@ -14,94 +15,67 @@ import java.util.UUID;
 
 public class DepartmentDAO {
 
-    private static final String COLLECTION = "hospitalDepartments";
+    private final Firestore db;
 
-    private final Firestore firestore;
+    private static final String COLLECTION =
+            "hospitalDepartments";
 
     public DepartmentDAO() {
-        this.firestore = FirebaseConfig.getFirestore();
+        this.db = FirebaseConfig.getFirestore();
     }
 
-    // ---------------------------------------------------------
-    // CURRENT HOSPITAL
-    // ---------------------------------------------------------
-
-    private String getCurrentHospitalId() {
-
-        if (!SessionManager.isLoggedIn()) {
-            throw new IllegalStateException(
-                    "No active hospital session."
-            );
-        }
-
-        String hospitalId =
-                SessionManager.getCurrentUser().getUid();
-
-        if (hospitalId == null || hospitalId.trim().isEmpty()) {
-            throw new IllegalStateException(
-                    "Hospital ID is not available."
-            );
-        }
-
-        return hospitalId.trim();
-    }
-
-    // ---------------------------------------------------------
-    // CREATE
-    // ---------------------------------------------------------
-
+    /**
+     * Creates a new department for the currently
+     * logged-in hospital.
+     */
     public String createDepartment(
             HospitalDepartment department) {
 
-        validateDepartment(department);
-
-        String hospitalId = getCurrentHospitalId();
-
         try {
+
+            validateDepartment(department);
+
+            String hospitalId = getCurrentHospitalId();
 
             department.setHospitalId(hospitalId);
 
-            // Generate ID if controller did not provide one
-            if (department.getDepartmentId() == null
-                    || department.getDepartmentId().trim().isEmpty()) {
+            String departmentId =
+                    department.getDepartmentId();
+
+            if (departmentId == null
+                    || departmentId.trim().isEmpty()) {
+
+                departmentId =
+                        "DEPT-" +
+                        UUID.randomUUID()
+                                .toString()
+                                .substring(0, 8)
+                                .toUpperCase();
 
                 department.setDepartmentId(
-                        "DEPT-" +
-                                UUID.randomUUID()
-                                        .toString()
-                                        .substring(0, 8)
-                                        .toUpperCase()
+                        departmentId
                 );
             }
 
-            department.setDepartmentId(
-                    department.getDepartmentId().trim()
-            );
-
-            // Make sure it is active when created
             department.setActive(true);
 
-            // Duplicate department name
-            if (departmentExistsByName(
-                    department.getName())) {
-
-                throw new DatabaseException(
-                        "A department with this name already exists."
-                );
-            }
-
-            firestore.collection(COLLECTION)
-                    .document(department.getDepartmentId())
+            db.collection(COLLECTION)
+                    .document(departmentId)
                     .set(department)
                     .get();
 
-            return department.getDepartmentId();
+            System.out.println(
+                    "Department created successfully: "
+                            + departmentId
+            );
 
-        } catch (DatabaseException e) {
-
-            throw e;
+            return departmentId;
 
         } catch (Exception e) {
+
+            if (e instanceof DatabaseException) {
+                throw (DatabaseException) e;
+            }
 
             throw new DatabaseException(
                     "Unable to create department.",
@@ -110,21 +84,23 @@ public class DepartmentDAO {
         }
     }
 
-    // ---------------------------------------------------------
-    // GET ALL ACTIVE DEPARTMENTS
-    // ---------------------------------------------------------
-
-    public List<HospitalDepartment> getAllDepartments() {
-
-        String hospitalId = getCurrentHospitalId();
+    /**
+     * Returns all active departments belonging
+     * to the currently logged-in hospital.
+     */
+    public List<HospitalDepartment>
+    getAllDepartments() {
 
         try {
+
+            String hospitalId =
+                    getCurrentHospitalId();
 
             List<HospitalDepartment> departments =
                     new ArrayList<>();
 
             List<QueryDocumentSnapshot> documents =
-                    firestore.collection(COLLECTION)
+                    db.collection(COLLECTION)
                             .whereEqualTo(
                                     "hospitalId",
                                     hospitalId
@@ -137,27 +113,13 @@ public class DepartmentDAO {
                             .get()
                             .getDocuments();
 
-            for (QueryDocumentSnapshot document : documents) {
+            for (QueryDocumentSnapshot document
+                    : documents) {
 
                 HospitalDepartment department =
                         document.toObject(
                                 HospitalDepartment.class
                         );
-
-                if (department == null) {
-                    continue;
-                }
-
-                // Fallback if ID was not stored in document
-                if (department.getDepartmentId() == null
-                        || department.getDepartmentId()
-                        .trim()
-                        .isEmpty()) {
-
-                    department.setDepartmentId(
-                            document.getId()
-                    );
-                }
 
                 departments.add(department);
             }
@@ -166,6 +128,10 @@ public class DepartmentDAO {
 
         } catch (Exception e) {
 
+            if (e instanceof DatabaseException) {
+                throw (DatabaseException) e;
+            }
+
             throw new DatabaseException(
                     "Unable to retrieve departments.",
                     e
@@ -173,36 +139,34 @@ public class DepartmentDAO {
         }
     }
 
-    // ---------------------------------------------------------
-    // GET DEPARTMENT BY ID
-    // ---------------------------------------------------------
-
+    /**
+     * Returns one department only if it belongs
+     * to the currently logged-in hospital.
+     */
     public HospitalDepartment getDepartmentById(
             String departmentId) {
 
-        if (departmentId == null
-                || departmentId.trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Department ID cannot be empty."
-            );
-        }
-
-        String hospitalId = getCurrentHospitalId();
-
         try {
 
+            if (departmentId == null
+                    || departmentId.trim().isEmpty()) {
+
+                throw new IllegalArgumentException(
+                        "Department ID is required."
+                );
+            }
+
+            String hospitalId =
+                    getCurrentHospitalId();
+
             DocumentSnapshot document =
-                    firestore.collection(COLLECTION)
+                    db.collection(COLLECTION)
                             .document(departmentId.trim())
                             .get()
                             .get();
 
             if (!document.exists()) {
-
-                throw new DatabaseException(
-                        "Department not found."
-                );
+                return null;
             }
 
             HospitalDepartment department =
@@ -211,39 +175,30 @@ public class DepartmentDAO {
                     );
 
             if (department == null) {
-
-                throw new DatabaseException(
-                        "Unable to read department."
-                );
+                return null;
             }
 
-            // Security check:
-            // department must belong to logged-in hospital
+            /*
+             * Security check:
+             * Never return another hospital's department.
+             */
             if (!hospitalId.equals(
                     department.getHospitalId())) {
 
-                throw new DatabaseException(
-                        "Department does not belong to the current hospital."
-                );
-            }
-
-            if (department.getDepartmentId() == null
-                    || department.getDepartmentId()
-                    .trim()
-                    .isEmpty()) {
-
-                department.setDepartmentId(
-                        document.getId()
-                );
+                return null;
             }
 
             return department;
 
-        } catch (DatabaseException e) {
+        } catch (IllegalArgumentException e) {
 
             throw e;
 
         } catch (Exception e) {
+
+            if (e instanceof DatabaseException) {
+                throw (DatabaseException) e;
+            }
 
             throw new DatabaseException(
                     "Unable to retrieve department.",
@@ -252,28 +207,27 @@ public class DepartmentDAO {
         }
     }
 
-    // ---------------------------------------------------------
-    // UPDATE
-    // ---------------------------------------------------------
-
+    /**
+     * Updates an existing department.
+     */
     public void updateDepartment(
             HospitalDepartment department) {
 
-        validateDepartment(department);
-
-        if (department.getDepartmentId() == null
-                || department.getDepartmentId()
-                .trim()
-                .isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Department ID is required."
-            );
-        }
-
-        String hospitalId = getCurrentHospitalId();
-
         try {
+
+            validateDepartment(department);
+
+            if (department.getDepartmentId() == null
+                    || department.getDepartmentId()
+                    .trim().isEmpty()) {
+
+                throw new IllegalArgumentException(
+                        "Department ID is required."
+                );
+            }
+
+            String hospitalId =
+                    getCurrentHospitalId();
 
             HospitalDepartment existing =
                     getDepartmentById(
@@ -287,21 +241,9 @@ public class DepartmentDAO {
                 );
             }
 
-            // Check duplicate name only when name changed
-            if (!existing.getName()
-                    .equalsIgnoreCase(
-                            department.getName().trim()
-                    )) {
-
-                if (departmentExistsByName(
-                        department.getName())) {
-
-                    throw new DatabaseException(
-                            "A department with this name already exists."
-                    );
-                }
-            }
-
+            /*
+             * Preserve ownership and ID.
+             */
             department.setDepartmentId(
                     existing.getDepartmentId()
             );
@@ -310,21 +252,30 @@ public class DepartmentDAO {
                     hospitalId
             );
 
-            // Preserve current active state
             department.setActive(
                     existing.isActive()
             );
 
-            firestore.collection(COLLECTION)
-                    .document(existing.getDepartmentId())
+            db.collection(COLLECTION)
+                    .document(
+                            existing.getDepartmentId()
+                    )
                     .set(department)
                     .get();
 
-        } catch (DatabaseException e) {
+            System.out.println(
+                    "Department updated successfully."
+            );
+
+        } catch (IllegalArgumentException e) {
 
             throw e;
 
         } catch (Exception e) {
+
+            if (e instanceof DatabaseException) {
+                throw (DatabaseException) e;
+            }
 
             throw new DatabaseException(
                     "Unable to update department.",
@@ -333,60 +284,125 @@ public class DepartmentDAO {
         }
     }
 
-    // ---------------------------------------------------------
-    // DEACTIVATE / DELETE
-    // ---------------------------------------------------------
-
+    /**
+     * Soft deletes a department.
+     *
+     * The Firestore document remains present,
+     * but active becomes false.
+     */
     public void deactivateDepartment(
             String departmentId) {
 
-        HospitalDepartment department =
-                getDepartmentById(departmentId);
-
         try {
 
-            firestore.collection(COLLECTION)
-                    .document(
-                            department.getDepartmentId()
-                    )
+            HospitalDepartment department =
+                    getDepartmentById(
+                            departmentId
+                    );
+
+            if (department == null) {
+
+                throw new DatabaseException(
+                        "Department not found."
+                );
+            }
+
+            db.collection(COLLECTION)
+                    .document(departmentId.trim())
                     .update(
                             "active",
                             false
                     )
                     .get();
 
+            System.out.println(
+                    "Department deactivated successfully."
+            );
+
+        } catch (IllegalArgumentException e) {
+
+            throw e;
+
         } catch (Exception e) {
 
+            if (e instanceof DatabaseException) {
+                throw (DatabaseException) e;
+            }
+
             throw new DatabaseException(
-                    "Unable to remove department.",
+                    "Unable to deactivate department.",
                     e
             );
         }
     }
 
-    // ---------------------------------------------------------
-    // REACTIVATE
-    // ---------------------------------------------------------
-
+    /**
+     * Reactivates a previously deactivated department.
+     */
     public void reactivateDepartment(
             String departmentId) {
 
-        HospitalDepartment department =
-                getDepartmentById(departmentId);
-
         try {
 
-            firestore.collection(COLLECTION)
-                    .document(
-                            department.getDepartmentId()
-                    )
+            if (departmentId == null
+                    || departmentId.trim().isEmpty()) {
+
+                throw new IllegalArgumentException(
+                        "Department ID is required."
+                );
+            }
+
+            String hospitalId =
+                    getCurrentHospitalId();
+
+            DocumentSnapshot document =
+                    db.collection(COLLECTION)
+                            .document(departmentId.trim())
+                            .get()
+                            .get();
+
+            if (!document.exists()) {
+
+                throw new DatabaseException(
+                        "Department not found."
+                );
+            }
+
+            HospitalDepartment department =
+                    document.toObject(
+                            HospitalDepartment.class
+                    );
+
+            if (department == null
+                    || !hospitalId.equals(
+                            department.getHospitalId())) {
+
+                throw new DatabaseException(
+                        "Department not found."
+                );
+            }
+
+            db.collection(COLLECTION)
+                    .document(departmentId.trim())
                     .update(
                             "active",
                             true
                     )
                     .get();
 
+            System.out.println(
+                    "Department reactivated successfully."
+            );
+
+        } catch (IllegalArgumentException e) {
+
+            throw e;
+
         } catch (Exception e) {
+
+            if (e instanceof DatabaseException) {
+                throw (DatabaseException) e;
+            }
 
             throw new DatabaseException(
                     "Unable to reactivate department.",
@@ -395,10 +411,10 @@ public class DepartmentDAO {
         }
     }
 
-    // ---------------------------------------------------------
-    // EXISTS BY ID
-    // ---------------------------------------------------------
-
+    /**
+     * Checks whether an active department exists
+     * by ID for the current hospital.
+     */
     public boolean departmentExists(
             String departmentId) {
 
@@ -408,47 +424,18 @@ public class DepartmentDAO {
             return false;
         }
 
-        String hospitalId = getCurrentHospitalId();
-
-        try {
-
-            DocumentSnapshot document =
-                    firestore.collection(COLLECTION)
-                            .document(departmentId.trim())
-                            .get()
-                            .get();
-
-            if (!document.exists()) {
-                return false;
-            }
-
-            HospitalDepartment department =
-                    document.toObject(
-                            HospitalDepartment.class
-                    );
-
-            if (department == null) {
-                return false;
-            }
-
-            return hospitalId.equals(
-                    department.getHospitalId()
-            );
-
-        } catch (Exception e) {
-
-            throw new DatabaseException(
-                    "Unable to check department.",
-                    e
-            );
-        }
+        return getDepartmentById(
+                departmentId.trim()
+        ) != null;
     }
 
-    // ---------------------------------------------------------
-    // EXISTS BY NAME
-    // CASE-INSENSITIVE
-    // ---------------------------------------------------------
-
+    /**
+     * Checks whether an active department with
+     * the same name exists in the current hospital.
+     *
+     * Firestore string equality is case-sensitive,
+     * so the final comparison is done in Java.
+     */
     public boolean departmentExistsByName(
             String name) {
 
@@ -458,15 +445,13 @@ public class DepartmentDAO {
             return false;
         }
 
-        String hospitalId = getCurrentHospitalId();
-
-        String normalizedName =
-                name.trim();
-
         try {
 
+            String hospitalId =
+                    getCurrentHospitalId();
+
             List<QueryDocumentSnapshot> documents =
-                    firestore.collection(COLLECTION)
+                    db.collection(COLLECTION)
                             .whereEqualTo(
                                     "hospitalId",
                                     hospitalId
@@ -479,24 +464,19 @@ public class DepartmentDAO {
                             .get()
                             .getDocuments();
 
-            for (QueryDocumentSnapshot document :
-                    documents) {
+            for (QueryDocumentSnapshot document
+                    : documents) {
 
                 HospitalDepartment department =
                         document.toObject(
                                 HospitalDepartment.class
                         );
 
-                if (department == null
-                        || department.getName() == null) {
-
-                    continue;
-                }
-
-                if (department.getName()
+                if (department.getName() != null
+                        && department.getName()
                         .trim()
                         .equalsIgnoreCase(
-                                normalizedName
+                                name.trim()
                         )) {
 
                     return true;
@@ -514,10 +494,37 @@ public class DepartmentDAO {
         }
     }
 
-    // ---------------------------------------------------------
-    // VALIDATION
-    // ---------------------------------------------------------
+    /**
+     * Gets the currently logged-in hospital UID.
+     */
+    private String getCurrentHospitalId() {
 
+        if (!SessionManager.isLoggedIn()) {
+
+            throw new DatabaseException(
+                    "No active hospital session."
+            );
+        }
+
+        String hospitalId =
+                SessionManager
+                        .getCurrentUser()
+                        .getUid();
+
+        if (hospitalId == null
+                || hospitalId.trim().isEmpty()) {
+
+            throw new DatabaseException(
+                    "Hospital ID is missing from session."
+            );
+        }
+
+        return hospitalId.trim();
+    }
+
+    /**
+     * Basic DAO-level validation.
+     */
     private void validateDepartment(
             HospitalDepartment department) {
 

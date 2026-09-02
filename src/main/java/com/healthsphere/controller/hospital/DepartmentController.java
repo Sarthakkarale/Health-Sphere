@@ -13,29 +13,35 @@ public class DepartmentController {
         this.departmentDAO = new DepartmentDAO();
     }
 
-    // ---------------------------------------------------------
-    // ADD DEPARTMENT
-    // ---------------------------------------------------------
-
+    /**
+     * Add a new department.
+     */
     public String addDepartment(
             String name,
             String headDoctorId,
             String category,
             boolean is24x7) {
 
-        validateName(name);
-        validateCategory(category);
+        validateDepartmentInput(
+                name,
+                category
+        );
 
         String normalizedName =
-                normalize(name);
+                name.trim();
 
         String normalizedCategory =
-                normalize(category);
+                category.trim();
 
-        String normalizedDoctorId =
-                normalizeOptional(headDoctorId);
+        String normalizedHeadDoctorId =
+                normalizeOptionalValue(
+                        headDoctorId
+                );
 
-        // Check duplicate before creating
+        /*
+         * Prevent duplicate active department names
+         * within the same hospital.
+         */
         if (departmentDAO.departmentExistsByName(
                 normalizedName)) {
 
@@ -47,49 +53,68 @@ public class DepartmentController {
         HospitalDepartment department =
                 new HospitalDepartment();
 
-        department.setName(normalizedName);
-        department.setHeadDoctorId(
-                normalizedDoctorId
+        department.setName(
+                normalizedName
         );
+
+        department.setHeadDoctorId(
+                normalizedHeadDoctorId
+        );
+
         department.setCategory(
                 normalizedCategory
         );
-        department.set24x7(is24x7);
-        department.setActive(true);
+
+        department.set24x7(
+                is24x7
+        );
+
+        department.setActive(
+                true
+        );
 
         return departmentDAO.createDepartment(
                 department
         );
     }
 
-    // ---------------------------------------------------------
-    // GET ALL DEPARTMENTS
-    // ---------------------------------------------------------
-
+    /**
+     * Get all active departments.
+     */
     public List<HospitalDepartment>
     getAllDepartments() {
 
         return departmentDAO.getAllDepartments();
     }
 
-    // ---------------------------------------------------------
-    // GET DEPARTMENT
-    // ---------------------------------------------------------
-
+    /**
+     * Get one department by ID.
+     */
     public HospitalDepartment getDepartmentById(
             String departmentId) {
 
-        validateDepartmentId(departmentId);
-
-        return departmentDAO.getDepartmentById(
-                departmentId.trim()
+        validateDepartmentId(
+                departmentId
         );
+
+        HospitalDepartment department =
+                departmentDAO.getDepartmentById(
+                        departmentId.trim()
+                );
+
+        if (department == null) {
+
+            throw new IllegalArgumentException(
+                    "Department not found."
+            );
+        }
+
+        return department;
     }
 
-    // ---------------------------------------------------------
-    // UPDATE DEPARTMENT
-    // ---------------------------------------------------------
-
+    /**
+     * Update an existing department.
+     */
     public void updateDepartment(
             String departmentId,
             String name,
@@ -97,21 +122,28 @@ public class DepartmentController {
             String category,
             boolean is24x7) {
 
-        validateDepartmentId(departmentId);
-        validateName(name);
-        validateCategory(category);
+        validateDepartmentId(
+                departmentId
+        );
+
+        validateDepartmentInput(
+                name,
+                category
+        );
 
         String normalizedId =
                 departmentId.trim();
 
         String normalizedName =
-                normalize(name);
+                name.trim();
 
         String normalizedCategory =
-                normalize(category);
+                category.trim();
 
-        String normalizedDoctorId =
-                normalizeOptional(headDoctorId);
+        String normalizedHeadDoctorId =
+                normalizeOptionalValue(
+                        headDoctorId
+                );
 
         HospitalDepartment existing =
                 departmentDAO.getDepartmentById(
@@ -125,19 +157,22 @@ public class DepartmentController {
             );
         }
 
-        // Only check duplicate if the name changed
+        /*
+         * Check duplicate name only when
+         * the department name is actually changed.
+         */
         if (!existing.getName()
                 .equalsIgnoreCase(
                         normalizedName
+                )
+                && departmentDAO
+                .departmentExistsByName(
+                        normalizedName
                 )) {
 
-            if (departmentDAO.departmentExistsByName(
-                    normalizedName)) {
-
-                throw new IllegalArgumentException(
-                        "A department with this name already exists."
-                );
-            }
+            throw new IllegalArgumentException(
+                    "A department with this name already exists."
+            );
         }
 
         existing.setName(
@@ -145,7 +180,7 @@ public class DepartmentController {
         );
 
         existing.setHeadDoctorId(
-                normalizedDoctorId
+                normalizedHeadDoctorId
         );
 
         existing.setCategory(
@@ -161,38 +196,51 @@ public class DepartmentController {
         );
     }
 
-    // ---------------------------------------------------------
-    // REMOVE / DEACTIVATE
-    // ---------------------------------------------------------
-
+    /**
+     * Deactivate a department.
+     */
     public void removeDepartment(
             String departmentId) {
 
-        validateDepartmentId(departmentId);
+        validateDepartmentId(
+                departmentId
+        );
+
+        HospitalDepartment department =
+                departmentDAO.getDepartmentById(
+                        departmentId.trim()
+                );
+
+        if (department == null) {
+
+            throw new IllegalArgumentException(
+                    "Department not found."
+            );
+        }
 
         departmentDAO.deactivateDepartment(
                 departmentId.trim()
         );
     }
 
-    // ---------------------------------------------------------
-    // REACTIVATE
-    // ---------------------------------------------------------
-
+    /**
+     * Reactivate a department.
+     */
     public void reactivateDepartment(
             String departmentId) {
 
-        validateDepartmentId(departmentId);
+        validateDepartmentId(
+                departmentId
+        );
 
         departmentDAO.reactivateDepartment(
                 departmentId.trim()
         );
     }
 
-    // ---------------------------------------------------------
-    // EXISTS BY ID
-    // ---------------------------------------------------------
-
+    /**
+     * Check department ID.
+     */
     public boolean departmentExists(
             String departmentId) {
 
@@ -207,10 +255,9 @@ public class DepartmentController {
         );
     }
 
-    // ---------------------------------------------------------
-    // EXISTS BY NAME
-    // ---------------------------------------------------------
-
+    /**
+     * Check department name.
+     */
     public boolean departmentExistsByName(
             String name) {
 
@@ -225,24 +272,12 @@ public class DepartmentController {
         );
     }
 
-    // ---------------------------------------------------------
-    // VALIDATION
-    // ---------------------------------------------------------
-
-    private void validateDepartmentId(
-            String departmentId) {
-
-        if (departmentId == null
-                || departmentId.trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Department ID is required."
-            );
-        }
-    }
-
-    private void validateName(
-            String name) {
+    /**
+     * Validate department input.
+     */
+    private void validateDepartmentInput(
+            String name,
+            String category) {
 
         if (name == null
                 || name.trim().isEmpty()) {
@@ -258,10 +293,6 @@ public class DepartmentController {
                     "Department name must contain at least 2 characters."
             );
         }
-    }
-
-    private void validateCategory(
-            String category) {
 
         if (category == null
                 || category.trim().isEmpty()) {
@@ -272,24 +303,33 @@ public class DepartmentController {
         }
     }
 
-    private String normalize(
-            String value) {
+    /**
+     * Validate department ID.
+     */
+    private void validateDepartmentId(
+            String departmentId) {
 
-        return value.trim()
-                .replaceAll("\\s+", " ");
+        if (departmentId == null
+                || departmentId.trim().isEmpty()) {
+
+            throw new IllegalArgumentException(
+                    "Department ID is required."
+            );
+        }
     }
 
-    private String normalizeOptional(
+    /**
+     * Normalize optional fields.
+     */
+    private String normalizeOptionalValue(
             String value) {
 
-        if (value == null) {
-            return "";
+        if (value == null
+                || value.trim().isEmpty()) {
+
+            return null;
         }
 
-        String normalized =
-                value.trim()
-                        .replaceAll("\\s+", " ");
-
-        return normalized;
+        return value.trim();
     }
 }
