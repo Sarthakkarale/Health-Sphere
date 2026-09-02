@@ -1,5 +1,9 @@
 package com.healthsphere.view.Hospital;
 
+import com.healthsphere.controller.hospital.DoctorController;
+import com.healthsphere.model.DoctorProfile;
+import com.healthsphere.model.HospitalDoctorDetails;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -18,13 +22,14 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 public class DoctorManagementView {
 
     // =========================================================
-    // COLOR PALETTE (Modern Light Theme with Dark Sidebar)
+    // COLOR PALETTE
     // =========================================================
 
     private static final String PRIMARY_BLUE = "#170eca";
@@ -35,11 +40,9 @@ public class DoctorManagementView {
     private static final String CARD_BG = "#FFFFFF";
     private static final String BORDER = "#E2E8F0";
 
-    // Dark Sidebar Theme Colors
     private static final String SIDEBAR_BG = "#0F172A";
     private static final String SIDEBAR_HOVER = "#1E293B";
     private static final String SIDEBAR_TEXT_MUTED = "#94A3B8";
-    private static final String DARK_ACCENT = "#38BDF8";
     private static final String SIDEBAR_BORDER = "#1E293B";
 
     private static final String SUCCESS_GREEN = "#059669";
@@ -55,143 +58,499 @@ public class DoctorManagementView {
     private static final String PURPLE_LIGHT = "#F5F3FF";
 
     // =========================================================
-    // DATA MODELS & STATE MANAGEMENT
+    // CONTROLLER
+    // =========================================================
+
+    private final DoctorController doctorController;
+
+    // =========================================================
+    // UI MODEL
     // =========================================================
 
     public static class Doctor {
+
         private String id;
+        private String associationId;
         private String name;
         private String department;
         private String qualification;
         private String status;
 
-        public Doctor(String id, String name, String department, String qualification, String status) {
+        public Doctor(
+                String id,
+                String associationId,
+                String name,
+                String department,
+                String qualification,
+                String status) {
+
             this.id = id;
+            this.associationId = associationId;
             this.name = name;
             this.department = department;
             this.qualification = qualification;
             this.status = status;
         }
 
-        public String getId() { return id; }
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-        public String getDepartment() { return department; }
-        public void setDepartment(String department) { this.department = department; }
-        public String getQualification() { return qualification; }
-        public void setQualification(String qualification) { this.qualification = qualification; }
-        public String getStatus() { return status; }
-        public void setStatus(String status) { this.status = status; }
+        public String getId() {
+            return id;
+        }
+
+        public String getAssociationId() {
+            return associationId;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getDepartment() {
+            return department;
+        }
+
+        public void setDepartment(String department) {
+            this.department = department;
+        }
+
+        public String getQualification() {
+            return qualification;
+        }
+
+        public void setQualification(String qualification) {
+            this.qualification = qualification;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
 
         public String getInitials() {
-            if (name == null || name.isEmpty()) return "DR";
-            String cleanName = name.replace("Dr. ", "").trim();
-            String[] parts = cleanName.split("\\s+");
-            if (parts.length >= 2) {
-                return ("" + parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
-            } else if (parts.length == 1 && !parts[0].isEmpty()) {
-                return ("" + parts[0].charAt(0)).toUpperCase();
+
+            if (name == null
+                    || name.trim().isEmpty()) {
+
+                return "DR";
             }
+
+            String cleanName =
+                    name.replace("Dr. ", "")
+                            .replace("Dr.", "")
+                            .trim();
+
+            String[] parts =
+                    cleanName.split("\\s+");
+
+            if (parts.length >= 2) {
+
+                return (
+                        ""
+                                + parts[0].charAt(0)
+                                + parts[1].charAt(0)
+                ).toUpperCase();
+            }
+
+            if (parts.length == 1
+                    && !parts[0].isEmpty()) {
+
+                return (
+                        ""
+                                + parts[0].charAt(0)
+                ).toUpperCase();
+            }
+
             return "DR";
         }
     }
 
-    private final ObservableList<Doctor> masterDoctorList = FXCollections.observableArrayList();
+    // =========================================================
+    // DOCTOR PROFILE ITEM
+    // =========================================================
+
+    /*
+     * This class is used only by the Add Doctor ComboBox.
+     *
+     * It keeps the complete DoctorProfile internally,
+     * while showing a readable doctor name and email
+     * to the Hospital Administrator.
+     */
+    private static class DoctorProfileItem {
+
+        private final DoctorProfile profile;
+
+        public DoctorProfileItem(
+                DoctorProfile profile) {
+
+            this.profile = profile;
+        }
+
+        public DoctorProfile getProfile() {
+
+            return profile;
+        }
+
+        @Override
+        public String toString() {
+
+            if (profile == null) {
+                return "Unknown Doctor";
+            }
+
+            String firstName =
+                    profile.getFirstName() == null
+                            ? ""
+                            : profile.getFirstName().trim();
+
+            String lastName =
+                    profile.getLastName() == null
+                            ? ""
+                            : profile.getLastName().trim();
+
+            String fullName =
+                    (firstName + " " + lastName).trim();
+
+            if (fullName.isEmpty()) {
+                fullName = "Unknown Doctor";
+            }
+
+            String email =
+                    profile.getEmail() == null
+                            ? ""
+                            : profile.getEmail().trim();
+
+            if (!email.isEmpty()) {
+
+                return "Dr. "
+                        + fullName
+                        + " - "
+                        + email;
+            }
+
+            return "Dr. " + fullName;
+        }
+    }
+
+    // =========================================================
+    // DATA STATE
+    // =========================================================
+
+    private final ObservableList<Doctor> masterDoctorList =
+            FXCollections.observableArrayList();
+
     private FilteredList<Doctor> filteredDoctorList;
+
+    // =========================================================
+    // UI REFERENCES
+    // =========================================================
 
     private Label totalDocsValLabel;
     private Label activeDocsValLabel;
     private Label onLeaveDocsValLabel;
     private Label totalDeptValLabel;
     private Label doctorCountHeaderLabel;
+
     private VBox doctorRowsContainer;
 
     private TextField searchField;
+
     private ComboBox<String> departmentFilter;
+
     private ComboBox<String> statusFilter;
+
+    // =========================================================
+    // CONSTRUCTOR
+    // =========================================================
+
+    public DoctorManagementView() {
+
+        this.doctorController =
+                new DoctorController();
+    }
 
     // =========================================================
     // CREATE SCENE
     // =========================================================
 
     public Scene createScene(Stage stage) {
-        initSampleData();
 
-        BorderPane root = new BorderPane();
-        root.setStyle("-fx-background-color: " + LIGHT_BACKGROUND + ";");
+        loadDoctorData();
 
-        root.setLeft(createSidebar(stage));
-        root.setTop(createTopBar());
+        BorderPane root =
+                new BorderPane();
 
-        // Wrap main content in a ScrollPane for smooth responsiveness
-        ScrollPane scrollPane = new ScrollPane(createMainContent(stage));
+        root.setStyle(
+                "-fx-background-color: "
+                        + LIGHT_BACKGROUND
+                        + ";"
+        );
+
+        root.setLeft(
+                createSidebar(stage)
+        );
+
+        root.setTop(
+                createTopBar()
+        );
+
+        ScrollPane scrollPane =
+                new ScrollPane(
+                        createMainContent(stage)
+                );
+
         scrollPane.setFitToWidth(true);
-        scrollPane.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-padding: 0;");
 
-        root.setCenter(scrollPane);
+        scrollPane.setStyle(
+                "-fx-background-color: transparent;" +
+                "-fx-background: transparent;" +
+                "-fx-padding: 0;"
+        );
 
-        // Initial Filter and Dynamic UI refresh
+        root.setCenter(
+                scrollPane
+        );
+
         applyFiltersAndRefreshUI();
 
-        return new Scene(root, stage.getWidth(), stage.getHeight());
-    }
-
-    private void initSampleData() {
-        if (masterDoctorList.isEmpty()) {
-            masterDoctorList.add(new Doctor("DOC-1024", "Dr. Ananya Sharma", "Cardiology", "MD, Cardiology", "Active"));
-            masterDoctorList.add(new Doctor("DOC-1025", "Dr. Rahul Patil", "Neurology", "MD, Neurology", "Active"));
-            masterDoctorList.add(new Doctor("DOC-1026", "Dr. Priya Mehta", "Pediatrics", "MD, Pediatrics", "On Leave"));
-            masterDoctorList.add(new Doctor("DOC-1027", "Dr. Amit Joshi", "Orthopedics", "MS, Orthopedics", "Inactive"));
-        }
-        filteredDoctorList = new FilteredList<>(masterDoctorList, p -> true);
+        return new Scene(
+                root,
+                stage.getWidth(),
+                stage.getHeight()
+        );
     }
 
     // =========================================================
-    // DARK SIDEBAR (Standardized layout across views)
+    // LOAD REAL HOSPITAL DOCTOR DATA
+    // =========================================================
+
+    private void loadDoctorData() {
+
+        masterDoctorList.clear();
+
+        try {
+
+            List<HospitalDoctorDetails> doctors =
+                    doctorController
+                            .getAllDoctorDetails();
+
+            for (HospitalDoctorDetails details :
+                    doctors) {
+
+                if (details == null) {
+                    continue;
+                }
+
+                String doctorName =
+                        details.getFullName();
+
+                if (doctorName == null
+                        || doctorName.trim().isEmpty()) {
+
+                    doctorName =
+                            "Unknown Doctor";
+
+                } else if (
+                        !doctorName
+                                .trim()
+                                .startsWith("Dr.")
+                ) {
+
+                    doctorName =
+                            "Dr. "
+                                    + doctorName.trim();
+                }
+
+                String department =
+                        details.getDepartmentId();
+
+                if (department == null
+                        || department.trim().isEmpty()) {
+
+                    department =
+                            "Unassigned";
+                }
+
+                String qualification =
+                        details.getQualification();
+
+                if (qualification == null
+                        || qualification.trim().isEmpty()) {
+
+                    qualification =
+                            "Not Specified";
+                }
+
+                String status =
+                        details.getStatus();
+
+                if (status == null
+                        || status.trim().isEmpty()) {
+
+                    status =
+                            "Inactive";
+                }
+
+                masterDoctorList.add(
+                        new Doctor(
+                                details.getDoctorId(),
+                                details.getAssociationId(),
+                                doctorName,
+                                department,
+                                qualification,
+                                status
+                        )
+                );
+            }
+
+        } catch (Exception e) {
+
+            showAlert(
+                    "Unable to Load Doctors",
+                    getRootMessage(e)
+            );
+        }
+
+        filteredDoctorList =
+                new FilteredList<>(
+                        masterDoctorList,
+                        doctor -> true
+                );
+    }
+
+    // =========================================================
+    // DARK SIDEBAR
     // =========================================================
 
     private VBox createSidebar(Stage stage) {
 
-        VBox sidebar = new VBox(6);
+        VBox sidebar =
+                new VBox(6);
+
         sidebar.setPrefWidth(240);
-        sidebar.setPadding(new Insets(24, 16, 20, 16));
+
+        sidebar.setPadding(
+                new Insets(
+                        24,
+                        16,
+                        20,
+                        16
+                )
+        );
 
         sidebar.setStyle(
-                "-fx-background-color: " + SIDEBAR_BG + ";" +
-                "-fx-border-color: " + SIDEBAR_BORDER + ";" +
+                "-fx-background-color: "
+                        + SIDEBAR_BG
+                        + ";" +
+                "-fx-border-color: "
+                        + SIDEBAR_BORDER
+                        + ";" +
                 "-fx-border-width: 0 1 0 0;"
         );
 
+        // =====================================================
         // LOGO
-        VBox logoBox = new VBox(2);
-        logoBox.setPadding(new Insets(0, 8, 24, 8));
+        // =====================================================
 
-        Label logo = new Label("Health-Sphere");
+        VBox logoBox =
+                new VBox(2);
+
+        logoBox.setPadding(
+                new Insets(
+                        0,
+                        8,
+                        24,
+                        8
+                )
+        );
+
+        Label logo =
+                new Label("Health-Sphere");
+
         logo.setStyle(
                 "-fx-font-size: 22px;" +
                 "-fx-font-weight: 800;" +
                 "-fx-text-fill: #FFFFFF;"
         );
 
-        Label subtitle = new Label("SMART HEALTHCARE");
+        Label subtitle =
+                new Label("SMART HEALTHCARE");
+
         subtitle.setStyle(
                 "-fx-font-size: 9px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-letter-spacing: 1px;" +
-                "-fx-text-fill: " + SIDEBAR_TEXT_MUTED + ";"
+                "-fx-text-fill: "
+                        + SIDEBAR_TEXT_MUTED
+                        + ";"
         );
 
-        logoBox.getChildren().addAll(logo, subtitle);
-        sidebar.getChildren().add(logoBox);
+        logoBox.getChildren().addAll(
+                logo,
+                subtitle
+        );
 
-        // NAVIGATION BUTTONS (Doctors Selected)
-        Button dashboardButton = createNavigationButton("▦", "Dashboard", false);
-        Button doctorButton = createNavigationButton("♙", "Doctors", true);
-        Button departmentButton = createNavigationButton("✚", "Departments", false);
-        Button bedButton = createNavigationButton("▥", "Beds", false);
-        Button appointmentButton = createNavigationButton("▣", "Appointments", false);
-        Button analyticsButton = createNavigationButton("◈", "Analytics", false);
-        Button settingsButton = createNavigationButton("⚙", "Hospital Settings", false);
+        sidebar.getChildren().add(
+                logoBox
+        );
+
+        // =====================================================
+        // NAVIGATION
+        // =====================================================
+
+        Button dashboardButton =
+                createNavigationButton(
+                        "▦",
+                        "Dashboard",
+                        false
+                );
+
+        Button doctorButton =
+                createNavigationButton(
+                        "♙",
+                        "Doctors",
+                        true
+                );
+
+        Button departmentButton =
+                createNavigationButton(
+                        "✚",
+                        "Departments",
+                        false
+                );
+
+        Button bedButton =
+                createNavigationButton(
+                        "▥",
+                        "Beds",
+                        false
+                );
+
+        Button appointmentButton =
+                createNavigationButton(
+                        "▣",
+                        "Appointments",
+                        false
+                );
+
+        Button analyticsButton =
+                createNavigationButton(
+                        "◈",
+                        "Analytics",
+                        false
+                );
+
+        Button settingsButton =
+                createNavigationButton(
+                        "⚙",
+                        "Hospital Settings",
+                        false
+                );
 
         sidebar.getChildren().addAll(
                 dashboardButton,
@@ -203,67 +562,236 @@ public class DoctorManagementView {
                 settingsButton
         );
 
-        // DIRECT NAVIGATION
-        dashboardButton.setOnAction(event -> stage.setScene(new HospitalDashboardView().createScene(stage)));
-        departmentButton.setOnAction(event -> stage.setScene(new DepartmentManagementView().createScene(stage)));
-        bedButton.setOnAction(event -> stage.setScene(new BedManagementView().createScene(stage)));
-        appointmentButton.setOnAction(event -> stage.setScene(new AppointmentManagementView().createScene(stage)));
-        analyticsButton.setOnAction(event -> stage.setScene(new HospitalAnalyticsView().createScene(stage)));
-        settingsButton.setOnAction(event -> stage.setScene(new HospitalProfileSettingsView().createScene(stage)));
+        // =====================================================
+        // NAVIGATION ACTIONS
+        // =====================================================
 
+        dashboardButton.setOnAction(
+                event ->
+                        stage.setScene(
+                                new HospitalDashboardView()
+                                        .createScene(stage)
+                        )
+        );
+
+        departmentButton.setOnAction(
+                event ->
+                        stage.setScene(
+                                new DepartmentManagementView()
+                                        .createScene(stage)
+                        )
+        );
+
+        bedButton.setOnAction(
+                event ->
+                        stage.setScene(
+                                new BedManagementView()
+                                        .createScene(stage)
+                        )
+        );
+
+        appointmentButton.setOnAction(
+                event ->
+                        stage.setScene(
+                                new AppointmentManagementView()
+                                        .createScene(stage)
+                        )
+        );
+
+        analyticsButton.setOnAction(
+                event ->
+                        stage.setScene(
+                                new HospitalAnalyticsView()
+                                        .createScene(stage)
+                        )
+        );
+
+        settingsButton.setOnAction(
+                event ->
+                        stage.setScene(
+                                new HospitalProfileSettingsView()
+                                        .createScene(stage)
+                        )
+        );
+
+        // =====================================================
         // SPACER
-        Region spacer = new Region();
-        VBox.setVgrow(spacer, Priority.ALWAYS);
-        sidebar.getChildren().add(spacer);
+        // =====================================================
 
-        // HELP & LOGOUT
-        Button helpButton = createNavigationButton("?", "Help Center", false);
-        Button logoutButton = createNavigationButton("↪", "Logout", false);
+        Region spacer =
+                new Region();
 
-        helpButton.setOnAction(e -> showAlert("Help Center", "For assistance, please contact support@healthsphere.com"));
-        logoutButton.setOnAction(e -> showAlert("Logout", "Logged out successfully."));
+        VBox.setVgrow(
+                spacer,
+                Priority.ALWAYS
+        );
 
-        sidebar.getChildren().addAll(helpButton, logoutButton);
+        sidebar.getChildren().add(
+                spacer
+        );
+
+        // =====================================================
+        // HELP / LOGOUT
+        // =====================================================
+
+        Button helpButton =
+                createNavigationButton(
+                        "?",
+                        "Help Center",
+                        false
+                );
+
+        Button logoutButton =
+                createNavigationButton(
+                        "↪",
+                        "Logout",
+                        false
+                );
+
+        helpButton.setOnAction(
+                e ->
+                        showAlert(
+                                "Help Center",
+                                "For assistance, please contact "
+                                        + "support@healthsphere.com"
+                        )
+        );
+
+        logoutButton.setOnAction(
+                e ->
+                        showAlert(
+                                "Logout",
+                                "Logged out successfully."
+                        )
+        );
+
+        sidebar.getChildren().addAll(
+                helpButton,
+                logoutButton
+        );
 
         return sidebar;
     }
 
-    private Button createNavigationButton(String icon, String text, boolean selected) {
+    // =========================================================
+    // NAVIGATION BUTTON
+    // =========================================================
 
-        Button button = new Button();
+    private Button createNavigationButton(
+            String icon,
+            String text,
+            boolean selected) {
 
-        Label iconLabel = new Label(icon);
+        Button button =
+                new Button();
+
+        Label iconLabel =
+                new Label(icon);
+
         iconLabel.setStyle(
                 "-fx-font-size: 16px;" +
-                "-fx-text-fill: " + (selected ? "#FFFFFF" : SIDEBAR_TEXT_MUTED) + ";"
+                "-fx-text-fill: "
+                        + (
+                        selected
+                                ? "#FFFFFF"
+                                : SIDEBAR_TEXT_MUTED
+                )
+                        + ";"
         );
 
-        Label textLabel = new Label(text);
+        Label textLabel =
+                new Label(text);
+
         textLabel.setStyle(
                 "-fx-font-size: 13px;" +
-                "-fx-font-weight: " + (selected ? "bold" : "500") + ";" +
-                "-fx-text-fill: " + (selected ? "#FFFFFF" : SIDEBAR_TEXT_MUTED) + ";"
+                "-fx-font-weight: "
+                        + (
+                        selected
+                                ? "bold"
+                                : "500"
+                )
+                        + ";" +
+                "-fx-text-fill: "
+                        + (
+                        selected
+                                ? "#FFFFFF"
+                                : SIDEBAR_TEXT_MUTED
+                )
+                        + ";"
         );
 
-        HBox content = new HBox(12);
-        content.setAlignment(Pos.CENTER_LEFT);
-        content.getChildren().addAll(iconLabel, textLabel);
+        HBox content =
+                new HBox(12);
 
-        button.setGraphic(content);
-        button.setMaxWidth(Double.MAX_VALUE);
+        content.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        content.getChildren().addAll(
+                iconLabel,
+                textLabel
+        );
+
+        button.setGraphic(
+                content
+        );
+
+        button.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
         button.setPrefHeight(42);
-        button.setAlignment(Pos.CENTER_LEFT);
-        button.setPadding(new Insets(0, 12, 0, 12));
 
-        String baseStyle = "-fx-background-radius: 8; -fx-cursor: hand;";
+        button.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        button.setPadding(
+                new Insets(
+                        0,
+                        12,
+                        0,
+                        12
+                )
+        );
+
+        String baseStyle =
+                "-fx-background-radius: 8;" +
+                "-fx-cursor: hand;";
 
         if (selected) {
-            button.setStyle(baseStyle + "-fx-background-color: " + PRIMARY_BLUE + ";");
-        } else {
-            button.setStyle(baseStyle + "-fx-background-color: transparent;");
 
-            button.setOnMouseEntered(e -> button.setStyle(baseStyle + "-fx-background-color: " + SIDEBAR_HOVER + ";"));
-            button.setOnMouseExited(e -> button.setStyle(baseStyle + "-fx-background-color: transparent;"));
+            button.setStyle(
+                    baseStyle +
+                    "-fx-background-color: "
+                            + PRIMARY_BLUE
+                            + ";"
+            );
+
+        } else {
+
+            button.setStyle(
+                    baseStyle +
+                    "-fx-background-color: transparent;"
+            );
+
+            button.setOnMouseEntered(
+                    e ->
+                            button.setStyle(
+                                    baseStyle +
+                                    "-fx-background-color: "
+                                            + SIDEBAR_HOVER
+                                            + ";"
+                            )
+            );
+
+            button.setOnMouseExited(
+                    e ->
+                            button.setStyle(
+                                    baseStyle +
+                                    "-fx-background-color: transparent;"
+                            )
+            );
         }
 
         return button;
@@ -275,77 +803,222 @@ public class DoctorManagementView {
 
     private HBox createTopBar() {
 
-        HBox topBar = new HBox(16);
-        topBar.setAlignment(Pos.CENTER_LEFT);
-        topBar.setPadding(new Insets(12, 28, 12, 28));
+        HBox topBar =
+                new HBox(16);
+
+        topBar.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        topBar.setPadding(
+                new Insets(
+                        12,
+                        28,
+                        12,
+                        28
+                )
+        );
 
         topBar.setStyle(
-                "-fx-background-color: " + CARD_BG + ";" +
-                "-fx-border-color: " + BORDER + ";" +
+                "-fx-background-color: "
+                        + CARD_BG
+                        + ";" +
+                "-fx-border-color: "
+                        + BORDER
+                        + ";" +
                 "-fx-border-width: 0 0 1 0;"
         );
 
-        Label searchIcon = new Label("⌕");
-        searchIcon.setStyle("-fx-font-size: 18px; -fx-text-fill: " + SECONDARY_TEXT + ";");
+        Label searchIcon =
+                new Label("⌕");
 
-        TextField topSearchField = new TextField();
-        topSearchField.setPromptText("Search doctors, departments...");
+        searchIcon.setStyle(
+                "-fx-font-size: 18px;" +
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+        );
+
+        TextField topSearchField =
+                new TextField();
+
+        topSearchField.setPromptText(
+                "Search doctors, departments..."
+        );
+
         topSearchField.setStyle(
                 "-fx-background-color: transparent;" +
                 "-fx-prompt-text-fill: #94A3B8;" +
                 "-fx-font-size: 13px;" +
-                "-fx-text-inner-color: " + DARK_TEXT + ";"
+                "-fx-text-inner-color: "
+                        + DARK_TEXT
+                        + ";"
         );
-        topSearchField.textProperty().addListener((obs, oldV, newV) -> {
-            if (searchField != null) {
-                searchField.setText(newV);
-            }
-        });
-        HBox.setHgrow(topSearchField, Priority.ALWAYS);
 
-        HBox searchBox = new HBox(8);
-        searchBox.setAlignment(Pos.CENTER_LEFT);
+        topSearchField.textProperty()
+                .addListener(
+                        (obs, oldValue, newValue) -> {
+
+                            if (searchField != null) {
+
+                                searchField.setText(
+                                        newValue
+                                );
+                            }
+                        }
+                );
+
+        HBox.setHgrow(
+                topSearchField,
+                Priority.ALWAYS
+        );
+
+        HBox searchBox =
+                new HBox(8);
+
+        searchBox.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
         searchBox.setPrefWidth(360);
+
         searchBox.setPrefHeight(40);
-        searchBox.setPadding(new Insets(0, 12, 0, 12));
+
+        searchBox.setPadding(
+                new Insets(
+                        0,
+                        12,
+                        0,
+                        12
+                )
+        );
+
         searchBox.setStyle(
-                "-fx-background-color: " + LIGHT_BACKGROUND + ";" +
+                "-fx-background-color: "
+                        + LIGHT_BACKGROUND
+                        + ";" +
                 "-fx-background-radius: 8;" +
-                "-fx-border-color: " + BORDER + ";" +
+                "-fx-border-color: "
+                        + BORDER
+                        + ";" +
                 "-fx-border-radius: 8;"
         );
-        searchBox.getChildren().addAll(searchIcon, topSearchField);
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        searchBox.getChildren().addAll(
+                searchIcon,
+                topSearchField
+        );
 
-        Label notification = new Label("🔔");
-        notification.setStyle("-fx-font-size: 16px; -fx-cursor: hand; -fx-text-fill: " + SECONDARY_TEXT + ";");
-        notification.setOnMouseClicked(e -> showAlert("Notifications", "You have 0 new notifications."));
+        Region spacer =
+                new Region();
 
-        Label settings = new Label("⚙");
-        settings.setStyle("-fx-font-size: 18px; -fx-cursor: hand; -fx-text-fill: " + SECONDARY_TEXT + ";");
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
 
-        Label administrator = new Label("Hospital Administrator");
-        administrator.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: " + DARK_TEXT + ";");
+        Label notification =
+                new Label("🔔");
 
-        Label role = new Label("HOSPITAL ADMIN");
-        role.setStyle("-fx-font-size: 9px; -fx-font-weight: bold; -fx-text-fill: " + SECONDARY_TEXT + ";");
+        notification.setStyle(
+                "-fx-font-size: 16px;" +
+                "-fx-cursor: hand;" +
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+        );
 
-        VBox userInfo = new VBox(2);
-        userInfo.setAlignment(Pos.CENTER_RIGHT);
-        userInfo.getChildren().addAll(administrator, role);
+        notification.setOnMouseClicked(
+                e ->
+                        showAlert(
+                                "Notifications",
+                                "You have 0 new notifications."
+                        )
+        );
 
-        Circle avatar = new Circle(18);
-        avatar.setFill(Color.web(PRIMARY_LIGHT));
-        avatar.setStroke(Color.web(BORDER));
+        Label settings =
+                new Label("⚙");
 
-        Label avatarText = new Label("HA");
-        avatarText.setStyle("-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: " + PRIMARY_BLUE + ";");
+        settings.setStyle(
+                "-fx-font-size: 18px;" +
+                "-fx-cursor: hand;" +
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+        );
 
-        StackPane avatarBox = new StackPane(avatar, avatarText);
+        Label administrator =
+                new Label(
+                        "Hospital Administrator"
+                );
 
-        topBar.getChildren().addAll(searchBox, spacer, notification, settings, userInfo, avatarBox);
+        administrator.setStyle(
+                "-fx-font-size: 13px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: "
+                        + DARK_TEXT
+                        + ";"
+        );
+
+        Label role =
+                new Label("HOSPITAL ADMIN");
+
+        role.setStyle(
+                "-fx-font-size: 9px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+        );
+
+        VBox userInfo =
+                new VBox(2);
+
+        userInfo.setAlignment(
+                Pos.CENTER_RIGHT
+        );
+
+        userInfo.getChildren().addAll(
+                administrator,
+                role
+        );
+
+        Circle avatar =
+                new Circle(18);
+
+        avatar.setFill(
+                Color.web(PRIMARY_LIGHT)
+        );
+
+        avatar.setStroke(
+                Color.web(BORDER)
+        );
+
+        Label avatarText =
+                new Label("HA");
+
+        avatarText.setStyle(
+                "-fx-font-size: 11px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: "
+                        + PRIMARY_BLUE
+                        + ";"
+        );
+
+        StackPane avatarBox =
+                new StackPane(
+                        avatar,
+                        avatarText
+                );
+
+        topBar.getChildren().addAll(
+                searchBox,
+                spacer,
+                notification,
+                settings,
+                userInfo,
+                avatarBox
+        );
 
         return topBar;
     }
@@ -354,11 +1027,21 @@ public class DoctorManagementView {
     // MAIN CONTENT
     // =========================================================
 
-    private VBox createMainContent(Stage stage) {
+    private VBox createMainContent(
+            Stage stage) {
 
-        VBox content = new VBox(24);
-        content.setPadding(new Insets(28));
-        content.setStyle("-fx-background-color: " + LIGHT_BACKGROUND + ";");
+        VBox content =
+                new VBox(24);
+
+        content.setPadding(
+                new Insets(28)
+        );
+
+        content.setStyle(
+                "-fx-background-color: "
+                        + LIGHT_BACKGROUND
+                        + ";"
+        );
 
         content.getChildren().addAll(
                 createPageHeader(stage),
@@ -374,44 +1057,112 @@ public class DoctorManagementView {
     // PAGE HEADER
     // =========================================================
 
-    private HBox createPageHeader(Stage stage) {
+    private HBox createPageHeader(
+            Stage stage) {
 
-        HBox header = new HBox();
-        header.setAlignment(Pos.CENTER_LEFT);
+        HBox header =
+                new HBox();
 
-        VBox titleBox = new VBox(4);
+        header.setAlignment(
+                Pos.CENTER_LEFT
+        );
 
-        Label title = new Label("Doctor Management");
-        title.setStyle("-fx-font-size: 26px; -fx-font-weight: 800; -fx-text-fill: " + DARK_TEXT + ";");
+        VBox titleBox =
+                new VBox(4);
 
-        Label subtitle = new Label("Manage doctors, departments and availability");
-        subtitle.setStyle("-fx-font-size: 13px; -fx-text-fill: " + SECONDARY_TEXT + ";");
+        Label title =
+                new Label(
+                        "Doctor Management"
+                );
 
-        titleBox.getChildren().addAll(title, subtitle);
+        title.setStyle(
+                "-fx-font-size: 26px;" +
+                "-fx-font-weight: 800;" +
+                "-fx-text-fill: "
+                        + DARK_TEXT
+                        + ";"
+        );
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Label subtitle =
+                new Label(
+                        "Manage doctors, departments and availability"
+                );
 
-        Button addDoctor = new Button("＋ Add Doctor");
+        subtitle.setStyle(
+                "-fx-font-size: 13px;" +
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+        );
+
+        titleBox.getChildren().addAll(
+                title,
+                subtitle
+        );
+
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        Button addDoctor =
+                new Button(
+                        "＋ Add Doctor"
+                );
+
         addDoctor.setPrefHeight(42);
-        addDoctor.setPadding(new Insets(0, 20, 0, 20));
 
-        String actionBtnStyle = 
-                "-fx-background-color: " + PRIMARY_BLUE + ";" +
+        addDoctor.setPadding(
+                new Insets(
+                        0,
+                        20,
+                        0,
+                        20
+                )
+        );
+
+        String actionBtnStyle =
+                "-fx-background-color: "
+                        + PRIMARY_BLUE
+                        + ";" +
                 "-fx-text-fill: white;" +
                 "-fx-background-radius: 8;" +
                 "-fx-font-size: 13px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-cursor: hand;";
 
-        addDoctor.setStyle(actionBtnStyle);
-        addDoctor.setOnMouseEntered(e -> addDoctor.setStyle(actionBtnStyle + "-fx-background-color: #1550B0;"));
-        addDoctor.setOnMouseExited(e -> addDoctor.setStyle(actionBtnStyle));
+        addDoctor.setStyle(
+                actionBtnStyle
+        );
 
-        // Add Doctor Action
-        addDoctor.setOnAction(e -> showAddDoctorDialog(stage));
+        addDoctor.setOnMouseEntered(
+                e ->
+                        addDoctor.setStyle(
+                                actionBtnStyle +
+                                "-fx-background-color: #1550B0;"
+                        )
+        );
 
-        header.getChildren().addAll(titleBox, spacer, addDoctor);
+        addDoctor.setOnMouseExited(
+                e ->
+                        addDoctor.setStyle(
+                                actionBtnStyle
+                        )
+        );
+
+        addDoctor.setOnAction(
+                e ->
+                        showAddDoctorDialog(stage)
+        );
+
+        header.getChildren().addAll(
+                titleBox,
+                spacer,
+                addDoctor
+        );
 
         return header;
     }
@@ -422,64 +1173,189 @@ public class DoctorManagementView {
 
     private HBox createStatistics() {
 
-        HBox statistics = new HBox(18);
+        HBox statistics =
+                new HBox(18);
 
-        VBox totalCard = createStatisticCard("Total Doctors", "0", "Across all departments", "♙", PRIMARY_BLUE, PRIMARY_LIGHT);
-        VBox activeCard = createStatisticCard("Active Doctors", "0", "Currently available", "✓", SUCCESS_GREEN, SUCCESS_LIGHT);
-        VBox leaveCard = createStatisticCard("On Leave", "0", "Currently unavailable", "◷", WARNING_ORANGE, WARNING_LIGHT);
-        VBox deptCard = createStatisticCard("Departments", "0", "Medical departments", "✚", PURPLE, PURPLE_LIGHT);
+        VBox totalCard =
+                createStatisticCard(
+                        "Total Doctors",
+                        "0",
+                        "Across all departments",
+                        "♙",
+                        PRIMARY_BLUE,
+                        PRIMARY_LIGHT
+                );
 
-        totalDocsValLabel = (Label) totalCard.getChildren().get(1);
-        activeDocsValLabel = (Label) activeCard.getChildren().get(1);
-        onLeaveDocsValLabel = (Label) leaveCard.getChildren().get(1);
-        totalDeptValLabel = (Label) deptCard.getChildren().get(1);
+        VBox activeCard =
+                createStatisticCard(
+                        "Active Doctors",
+                        "0",
+                        "Currently available",
+                        "✓",
+                        SUCCESS_GREEN,
+                        SUCCESS_LIGHT
+                );
 
-        statistics.getChildren().addAll(totalCard, activeCard, leaveCard, deptCard);
+        VBox leaveCard =
+                createStatisticCard(
+                        "On Leave",
+                        "0",
+                        "Currently unavailable",
+                        "◷",
+                        WARNING_ORANGE,
+                        WARNING_LIGHT
+                );
 
-        for (javafx.scene.Node node : statistics.getChildren()) {
-            HBox.setHgrow(node, Priority.ALWAYS);
+        VBox deptCard =
+                createStatisticCard(
+                        "Departments",
+                        "0",
+                        "Medical departments",
+                        "✚",
+                        PURPLE,
+                        PURPLE_LIGHT
+                );
+
+        totalDocsValLabel =
+                (Label) totalCard
+                        .getChildren()
+                        .get(1);
+
+        activeDocsValLabel =
+                (Label) activeCard
+                        .getChildren()
+                        .get(1);
+
+        onLeaveDocsValLabel =
+                (Label) leaveCard
+                        .getChildren()
+                        .get(1);
+
+        totalDeptValLabel =
+                (Label) deptCard
+                        .getChildren()
+                        .get(1);
+
+        statistics.getChildren().addAll(
+                totalCard,
+                activeCard,
+                leaveCard,
+                deptCard
+        );
+
+        for (javafx.scene.Node node :
+                statistics.getChildren()) {
+
+            HBox.setHgrow(
+                    node,
+                    Priority.ALWAYS
+            );
         }
 
         return statistics;
     }
 
-    private VBox createStatisticCard(String title, String value, String subtitle, String icon, String color, String bgColor) {
+    private VBox createStatisticCard(
+            String title,
+            String value,
+            String subtitle,
+            String icon,
+            String color,
+            String bgColor) {
 
-        VBox card = new VBox(10);
-        card.setPadding(new Insets(20));
+        VBox card =
+                new VBox(10);
+
+        card.setPadding(
+                new Insets(20)
+        );
+
         card.setPrefHeight(120);
 
         applyCardStyle(card);
 
-        HBox top = new HBox();
-        top.setAlignment(Pos.CENTER_LEFT);
+        HBox top =
+                new HBox();
 
-        Label titleLabel = new Label(title);
-        titleLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: " + SECONDARY_TEXT + ";");
+        top.setAlignment(
+                Pos.CENTER_LEFT
+        );
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Label titleLabel =
+                new Label(title);
 
-        Label iconLabel = new Label(icon);
-        iconLabel.setPrefSize(36, 36);
-        iconLabel.setAlignment(Pos.CENTER);
+        titleLabel.setStyle(
+                "-fx-font-size: 12px;" +
+                "-fx-font-weight: 600;" +
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+        );
+
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        Label iconLabel =
+                new Label(icon);
+
+        iconLabel.setPrefSize(
+                36,
+                36
+        );
+
+        iconLabel.setAlignment(
+                Pos.CENTER
+        );
+
         iconLabel.setStyle(
-                "-fx-background-color: " + bgColor + ";" +
+                "-fx-background-color: "
+                        + bgColor
+                        + ";" +
                 "-fx-background-radius: 8;" +
-                "-fx-text-fill: " + color + ";" +
+                "-fx-text-fill: "
+                        + color
+                        + ";" +
                 "-fx-font-size: 16px;" +
                 "-fx-font-weight: bold;"
         );
 
-        top.getChildren().addAll(titleLabel, spacer, iconLabel);
+        top.getChildren().addAll(
+                titleLabel,
+                spacer,
+                iconLabel
+        );
 
-        Label valueLabel = new Label(value);
-        valueLabel.setStyle("-fx-font-size: 26px; -fx-font-weight: 800; -fx-text-fill: " + DARK_TEXT + ";");
+        Label valueLabel =
+                new Label(value);
 
-        Label subtitleLabel = new Label(subtitle);
-        subtitleLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: " + SECONDARY_TEXT + ";");
+        valueLabel.setStyle(
+                "-fx-font-size: 26px;" +
+                "-fx-font-weight: 800;" +
+                "-fx-text-fill: "
+                        + DARK_TEXT
+                        + ";"
+        );
 
-        card.getChildren().addAll(top, valueLabel, subtitleLabel);
+        Label subtitleLabel =
+                new Label(subtitle);
+
+        subtitleLabel.setStyle(
+                "-fx-font-size: 11px;" +
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+        );
+
+        card.getChildren().addAll(
+                top,
+                valueLabel,
+                subtitleLabel
+        );
 
         return card;
     }
@@ -488,28 +1364,55 @@ public class DoctorManagementView {
     // SEARCH AND FILTERS
     // =========================================================
 
-    private HBox createSearchAndFilters(Stage stage) {
+    private HBox createSearchAndFilters(
+            Stage stage) {
 
-        HBox container = new HBox(12);
-        container.setAlignment(Pos.CENTER_LEFT);
-        container.setPadding(new Insets(16));
+        HBox container =
+                new HBox(12);
+
+        container.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        container.setPadding(
+                new Insets(16)
+        );
+
         applyCardStyle(container);
 
-        searchField = new TextField();
-        searchField.setPromptText("Search by doctor name...");
+        searchField =
+                new TextField();
+
+        searchField.setPromptText(
+                "Search by doctor name..."
+        );
+
         searchField.setPrefHeight(40);
+
         searchField.setPrefWidth(320);
+
         searchField.setStyle(
-                "-fx-background-color: " + LIGHT_BACKGROUND + ";" +
-                "-fx-border-color: " + BORDER + ";" +
+                "-fx-background-color: "
+                        + LIGHT_BACKGROUND
+                        + ";" +
+                "-fx-border-color: "
+                        + BORDER
+                        + ";" +
                 "-fx-border-radius: 8;" +
                 "-fx-background-radius: 8;" +
                 "-fx-padding: 0 14;" +
                 "-fx-font-size: 12px;"
         );
-        searchField.textProperty().addListener((obs, oldV, newV) -> applyFiltersAndRefreshUI());
 
-        departmentFilter = new ComboBox<>();
+        searchField.textProperty()
+                .addListener(
+                        (obs, oldValue, newValue) ->
+                                applyFiltersAndRefreshUI()
+                );
+
+        departmentFilter =
+                new ComboBox<>();
+
         departmentFilter.getItems().addAll(
                 "All Departments",
                 "Cardiology",
@@ -518,59 +1421,138 @@ public class DoctorManagementView {
                 "Pediatrics",
                 "General Medicine"
         );
-        departmentFilter.setValue("All Departments");
-        departmentFilter.setPrefHeight(40);
-        departmentFilter.setStyle("-fx-font-size: 12px;");
-        departmentFilter.setOnAction(e -> applyFiltersAndRefreshUI());
 
-        statusFilter = new ComboBox<>();
+        departmentFilter.setValue(
+                "All Departments"
+        );
+
+        departmentFilter.setPrefHeight(40);
+
+        departmentFilter.setStyle(
+                "-fx-font-size: 12px;"
+        );
+
+        departmentFilter.setOnAction(
+                e ->
+                        applyFiltersAndRefreshUI()
+        );
+
+        statusFilter =
+                new ComboBox<>();
+
         statusFilter.getItems().addAll(
                 "All Status",
                 "Active",
                 "Inactive",
                 "On Leave"
         );
-        statusFilter.setValue("All Status");
+
+        statusFilter.setValue(
+                "All Status"
+        );
+
         statusFilter.setPrefHeight(40);
-        statusFilter.setStyle("-fx-font-size: 12px;");
-        statusFilter.setOnAction(e -> applyFiltersAndRefreshUI());
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        statusFilter.setStyle(
+                "-fx-font-size: 12px;"
+        );
 
-        Button filterButton = new Button("☷  Reset Filters");
+        statusFilter.setOnAction(
+                e ->
+                        applyFiltersAndRefreshUI()
+        );
+
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        Button filterButton =
+                new Button(
+                        "☷  Reset Filters"
+                );
+
         filterButton.setPrefHeight(40);
+
         filterButton.setStyle(
-                "-fx-background-color: " + CARD_BG + ";" +
-                "-fx-border-color: " + BORDER + ";" +
+                "-fx-background-color: "
+                        + CARD_BG
+                        + ";" +
+                "-fx-border-color: "
+                        + BORDER
+                        + ";" +
                 "-fx-border-radius: 8;" +
                 "-fx-background-radius: 8;" +
-                "-fx-text-fill: " + DARK_TEXT + ";" +
+                "-fx-text-fill: "
+                        + DARK_TEXT
+                        + ";" +
                 "-fx-font-size: 12px;" +
                 "-fx-font-weight: 600;" +
                 "-fx-cursor: hand;"
         );
-        filterButton.setOnAction(e -> {
-            searchField.clear();
-            departmentFilter.setValue("All Departments");
-            statusFilter.setValue("All Status");
-            applyFiltersAndRefreshUI();
-        });
 
-        Button exportButton = new Button("↓  Export");
+        filterButton.setOnAction(
+                e -> {
+
+                    searchField.clear();
+
+                    departmentFilter.setValue(
+                            "All Departments"
+                    );
+
+                    statusFilter.setValue(
+                            "All Status"
+                    );
+
+                    applyFiltersAndRefreshUI();
+                }
+        );
+
+        Button exportButton =
+                new Button(
+                        "↓  Export"
+                );
+
         exportButton.setPrefHeight(40);
-        exportButton.setPadding(new Insets(0, 16, 0, 16));
+
+        exportButton.setPadding(
+                new Insets(
+                        0,
+                        16,
+                        0,
+                        16
+                )
+        );
+
         exportButton.setStyle(
-                "-fx-background-color: " + PRIMARY_LIGHT + ";" +
-                "-fx-text-fill: " + PRIMARY_BLUE + ";" +
+                "-fx-background-color: "
+                        + PRIMARY_LIGHT
+                        + ";" +
+                "-fx-text-fill: "
+                        + PRIMARY_BLUE
+                        + ";" +
                 "-fx-background-radius: 8;" +
                 "-fx-font-size: 12px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-cursor: hand;"
         );
-        exportButton.setOnAction(e -> exportDoctorDataToCSV(stage));
 
-        container.getChildren().addAll(searchField, departmentFilter, statusFilter, spacer, filterButton, exportButton);
+        exportButton.setOnAction(
+                e ->
+                        exportDoctorDataToCSV(stage)
+        );
+
+        container.getChildren().addAll(
+                searchField,
+                departmentFilter,
+                statusFilter,
+                spacer,
+                filterButton,
+                exportButton
+        );
 
         return container;
     }
@@ -579,471 +1561,1820 @@ public class DoctorManagementView {
     // DOCTOR LIST
     // =========================================================
 
-    private VBox createDoctorList(Stage stage) {
+    private VBox createDoctorList(
+            Stage stage) {
 
-        VBox card = new VBox(0);
+        VBox card =
+                new VBox(0);
+
         applyCardStyle(card);
 
-        // Header
-        HBox header = new HBox();
-        header.setAlignment(Pos.CENTER_LEFT);
-        header.setPadding(new Insets(20, 24, 20, 24));
+        HBox header =
+                new HBox();
 
-        Label title = new Label("Doctors Directory");
-        title.setStyle("-fx-font-size: 16px; -fx-font-weight: 800; -fx-text-fill: " + DARK_TEXT + ";");
+        header.setAlignment(
+                Pos.CENTER_LEFT
+        );
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        header.setPadding(
+                new Insets(
+                        20,
+                        24,
+                        20,
+                        24
+                )
+        );
 
-        doctorCountHeaderLabel = new Label("0 Doctors");
-        doctorCountHeaderLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: " + SECONDARY_TEXT + ";");
+        Label title =
+                new Label(
+                        "Doctors Directory"
+                );
 
-        header.getChildren().addAll(title, spacer, doctorCountHeaderLabel);
-        card.getChildren().add(header);
+        title.setStyle(
+                "-fx-font-size: 16px;" +
+                "-fx-font-weight: 800;" +
+                "-fx-text-fill: "
+                        + DARK_TEXT
+                        + ";"
+        );
 
-        card.getChildren().add(new Separator());
+        Region spacer =
+                new Region();
 
-        // Column header
-        card.getChildren().add(createTableHeader());
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
 
-        card.getChildren().add(new Separator());
+        doctorCountHeaderLabel =
+                new Label(
+                        "0 Doctors"
+                );
 
-        // Rows Container
-        doctorRowsContainer = new VBox(0);
-        card.getChildren().add(doctorRowsContainer);
+        doctorCountHeaderLabel.setStyle(
+                "-fx-font-size: 12px;" +
+                "-fx-font-weight: 600;" +
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+        );
+
+        header.getChildren().addAll(
+                title,
+                spacer,
+                doctorCountHeaderLabel
+        );
+
+        card.getChildren().add(
+                header
+        );
+
+        card.getChildren().add(
+                new Separator()
+        );
+
+        card.getChildren().add(
+                createTableHeader()
+        );
+
+        card.getChildren().add(
+                new Separator()
+        );
+
+        doctorRowsContainer =
+                new VBox(0);
+
+        card.getChildren().add(
+                doctorRowsContainer
+        );
 
         return card;
     }
 
     private HBox createTableHeader() {
 
-        HBox header = new HBox();
-        header.setAlignment(Pos.CENTER_LEFT);
-        header.setPadding(new Insets(12, 24, 12, 24));
-        header.setStyle("-fx-background-color: #FAFAFA;");
+        HBox header =
+                new HBox();
 
-        Label doctor = createHeaderLabel("DOCTOR", 280);
-        Label department = createHeaderLabel("DEPARTMENT", 160);
-        Label qualification = createHeaderLabel("QUALIFICATION", 180);
-        Label status = createHeaderLabel("STATUS", 120);
+        header.setAlignment(
+                Pos.CENTER_LEFT
+        );
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        header.setPadding(
+                new Insets(
+                        12,
+                        24,
+                        12,
+                        24
+                )
+        );
 
-        Label actions = createHeaderLabel("ACTIONS", 180);
-        actions.setAlignment(Pos.CENTER_RIGHT);
+        header.setStyle(
+                "-fx-background-color: #FAFAFA;"
+        );
 
-        header.getChildren().addAll(doctor, department, qualification, status, spacer, actions);
+        Label doctor =
+                createHeaderLabel(
+                        "DOCTOR",
+                        280
+                );
+
+        Label department =
+                createHeaderLabel(
+                        "DEPARTMENT",
+                        160
+                );
+
+        Label qualification =
+                createHeaderLabel(
+                        "QUALIFICATION",
+                        180
+                );
+
+        Label status =
+                createHeaderLabel(
+                        "STATUS",
+                        120
+                );
+
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        Label actions =
+                createHeaderLabel(
+                        "ACTIONS",
+                        180
+                );
+
+        actions.setAlignment(
+                Pos.CENTER_RIGHT
+        );
+
+        header.getChildren().addAll(
+                doctor,
+                department,
+                qualification,
+                status,
+                spacer,
+                actions
+        );
 
         return header;
     }
 
-    private Label createHeaderLabel(String text, double width) {
+    private Label createHeaderLabel(
+            String text,
+            double width) {
 
-        Label label = new Label(text);
+        Label label =
+                new Label(text);
+
         label.setPrefWidth(width);
+
         label.setStyle(
                 "-fx-font-size: 11px;" +
                 "-fx-font-weight: 800;" +
-                "-fx-text-fill: " + SECONDARY_TEXT + ";"
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
         );
 
         return label;
     }
 
     // =========================================================
-    // DYNAMIC FILTERING & REFRESH LOGIC
+    // FILTERING
     // =========================================================
 
     private void applyFiltersAndRefreshUI() {
-        String searchText = searchField != null && searchField.getText() != null ? searchField.getText().toLowerCase().trim() : "";
-        String deptVal = departmentFilter != null && departmentFilter.getValue() != null ? departmentFilter.getValue() : "All Departments";
-        String statusVal = statusFilter != null && statusFilter.getValue() != null ? statusFilter.getValue() : "All Status";
 
-        filteredDoctorList.setPredicate(doc -> {
-            boolean matchesSearch = searchText.isEmpty() ||
-                    doc.getName().toLowerCase().contains(searchText) ||
-                    doc.getId().toLowerCase().contains(searchText) ||
-                    doc.getQualification().toLowerCase().contains(searchText);
-
-            boolean matchesDept = deptVal.equals("All Departments") || doc.getDepartment().equalsIgnoreCase(deptVal);
-            boolean matchesStatus = statusVal.equals("All Status") || doc.getStatus().equalsIgnoreCase(statusVal);
-
-            return matchesSearch && matchesDept && matchesStatus;
-        });
-
-        rebuildTableRows();
-        updateStatistics();
-    }
-
-    private void rebuildTableRows() {
-        if (doctorRowsContainer == null) return;
-        doctorRowsContainer.getChildren().clear();
-
-        if (filteredDoctorList.isEmpty()) {
-            Label emptyLabel = new Label("No doctors match the selected search criteria.");
-            emptyLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: " + SECONDARY_TEXT + "; -fx-padding: 24;");
-            doctorRowsContainer.getChildren().add(emptyLabel);
+        if (filteredDoctorList == null) {
             return;
         }
 
-        for (int i = 0; i < filteredDoctorList.size(); i++) {
-            Doctor doc = filteredDoctorList.get(i);
+        String searchText =
+                searchField != null
+                        && searchField.getText() != null
+                        ? searchField
+                                .getText()
+                                .toLowerCase()
+                                .trim()
+                        : "";
 
-            String statusColor = SUCCESS_GREEN;
-            String statusBgColor = SUCCESS_LIGHT;
+        String deptValue =
+                departmentFilter != null
+                        && departmentFilter.getValue() != null
+                        ? departmentFilter.getValue()
+                        : "All Departments";
 
-            if ("On Leave".equalsIgnoreCase(doc.getStatus())) {
-                statusColor = WARNING_ORANGE;
-                statusBgColor = WARNING_LIGHT;
-            } else if ("Inactive".equalsIgnoreCase(doc.getStatus())) {
-                statusColor = ERROR_RED;
-                statusBgColor = ERROR_LIGHT;
+        String statusValue =
+                statusFilter != null
+                        && statusFilter.getValue() != null
+                        ? statusFilter.getValue()
+                        : "All Status";
+
+        filteredDoctorList.setPredicate(
+                doctor -> {
+
+                    boolean matchesSearch =
+                            searchText.isEmpty()
+                                    ||
+                            safeLower(
+                                    doctor.getName()
+                            ).contains(searchText)
+                                    ||
+                            safeLower(
+                                    doctor.getId()
+                            ).contains(searchText)
+                                    ||
+                            safeLower(
+                                    doctor.getQualification()
+                            ).contains(searchText);
+
+                    boolean matchesDepartment =
+                            deptValue.equals(
+                                    "All Departments"
+                            )
+                                    ||
+                            safeEquals(
+                                    doctor.getDepartment(),
+                                    deptValue
+                            );
+
+                    boolean matchesStatus =
+                            statusValue.equals(
+                                    "All Status"
+                            )
+                                    ||
+                            safeEquals(
+                                    doctor.getStatus(),
+                                    statusValue
+                            );
+
+                    return matchesSearch
+                            && matchesDepartment
+                            && matchesStatus;
+                }
+        );
+
+        rebuildTableRows();
+
+        updateStatistics();
+    }
+
+    // =========================================================
+    // TABLE
+    // =========================================================
+
+    private void rebuildTableRows() {
+
+        if (doctorRowsContainer == null) {
+            return;
+        }
+
+        doctorRowsContainer
+                .getChildren()
+                .clear();
+
+        if (filteredDoctorList == null
+                || filteredDoctorList.isEmpty()) {
+
+            Label emptyLabel =
+                    new Label(
+                            "No doctors match the selected search criteria."
+                    );
+
+            emptyLabel.setStyle(
+                    "-fx-font-size: 13px;" +
+                    "-fx-text-fill: "
+                            + SECONDARY_TEXT
+                            + ";" +
+                    "-fx-padding: 24;"
+            );
+
+            doctorRowsContainer
+                    .getChildren()
+                    .add(emptyLabel);
+
+            return;
+        }
+
+        for (int i = 0;
+             i < filteredDoctorList.size();
+             i++) {
+
+            Doctor doctor =
+                    filteredDoctorList.get(i);
+
+            String statusColor =
+                    SUCCESS_GREEN;
+
+            String statusBgColor =
+                    SUCCESS_LIGHT;
+
+            if ("On Leave".equalsIgnoreCase(
+                    doctor.getStatus())) {
+
+                statusColor =
+                        WARNING_ORANGE;
+
+                statusBgColor =
+                        WARNING_LIGHT;
+
+            } else if (
+                    "Inactive".equalsIgnoreCase(
+                            doctor.getStatus())) {
+
+                statusColor =
+                        ERROR_RED;
+
+                statusBgColor =
+                        ERROR_LIGHT;
             }
 
-            HBox row = createDoctorRow(doc, statusColor, statusBgColor);
-            doctorRowsContainer.getChildren().add(row);
+            HBox row =
+                    createDoctorRow(
+                            doctor,
+                            statusColor,
+                            statusBgColor
+                    );
+
+            doctorRowsContainer
+                    .getChildren()
+                    .add(row);
 
             if (i < filteredDoctorList.size() - 1) {
-                doctorRowsContainer.getChildren().add(new Separator());
+
+                doctorRowsContainer
+                        .getChildren()
+                        .add(
+                                new Separator()
+                        );
             }
         }
     }
+
+    // =========================================================
+    // STATISTICS
+    // =========================================================
 
     private void updateStatistics() {
-        int total = masterDoctorList.size();
-        int active = 0;
-        int onLeave = 0;
-        Set<String> departments = new HashSet<>();
 
-        for (Doctor d : masterDoctorList) {
-            if ("Active".equalsIgnoreCase(d.getStatus())) active++;
-            else if ("On Leave".equalsIgnoreCase(d.getStatus())) onLeave++;
-            if (d.getDepartment() != null && !d.getDepartment().trim().isEmpty()) {
-                departments.add(d.getDepartment().trim());
+        int total =
+                masterDoctorList.size();
+
+        int active = 0;
+
+        int onLeave = 0;
+
+        Set<String> departments =
+                new HashSet<>();
+
+        for (Doctor doctor :
+                masterDoctorList) {
+
+            if ("Active".equalsIgnoreCase(
+                    doctor.getStatus())) {
+
+                active++;
+
+            } else if (
+                    "On Leave".equalsIgnoreCase(
+                            doctor.getStatus())) {
+
+                onLeave++;
+            }
+
+            if (doctor.getDepartment() != null
+                    && !doctor
+                    .getDepartment()
+                    .trim()
+                    .isEmpty()
+                    && !"Unassigned".equalsIgnoreCase(
+                            doctor.getDepartment()
+                    )) {
+
+                departments.add(
+                        doctor
+                                .getDepartment()
+                                .trim()
+                );
             }
         }
 
-        if (totalDocsValLabel != null) totalDocsValLabel.setText(String.valueOf(total));
-        if (activeDocsValLabel != null) activeDocsValLabel.setText(String.valueOf(active));
-        if (onLeaveDocsValLabel != null) onLeaveDocsValLabel.setText(String.valueOf(onLeave));
-        if (totalDeptValLabel != null) totalDeptValLabel.setText(String.valueOf(departments.size()));
-        if (doctorCountHeaderLabel != null) doctorCountHeaderLabel.setText(filteredDoctorList.size() + " Doctors");
+        if (totalDocsValLabel != null) {
+
+            totalDocsValLabel.setText(
+                    String.valueOf(total)
+            );
+        }
+
+        if (activeDocsValLabel != null) {
+
+            activeDocsValLabel.setText(
+                    String.valueOf(active)
+            );
+        }
+
+        if (onLeaveDocsValLabel != null) {
+
+            onLeaveDocsValLabel.setText(
+                    String.valueOf(onLeave)
+            );
+        }
+
+        if (totalDeptValLabel != null) {
+
+            totalDeptValLabel.setText(
+                    String.valueOf(
+                            departments.size()
+                    )
+            );
+        }
+
+        if (doctorCountHeaderLabel != null) {
+
+            doctorCountHeaderLabel.setText(
+                    filteredDoctorList.size()
+                            + " Doctors"
+            );
+        }
     }
+
+    // =========================================================
+    // DOCTOR ROW
+    // =========================================================
 
     private HBox createDoctorRow(
             Doctor doctor,
             String statusColor,
-            String statusBgColor
-    ) {
-        HBox row = new HBox();
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.setPadding(new Insets(14, 24, 14, 24));
+            String statusBgColor) {
 
-        row.setOnMouseEntered(e -> row.setStyle("-fx-background-color: #F8FAFC;"));
-        row.setOnMouseExited(e -> row.setStyle("-fx-background-color: transparent;"));
+        HBox row =
+                new HBox();
 
-        // Doctor Info
-        HBox doctorBox = new HBox(12);
-        doctorBox.setAlignment(Pos.CENTER_LEFT);
+        row.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        row.setPadding(
+                new Insets(
+                        14,
+                        24,
+                        14,
+                        24
+                )
+        );
+
+        row.setOnMouseEntered(
+                e ->
+                        row.setStyle(
+                                "-fx-background-color: #F8FAFC;"
+                        )
+        );
+
+        row.setOnMouseExited(
+                e ->
+                        row.setStyle(
+                                "-fx-background-color: transparent;"
+                        )
+        );
+
+        // =====================================================
+        // DOCTOR INFORMATION
+        // =====================================================
+
+        HBox doctorBox =
+                new HBox(12);
+
+        doctorBox.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
         doctorBox.setPrefWidth(280);
 
-        Circle avatar = new Circle(18);
-        avatar.setFill(Color.web(PRIMARY_LIGHT));
+        Circle avatar =
+                new Circle(18);
 
-        Label initialsLabel = new Label(doctor.getInitials());
+        avatar.setFill(
+                Color.web(PRIMARY_LIGHT)
+        );
+
+        Label initialsLabel =
+                new Label(
+                        doctor.getInitials()
+                );
+
         initialsLabel.setStyle(
                 "-fx-font-size: 11px;" +
                 "-fx-font-weight: bold;" +
-                "-fx-text-fill: " + PRIMARY_BLUE + ";"
+                "-fx-text-fill: "
+                        + PRIMARY_BLUE
+                        + ";"
         );
 
-        StackPane avatarPane = new StackPane(avatar, initialsLabel);
+        StackPane avatarPane =
+                new StackPane(
+                        avatar,
+                        initialsLabel
+                );
 
-        VBox doctorInfo = new VBox(2);
+        VBox doctorInfo =
+                new VBox(2);
 
-        Label nameLabel = new Label(doctor.getName());
-        nameLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: " + DARK_TEXT + ";");
+        Label nameLabel =
+                new Label(
+                        doctor.getName()
+                );
 
-        Label idLabel = new Label("Doctor ID: " + doctor.getId());
-        idLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: " + SECONDARY_TEXT + ";");
+        nameLabel.setStyle(
+                "-fx-font-size: 13px;" +
+                "-fx-font-weight: 700;" +
+                "-fx-text-fill: "
+                        + DARK_TEXT
+                        + ";"
+        );
 
-        doctorInfo.getChildren().addAll(nameLabel, idLabel);
-        doctorBox.getChildren().addAll(avatarPane, doctorInfo);
+        Label idLabel =
+                new Label(
+                        "Doctor ID: "
+                                + doctor.getId()
+                );
 
-        // Department
-        Label departmentLabel = new Label(doctor.getDepartment());
+        idLabel.setStyle(
+                "-fx-font-size: 11px;" +
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+        );
+
+        doctorInfo.getChildren().addAll(
+                nameLabel,
+                idLabel
+        );
+
+        doctorBox.getChildren().addAll(
+                avatarPane,
+                doctorInfo
+        );
+
+        // =====================================================
+        // DEPARTMENT
+        // =====================================================
+
+        Label departmentLabel =
+                new Label(
+                        doctor.getDepartment()
+                );
+
         departmentLabel.setPrefWidth(160);
-        departmentLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: 600; -fx-text-fill: " + DARK_TEXT + ";");
 
-        // Qualification
-        Label qualificationLabel = new Label(doctor.getQualification());
+        departmentLabel.setStyle(
+                "-fx-font-size: 12px;" +
+                "-fx-font-weight: 600;" +
+                "-fx-text-fill: "
+                        + DARK_TEXT
+                        + ";"
+        );
+
+        // =====================================================
+        // QUALIFICATION
+        // =====================================================
+
+        Label qualificationLabel =
+                new Label(
+                        doctor.getQualification()
+                );
+
         qualificationLabel.setPrefWidth(180);
-        qualificationLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + SECONDARY_TEXT + ";");
 
-        // Status Tag
-        Label statusLabel = new Label(doctor.getStatus());
+        qualificationLabel.setStyle(
+                "-fx-font-size: 12px;" +
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+        );
+
+        // =====================================================
+        // STATUS
+        // =====================================================
+
+        Label statusLabel =
+                new Label(
+                        doctor.getStatus()
+                );
+
         statusLabel.setStyle(
                 "-fx-font-size: 11px;" +
                 "-fx-font-weight: 800;" +
-                "-fx-text-fill: " + statusColor + ";" +
-                "-fx-background-color: " + statusBgColor + ";" +
+                "-fx-text-fill: "
+                        + statusColor
+                        + ";" +
+                "-fx-background-color: "
+                        + statusBgColor
+                        + ";" +
                 "-fx-padding: 4 10;" +
                 "-fx-background-radius: 12;"
         );
 
-        HBox statusBox = new HBox(statusLabel);
+        HBox statusBox =
+                new HBox(
+                        statusLabel
+                );
+
         statusBox.setPrefWidth(120);
-        statusBox.setAlignment(Pos.CENTER_LEFT);
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        statusBox.setAlignment(
+                Pos.CENTER_LEFT
+        );
 
-        // Actions
-        HBox actions = new HBox(8);
+        // =====================================================
+        // SPACER
+        // =====================================================
+
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        // =====================================================
+        // ACTIONS
+        // =====================================================
+
+        HBox actions =
+                new HBox(8);
+
         actions.setPrefWidth(180);
-        actions.setAlignment(Pos.CENTER_RIGHT);
 
-        Button viewButton = createSmallButton("View", PRIMARY_BLUE, PRIMARY_LIGHT);
-        Button editButton = createSmallButton("Edit", PURPLE, PURPLE_LIGHT);
-        Button deleteButton = createSmallButton("Delete", ERROR_RED, ERROR_LIGHT);
+        actions.setAlignment(
+                Pos.CENTER_RIGHT
+        );
 
-        // Action Handlers
-        viewButton.setOnAction(e -> showViewDoctorDialog(doctor));
-        editButton.setOnAction(e -> showEditDoctorDialog(doctor));
-        deleteButton.setOnAction(e -> handleDeleteDoctor(doctor));
+        Button viewButton =
+                createSmallButton(
+                        "View",
+                        PRIMARY_BLUE,
+                        PRIMARY_LIGHT
+                );
 
-        actions.getChildren().addAll(viewButton, editButton, deleteButton);
+        Button editButton =
+                createSmallButton(
+                        "Edit",
+                        PURPLE,
+                        PURPLE_LIGHT
+                );
 
-        row.getChildren().addAll(doctorBox, departmentLabel, qualificationLabel, statusBox, spacer, actions);
+        Button deleteButton =
+                createSmallButton(
+                        "Delete",
+                        ERROR_RED,
+                        ERROR_LIGHT
+                );
+
+        viewButton.setOnAction(
+                e ->
+                        showViewDoctorDialog(
+                                doctor
+                        )
+        );
+
+        editButton.setOnAction(
+                e ->
+                        showEditDoctorDialog(
+                                doctor
+                        )
+        );
+
+        deleteButton.setOnAction(
+                e ->
+                        handleDeleteDoctor(
+                                doctor
+                        )
+        );
+
+        actions.getChildren().addAll(
+                viewButton,
+                editButton,
+                deleteButton
+        );
+
+        row.getChildren().addAll(
+                doctorBox,
+                departmentLabel,
+                qualificationLabel,
+                statusBox,
+                spacer,
+                actions
+        );
 
         return row;
     }
 
-    private Button createSmallButton(String text, String color, String bgColor) {
-        Button btn = new Button(text);
-        btn.setStyle(
-                "-fx-background-color: " + bgColor + ";" +
-                "-fx-text-fill: " + color + ";" +
+    // =========================================================
+    // SMALL BUTTON
+    // =========================================================
+
+    private Button createSmallButton(
+            String text,
+            String color,
+            String bgColor) {
+
+        Button button =
+                new Button(text);
+
+        button.setStyle(
+                "-fx-background-color: "
+                        + bgColor
+                        + ";" +
+                "-fx-text-fill: "
+                        + color
+                        + ";" +
                 "-fx-font-size: 11px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-background-radius: 6;" +
                 "-fx-cursor: hand;" +
                 "-fx-padding: 4 10;"
         );
-        return btn;
+
+        return button;
     }
 
     // =========================================================
-    // DIALOGS & ACTIONS
+    // ADD DOCTOR
     // =========================================================
 
-    private void showAddDoctorDialog(Stage parentStage) {
-        Stage dialog = createModalDialog(parentStage, "Add New Doctor");
+    private void showAddDoctorDialog(
+            Stage parentStage) {
 
-        VBox form = new VBox(16);
-        form.setPadding(new Insets(24));
+        Stage dialog =
+                createModalDialog(
+                        parentStage,
+                        "Add Doctor"
+                );
 
-        TextField nameInput = createInputField("Full Name (e.g. Dr. John Doe)");
-        ComboBox<String> deptInput = new ComboBox<>(FXCollections.observableArrayList(
-                "Cardiology", "Neurology", "Orthopedics", "Pediatrics", "General Medicine"
-        ));
-        deptInput.setPromptText("Select Department");
-        deptInput.setMaxWidth(Double.MAX_VALUE);
+        VBox form =
+                new VBox(14);
 
-        TextField qualInput = createInputField("Qualification (e.g. MD, Cardiology)");
-        ComboBox<String> statusInput = new ComboBox<>(FXCollections.observableArrayList("Active", "Inactive", "On Leave"));
-        statusInput.setValue("Active");
-        statusInput.setMaxWidth(Double.MAX_VALUE);
+        form.setPadding(
+                new Insets(24)
+        );
 
-        Button saveBtn = new Button("Add Doctor");
-        saveBtn.setStyle("-fx-background-color: " + PRIMARY_BLUE + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand;");
-        saveBtn.setMaxWidth(Double.MAX_VALUE);
-        saveBtn.setPrefHeight(40);
+        Label infoLabel =
+                new Label(
+                        "Select an existing doctor from the shared "
+                                + "doctor profiles."
+                );
 
-        saveBtn.setOnAction(e -> {
-            if (nameInput.getText().trim().isEmpty() || deptInput.getValue() == null) {
-                showAlert("Validation Error", "Please provide at least a name and department.");
-                return;
+        infoLabel.setWrapText(true);
+
+        infoLabel.setStyle(
+                "-fx-font-size: 12px;" +
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+        );
+
+        // =====================================================
+        // DOCTOR SELECTOR
+        // =====================================================
+
+        ComboBox<DoctorProfileItem> doctorInput =
+                new ComboBox<>();
+
+        doctorInput.setPromptText(
+                "Select Doctor"
+        );
+
+        doctorInput.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        doctorInput.setPrefHeight(38);
+
+        try {
+
+            List<DoctorProfile> profiles =
+                    doctorController
+                            .getAllDoctorProfiles();
+
+            for (DoctorProfile profile :
+                    profiles) {
+
+                if (profile == null) {
+                    continue;
+                }
+
+                if (profile.getUid() == null
+                        || profile.getUid()
+                        .trim()
+                        .isEmpty()) {
+
+                    continue;
+                }
+
+                doctorInput.getItems().add(
+                        new DoctorProfileItem(
+                                profile
+                        )
+                );
             }
 
-            String newId = "DOC-" + (1024 + masterDoctorList.size() + 1);
-            Doctor newDoc = new Doctor(
-                    newId,
-                    nameInput.getText().trim(),
-                    deptInput.getValue(),
-                    qualInput.getText().trim().isEmpty() ? "MBBS" : qualInput.getText().trim(),
-                    statusInput.getValue()
+        } catch (Exception ex) {
+
+            showAlert(
+                    "Unable to Load Doctors",
+                    getRootMessage(ex)
             );
 
-            masterDoctorList.add(newDoc);
-            applyFiltersAndRefreshUI();
             dialog.close();
-            showAlert("Success", "Doctor added successfully with ID " + newId);
-        });
 
-        form.getChildren().addAll(
-                new Label("Doctor Name:"), nameInput,
-                new Label("Department:"), deptInput,
-                new Label("Qualification:"), qualInput,
-                new Label("Initial Status:"), statusInput,
-                new Region(), saveBtn
+            return;
+        }
+
+        // =====================================================
+        // NO DOCTORS AVAILABLE
+        // =====================================================
+
+        if (doctorInput.getItems().isEmpty()) {
+
+            showAlert(
+                    "No Doctors Available",
+                    "No doctor profiles were found in the "
+                            + "shared doctor records.\n\n"
+                            + "Please register a doctor first."
+            );
+
+            dialog.close();
+
+            return;
+        }
+
+        // =====================================================
+        // DEPARTMENT
+        // =====================================================
+
+        ComboBox<String> deptInput =
+                new ComboBox<>(
+                        FXCollections.observableArrayList(
+                                "Cardiology",
+                                "Neurology",
+                                "Orthopedics",
+                                "Pediatrics",
+                                "General Medicine"
+                        )
+                );
+
+        deptInput.setPromptText(
+                "Select Department"
         );
 
-        dialog.setScene(new Scene(form, 400, 420));
+        deptInput.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        deptInput.setPrefHeight(38);
+
+        // =====================================================
+        // QUALIFICATION
+        // =====================================================
+
+        TextField qualificationInput =
+                createInputField(
+                        "Qualification (e.g. MD, MS)"
+                );
+
+        // =====================================================
+        // STATUS
+        // =====================================================
+
+        ComboBox<String> statusInput =
+                new ComboBox<>(
+                        FXCollections.observableArrayList(
+                                "Active",
+                                "Inactive",
+                                "On Leave"
+                        )
+                );
+
+        statusInput.setValue(
+                "Active"
+        );
+
+        statusInput.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        statusInput.setPrefHeight(38);
+
+        // =====================================================
+        // ADD BUTTON
+        // =====================================================
+
+        Button saveButton =
+                new Button(
+                        "Add Doctor"
+                );
+
+        saveButton.setStyle(
+                "-fx-background-color: "
+                        + PRIMARY_BLUE
+                        + ";" +
+                "-fx-text-fill: white;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-radius: 8;" +
+                "-fx-cursor: hand;"
+        );
+
+        saveButton.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        saveButton.setPrefHeight(40);
+
+        saveButton.setOnAction(
+                e -> {
+
+                    DoctorProfileItem selectedDoctor =
+                            doctorInput.getValue();
+
+                    String department =
+                            deptInput.getValue();
+
+                    String qualification =
+                            qualificationInput
+                                    .getText()
+                                    .trim();
+
+                    String status =
+                            statusInput.getValue();
+
+                    // =================================================
+                    // VALIDATION
+                    // =================================================
+
+                    if (selectedDoctor == null) {
+
+                        showAlert(
+                                "Validation Error",
+                                "Please select a doctor."
+                        );
+
+                        return;
+                    }
+
+                    if (department == null
+                            || department.trim().isEmpty()) {
+
+                        showAlert(
+                                "Validation Error",
+                                "Please select a department."
+                        );
+
+                        return;
+                    }
+
+                    if (qualification.isEmpty()) {
+
+                        showAlert(
+                                "Validation Error",
+                                "Qualification is required."
+                        );
+
+                        return;
+                    }
+
+                    if (status == null
+                            || status.trim().isEmpty()) {
+
+                        showAlert(
+                                "Validation Error",
+                                "Please select a status."
+                        );
+
+                        return;
+                    }
+
+                    // =================================================
+                    // SAVE TO FIRESTORE
+                    // =================================================
+
+                    try {
+
+                        String doctorUid =
+                                selectedDoctor
+                                        .getProfile()
+                                        .getUid();
+
+                        String associationId =
+                                doctorController.addDoctor(
+                                        doctorUid,
+                                        department,
+                                        qualification,
+                                        status
+                                );
+
+                        loadDoctorData();
+
+                        applyFiltersAndRefreshUI();
+
+                        dialog.close();
+
+                        showAlert(
+                                "Success",
+                                "Doctor associated successfully.\n\n"
+                                        + "Doctor: "
+                                        + selectedDoctor
+                                        + "\n\n"
+                                        + "Association ID: "
+                                        + associationId
+                        );
+
+                    } catch (Exception ex) {
+
+                        showAlert(
+                                "Unable to Add Doctor",
+                                getRootMessage(ex)
+                        );
+                    }
+                }
+        );
+
+        // =====================================================
+        // LABELS
+        // =====================================================
+
+        Label doctorLabel =
+                createFormLabel(
+                        "Select Doctor:"
+                );
+
+        Label departmentLabel =
+                createFormLabel(
+                        "Department:"
+                );
+
+        Label qualificationLabel =
+                createFormLabel(
+                        "Qualification:"
+                );
+
+        Label statusLabel =
+                createFormLabel(
+                        "Initial Status:"
+                );
+
+        // =====================================================
+        // FORM
+        // =====================================================
+
+        form.getChildren().addAll(
+
+                infoLabel,
+
+                doctorLabel,
+                doctorInput,
+
+                departmentLabel,
+                deptInput,
+
+                qualificationLabel,
+                qualificationInput,
+
+                statusLabel,
+                statusInput,
+
+                saveButton
+        );
+
+        dialog.setScene(
+                new Scene(
+                        form,
+                        440,
+                        480
+                )
+        );
+
         dialog.showAndWait();
     }
 
-    private void showEditDoctorDialog(Doctor doctor) {
-        Stage dialog = createModalDialog((Stage) doctorRowsContainer.getScene().getWindow(), "Edit Doctor - " + doctor.getId());
+    // =========================================================
+    // FORM LABEL
+    // =========================================================
 
-        VBox form = new VBox(16);
-        form.setPadding(new Insets(24));
+    private Label createFormLabel(
+            String text) {
 
-        TextField nameInput = createInputField("Full Name");
-        nameInput.setText(doctor.getName());
+        Label label =
+                new Label(text);
 
-        ComboBox<String> deptInput = new ComboBox<>(FXCollections.observableArrayList(
-                "Cardiology", "Neurology", "Orthopedics", "Pediatrics", "General Medicine"
-        ));
-        deptInput.setValue(doctor.getDepartment());
-        deptInput.setMaxWidth(Double.MAX_VALUE);
-
-        TextField qualInput = createInputField("Qualification");
-        qualInput.setText(doctor.getQualification());
-
-        ComboBox<String> statusInput = new ComboBox<>(FXCollections.observableArrayList("Active", "Inactive", "On Leave"));
-        statusInput.setValue(doctor.getStatus());
-        statusInput.setMaxWidth(Double.MAX_VALUE);
-
-        Button saveBtn = new Button("Save Changes");
-        saveBtn.setStyle("-fx-background-color: " + PRIMARY_BLUE + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand;");
-        saveBtn.setMaxWidth(Double.MAX_VALUE);
-        saveBtn.setPrefHeight(40);
-
-        saveBtn.setOnAction(e -> {
-            doctor.setName(nameInput.getText().trim());
-            doctor.setDepartment(deptInput.getValue());
-            doctor.setQualification(qualInput.getText().trim());
-            doctor.setStatus(statusInput.getValue());
-
-            applyFiltersAndRefreshUI();
-            dialog.close();
-            showAlert("Updated", "Doctor details updated successfully.");
-        });
-
-        form.getChildren().addAll(
-                new Label("Doctor Name:"), nameInput,
-                new Label("Department:"), deptInput,
-                new Label("Qualification:"), qualInput,
-                new Label("Status:"), statusInput,
-                new Region(), saveBtn
+        label.setStyle(
+                "-fx-font-size: 12px;" +
+                "-fx-font-weight: 600;" +
+                "-fx-text-fill: "
+                        + DARK_TEXT
+                        + ";"
         );
 
-        dialog.setScene(new Scene(form, 400, 420));
+        return label;
+    }
+
+    // =========================================================
+    // EDIT DOCTOR
+    // =========================================================
+
+    private void showEditDoctorDialog(
+            Doctor doctor) {
+
+        Stage parentStage =
+                (Stage) doctorRowsContainer
+                        .getScene()
+                        .getWindow();
+
+        Stage dialog =
+                createModalDialog(
+                        parentStage,
+                        "Edit Doctor - "
+                                + doctor.getId()
+                );
+
+        VBox form =
+                new VBox(16);
+
+        form.setPadding(
+                new Insets(24)
+        );
+
+        Label doctorName =
+                new Label(
+                        "Doctor: "
+                                + doctor.getName()
+                );
+
+        doctorName.setStyle(
+                "-fx-font-size: 14px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: "
+                        + DARK_TEXT
+                        + ";"
+        );
+
+        Label doctorId =
+                new Label(
+                        "Doctor UID: "
+                                + doctor.getId()
+                );
+
+        doctorId.setStyle(
+                "-fx-font-size: 12px;" +
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+        );
+
+        ComboBox<String> deptInput =
+                new ComboBox<>(
+                        FXCollections.observableArrayList(
+                                "Cardiology",
+                                "Neurology",
+                                "Orthopedics",
+                                "Pediatrics",
+                                "General Medicine"
+                        )
+                );
+
+        deptInput.setValue(
+                doctor.getDepartment()
+        );
+
+        deptInput.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        deptInput.setPrefHeight(38);
+
+        TextField qualificationInput =
+                createInputField(
+                        "Qualification"
+                );
+
+        qualificationInput.setText(
+                doctor.getQualification()
+        );
+
+        ComboBox<String> statusInput =
+                new ComboBox<>(
+                        FXCollections.observableArrayList(
+                                "Active",
+                                "Inactive",
+                                "On Leave"
+                        )
+                );
+
+        statusInput.setValue(
+                doctor.getStatus()
+        );
+
+        statusInput.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        statusInput.setPrefHeight(38);
+
+        Button saveButton =
+                new Button(
+                        "Save Changes"
+                );
+
+        saveButton.setStyle(
+                "-fx-background-color: "
+                        + PRIMARY_BLUE
+                        + ";" +
+                "-fx-text-fill: white;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-radius: 8;" +
+                "-fx-cursor: hand;"
+        );
+
+        saveButton.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        saveButton.setPrefHeight(40);
+
+        saveButton.setOnAction(
+                e -> {
+
+                    String department =
+                            deptInput.getValue();
+
+                    String qualification =
+                            qualificationInput
+                                    .getText()
+                                    .trim();
+
+                    String status =
+                            statusInput.getValue();
+
+                    if (department == null) {
+
+                        showAlert(
+                                "Validation Error",
+                                "Please select a department."
+                        );
+
+                        return;
+                    }
+
+                    if (qualification.isEmpty()) {
+
+                        showAlert(
+                                "Validation Error",
+                                "Qualification is required."
+                        );
+
+                        return;
+                    }
+
+                    if (status == null) {
+
+                        showAlert(
+                                "Validation Error",
+                                "Please select a status."
+                        );
+
+                        return;
+                    }
+
+                    try {
+
+                        doctorController.updateDoctor(
+                                doctor.getAssociationId(),
+                                department,
+                                qualification,
+                                status
+                        );
+
+                        loadDoctorData();
+
+                        applyFiltersAndRefreshUI();
+
+                        dialog.close();
+
+                        showAlert(
+                                "Updated",
+                                "Doctor details updated successfully."
+                        );
+
+                    } catch (Exception ex) {
+
+                        showAlert(
+                                "Update Failed",
+                                getRootMessage(ex)
+                        );
+                    }
+                }
+        );
+
+        form.getChildren().addAll(
+                doctorName,
+                doctorId,
+
+                createFormLabel(
+                        "Department:"
+                ),
+                deptInput,
+
+                createFormLabel(
+                        "Qualification:"
+                ),
+                qualificationInput,
+
+                createFormLabel(
+                        "Status:"
+                ),
+                statusInput,
+
+                saveButton
+        );
+
+        dialog.setScene(
+                new Scene(
+                        form,
+                        400,
+                        430
+                )
+        );
+
         dialog.showAndWait();
     }
 
-    private void showViewDoctorDialog(Doctor doctor) {
-        Stage dialog = createModalDialog((Stage) doctorRowsContainer.getScene().getWindow(), "Doctor Details");
+    // =========================================================
+    // VIEW DOCTOR
+    // =========================================================
 
-        VBox content = new VBox(12);
-        content.setPadding(new Insets(24));
+    private void showViewDoctorDialog(
+            Doctor doctor) {
+
+        Stage parentStage =
+                (Stage) doctorRowsContainer
+                        .getScene()
+                        .getWindow();
+
+        Stage dialog =
+                createModalDialog(
+                        parentStage,
+                        "Doctor Details"
+                );
+
+        VBox content =
+                new VBox(12);
+
+        content.setPadding(
+                new Insets(24)
+        );
 
         content.getChildren().addAll(
-                new Label("ID: " + doctor.getId()),
-                new Label("Name: " + doctor.getName()),
-                new Label("Department: " + doctor.getDepartment()),
-                new Label("Qualification: " + doctor.getQualification()),
-                new Label("Status: " + doctor.getStatus())
+
+                new Label(
+                        "Doctor UID: "
+                                + doctor.getId()
+                ),
+
+                new Label(
+                        "Association ID: "
+                                + doctor
+                                .getAssociationId()
+                ),
+
+                new Label(
+                        "Name: "
+                                + doctor.getName()
+                ),
+
+                new Label(
+                        "Department: "
+                                + doctor.getDepartment()
+                ),
+
+                new Label(
+                        "Qualification: "
+                                + doctor.getQualification()
+                ),
+
+                new Label(
+                        "Status: "
+                                + doctor.getStatus()
+                )
         );
 
-        for (javafx.scene.Node n : content.getChildren()) {
-            n.setStyle("-fx-font-size: 14px; -fx-text-fill: " + DARK_TEXT + ";");
+        for (javafx.scene.Node node :
+                content.getChildren()) {
+
+            node.setStyle(
+                    "-fx-font-size: 14px;" +
+                    "-fx-text-fill: "
+                            + DARK_TEXT
+                            + ";"
+            );
         }
 
-        Button closeBtn = new Button("Close");
-        closeBtn.setOnAction(e -> dialog.close());
-        content.getChildren().add(closeBtn);
+        Button closeButton =
+                new Button(
+                        "Close"
+                );
 
-        dialog.setScene(new Scene(content, 320, 260));
+        closeButton.setStyle(
+                "-fx-background-color: "
+                        + PRIMARY_LIGHT
+                        + ";" +
+                "-fx-text-fill: "
+                        + PRIMARY_BLUE
+                        + ";" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-radius: 6;" +
+                "-fx-cursor: hand;"
+        );
+
+        closeButton.setOnAction(
+                e ->
+                        dialog.close()
+        );
+
+        content.getChildren().add(
+                closeButton
+        );
+
+        dialog.setScene(
+                new Scene(
+                        content,
+                        380,
+                        340
+                )
+        );
+
         dialog.showAndWait();
     }
 
-    private void handleDeleteDoctor(Doctor doctor) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Delete Doctor");
-        alert.setHeaderText("Remove " + doctor.getName() + "?");
-        alert.setContentText("Are you sure you want to remove this doctor from records?");
+    // =========================================================
+    // DELETE / REMOVE DOCTOR
+    // =========================================================
 
-        Optional<ButtonType> result = alert.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.OK) {
-            masterDoctorList.remove(doctor);
-            applyFiltersAndRefreshUI();
-            showAlert("Deleted", doctor.getName() + " has been removed.");
-        }
-    }
+    private void handleDeleteDoctor(
+            Doctor doctor) {
 
-    private void exportDoctorDataToCSV(Stage stage) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Export Doctor List");
-        fileChooser.setInitialFileName("Doctors_Export.csv");
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+        Alert alert =
+                new Alert(
+                        Alert.AlertType.CONFIRMATION
+                );
 
-        File file = fileChooser.showSaveDialog(stage);
-        if (file != null) {
-            try (PrintWriter writer = new PrintWriter(file)) {
-                writer.println("ID,Name,Department,Qualification,Status");
-                for (Doctor d : filteredDoctorList) {
-                    writer.println(String.format("%s,\"%s\",\"%s\",\"%s\",%s",
-                            d.getId(), d.getName(), d.getDepartment(), d.getQualification(), d.getStatus()));
-                }
-                showAlert("Export Success", "Data exported successfully to " + file.getName());
+        alert.setTitle(
+                "Remove Doctor"
+        );
+
+        alert.setHeaderText(
+                "Remove "
+                        + doctor.getName()
+                        + "?"
+        );
+
+        alert.setContentText(
+                "The doctor will be removed from "
+                        + "this hospital's active doctor list."
+        );
+
+        Optional<ButtonType> result =
+                alert.showAndWait();
+
+        if (result.isPresent()
+                && result.get() == ButtonType.OK) {
+
+            try {
+
+                doctorController.removeDoctor(
+                        doctor.getAssociationId()
+                );
+
+                loadDoctorData();
+
+                applyFiltersAndRefreshUI();
+
+                showAlert(
+                        "Removed",
+                        doctor.getName()
+                                + " has been removed from "
+                                + "the hospital."
+                );
+
             } catch (Exception ex) {
-                showAlert("Export Error", "Failed to export data: " + ex.getMessage());
+
+                showAlert(
+                        "Remove Failed",
+                        getRootMessage(ex)
+                );
             }
         }
     }
 
     // =========================================================
-    // HELPER METHODS
+    // CSV EXPORT
     // =========================================================
 
-    private TextField createInputField(String prompt) {
-        TextField tf = new TextField();
-        tf.setPromptText(prompt);
-        tf.setPrefHeight(38);
-        tf.setStyle("-fx-background-color: " + LIGHT_BACKGROUND + "; -fx-border-color: " + BORDER + "; -fx-border-radius: 6; -fx-background-radius: 6;");
-        return tf;
+    private void exportDoctorDataToCSV(
+            Stage stage) {
+
+        FileChooser fileChooser =
+                new FileChooser();
+
+        fileChooser.setTitle(
+                "Export Doctor List"
+        );
+
+        fileChooser.setInitialFileName(
+                "Doctors_Export.csv"
+        );
+
+        fileChooser
+                .getExtensionFilters()
+                .add(
+                        new FileChooser
+                                .ExtensionFilter(
+                                        "CSV Files",
+                                        "*.csv"
+                                )
+                );
+
+        File file =
+                fileChooser.showSaveDialog(
+                        stage
+                );
+
+        if (file == null) {
+            return;
+        }
+
+        try (
+                PrintWriter writer =
+                        new PrintWriter(file)
+        ) {
+
+            writer.println(
+                    "Doctor UID,Association ID,"
+                            + "Name,Department,"
+                            + "Qualification,Status"
+            );
+
+            for (Doctor doctor :
+                    filteredDoctorList) {
+
+                writer.println(
+                        String.format(
+                                "\"%s\",\"%s\",\"%s\","
+                                        + "\"%s\",\"%s\",\"%s\"",
+                                escapeCsv(
+                                        doctor.getId()
+                                ),
+                                escapeCsv(
+                                        doctor
+                                                .getAssociationId()
+                                ),
+                                escapeCsv(
+                                        doctor.getName()
+                                ),
+                                escapeCsv(
+                                        doctor.getDepartment()
+                                ),
+                                escapeCsv(
+                                        doctor.getQualification()
+                                ),
+                                escapeCsv(
+                                        doctor.getStatus()
+                                )
+                        )
+                );
+            }
+
+            showAlert(
+                    "Export Success",
+                    "Doctor data exported successfully to "
+                            + file.getName()
+            );
+
+        } catch (Exception ex) {
+
+            showAlert(
+                    "Export Error",
+                    "Failed to export data: "
+                            + getRootMessage(ex)
+            );
+        }
     }
 
-    private Stage createModalDialog(Stage parent, String title) {
-        Stage dialog = new Stage();
-        dialog.initModality(Modality.WINDOW_MODAL);
-        dialog.initOwner(parent);
-        dialog.setTitle(title);
+    private String escapeCsv(
+            String value) {
+
+        if (value == null) {
+            return "";
+        }
+
+        return value.replace(
+                "\"",
+                "\"\""
+        );
+    }
+
+    // =========================================================
+    // INPUT FIELD
+    // =========================================================
+
+    private TextField createInputField(
+            String prompt) {
+
+        TextField textField =
+                new TextField();
+
+        textField.setPromptText(
+                prompt
+        );
+
+        textField.setPrefHeight(38);
+
+        textField.setStyle(
+                "-fx-background-color: "
+                        + LIGHT_BACKGROUND
+                        + ";" +
+                "-fx-border-color: "
+                        + BORDER
+                        + ";" +
+                "-fx-border-radius: 6;" +
+                "-fx-background-radius: 6;" +
+                "-fx-padding: 0 10;"
+        );
+
+        return textField;
+    }
+
+    // =========================================================
+    // MODAL DIALOG
+    // =========================================================
+
+    private Stage createModalDialog(
+            Stage parent,
+            String title) {
+
+        Stage dialog =
+                new Stage();
+
+        dialog.initModality(
+                Modality.WINDOW_MODAL
+        );
+
+        dialog.initOwner(
+                parent
+        );
+
+        dialog.setTitle(
+                title
+        );
+
         return dialog;
     }
 
-    private void applyCardStyle(Pane card) {
+    // =========================================================
+    // CARD STYLE
+    // =========================================================
+
+    private void applyCardStyle(
+            Pane card) {
+
         card.setStyle(
-                "-fx-background-color: " + CARD_BG + ";" +
+                "-fx-background-color: "
+                        + CARD_BG
+                        + ";" +
                 "-fx-background-radius: 12;" +
-                "-fx-border-color: " + BORDER + ";" +
+                "-fx-border-color: "
+                        + BORDER
+                        + ";" +
                 "-fx-border-radius: 12;"
         );
-        DropShadow shadow = new DropShadow();
-        shadow.setColor(Color.rgb(15, 23, 42, 0.04));
+
+        DropShadow shadow =
+                new DropShadow();
+
+        shadow.setColor(
+                Color.rgb(
+                        15,
+                        23,
+                        42,
+                        0.04
+                )
+        );
+
         shadow.setRadius(8);
+
         shadow.setOffsetY(2);
-        card.setEffect(shadow);
+
+        card.setEffect(
+                shadow
+        );
     }
 
-    private void showAlert(String title, String content) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
+    // =========================================================
+    // SAFE STRING HELPERS
+    // =========================================================
+
+    private String safeLower(
+            String value) {
+
+        return value == null
+                ? ""
+                : value.toLowerCase();
+    }
+
+    private boolean safeEquals(
+            String first,
+            String second) {
+
+        if (first == null
+                || second == null) {
+
+            return false;
+        }
+
+        return first.equalsIgnoreCase(
+                second
+        );
+    }
+
+    // =========================================================
+    // EXCEPTION MESSAGE
+    // =========================================================
+
+    private String getRootMessage(
+            Exception exception) {
+
+        Throwable cause =
+                exception;
+
+        while (cause.getCause() != null) {
+
+            cause =
+                    cause.getCause();
+        }
+
+        if (cause.getMessage() != null
+                && !cause
+                .getMessage()
+                .trim()
+                .isEmpty()) {
+
+            return cause.getMessage();
+        }
+
+        if (exception.getMessage() != null
+                && !exception
+                .getMessage()
+                .trim()
+                .isEmpty()) {
+
+            return exception.getMessage();
+        }
+
+        return "Unknown database error.";
+    }
+
+    // =========================================================
+    // ALERT
+    // =========================================================
+
+    private void showAlert(
+            String title,
+            String content) {
+
+        Alert alert =
+                new Alert(
+                        Alert.AlertType.INFORMATION
+                );
+
+        alert.setTitle(
+                title
+        );
+
+        alert.setHeaderText(
+                null
+        );
+
+        alert.setContentText(
+                content
+        );
+
         alert.showAndWait();
     }
 }
