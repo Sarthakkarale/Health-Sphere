@@ -1,14 +1,19 @@
 package com.healthsphere.dao.authentication;
 
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.QuerySnapshot;
+
 import com.healthsphere.config.FirebaseConfig;
 import com.healthsphere.exceptions.DatabaseException;
 import com.healthsphere.model.HospitalProfile;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class HospitalDAO {
 
@@ -41,9 +46,27 @@ public class HospitalDAO {
 
         try {
 
+            /*
+             * New hospital accounts start as PENDING.
+             * Existing supplied status is preserved.
+             */
+            if (hospitalProfile.getVerificationStatus() == null
+                    || hospitalProfile.getVerificationStatus()
+                    .trim()
+                    .isEmpty()) {
+
+                hospitalProfile.setVerificationStatus(
+                        "PENDING"
+                );
+            }
+
+            hospitalProfile.setUpdatedAt(
+                    Instant.now()
+            );
+
             db.collection("hospitals")
                     .document(hospitalProfile.getUid())
-                    .set(hospitalProfile)
+                    .set(toMap(hospitalProfile))
                     .get();
 
             System.out.println(
@@ -72,7 +95,7 @@ public class HospitalDAO {
 
             DocumentSnapshot document =
                     db.collection("hospitals")
-                            .document(uid)
+                            .document(uid.trim())
                             .get()
                             .get();
 
@@ -83,9 +106,7 @@ public class HospitalDAO {
                 );
             }
 
-            return document.toObject(
-                    HospitalProfile.class
-            );
+            return fromDocument(document);
 
         } catch (DatabaseException e) {
 
@@ -124,9 +145,7 @@ public class HospitalDAO {
                 }
 
                 HospitalProfile hospital =
-                        document.toObject(
-                                HospitalProfile.class
-                        );
+                        fromDocument(document);
 
                 if (hospital != null) {
                     hospitals.add(hospital);
@@ -163,9 +182,17 @@ public class HospitalDAO {
 
         try {
 
+            hospitalProfile.setUpdatedAt(
+                    Instant.now()
+            );
+
             db.collection("hospitals")
-                    .document(hospitalProfile.getUid())
-                    .set(hospitalProfile)
+                    .document(
+                            hospitalProfile
+                                    .getUid()
+                                    .trim()
+                    )
+                    .set(toMap(hospitalProfile))
                     .get();
 
             System.out.println(
@@ -193,7 +220,7 @@ public class HospitalDAO {
         try {
 
             db.collection("hospitals")
-                    .document(uid)
+                    .document(uid.trim())
                     .delete()
                     .get();
 
@@ -208,6 +235,174 @@ public class HospitalDAO {
                     e
             );
         }
+    }
+
+    // ============================================================
+    // MODEL -> FIRESTORE MAP
+    // ============================================================
+
+    private Map<String, Object> toMap(
+            HospitalProfile hospitalProfile) {
+
+        Map<String, Object> map =
+                new HashMap<>();
+
+        map.put(
+                "uid",
+                hospitalProfile.getUid()
+        );
+
+        map.put(
+                "email",
+                hospitalProfile.getEmail()
+        );
+
+        map.put(
+                "hospitalName",
+                hospitalProfile.getHospitalName()
+        );
+
+        map.put(
+                "registrationNumber",
+                hospitalProfile.getRegistrationNumber()
+        );
+
+        map.put(
+                "hospitalType",
+                hospitalProfile.getHospitalType()
+        );
+
+        map.put(
+                "beds",
+                hospitalProfile.getBeds()
+        );
+
+        map.put(
+                "contact",
+                hospitalProfile.getContact()
+        );
+
+        map.put(
+                "address",
+                hospitalProfile.getAddress()
+        );
+
+        map.put(
+                "verificationStatus",
+                hospitalProfile.getVerificationStatus()
+        );
+
+        map.put(
+                "verifiedBy",
+                hospitalProfile.getVerifiedBy()
+        );
+
+        if (hospitalProfile.getUpdatedAt() != null) {
+
+            map.put(
+                    "updatedAt",
+                    Timestamp.ofTimeSecondsAndNanos(
+                            hospitalProfile
+                                    .getUpdatedAt()
+                                    .getEpochSecond(),
+                            hospitalProfile
+                                    .getUpdatedAt()
+                                    .getNano()
+                    )
+            );
+        }
+
+        return map;
+    }
+
+    // ============================================================
+    // FIRESTORE -> MODEL
+    // ============================================================
+
+    private HospitalProfile fromDocument(
+            DocumentSnapshot document) {
+
+        if (document == null
+                || !document.exists()) {
+
+            return null;
+        }
+
+        HospitalProfile hospital =
+                new HospitalProfile();
+
+        hospital.setUid(
+                document.getString("uid")
+        );
+
+        /*
+         * Backward compatibility:
+         * if uid field is missing, use document ID.
+         */
+        if (hospital.getUid() == null
+                || hospital.getUid().isBlank()) {
+
+            hospital.setUid(
+                    document.getId()
+            );
+        }
+
+        hospital.setEmail(
+                document.getString("email")
+        );
+
+        hospital.setHospitalName(
+                document.getString("hospitalName")
+        );
+
+        hospital.setRegistrationNumber(
+                document.getString(
+                        "registrationNumber"
+                )
+        );
+
+        hospital.setHospitalType(
+                document.getString("hospitalType")
+        );
+
+        hospital.setBeds(
+                document.getString("beds")
+        );
+
+        hospital.setContact(
+                document.getString("contact")
+        );
+
+        hospital.setAddress(
+                document.getString("address")
+        );
+
+        hospital.setVerificationStatus(
+                document.getString(
+                        "verificationStatus"
+                )
+        );
+
+        hospital.setVerifiedBy(
+                document.getString(
+                        "verifiedBy"
+                )
+        );
+
+        Timestamp updatedTimestamp =
+                document.getTimestamp("updatedAt");
+
+        if (updatedTimestamp != null) {
+
+            hospital.setUpdatedAt(
+                    Instant.ofEpochSecond(
+                            updatedTimestamp.getSeconds(),
+                            updatedTimestamp.getNanos()
+                    )
+            );
+        }
+
+        return hospital;
     }
 
     // ============================================================

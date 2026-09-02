@@ -1,11 +1,13 @@
 package com.healthsphere.view.admin;
 
+import com.healthsphere.controller.admin.HospitalVerificationController;
 import com.healthsphere.dao.authentication.HospitalDAO;
 import com.healthsphere.model.HospitalProfile;
+import com.healthsphere.model.HospitalVerification;
 
 import javafx.beans.Observable;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -38,6 +40,7 @@ public class HospitalManagementView extends ScrollPane {
     private TableView<HospitalProfile> hospitalTable;
 
     private ObservableList<HospitalProfile> masterHospitalData;
+
     private FilteredList<HospitalProfile> filteredData;
 
     private Label totalCountLabel;
@@ -47,17 +50,28 @@ public class HospitalManagementView extends ScrollPane {
 
     private BarChart<String, Number> cityBarChart;
 
+    private ComboBox<String> cityFilter;
+
     private final HospitalDAO hospitalDAO;
 
+    private final HospitalVerificationController verificationController;
+
     /*
-     * Current HospitalProfile does not have a status field.
-     * Status is maintained dynamically in this map.
+     * Firestore-loaded verification data.
      *
-     * Key   = Hospital UID / Registration Number / Hospital Name
-     * Value = PENDING / VERIFIED / REJECTED
+     * Firestore remains the source of truth.
      */
-    private final Map<String, String> hospitalStatusMap =
+    private final Map<String, HospitalVerification> verificationMap =
             new HashMap<>();
+
+    /*
+     * Temporary admin UID.
+     *
+     * Replace this later with your SessionManager /
+     * Firebase Authentication logged-in admin UID.
+     */
+    private static final String ADMIN_UID = "ADMIN";
+
 
     // ============================================================
     // CONSTRUCTOR
@@ -73,6 +87,9 @@ public class HospitalManagementView extends ScrollPane {
 
         this.hospitalDAO = new HospitalDAO();
 
+        this.verificationController =
+                new HospitalVerificationController();
+
         setFitToWidth(true);
 
         setStyle(
@@ -81,8 +98,7 @@ public class HospitalManagementView extends ScrollPane {
                 "-fx-border-color: transparent;"
         );
 
-        VBox mainContainer =
-                new VBox(24);
+        VBox mainContainer = new VBox(24);
 
         mainContainer.setPadding(
                 new Insets(28)
@@ -92,31 +108,13 @@ public class HospitalManagementView extends ScrollPane {
                 "-fx-background-color: #F8FAFC;"
         );
 
-        // ========================================================
-        // HEADER
-        // ========================================================
-
-        HBox header =
-                createHeader();
-
-        // ========================================================
-        // ANALYTICS
-        // CARDS LEFT + GRAPH RIGHT
-        // ========================================================
+        HBox header = createHeader();
 
         HBox topAnalyticsSection =
                 createTopAnalyticsSection();
 
-        // ========================================================
-        // FILTERS
-        // ========================================================
-
         HBox filterBar =
                 createFilterBar();
-
-        // ========================================================
-        // TABLE
-        // ========================================================
 
         VBox tableContainer =
                 createTableContainer();
@@ -130,20 +128,35 @@ public class HospitalManagementView extends ScrollPane {
 
         setContent(mainContainer);
 
-        // ========================================================
-        // LOAD DATA
-        // ========================================================
-
         loadHospitalData();
     }
 
+
+    // ============================================================
+    // VIEW / SCENE
+    // ============================================================
+
+    /*
+     * Returns this view as a Parent.
+     */
     public Parent getView() {
         return this;
     }
 
+    /*
+     * IMPORTANT:
+     *
+     * Do NOT create getScene() here.
+     *
+     * ScrollPane extends Node and JavaFX already provides
+     * a final getScene() method.
+     *
+     * Use createScene() when you need a new Scene.
+     */
     public Scene createScene() {
         return new Scene(this);
     }
+
 
     // ============================================================
     // HEADER
@@ -151,15 +164,13 @@ public class HospitalManagementView extends ScrollPane {
 
     private HBox createHeader() {
 
-        HBox header =
-                new HBox();
+        HBox header = new HBox();
 
         header.setAlignment(
                 Pos.CENTER_LEFT
         );
 
-        VBox titleBox =
-                new VBox(4);
+        VBox titleBox = new VBox(4);
 
         Label title =
                 new Label(
@@ -200,8 +211,7 @@ public class HospitalManagementView extends ScrollPane {
                 subtitle
         );
 
-        Region spacer =
-                new Region();
+        Region spacer = new Region();
 
         HBox.setHgrow(
                 spacer,
@@ -216,28 +226,20 @@ public class HospitalManagementView extends ScrollPane {
         return header;
     }
 
+
     // ============================================================
     // ANALYTICS
-    // CARDS LEFT + GRAPH RIGHT
     // ============================================================
 
     private HBox createTopAnalyticsSection() {
 
-        HBox section =
-                new HBox(20);
+        HBox section = new HBox(20);
 
         section.setAlignment(
                 Pos.CENTER
         );
 
-        /*
-         * ========================================================
-         * LEFT SIDE - KPI CARDS
-         * ========================================================
-         */
-
-        GridPane statsGrid =
-                new GridPane();
+        GridPane statsGrid = new GridPane();
 
         statsGrid.setHgap(16);
         statsGrid.setVgap(16);
@@ -249,10 +251,6 @@ public class HospitalManagementView extends ScrollPane {
                 statsGrid,
                 Priority.ALWAYS
         );
-
-        // ========================================================
-        // KPI LABELS
-        // ========================================================
 
         totalCountLabel =
                 new Label("0");
@@ -266,10 +264,6 @@ public class HospitalManagementView extends ScrollPane {
         rejectedCountLabel =
                 new Label("0");
 
-        // ========================================================
-        // TOTAL
-        // ========================================================
-
         VBox totalCard =
                 createStatCard(
                         "Total Facilities",
@@ -278,10 +272,6 @@ public class HospitalManagementView extends ScrollPane {
                         "#4F46E5",
                         "#EEF2FF"
                 );
-
-        // ========================================================
-        // PENDING
-        // ========================================================
 
         VBox pendingCard =
                 createStatCard(
@@ -292,10 +282,6 @@ public class HospitalManagementView extends ScrollPane {
                         "#FFFBEB"
                 );
 
-        // ========================================================
-        // VERIFIED
-        // ========================================================
-
         VBox verifiedCard =
                 createStatCard(
                         "Verified Facilities",
@@ -305,10 +291,6 @@ public class HospitalManagementView extends ScrollPane {
                         "#ECFDF5"
                 );
 
-        // ========================================================
-        // REJECTED
-        // ========================================================
-
         VBox rejectedCard =
                 createStatCard(
                         "Rejected Applications",
@@ -317,10 +299,6 @@ public class HospitalManagementView extends ScrollPane {
                         "#DC2626",
                         "#FEF2F2"
                 );
-
-        // ========================================================
-        // COLUMN CONSTRAINTS
-        // ========================================================
 
         ColumnConstraints c1 =
                 new ColumnConstraints();
@@ -336,10 +314,6 @@ public class HospitalManagementView extends ScrollPane {
                 c1,
                 c2
         );
-
-        // ========================================================
-        // ADD CARDS
-        // ========================================================
 
         statsGrid.add(
                 totalCard,
@@ -365,22 +339,12 @@ public class HospitalManagementView extends ScrollPane {
                 1
         );
 
-        /*
-         * ========================================================
-         * RIGHT SIDE - GRAPH
-         * ========================================================
-         */
-
         VBox chartCard =
                 createChartCard();
 
         chartCard.setPrefWidth(470);
         chartCard.setMinWidth(430);
         chartCard.setMaxWidth(520);
-
-        /*
-         * Graph stays on RIGHT side.
-         */
 
         section.getChildren().addAll(
                 statsGrid,
@@ -389,6 +353,7 @@ public class HospitalManagementView extends ScrollPane {
 
         return section;
     }
+
 
     // ============================================================
     // KPI CARD
@@ -401,32 +366,30 @@ public class HospitalManagementView extends ScrollPane {
             String accentColorHex,
             String backgroundColorHex) {
 
-        VBox card =
-                new VBox(7);
+        VBox card = new VBox(7);
 
         card.setPadding(
                 new Insets(18)
         );
 
         card.setMinHeight(125);
-
         card.setPrefHeight(135);
 
         card.setStyle(
                 "-fx-background-color: "
                         + backgroundColorHex
-                        + ";" +
-                "-fx-background-radius: 14px;" +
-                "-fx-border-color: "
+                        + ";"
+                        +
+                        "-fx-background-radius: 14px;"
+                        +
+                        "-fx-border-color: "
                         + accentColorHex
-                        + ";" +
-                "-fx-border-width: 1px;" +
-                "-fx-border-radius: 14px;"
+                        + ";"
+                        +
+                        "-fx-border-width: 1px;"
+                        +
+                        "-fx-border-radius: 14px;"
         );
-
-        // ========================================================
-        // TITLE
-        // ========================================================
 
         Label titleLabel =
                 new Label(title);
@@ -443,10 +406,6 @@ public class HospitalManagementView extends ScrollPane {
                 Color.web("#475569")
         );
 
-        // ========================================================
-        // VALUE
-        // ========================================================
-
         valueLabel.setFont(
                 Font.font(
                         "Segoe UI",
@@ -458,10 +417,6 @@ public class HospitalManagementView extends ScrollPane {
         valueLabel.setTextFill(
                 Color.web(accentColorHex)
         );
-
-        // ========================================================
-        // SUBTEXT
-        // ========================================================
 
         Label subLabel =
                 new Label(subtext);
@@ -488,6 +443,7 @@ public class HospitalManagementView extends ScrollPane {
 
         return card;
     }
+
 
     // ============================================================
     // GRAPH CARD
@@ -543,10 +499,6 @@ public class HospitalManagementView extends ScrollPane {
                 Color.web("#64748B")
         );
 
-        // ========================================================
-        // X AXIS
-        // ========================================================
-
         CategoryAxis xAxis =
                 new CategoryAxis();
 
@@ -560,10 +512,6 @@ public class HospitalManagementView extends ScrollPane {
                         10
                 )
         );
-
-        // ========================================================
-        // Y AXIS
-        // ========================================================
 
         NumberAxis yAxis =
                 new NumberAxis();
@@ -579,13 +527,7 @@ public class HospitalManagementView extends ScrollPane {
                 )
         );
 
-        yAxis.setForceZeroInRange(
-                true
-        );
-
-        // ========================================================
-        // BAR CHART
-        // ========================================================
+        yAxis.setForceZeroInRange(true);
 
         cityBarChart =
                 new BarChart<>(
@@ -593,33 +535,16 @@ public class HospitalManagementView extends ScrollPane {
                         yAxis
                 );
 
-        cityBarChart.setPrefHeight(
-                190
-        );
+        cityBarChart.setPrefHeight(190);
+        cityBarChart.setMinHeight(180);
 
-        cityBarChart.setMinHeight(
-                180
-        );
+        cityBarChart.setLegendVisible(false);
+        cityBarChart.setAnimated(false);
 
-        cityBarChart.setLegendVisible(
-                false
-        );
+        cityBarChart.setVerticalGridLinesVisible(false);
+        cityBarChart.setHorizontalGridLinesVisible(true);
 
-        cityBarChart.setAnimated(
-                false
-        );
-
-        cityBarChart.setVerticalGridLinesVisible(
-                false
-        );
-
-        cityBarChart.setHorizontalGridLinesVisible(
-                true
-        );
-
-        cityBarChart.setCategoryGap(
-                18
-        );
+        cityBarChart.setCategoryGap(18);
 
         chartCard.getChildren().addAll(
                 chartTitle,
@@ -634,6 +559,7 @@ public class HospitalManagementView extends ScrollPane {
 
         return chartCard;
     }
+
 
     // ============================================================
     // FILTER BAR
@@ -659,10 +585,6 @@ public class HospitalManagementView extends ScrollPane {
                 "-fx-border-radius: 10px;"
         );
 
-        // ========================================================
-        // SEARCH
-        // ========================================================
-
         TextField searchInput =
                 new TextField();
 
@@ -670,13 +592,7 @@ public class HospitalManagementView extends ScrollPane {
                 "🔍 Search Hospital Name, Registration No, or City..."
         );
 
-        searchInput.setPrefWidth(
-                320
-        );
-
-        // ========================================================
-        // STATUS
-        // ========================================================
+        searchInput.setPrefWidth(320);
 
         ComboBox<String> statusFilter =
                 new ComboBox<>();
@@ -692,12 +608,16 @@ public class HospitalManagementView extends ScrollPane {
                 "All Statuses"
         );
 
-        // ========================================================
-        // CITY
-        // ========================================================
-
-        ComboBox<String> cityFilter =
+        /*
+         * IMPORTANT:
+         *
+         * City filter is now a class-level field.
+         * This allows loadHospitalData() to populate it.
+         */
+        cityFilter =
                 new ComboBox<>();
+
+        cityFilter.setPrefWidth(160);
 
         cityFilter.getItems().add(
                 "All Cities"
@@ -706,6 +626,7 @@ public class HospitalManagementView extends ScrollPane {
         cityFilter.setValue(
                 "All Cities"
         );
+
 
         // ========================================================
         // FILTER FUNCTION
@@ -733,32 +654,52 @@ public class HospitalManagementView extends ScrollPane {
             filteredData.setPredicate(
                     hospital -> {
 
-                        boolean matchesQuery =
-                                query.isEmpty()
+                        if (hospital == null) {
+                            return false;
+                        }
 
-                                ||
-
+                        String hospitalName =
                                 safe(
                                         hospital.getHospitalName()
                                 )
-                                        .toLowerCase()
-                                        .contains(query)
+                                        .toLowerCase();
 
-                                ||
-
+                        String registrationNumber =
                                 safe(
                                         hospital.getRegistrationNumber()
                                 )
-                                        .toLowerCase()
-                                        .contains(query)
+                                        .toLowerCase();
 
-                                ||
-
+                        String address =
                                 safe(
                                         hospital.getAddress()
                                 )
-                                        .toLowerCase()
-                                        .contains(query);
+                                        .toLowerCase();
+
+                        String city =
+                                extractCity(
+                                        hospital.getAddress()
+                                )
+                                        .toLowerCase();
+
+                        boolean matchesQuery =
+                                query.isEmpty()
+                                        ||
+                                        hospitalName.contains(
+                                                query
+                                        )
+                                        ||
+                                        registrationNumber.contains(
+                                                query
+                                        )
+                                        ||
+                                        address.contains(
+                                                query
+                                        )
+                                        ||
+                                        city.contains(
+                                                query
+                                        );
 
                         String hospitalStatus =
                                 getHospitalStatus(
@@ -769,29 +710,29 @@ public class HospitalManagementView extends ScrollPane {
                                 "All Statuses".equals(
                                         selectedStatus
                                 )
-                                ||
-                                hospitalStatus.equalsIgnoreCase(
-                                        selectedStatus
-                                );
+                                        ||
+                                        hospitalStatus.equalsIgnoreCase(
+                                                safe(selectedStatus)
+                                        );
 
                         boolean matchesCity =
                                 "All Cities".equals(
                                         selectedCity
                                 )
-                                ||
-                                extractCity(
-                                        hospital.getAddress()
-                                )
-                                        .equalsIgnoreCase(
-                                                selectedCity
+                                        ||
+                                        city.equalsIgnoreCase(
+                                                safe(selectedCity)
                                         );
 
                         return matchesQuery
-                                && matchesStatus
-                                && matchesCity;
+                                &&
+                                matchesStatus
+                                &&
+                                matchesCity;
                     }
             );
         };
+
 
         searchInput.textProperty()
                 .addListener(
@@ -811,6 +752,11 @@ public class HospitalManagementView extends ScrollPane {
                                 applyFilter.run()
                 );
 
+
+        // ========================================================
+        // SPACER
+        // ========================================================
+
         Region spacer =
                 new Region();
 
@@ -818,6 +764,11 @@ public class HospitalManagementView extends ScrollPane {
                 spacer,
                 Priority.ALWAYS
         );
+
+
+        // ========================================================
+        // RESET BUTTON
+        // ========================================================
 
         Button resetBtn =
                 new Button(
@@ -843,8 +794,11 @@ public class HospitalManagementView extends ScrollPane {
                     cityFilter.setValue(
                             "All Cities"
                     );
+
+                    applyFilter.run();
                 }
         );
+
 
         bar.getChildren().addAll(
                 searchInput,
@@ -856,6 +810,7 @@ public class HospitalManagementView extends ScrollPane {
 
         return bar;
     }
+
 
     // ============================================================
     // TABLE
@@ -901,9 +856,8 @@ public class HospitalManagementView extends ScrollPane {
                 TableView.CONSTRAINED_RESIZE_POLICY
         );
 
-        hospitalTable.setPrefHeight(
-                400
-        );
+        hospitalTable.setPrefHeight(400);
+
 
         // ========================================================
         // NAME
@@ -946,8 +900,7 @@ public class HospitalManagementView extends ScrollPane {
                         }
 
                         HospitalProfile hospital =
-                                getTableRow()
-                                        .getItem();
+                                getTableRow().getItem();
 
                         if (hospital == null) {
 
@@ -969,10 +922,7 @@ public class HospitalManagementView extends ScrollPane {
                                         ? "H"
                                         : name
                                                 .trim()
-                                                .substring(
-                                                        0,
-                                                        1
-                                                );
+                                                .substring(0, 1);
 
                         StackPane icon =
                                 createHospitalBadge(
@@ -983,9 +933,7 @@ public class HospitalManagementView extends ScrollPane {
                                 new VBox(2);
 
                         Label nameLbl =
-                                new Label(
-                                        name
-                                );
+                                new Label(name);
 
                         nameLbl.setFont(
                                 Font.font(
@@ -1002,14 +950,15 @@ public class HospitalManagementView extends ScrollPane {
                         Label registrationLbl =
                                 new Label(
                                         "Reg: "
-                                                + safe(
-                                                        hospital
-                                                                .getRegistrationNumber()
+                                                +
+                                                safe(
+                                                        hospital.getRegistrationNumber()
                                                 )
-                                                + " • "
-                                                + safe(
-                                                        hospital
-                                                                .getHospitalType()
+                                                +
+                                                " • "
+                                                +
+                                                safe(
+                                                        hospital.getHospitalType()
                                                 )
                                 );
 
@@ -1041,6 +990,7 @@ public class HospitalManagementView extends ScrollPane {
                 }
         );
 
+
         // ========================================================
         // TYPE
         // ========================================================
@@ -1059,6 +1009,7 @@ public class HospitalManagementView extends ScrollPane {
                                 )
                         )
         );
+
 
         // ========================================================
         // BEDS
@@ -1079,6 +1030,7 @@ public class HospitalManagementView extends ScrollPane {
                         )
         );
 
+
         // ========================================================
         // CONTACT
         // ========================================================
@@ -1098,6 +1050,7 @@ public class HospitalManagementView extends ScrollPane {
                         )
         );
 
+
         // ========================================================
         // ADDRESS
         // ========================================================
@@ -1116,6 +1069,7 @@ public class HospitalManagementView extends ScrollPane {
                                 )
                         )
         );
+
 
         // ========================================================
         // STATUS
@@ -1158,9 +1112,7 @@ public class HospitalManagementView extends ScrollPane {
                         }
 
                         Label badge =
-                                new Label(
-                                        status
-                                );
+                                new Label(status);
 
                         badge.setFont(
                                 Font.font(
@@ -1189,16 +1141,13 @@ public class HospitalManagementView extends ScrollPane {
                 }
         );
 
+
         // ========================================================
-        // VERIFICATION ACTION
-        //
-        // IMPORTANT:
-        // ONLY VIEW BUTTON IS SHOWN IN TABLE.
-        //
-        // Verify / Pending / Reject are inside View modal.
+        // ACTION
         // ========================================================
 
-        TableColumn<HospitalProfile, HospitalProfile> actionCol =
+        TableColumn<HospitalProfile, HospitalProfile>
+                actionCol =
                 new TableColumn<>(
                         "Verification Action"
                 );
@@ -1214,9 +1163,7 @@ public class HospitalManagementView extends ScrollPane {
                 col -> new TableCell<>() {
 
                     private final Button inspectBtn =
-                            new Button(
-                                    "View"
-                            );
+                            new Button("View");
 
                     {
 
@@ -1234,8 +1181,7 @@ public class HospitalManagementView extends ScrollPane {
                                 e -> {
 
                                     HospitalProfile hospital =
-                                            getTableRow()
-                                                    .getItem();
+                                            getTableRow().getItem();
 
                                     if (hospital != null) {
 
@@ -1257,10 +1203,7 @@ public class HospitalManagementView extends ScrollPane {
                                 empty
                         );
 
-                        if (
-                                empty
-                                        || hospital == null
-                        ) {
+                        if (empty || hospital == null) {
 
                             setGraphic(null);
 
@@ -1274,9 +1217,6 @@ public class HospitalManagementView extends ScrollPane {
                 }
         );
 
-        // ========================================================
-        // ADD COLUMNS
-        // ========================================================
 
         hospitalTable.getColumns().addAll(
                 nameCol,
@@ -1296,6 +1236,7 @@ public class HospitalManagementView extends ScrollPane {
         return container;
     }
 
+
     // ============================================================
     // HOSPITAL BADGE
     // ============================================================
@@ -1314,9 +1255,7 @@ public class HospitalManagementView extends ScrollPane {
                 Color.web("#818CF8")
         );
 
-        circle.setStrokeWidth(
-                1.5
-        );
+        circle.setStrokeWidth(1.5);
 
         Label label =
                 new Label(
@@ -1341,24 +1280,37 @@ public class HospitalManagementView extends ScrollPane {
         );
     }
 
+
     // ============================================================
     // LOAD HOSPITAL DATA
     // ============================================================
 
     private void loadHospitalData() {
 
+        /*
+         * Re-create observable list here.
+         */
         masterHospitalData =
                 FXCollections.observableArrayList(
                         hospital ->
                                 new Observable[]{
+
                                         new SimpleStringProperty(
-                                                hospital.getHospitalName()
+                                                safe(
+                                                        hospital.getHospitalName()
+                                                )
                                         ),
+
                                         new SimpleStringProperty(
-                                                hospital.getAddress()
+                                                safe(
+                                                        hospital.getAddress()
+                                                )
                                         ),
+
                                         new SimpleStringProperty(
-                                                hospital.getBeds()
+                                                safe(
+                                                        hospital.getBeds()
+                                                )
                                         )
                                 }
                 );
@@ -1368,20 +1320,22 @@ public class HospitalManagementView extends ScrollPane {
             java.util.List<HospitalProfile> hospitals =
                     hospitalDAO.getAllHospitalProfiles();
 
+            verificationMap.clear();
+
             if (hospitals != null) {
 
                 masterHospitalData.addAll(
                         hospitals
                 );
 
-                for (
-                        HospitalProfile hospital :
-                        hospitals
-                ) {
+                /*
+                 * Load current verification status
+                 * directly from Firestore.
+                 */
+                for (HospitalProfile hospital : hospitals) {
 
-                    hospitalStatusMap.putIfAbsent(
-                            getHospitalKey(hospital),
-                            "PENDING"
+                    loadVerificationForHospital(
+                            hospital
                     );
                 }
             }
@@ -1392,6 +1346,8 @@ public class HospitalManagementView extends ScrollPane {
                     "Failed to load hospitals: "
                             + e.getMessage()
             );
+
+            e.printStackTrace();
 
             showAlert(
                     "Hospital Data Error",
@@ -1416,101 +1372,142 @@ public class HospitalManagementView extends ScrollPane {
                 filteredData
         );
 
-        updateCityFilter();
+        /*
+         * Populate the city filter now that the
+         * hospital data has been loaded.
+         */
+        updateCityFilterItems();
 
         updateCountersAndChart();
     }
 
-    // ============================================================
-    // CITY FILTER
-    // ============================================================
-
-    private void updateCityFilter() {
-
-        /*
-         * City filtering remains available through
-         * the filter ComboBox.
-         *
-         * City values are derived from hospital address.
-         */
-    }
 
     // ============================================================
-    // STATUS UPDATE
+    // LOAD VERIFICATION
     // ============================================================
 
-    private void updateHospitalStatus(
-            HospitalProfile hospital,
-            String newStatus) {
+    private void loadVerificationForHospital(
+            HospitalProfile hospital) {
 
         if (hospital == null) {
             return;
         }
 
-        String key =
-                getHospitalKey(
-                        hospital
-                );
+        String hospitalId =
+                getHospitalKey(hospital);
 
-        String oldStatus =
-                hospitalStatusMap.get(
-                        key
-                );
-
-        if (newStatus.equalsIgnoreCase(oldStatus)) {
+        if (hospitalId.isBlank()) {
             return;
         }
 
-        hospitalStatusMap.put(
-                key,
-                newStatus
-        );
+        try {
 
-        // Refresh table
-        hospitalTable.refresh();
+            HospitalVerification verification =
+                    verificationController
+                            .getVerificationByHospitalId(
+                                    hospitalId
+                            );
 
-        // Refresh counters
-        updateCountersAndChart();
+            if (verification != null) {
 
-        String hospitalName =
-                safe(
-                        hospital.getHospitalName()
+                verificationMap.put(
+                        hospitalId,
+                        verification
                 );
+            }
 
-        String message;
+        } catch (Exception e) {
 
-        switch (newStatus) {
+            System.err.println(
+                    "Failed to load verification for hospital "
+                            + hospitalId
+                            + ": "
+                            + e.getMessage()
+            );
+        }
+    }
 
-            case "VERIFIED":
 
-                message =
-                        hospitalName
-                                + " has been verified successfully.";
+    // ============================================================
+    // CITY FILTER
+    // ============================================================
 
-                break;
+    private void updateCityFilterItems() {
 
-            case "REJECTED":
-
-                message =
-                        hospitalName
-                                + " has been rejected.";
-
-                break;
-
-            default:
-
-                message =
-                        hospitalName
-                                + " has been moved to pending verification.";
-
-                break;
+        if (cityFilter == null) {
+            return;
         }
 
-        showAlert(
-                "Verification Status Updated",
-                message
+        /*
+         * Remember currently selected city.
+         */
+        String currentSelection =
+                cityFilter.getValue();
+
+        /*
+         * Get unique cities from hospital addresses.
+         */
+        ObservableList<String> cities =
+                FXCollections.observableArrayList();
+
+        if (masterHospitalData != null) {
+
+            masterHospitalData.stream()
+                    .map(
+                            hospital ->
+                                    extractCity(
+                                            hospital.getAddress()
+                                    )
+                    )
+                    .filter(
+                            city ->
+                                    city != null
+                                            &&
+                                            !city.isBlank()
+                    )
+                    .distinct()
+                    .sorted(
+                            String.CASE_INSENSITIVE_ORDER
+                    )
+                    .forEach(
+                            cities::add
+                    );
+        }
+
+        /*
+         * Rebuild ComboBox items.
+         */
+        cityFilter.getItems().clear();
+
+        cityFilter.getItems().add(
+                "All Cities"
         );
+
+        cityFilter.getItems().addAll(
+                cities
+        );
+
+        /*
+         * Restore previous selection if it still exists.
+         */
+        if (currentSelection != null
+                &&
+                cityFilter.getItems().contains(
+                        currentSelection
+                )) {
+
+            cityFilter.setValue(
+                    currentSelection
+            );
+
+        } else {
+
+            cityFilter.setValue(
+                    "All Cities"
+            );
+        }
     }
+
 
     // ============================================================
     // GET STATUS
@@ -1520,17 +1517,41 @@ public class HospitalManagementView extends ScrollPane {
             HospitalProfile hospital) {
 
         if (hospital == null) {
+
             return "PENDING";
         }
 
-        return hospitalStatusMap.getOrDefault(
-                getHospitalKey(hospital),
-                "PENDING"
-        );
+        String hospitalId =
+                getHospitalKey(hospital);
+
+        HospitalVerification verification =
+                verificationMap.get(hospitalId);
+
+        if (verification != null) {
+
+            String status =
+                    verification.getVerificationStatus();
+
+            if (status != null
+                    &&
+                    !status.isBlank()) {
+
+                return status
+                        .trim()
+                        .toUpperCase();
+            }
+        }
+
+        /*
+         * If no verification document exists,
+         * treat hospital as PENDING.
+         */
+        return "PENDING";
     }
 
+
     // ============================================================
-    // UNIQUE HOSPITAL KEY
+    // HOSPITAL KEY
     // ============================================================
 
     private String getHospitalKey(
@@ -1563,6 +1584,7 @@ public class HospitalManagementView extends ScrollPane {
         ).trim();
     }
 
+
     // ============================================================
     // COUNTERS
     // ============================================================
@@ -1580,9 +1602,7 @@ public class HospitalManagementView extends ScrollPane {
                 masterHospitalData.stream()
                         .filter(
                                 hospital ->
-                                        getHospitalStatus(
-                                                hospital
-                                        )
+                                        getHospitalStatus(hospital)
                                                 .equalsIgnoreCase(
                                                         "PENDING"
                                                 )
@@ -1592,13 +1612,18 @@ public class HospitalManagementView extends ScrollPane {
         long verified =
                 masterHospitalData.stream()
                         .filter(
-                                hospital ->
-                                        getHospitalStatus(
-                                                hospital
-                                        )
-                                                .equalsIgnoreCase(
-                                                        "VERIFIED"
-                                                )
+                                hospital -> {
+                                    String status =
+                                            getHospitalStatus(hospital);
+
+                                    return status.equalsIgnoreCase(
+                                                "APPROVED"
+                                            )
+                                            ||
+                                            status.equalsIgnoreCase(
+                                                "VERIFIED"
+                                            );
+                                }
                         )
                         .count();
 
@@ -1606,33 +1631,44 @@ public class HospitalManagementView extends ScrollPane {
                 masterHospitalData.stream()
                         .filter(
                                 hospital ->
-                                        getHospitalStatus(
-                                                hospital
-                                        )
+                                        getHospitalStatus(hospital)
                                                 .equalsIgnoreCase(
                                                         "REJECTED"
                                                 )
                         )
                         .count();
 
-        totalCountLabel.setText(
-                String.valueOf(total)
-        );
+        if (totalCountLabel != null) {
 
-        pendingCountLabel.setText(
-                String.valueOf(pending)
-        );
+            totalCountLabel.setText(
+                    String.valueOf(total)
+            );
+        }
 
-        verifiedCountLabel.setText(
-                String.valueOf(verified)
-        );
+        if (pendingCountLabel != null) {
 
-        rejectedCountLabel.setText(
-                String.valueOf(rejected)
-        );
+            pendingCountLabel.setText(
+                    String.valueOf(pending)
+            );
+        }
+
+        if (verifiedCountLabel != null) {
+
+            verifiedCountLabel.setText(
+                    String.valueOf(verified)
+            );
+        }
+
+        if (rejectedCountLabel != null) {
+
+            rejectedCountLabel.setText(
+                    String.valueOf(rejected)
+            );
+        }
 
         updateCityChart();
     }
+
 
     // ============================================================
     // CITY CHART
@@ -1646,10 +1682,9 @@ public class HospitalManagementView extends ScrollPane {
 
         cityBarChart.getData().clear();
 
-        if (
-                masterHospitalData == null
-                        || masterHospitalData.isEmpty()
-        ) {
+        if (masterHospitalData == null
+                ||
+                masterHospitalData.isEmpty()) {
 
             return;
         }
@@ -1671,7 +1706,6 @@ public class HospitalManagementView extends ScrollPane {
 
         cityCounts.forEach(
                 (city, count) ->
-
                         series.getData().add(
                                 new XYChart.Data<>(
                                         city,
@@ -1685,6 +1719,7 @@ public class HospitalManagementView extends ScrollPane {
         );
     }
 
+
     // ============================================================
     // STATUS STYLE
     // ============================================================
@@ -1692,6 +1727,10 @@ public class HospitalManagementView extends ScrollPane {
     private void applyStatusStyle(
             Label badge,
             String status) {
+
+        if (status == null) {
+            status = "PENDING";
+        }
 
         switch (
                 status.toUpperCase()
@@ -1729,8 +1768,9 @@ public class HospitalManagementView extends ScrollPane {
         }
     }
 
+
     // ============================================================
-    // HOSPITAL INSPECTION / VERIFICATION MODAL
+    // HOSPITAL INSPECTION MODAL
     // ============================================================
 
     private void showDocumentInspectionModal(
@@ -1755,13 +1795,7 @@ public class HospitalManagementView extends ScrollPane {
 
         dialog.getDialogPane()
                 .getButtonTypes()
-                .add(
-                        closeButton
-                );
-
-        // ========================================================
-        // MAIN CONTENT
-        // ========================================================
+                .add(closeButton);
 
         VBox content =
                 new VBox(14);
@@ -1770,13 +1804,7 @@ public class HospitalManagementView extends ScrollPane {
                 new Insets(12)
         );
 
-        content.setPrefWidth(
-                560
-        );
-
-        // ========================================================
-        // HOSPITAL TITLE
-        // ========================================================
+        content.setPrefWidth(560);
 
         Label hospitalTitle =
                 new Label(
@@ -1797,14 +1825,13 @@ public class HospitalManagementView extends ScrollPane {
                 Color.web("#0F172A")
         );
 
+
         // ========================================================
         // CURRENT STATUS
         // ========================================================
 
         String currentStatusValue =
-                getHospitalStatus(
-                        hospital
-                );
+                getHospitalStatus(hospital);
 
         Label currentStatus =
                 new Label(
@@ -1834,6 +1861,7 @@ public class HospitalManagementView extends ScrollPane {
                 currentStatusValue
         );
 
+
         // ========================================================
         // DETAILS
         // ========================================================
@@ -1841,29 +1869,31 @@ public class HospitalManagementView extends ScrollPane {
         Label details =
                 new Label(
                         "UID: "
-                                + safe(
-                                        hospital.getUid()
-                                )
+                                + safe(hospital.getUid())
+
                                 + "\n\nEmail: "
-                                + safe(
-                                        hospital.getEmail()
-                                )
+                                + safe(hospital.getEmail())
+
                                 + "\n\nRegistration Number: "
                                 + safe(
                                         hospital.getRegistrationNumber()
                                 )
+
                                 + "\n\nHospital Type: "
                                 + safe(
                                         hospital.getHospitalType()
                                 )
+
                                 + "\n\nBeds: "
                                 + safe(
                                         hospital.getBeds()
                                 )
+
                                 + "\n\nContact: "
                                 + safe(
                                         hospital.getContact()
                                 )
+
                                 + "\n\nAddress: "
                                 + safe(
                                         hospital.getAddress()
@@ -1881,19 +1911,11 @@ public class HospitalManagementView extends ScrollPane {
                 Color.web("#334155")
         );
 
-        details.setWrapText(
-                true
-        );
+        details.setWrapText(true);
+
 
         // ========================================================
-        // SEPARATOR
-        // ========================================================
-
-        Separator separator =
-                new Separator();
-
-        // ========================================================
-        // VERIFICATION SECTION TITLE
+        // VERIFICATION TITLE
         // ========================================================
 
         Label verificationTitle =
@@ -1913,6 +1935,7 @@ public class HospitalManagementView extends ScrollPane {
                 Color.web("#0F172A")
         );
 
+
         // ========================================================
         // VERIFY BUTTON
         // ========================================================
@@ -1922,22 +1945,12 @@ public class HospitalManagementView extends ScrollPane {
                         "✓ Verify & Approve"
                 );
 
-        verifyBtn.setMaxWidth(
-                Double.MAX_VALUE
+        styleActionButton(
+                verifyBtn,
+                "#D1FAE5",
+                "#065F46"
         );
 
-        verifyBtn.setPrefHeight(
-                38
-        );
-
-        verifyBtn.setStyle(
-                "-fx-background-color: #D1FAE5;" +
-                "-fx-text-fill: #065F46;" +
-                "-fx-font-size: 12px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-background-radius: 7px;" +
-                "-fx-cursor: hand;"
-        );
 
         // ========================================================
         // PENDING BUTTON
@@ -1948,22 +1961,12 @@ public class HospitalManagementView extends ScrollPane {
                         "⏳ Set as Pending"
                 );
 
-        pendingBtn.setMaxWidth(
-                Double.MAX_VALUE
+        styleActionButton(
+                pendingBtn,
+                "#FEF3C7",
+                "#92400E"
         );
 
-        pendingBtn.setPrefHeight(
-                38
-        );
-
-        pendingBtn.setStyle(
-                "-fx-background-color: #FEF3C7;" +
-                "-fx-text-fill: #92400E;" +
-                "-fx-font-size: 12px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-background-radius: 7px;" +
-                "-fx-cursor: hand;"
-        );
 
         // ========================================================
         // REJECT BUTTON
@@ -1974,22 +1977,12 @@ public class HospitalManagementView extends ScrollPane {
                         "✕ Reject Verification"
                 );
 
-        rejectBtn.setMaxWidth(
-                Double.MAX_VALUE
+        styleActionButton(
+                rejectBtn,
+                "#FEE2E2",
+                "#991B1B"
         );
 
-        rejectBtn.setPrefHeight(
-                38
-        );
-
-        rejectBtn.setStyle(
-                "-fx-background-color: #FEE2E2;" +
-                "-fx-text-fill: #991B1B;" +
-                "-fx-font-size: 12px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-background-radius: 7px;" +
-                "-fx-cursor: hand;"
-        );
 
         // ========================================================
         // VERIFY ACTION
@@ -1998,21 +1991,103 @@ public class HospitalManagementView extends ScrollPane {
         verifyBtn.setOnAction(
                 e -> {
 
-                    updateHospitalStatus(
-                            hospital,
-                            "VERIFIED"
-                    );
+                    String verificationId =
+                            getVerificationId(
+                                    hospital
+                            );
 
-                    currentStatus.setText(
-                            "Current Verification Status: VERIFIED"
-                    );
+                    if (verificationId == null
+                            ||
+                            verificationId.isBlank()) {
 
-                    applyStatusStyle(
-                            currentStatus,
-                            "VERIFIED"
-                    );
+                        showAlert(
+                                "Verification Error",
+                                "No verification record was found for this hospital."
+                        );
+
+                        return;
+                    }
+
+                    try {
+
+                        /*
+                         * Existing hospitals can be missing a
+                         * hospital_verifications document. Create a
+                         * PENDING record first, then approve it.
+                         */
+                        HospitalVerification existingVerification =
+                                getVerification(hospital);
+
+                        if (existingVerification == null) {
+                            boolean created =
+                                    verificationController
+                                            .setPendingVerification(
+                                                    verificationId,
+                                                    ADMIN_UID
+                                            );
+
+                            if (!created) {
+                                showAlert(
+                                        "Verification Failed",
+                                        "Unable to create the hospital verification record."
+                                );
+                                return;
+                            }
+                        }
+
+                        boolean success =
+                                verificationController
+                                        .approveVerification(
+                                                verificationId,
+                                                ADMIN_UID
+                                        );
+
+                        if (success) {
+
+                            /*
+                             * Reload directly from Firestore.
+                             */
+                            refreshVerification(
+                                    hospital
+                            );
+
+                            updateStatusLabel(
+                                    currentStatus,
+                                    hospital
+                            );
+
+                            hospitalTable.refresh();
+
+                            updateCountersAndChart();
+
+                            showAlert(
+                                    "Verification Successful",
+                                    safe(
+                                            hospital.getHospitalName()
+                                    )
+                                            + " has been verified successfully."
+                            );
+
+                        } else {
+
+                            showAlert(
+                                    "Verification Failed",
+                                    "Unable to verify the hospital."
+                            );
+                        }
+
+                    } catch (Exception ex) {
+
+                        ex.printStackTrace();
+
+                        showAlert(
+                                "Verification Error",
+                                ex.getMessage()
+                        );
+                    }
                 }
         );
+
 
         // ========================================================
         // PENDING ACTION
@@ -2021,21 +2096,81 @@ public class HospitalManagementView extends ScrollPane {
         pendingBtn.setOnAction(
                 e -> {
 
-                    updateHospitalStatus(
-                            hospital,
-                            "PENDING"
-                    );
+                    String verificationId =
+                            getVerificationId(
+                                    hospital
+                            );
 
-                    currentStatus.setText(
-                            "Current Verification Status: PENDING"
-                    );
+                    if (verificationId == null
+                            ||
+                            verificationId.isBlank()) {
 
-                    applyStatusStyle(
-                            currentStatus,
-                            "PENDING"
-                    );
+                        showAlert(
+                                "Verification Error",
+                                "No verification record was found for this hospital."
+                        );
+
+                        return;
+                    }
+
+                    try {
+
+                        /*
+                         * Create the verification document when an
+                         * older/existing hospital does not have one.
+                         * If it already exists, the same operation
+                         * updates it to PENDING.
+                         */
+                        boolean success =
+                                verificationController
+                                        .setPendingVerification(
+                                                verificationId,
+                                                ADMIN_UID
+                                        );
+
+                        if (success) {
+
+                            refreshVerification(
+                                    hospital
+                            );
+
+                            updateStatusLabel(
+                                    currentStatus,
+                                    hospital
+                            );
+
+                            hospitalTable.refresh();
+
+                            updateCountersAndChart();
+
+                            showAlert(
+                                    "Status Updated",
+                                    safe(
+                                            hospital.getHospitalName()
+                                    )
+                                            + " has been moved to PENDING."
+                            );
+
+                        } else {
+
+                            showAlert(
+                                    "Update Failed",
+                                    "Unable to update verification status."
+                            );
+                        }
+
+                    } catch (Exception ex) {
+
+                        ex.printStackTrace();
+
+                        showAlert(
+                                "Status Update Error",
+                                ex.getMessage()
+                        );
+                    }
                 }
         );
+
 
         // ========================================================
         // REJECT ACTION
@@ -2044,21 +2179,136 @@ public class HospitalManagementView extends ScrollPane {
         rejectBtn.setOnAction(
                 e -> {
 
-                    updateHospitalStatus(
-                            hospital,
-                            "REJECTED"
+                    TextInputDialog rejectionDialog =
+                            new TextInputDialog();
+
+                    rejectionDialog.setTitle(
+                            "Reject Hospital Verification"
                     );
 
-                    currentStatus.setText(
-                            "Current Verification Status: REJECTED"
+                    rejectionDialog.setHeaderText(
+                            "Enter rejection reason"
                     );
 
-                    applyStatusStyle(
-                            currentStatus,
-                            "REJECTED"
+                    rejectionDialog.setContentText(
+                            "Reason:"
                     );
+
+                    Optional<String> result =
+                            rejectionDialog.showAndWait();
+
+                    if (result.isEmpty()) {
+                        return;
+                    }
+
+                    String reason =
+                            result.get().trim();
+
+                    if (reason.isBlank()) {
+
+                        showAlert(
+                                "Invalid Reason",
+                                "Rejection reason cannot be empty."
+                        );
+
+                        return;
+                    }
+
+                    String verificationId =
+                            getVerificationId(
+                                    hospital
+                            );
+
+                    if (verificationId == null
+                            ||
+                            verificationId.isBlank()) {
+
+                        showAlert(
+                                "Verification Error",
+                                "No verification record was found."
+                        );
+
+                        return;
+                    }
+
+                    try {
+
+                        /*
+                         * A hospital may not yet have a verification
+                         * document. Create a PENDING record first so
+                         * rejection can safely be applied.
+                         */
+                        HospitalVerification existingVerification =
+                                getVerification(hospital);
+
+                        if (existingVerification == null) {
+                            boolean created =
+                                    verificationController
+                                            .setPendingVerification(
+                                                    verificationId,
+                                                    ADMIN_UID
+                                            );
+
+                            if (!created) {
+                                showAlert(
+                                        "Rejection Failed",
+                                        "Unable to create the hospital verification record."
+                                );
+                                return;
+                            }
+                        }
+
+                        boolean success =
+                                verificationController
+                                        .rejectVerification(
+                                                verificationId,
+                                                ADMIN_UID,
+                                                reason
+                                        );
+
+                        if (success) {
+
+                            refreshVerification(
+                                    hospital
+                            );
+
+                            updateStatusLabel(
+                                    currentStatus,
+                                    hospital
+                            );
+
+                            hospitalTable.refresh();
+
+                            updateCountersAndChart();
+
+                            showAlert(
+                                    "Verification Rejected",
+                                    safe(
+                                            hospital.getHospitalName()
+                                    )
+                                            + " has been rejected."
+                            );
+
+                        } else {
+
+                            showAlert(
+                                    "Rejection Failed",
+                                    "Unable to reject the hospital verification."
+                            );
+                        }
+
+                    } catch (Exception ex) {
+
+                        ex.printStackTrace();
+
+                        showAlert(
+                                "Rejection Error",
+                                ex.getMessage()
+                        );
+                    }
                 }
         );
+
 
         // ========================================================
         // ADD CONTENT
@@ -2067,7 +2317,7 @@ public class HospitalManagementView extends ScrollPane {
         content.getChildren().addAll(
                 hospitalTitle,
                 currentStatus,
-                separator,
+                new Separator(),
                 details,
                 new Separator(),
                 verificationTitle,
@@ -2077,15 +2327,225 @@ public class HospitalManagementView extends ScrollPane {
         );
 
         dialog.getDialogPane()
-                .setContent(
-                        content
-                );
+                .setContent(content);
 
         dialog.showAndWait();
     }
 
+
     // ============================================================
-    // HELPERS
+    // ACTION BUTTON STYLE
+    // ============================================================
+
+    private void styleActionButton(
+            Button button,
+            String background,
+            String textColor) {
+
+        button.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        button.setPrefHeight(38);
+
+        button.setStyle(
+                "-fx-background-color: "
+                        + background
+                        + ";" +
+                "-fx-text-fill: "
+                        + textColor
+                        + ";" +
+                "-fx-font-size: 12px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-radius: 7px;" +
+                "-fx-cursor: hand;"
+        );
+    }
+
+
+    // ============================================================
+    // UPDATE STATUS LABEL
+    // ============================================================
+
+    private void updateStatusLabel(
+            Label statusLabel,
+            HospitalProfile hospital) {
+
+        String status =
+                getHospitalStatus(
+                        hospital
+                );
+
+        statusLabel.setText(
+                "Current Verification Status: "
+                        + status
+        );
+
+        applyStatusStyle(
+                statusLabel,
+                status
+        );
+    }
+
+
+    // ============================================================
+    // GET VERIFICATION
+    // ============================================================
+
+    private HospitalVerification getVerification(
+            HospitalProfile hospital) {
+
+        if (hospital == null) {
+            return null;
+        }
+
+        String hospitalId =
+                getHospitalKey(
+                        hospital
+                );
+
+        if (hospitalId.isBlank()) {
+            return null;
+        }
+
+        /*
+         * First check loaded Firestore cache.
+         */
+        HospitalVerification verification =
+                verificationMap.get(
+                        hospitalId
+                );
+
+        /*
+         * If missing, query Firestore.
+         */
+        if (verification == null) {
+
+            try {
+
+                verification =
+                        verificationController
+                                .getVerificationByHospitalId(
+                                        hospitalId
+                                );
+
+                if (verification != null) {
+
+                    verificationMap.put(
+                            hospitalId,
+                            verification
+                    );
+                }
+
+            } catch (Exception e) {
+
+                System.err.println(
+                        "Failed to retrieve verification: "
+                                + e.getMessage()
+                );
+            }
+        }
+
+        return verification;
+    }
+
+
+    // ============================================================
+    // GET VERIFICATION ID
+    // ============================================================
+
+    private String getVerificationId(
+            HospitalProfile hospital) {
+
+        if (hospital == null) {
+            return null;
+        }
+
+        HospitalVerification verification =
+                getVerification(
+                        hospital
+                );
+
+        /*
+         * Existing hospitals may have a users/hospitals document
+         * but no hospital_verifications document yet.
+         * In that case the hospital UID itself is the verification
+         * document ID and the controller will create the missing
+         * verification record before changing its status.
+         */
+        if (verification == null) {
+            return getHospitalKey(hospital);
+        }
+
+        String verificationId =
+                verification.getVerificationId();
+
+        if (verificationId == null
+                || verificationId.isBlank()) {
+            return getHospitalKey(hospital);
+        }
+
+        return verificationId;
+    }
+
+
+    // ============================================================
+    // REFRESH VERIFICATION
+    // ============================================================
+
+    private void refreshVerification(
+            HospitalProfile hospital) {
+
+        if (hospital == null) {
+            return;
+        }
+
+        String hospitalId =
+                getHospitalKey(
+                        hospital
+                );
+
+        if (hospitalId.isBlank()) {
+            return;
+        }
+
+        try {
+
+            /*
+             * ALWAYS get fresh value from Firestore.
+             */
+            HospitalVerification verification =
+                    verificationController
+                            .getVerificationByHospitalId(
+                                    hospitalId
+                            );
+
+            if (verification != null) {
+
+                verificationMap.put(
+                        hospitalId,
+                        verification
+                );
+
+            } else {
+
+                verificationMap.remove(
+                        hospitalId
+                );
+            }
+
+        } catch (Exception e) {
+
+            System.err.println(
+                    "Failed to refresh verification: "
+                            + e.getMessage()
+            );
+        }
+    }
+
+
+    // ============================================================
+    // SAFE STRING
     // ============================================================
 
     private String safe(
@@ -2096,13 +2556,17 @@ public class HospitalManagementView extends ScrollPane {
                 : value;
     }
 
+
+    // ============================================================
+    // EXTRACT CITY
+    // ============================================================
+
     private String extractCity(
             String address) {
 
-        if (
-                address == null
-                        || address.trim().isEmpty()
-        ) {
+        if (address == null
+                ||
+                address.trim().isEmpty()) {
 
             return "Unknown";
         }
@@ -2110,10 +2574,19 @@ public class HospitalManagementView extends ScrollPane {
         String[] parts =
                 address.split(",");
 
+        /*
+         * Current project convention:
+         *
+         * First comma-separated section is treated
+         * as the city.
+         */
         return parts.length > 0
-                ? parts[0].trim()
-                : "Unknown";
+                ?
+                parts[0].trim()
+                :
+                "Unknown";
     }
+
 
     // ============================================================
     // ALERT
@@ -2128,18 +2601,16 @@ public class HospitalManagementView extends ScrollPane {
                         Alert.AlertType.INFORMATION
                 );
 
-        alert.setTitle(
-                title
-        );
+        alert.setTitle(title);
 
-        alert.setHeaderText(
-                null
-        );
+        alert.setHeaderText(null);
 
         alert.setContentText(
                 content == null
-                        ? "An unexpected error occurred."
-                        : content
+                        ?
+                        "An unexpected error occurred."
+                        :
+                        content
         );
 
         alert.showAndWait();

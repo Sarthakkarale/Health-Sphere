@@ -18,7 +18,20 @@ public class DoctorManagementController {
      */
     public List<DoctorProfile> getAllDoctors() {
 
-        return doctorDAO.getAllDoctorProfiles();
+        try {
+            return doctorDAO.getAllDoctorProfiles();
+
+        } catch (RuntimeException e) {
+
+            System.err.println(
+                    "Failed to load doctors: "
+                            + e.getMessage()
+            );
+
+            e.printStackTrace();
+
+            return List.of();
+        }
     }
 
     /**
@@ -29,25 +42,42 @@ public class DoctorManagementController {
 
         validateUid(doctorUid);
 
-        return doctorDAO.getDoctorProfile(
-                doctorUid
-        );
+        try {
+
+            return doctorDAO.getDoctorProfile(
+                    doctorUid
+            );
+
+        } catch (RuntimeException e) {
+
+            System.err.println(
+                    "Failed to get doctor: "
+                            + e.getMessage()
+            );
+
+            return null;
+        }
     }
 
     /**
      * Approve / verify a doctor.
+     *
+     * Updates:
+     * doctors/{uid}
+     * doctor_credentials/{uid}
+     * users/{uid}
      */
     public boolean verifyDoctor(
             String doctorUid) {
 
         return updateVerificationStatus(
                 doctorUid,
-                "VERIFIED"
+                "APPROVED"
         );
     }
 
     /**
-     * Put doctor verification back into pending state.
+     * Put doctor credentialing back into PENDING.
      */
     public boolean setDoctorPending(
             String doctorUid) {
@@ -59,7 +89,7 @@ public class DoctorManagementController {
     }
 
     /**
-     * Reject a doctor's verification.
+     * Reject a doctor's credentialing.
      */
     public boolean rejectDoctor(
             String doctorUid) {
@@ -90,6 +120,11 @@ public class DoctorManagementController {
 
         } catch (RuntimeException e) {
 
+            System.err.println(
+                    "Failed to update doctor verification status: "
+                            + e.getMessage()
+            );
+
             e.printStackTrace();
 
             return false;
@@ -104,9 +139,21 @@ public class DoctorManagementController {
 
         validateUid(doctorUid);
 
-        return doctorDAO.getVerificationStatus(
-                doctorUid
-        );
+        try {
+
+            return doctorDAO.getVerificationStatus(
+                    doctorUid
+            );
+
+        } catch (RuntimeException e) {
+
+            System.err.println(
+                    "Failed to get doctor verification status: "
+                            + e.getMessage()
+            );
+
+            return null;
+        }
     }
 
     /**
@@ -136,6 +183,11 @@ public class DoctorManagementController {
 
         } catch (RuntimeException e) {
 
+            System.err.println(
+                    "Failed to update doctor profile: "
+                            + e.getMessage()
+            );
+
             e.printStackTrace();
 
             return false;
@@ -143,7 +195,7 @@ public class DoctorManagementController {
     }
 
     /**
-     * Delete doctor profile.
+     * Delete doctor profile and credential record.
      */
     public boolean deleteDoctor(
             String doctorUid) {
@@ -159,6 +211,11 @@ public class DoctorManagementController {
             return true;
 
         } catch (RuntimeException e) {
+
+            System.err.println(
+                    "Failed to delete doctor: "
+                            + e.getMessage()
+            );
 
             e.printStackTrace();
 

@@ -1,5 +1,7 @@
 package com.healthsphere.model;
 
+import java.time.Instant;
+
 public class HospitalProfile {
 
     private String uid;
@@ -11,7 +13,13 @@ public class HospitalProfile {
     private String contact;
     private String address;
 
+    // Verification information
+    private String verificationStatus;
+    private String verifiedBy;
+    private Instant updatedAt;
+
     public HospitalProfile() {
+        // Required for Firestore deserialization
     }
 
     public HospitalProfile(
@@ -96,5 +104,35 @@ public class HospitalProfile {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    // ============================================================
+    // VERIFICATION STATUS
+    // ============================================================
+
+    public String getVerificationStatus() {
+        return verificationStatus;
+    }
+
+    public void setVerificationStatus(
+            String verificationStatus) {
+
+        this.verificationStatus = verificationStatus;
+    }
+
+    public String getVerifiedBy() {
+        return verifiedBy;
+    }
+
+    public void setVerifiedBy(String verifiedBy) {
+        this.verifiedBy = verifiedBy;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

@@ -1,6 +1,7 @@
 package com.healthsphere.dao.authentication;
 
 import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.FieldValue;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.QuerySnapshot;
 import com.healthsphere.config.FirebaseConfig;
@@ -13,55 +14,55 @@ import java.util.Map;
 
 public class DoctorDAO {
 
-    private static final String COLLECTION_NAME = "doctors";
+    private static final String COLLECTION_NAME =
+            "doctors";
 
-    /*
-     * Firestore field used by Admin for doctor verification.
-     *
-     * Possible values:
-     * VERIFIED
-     * PENDING
-     * REJECTED
-     */
+    private static final String CREDENTIALS_COLLECTION =
+            "doctor_credentials";
+
+    private static final String USERS_COLLECTION =
+            "users";
+
     private static final String VERIFICATION_STATUS_FIELD =
             "verificationStatus";
 
     private final Firestore firestore;
 
     public DoctorDAO() {
-        this.firestore = FirebaseConfig.getFirestore();
+        this.firestore =
+                FirebaseConfig.getFirestore();
     }
 
     /**
      * Create a doctor profile.
+     *
+     * Also creates a PENDING credential record.
      */
     public void createDoctorProfile(
             DoctorProfile doctorProfile) {
 
-        if (doctorProfile == null) {
-            throw new IllegalArgumentException(
-                    "Doctor profile cannot be null."
-            );
-        }
-
-        if (doctorProfile.getUid() == null ||
-                doctorProfile.getUid().trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Doctor UID is required."
-            );
-        }
+        validateDoctorProfile(doctorProfile);
 
         try {
 
-            /*
-             * Store the normal DoctorProfile.
-             */
             firestore
                     .collection(COLLECTION_NAME)
                     .document(doctorProfile.getUid())
                     .set(doctorProfile)
                     .get();
+
+            createPendingCredential(
+                    doctorProfile
+            );
+
+        } catch (InterruptedException e) {
+
+            Thread.currentThread().interrupt();
+
+            throw new RuntimeException(
+                    "Doctor profile creation was interrupted.",
+                    e
+            );
 
         } catch (Exception e) {
 
@@ -97,6 +98,15 @@ public class DoctorDAO {
                     DoctorProfile.class
             );
 
+        } catch (InterruptedException e) {
+
+            Thread.currentThread().interrupt();
+
+            throw new RuntimeException(
+                    "Doctor profile retrieval was interrupted.",
+                    e
+            );
+
         } catch (Exception e) {
 
             throw new RuntimeException(
@@ -108,8 +118,6 @@ public class DoctorDAO {
 
     /**
      * Get all doctor profiles.
-     *
-     * Used by the Admin Doctor Directory.
      */
     public List<DoctorProfile> getAllDoctorProfiles() {
 
@@ -144,6 +152,15 @@ public class DoctorDAO {
 
             return doctors;
 
+        } catch (InterruptedException e) {
+
+            Thread.currentThread().interrupt();
+
+            throw new RuntimeException(
+                    "Doctor profile retrieval was interrupted.",
+                    e
+            );
+
         } catch (Exception e) {
 
             throw new RuntimeException(
@@ -159,16 +176,7 @@ public class DoctorDAO {
     public void updateDoctorProfile(
             DoctorProfile doctorProfile) {
 
-        if (doctorProfile == null) {
-
-            throw new IllegalArgumentException(
-                    "Doctor profile cannot be null."
-            );
-        }
-
-        validateUid(
-                doctorProfile.getUid()
-        );
+        validateDoctorProfile(doctorProfile);
 
         try {
 
@@ -177,6 +185,15 @@ public class DoctorDAO {
                     .document(doctorProfile.getUid())
                     .set(doctorProfile)
                     .get();
+
+        } catch (InterruptedException e) {
+
+            Thread.currentThread().interrupt();
+
+            throw new RuntimeException(
+                    "Doctor profile update was interrupted.",
+                    e
+            );
 
         } catch (Exception e) {
 
@@ -188,18 +205,16 @@ public class DoctorDAO {
     }
 
     /**
-     * Update the Admin verification status of a doctor.
+     * Update doctor credentialing / verification status.
      *
-     * This does NOT create another Doctor model.
+     * Supported values:
      *
-     * It stores the status directly in the existing
-     * doctor Firestore document.
+     * PENDING
+     * APPROVED
+     * VERIFIED
+     * REJECTED
      *
-     * Example:
-     *
-     * verificationStatus = VERIFIED
-     * verificationStatus = PENDING
-     * verificationStatus = REJECTED
+     * VERIFIED is converted to APPROVED.
      */
     public void updateVerificationStatus(
             String doctorUid,
@@ -207,10 +222,8 @@ public class DoctorDAO {
 
         validateUid(doctorUid);
 
-        if (
-                verificationStatus == null ||
-                verificationStatus.trim().isEmpty()
-        ) {
+        if (verificationStatus == null ||
+                verificationStatus.trim().isEmpty()) {
 
             throw new IllegalArgumentException(
                     "Verification status is required."
@@ -222,33 +235,103 @@ public class DoctorDAO {
                         .trim()
                         .toUpperCase();
 
-        if (
-                !normalizedStatus.equals("VERIFIED") &&
+        if (!normalizedStatus.equals("VERIFIED") &&
+                !normalizedStatus.equals("APPROVED") &&
                 !normalizedStatus.equals("PENDING") &&
-                !normalizedStatus.equals("REJECTED")
-        ) {
+                !normalizedStatus.equals("REJECTED")) {
 
             throw new IllegalArgumentException(
                     "Invalid verification status. " +
-                    "Allowed values are VERIFIED, PENDING, or REJECTED."
+                    "Allowed values are VERIFIED, APPROVED, " +
+                    "PENDING, or REJECTED."
             );
         }
 
         try {
 
-            Map<String, Object> updateData =
+            DocumentSnapshot doctorDocument =
+                    firestore
+                            .collection(COLLECTION_NAME)
+                            .document(doctorUid)
+                            .get()
+                            .get();
+
+            if (!doctorDocument.exists()) {
+
+                throw new IllegalArgumentException(
+                        "Doctor profile not found: "
+                                + doctorUid
+                );
+            }
+
+            DoctorProfile doctor =
+                    doctorDocument.toObject(
+                            DoctorProfile.class
+                    );
+
+            /*
+             * VERIFIED is maintained for compatibility
+             * but stored as APPROVED in credentialing.
+             */
+            String credentialStatus =
+                    normalizedStatus.equals("VERIFIED")
+                            ? "APPROVED"
+                            : normalizedStatus;
+
+            /*
+             * Update/create dedicated credential record.
+             */
+            createOrUpdateCredential(
+                    doctorUid,
+                    doctor,
+                    credentialStatus
+            );
+
+            /*
+             * Keep status inside doctors/{uid}.
+             */
+            Map<String, Object> doctorUpdate =
                     new HashMap<>();
 
-            updateData.put(
+            doctorUpdate.put(
                     VERIFICATION_STATUS_FIELD,
-                    normalizedStatus
+                    credentialStatus
             );
 
             firestore
                     .collection(COLLECTION_NAME)
                     .document(doctorUid)
-                    .update(updateData)
+                    .update(doctorUpdate)
                     .get();
+
+            /*
+             * Update users/{uid} status.
+             */
+            if (credentialStatus.equals("APPROVED")) {
+
+                updateUserStatus(
+                        doctorUid,
+                        "ACTIVE"
+                );
+
+            } else if (
+                    credentialStatus.equals("REJECTED")
+            ) {
+
+                updateUserStatus(
+                        doctorUid,
+                        "REJECTED"
+                );
+            }
+
+        } catch (InterruptedException e) {
+
+            Thread.currentThread().interrupt();
+
+            throw new RuntimeException(
+                    "Doctor verification operation was interrupted.",
+                    e
+            );
 
         } catch (Exception e) {
 
@@ -260,14 +343,10 @@ public class DoctorDAO {
     }
 
     /**
-     * Get the verification status of a doctor.
+     * Get current doctor verification status.
      *
-     * Returns:
-     * VERIFIED
-     * PENDING
-     * REJECTED
-     *
-     * If no status exists yet, returns PENDING.
+     * Checks doctor_credentials first.
+     * Falls back to doctors/{uid}.
      */
     public String getVerificationStatus(
             String doctorUid) {
@@ -276,32 +355,78 @@ public class DoctorDAO {
 
         try {
 
-            DocumentSnapshot document =
+            /*
+             * Check credential collection first.
+             */
+            DocumentSnapshot credentialDocument =
+                    firestore
+                            .collection(
+                                    CREDENTIALS_COLLECTION
+                            )
+                            .document(doctorUid)
+                            .get()
+                            .get();
+
+            if (credentialDocument.exists()) {
+
+                String credentialStatus =
+                        credentialDocument.getString(
+                                "credentialStatus"
+                        );
+
+                if (credentialStatus != null &&
+                        !credentialStatus.trim().isEmpty()) {
+
+                    return credentialStatus;
+                }
+
+                String verificationStatus =
+                        credentialDocument.getString(
+                                VERIFICATION_STATUS_FIELD
+                        );
+
+                if (verificationStatus != null &&
+                        !verificationStatus.trim().isEmpty()) {
+
+                    return verificationStatus;
+                }
+            }
+
+            /*
+             * Fallback to doctors/{uid}.
+             */
+            DocumentSnapshot doctorDocument =
                     firestore
                             .collection(COLLECTION_NAME)
                             .document(doctorUid)
                             .get()
                             .get();
 
-            if (!document.exists()) {
-
+            if (!doctorDocument.exists()) {
                 return null;
             }
 
             String status =
-                    document.getString(
+                    doctorDocument.getString(
                             VERIFICATION_STATUS_FIELD
                     );
 
-            if (
-                    status == null ||
-                    status.trim().isEmpty()
-            ) {
+            if (status == null ||
+                    status.trim().isEmpty()) {
 
                 return "PENDING";
             }
 
             return status;
+
+        } catch (InterruptedException e) {
+
+            Thread.currentThread().interrupt();
+
+            throw new RuntimeException(
+                    "Doctor verification retrieval was interrupted.",
+                    e
+            );
 
         } catch (Exception e) {
 
@@ -313,7 +438,259 @@ public class DoctorDAO {
     }
 
     /**
-     * Delete a doctor profile.
+     * Create a PENDING credential record if it
+     * does not already exist.
+     */
+    public void createPendingCredential(
+            DoctorProfile doctorProfile) {
+
+        validateDoctorProfile(doctorProfile);
+
+        try {
+
+            DocumentSnapshot existing =
+                    firestore
+                            .collection(
+                                    CREDENTIALS_COLLECTION
+                            )
+                            .document(
+                                    doctorProfile.getUid()
+                            )
+                            .get()
+                            .get();
+
+            if (existing.exists()) {
+                return;
+            }
+
+            createOrUpdateCredential(
+                    doctorProfile.getUid(),
+                    doctorProfile,
+                    "PENDING"
+            );
+
+            /*
+             * Keep doctors/{uid} compatible with
+             * the existing Doctor UI.
+             */
+            Map<String, Object> doctorUpdate =
+                    new HashMap<>();
+
+            doctorUpdate.put(
+                    VERIFICATION_STATUS_FIELD,
+                    "PENDING"
+            );
+
+            firestore
+                    .collection(COLLECTION_NAME)
+                    .document(doctorProfile.getUid())
+                    .update(doctorUpdate)
+                    .get();
+
+        } catch (InterruptedException e) {
+
+            Thread.currentThread().interrupt();
+
+            throw new RuntimeException(
+                    "Pending credential creation was interrupted.",
+                    e
+            );
+
+        } catch (Exception e) {
+
+            throw new RuntimeException(
+                    "Failed to create pending doctor credential.",
+                    e
+            );
+        }
+    }
+
+    /**
+     * Create or update the dedicated credential document.
+     */
+    private void createOrUpdateCredential(
+            String doctorUid,
+            DoctorProfile doctor,
+            String credentialStatus) {
+
+        try {
+
+            Map<String, Object> credential =
+                    new HashMap<>();
+
+            credential.put(
+                    "doctorId",
+                    doctorUid
+            );
+
+            credential.put(
+                    "credentialId",
+                    doctorUid
+            );
+
+            credential.put(
+                    "firstName",
+                    safe(
+                            doctor != null
+                                    ? doctor.getFirstName()
+                                    : null
+                    )
+            );
+
+            credential.put(
+                    "lastName",
+                    safe(
+                            doctor != null
+                                    ? doctor.getLastName()
+                                    : null
+                    )
+            );
+
+            credential.put(
+                    "email",
+                    safe(
+                            doctor != null
+                                    ? doctor.getEmail()
+                                    : null
+                    )
+            );
+
+            credential.put(
+                    "phone",
+                    safe(
+                            doctor != null
+                                    ? doctor.getPhone()
+                                    : null
+                    )
+            );
+
+            credential.put(
+                    "registrationNumber",
+                    safe(
+                            doctor != null
+                                    ? doctor.getRegistrationNumber()
+                                    : null
+                    )
+            );
+
+            credential.put(
+                    "specialization",
+                    safe(
+                            doctor != null
+                                    ? doctor.getSpecialization()
+                                    : null
+                    )
+            );
+
+            credential.put(
+                    "experience",
+                    safe(
+                            doctor != null
+                                    ? doctor.getExperience()
+                                    : null
+                    )
+            );
+
+            credential.put(
+                    "hospitalAffiliation",
+                    safe(
+                            doctor != null
+                                    ? doctor.getHospitalAffiliation()
+                                    : null
+                    )
+            );
+
+            credential.put(
+                    "medicalCouncil",
+                    safe(
+                            doctor != null
+                                    ? doctor.getMedicalCouncil()
+                                    : null
+                    )
+            );
+
+            credential.put(
+                    "credentialStatus",
+                    credentialStatus
+            );
+
+            credential.put(
+                    VERIFICATION_STATUS_FIELD,
+                    credentialStatus
+            );
+
+            credential.put(
+                    "updatedAt",
+                    FieldValue.serverTimestamp()
+            );
+
+            firestore
+                    .collection(CREDENTIALS_COLLECTION)
+                    .document(doctorUid)
+                    .set(credential)
+                    .get();
+
+        } catch (InterruptedException e) {
+
+            Thread.currentThread().interrupt();
+
+            throw new RuntimeException(
+                    "Doctor credential operation was interrupted.",
+                    e
+            );
+
+        } catch (Exception e) {
+
+            throw new RuntimeException(
+                    "Failed to create/update doctor credential.",
+                    e
+            );
+        }
+    }
+
+    /**
+     * Update users/{doctorUid}.status.
+     */
+    private void updateUserStatus(
+            String doctorUid,
+            String status) {
+
+        try {
+
+            Map<String, Object> update =
+                    new HashMap<>();
+
+            update.put(
+                    "status",
+                    status
+            );
+
+            firestore
+                    .collection(USERS_COLLECTION)
+                    .document(doctorUid)
+                    .update(update)
+                    .get();
+
+        } catch (InterruptedException e) {
+
+            Thread.currentThread().interrupt();
+
+            throw new RuntimeException(
+                    "User status update was interrupted.",
+                    e
+            );
+
+        } catch (Exception e) {
+
+            throw new RuntimeException(
+                    "Failed to update user status.",
+                    e
+            );
+        }
+    }
+
+    /**
+     * Delete doctor profile and credential record.
      */
     public void deleteDoctorProfile(
             String doctorUid) {
@@ -322,11 +699,32 @@ public class DoctorDAO {
 
         try {
 
+            /*
+             * Delete doctor profile.
+             */
             firestore
                     .collection(COLLECTION_NAME)
                     .document(doctorUid)
                     .delete()
                     .get();
+
+            /*
+             * Delete credential record.
+             */
+            firestore
+                    .collection(CREDENTIALS_COLLECTION)
+                    .document(doctorUid)
+                    .delete()
+                    .get();
+
+        } catch (InterruptedException e) {
+
+            Thread.currentThread().interrupt();
+
+            throw new RuntimeException(
+                    "Doctor deletion was interrupted.",
+                    e
+            );
 
         } catch (Exception e) {
 
@@ -338,15 +736,41 @@ public class DoctorDAO {
     }
 
     /**
+     * Safely handle nullable profile fields.
+     */
+    private String safe(String value) {
+
+        return value == null
+                ? ""
+                : value;
+    }
+
+    /**
+     * Validate complete doctor profile.
+     */
+    private void validateDoctorProfile(
+            DoctorProfile doctorProfile) {
+
+        if (doctorProfile == null) {
+
+            throw new IllegalArgumentException(
+                    "Doctor profile cannot be null."
+            );
+        }
+
+        validateUid(
+                doctorProfile.getUid()
+        );
+    }
+
+    /**
      * Validate Firebase UID.
      */
     private void validateUid(
             String uid) {
 
-        if (
-                uid == null ||
-                uid.trim().isEmpty()
-        ) {
+        if (uid == null ||
+                uid.trim().isEmpty()) {
 
             throw new IllegalArgumentException(
                     "Doctor UID is required."

@@ -8,12 +8,16 @@ public class HospitalVerification {
     private String hospitalId;
     private String hospitalName;
     private String nabhLicenseNumber;
+
     private double aiOcrMatchScore;
     private String aiOcrResult;
+
     private String verificationStatus;
     private String documentStatus;
+
     private String rejectionReason;
     private String verifiedBy;
+
     private Instant createdAt;
     private Instant updatedAt;
 
@@ -53,7 +57,9 @@ public class HospitalVerification {
         return verificationId;
     }
 
-    public void setVerificationId(String verificationId) {
+    public void setVerificationId(
+            String verificationId) {
+
         this.verificationId = verificationId;
     }
 
@@ -61,7 +67,9 @@ public class HospitalVerification {
         return hospitalId;
     }
 
-    public void setHospitalId(String hospitalId) {
+    public void setHospitalId(
+            String hospitalId) {
+
         this.hospitalId = hospitalId;
     }
 
@@ -69,7 +77,9 @@ public class HospitalVerification {
         return hospitalName;
     }
 
-    public void setHospitalName(String hospitalName) {
+    public void setHospitalName(
+            String hospitalName) {
+
         this.hospitalName = hospitalName;
     }
 
@@ -77,55 +87,75 @@ public class HospitalVerification {
         return nabhLicenseNumber;
     }
 
-    public void setNabhLicenseNumber(String nabhLicenseNumber) {
-        this.nabhLicenseNumber = nabhLicenseNumber;
+    public void setNabhLicenseNumber(
+            String nabhLicenseNumber) {
+
+        this.nabhLicenseNumber =
+                nabhLicenseNumber;
     }
 
     public double getAiOcrMatchScore() {
         return aiOcrMatchScore;
     }
 
-    public void setAiOcrMatchScore(double aiOcrMatchScore) {
-        this.aiOcrMatchScore = aiOcrMatchScore;
+    public void setAiOcrMatchScore(
+            double aiOcrMatchScore) {
+
+        this.aiOcrMatchScore =
+                aiOcrMatchScore;
     }
 
     public String getAiOcrResult() {
         return aiOcrResult;
     }
 
-    public void setAiOcrResult(String aiOcrResult) {
-        this.aiOcrResult = aiOcrResult;
+    public void setAiOcrResult(
+            String aiOcrResult) {
+
+        this.aiOcrResult =
+                aiOcrResult;
     }
 
     public String getVerificationStatus() {
         return verificationStatus;
     }
 
-    public void setVerificationStatus(String verificationStatus) {
-        this.verificationStatus = verificationStatus;
+    public void setVerificationStatus(
+            String verificationStatus) {
+
+        this.verificationStatus =
+                verificationStatus;
     }
 
     public String getDocumentStatus() {
         return documentStatus;
     }
 
-    public void setDocumentStatus(String documentStatus) {
-        this.documentStatus = documentStatus;
+    public void setDocumentStatus(
+            String documentStatus) {
+
+        this.documentStatus =
+                documentStatus;
     }
 
     public String getRejectionReason() {
         return rejectionReason;
     }
 
-    public void setRejectionReason(String rejectionReason) {
-        this.rejectionReason = rejectionReason;
+    public void setRejectionReason(
+            String rejectionReason) {
+
+        this.rejectionReason =
+                rejectionReason;
     }
 
     public String getVerifiedBy() {
         return verifiedBy;
     }
 
-    public void setVerifiedBy(String verifiedBy) {
+    public void setVerifiedBy(
+            String verifiedBy) {
+
         this.verifiedBy = verifiedBy;
     }
 
@@ -133,7 +163,9 @@ public class HospitalVerification {
         return createdAt;
     }
 
-    public void setCreatedAt(Instant createdAt) {
+    public void setCreatedAt(
+            Instant createdAt) {
+
         this.createdAt = createdAt;
     }
 
@@ -141,7 +173,9 @@ public class HospitalVerification {
         return updatedAt;
     }
 
-    public void setUpdatedAt(Instant updatedAt) {
+    public void setUpdatedAt(
+            Instant updatedAt) {
+
         this.updatedAt = updatedAt;
     }
 }

@@ -4,12 +4,25 @@ import com.healthsphere.dao.admin.AdminDAO;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Controller for Admin Dashboard operations.
+ *
+ * This controller loads dashboard statistics from Firestore.
+ *
+ * IMPORTANT:
+ * Hospital verification status is always read from Firestore.
+ * No verification status is stored locally in this controller.
+ */
 public class AdminDashboardController {
 
     private final AdminDAO adminDAO;
 
     private final HospitalVerificationController
             verificationController;
+
+    // ============================================================
+    // CONSTRUCTOR
+    // ============================================================
 
     public AdminDashboardController() {
 
@@ -20,10 +33,12 @@ public class AdminDashboardController {
                 new HospitalVerificationController();
     }
 
+    // ============================================================
+    // REGISTERED HOSPITAL COUNT
+    // ============================================================
+
     /**
-     * Load total number of registered hospitals.
-     *
-     * Database access is handled by AdminDAO.
+     * Get total number of registered hospitals.
      */
     public int getRegisteredHospitalCount()
             throws Exception {
@@ -32,10 +47,12 @@ public class AdminDashboardController {
                 .getRegisteredHospitalCount();
     }
 
+    // ============================================================
+    // ACTIVE DOCTOR COUNT
+    // ============================================================
+
     /**
-     * Load total number of doctors.
-     *
-     * Database access is handled by AdminDAO.
+     * Get total number of active doctors.
      */
     public int getActiveDoctorCount()
             throws Exception {
@@ -44,11 +61,15 @@ public class AdminDashboardController {
                 .getActiveDoctorCount();
     }
 
+    // ============================================================
+    // PENDING VERIFICATION COUNT
+    // ============================================================
+
     /**
-     * Load number of pending hospital verifications.
+     * Get number of hospitals whose CURRENT Firestore
+     * verification status is PENDING.
      *
-     * Hospital verification database operations
-     * are handled by HospitalVerificationController.
+     * VERIFIED hospitals will NOT be counted as pending.
      */
     public int getPendingVerificationCount()
             throws Exception {
@@ -60,11 +81,15 @@ public class AdminDashboardController {
                 .size();
     }
 
+    // ============================================================
+    // LOAD DASHBOARD STATISTICS
+    // ============================================================
+
     /**
      * Load all dashboard KPI values asynchronously.
      *
-     * Firestore operations execute away from
-     * the JavaFX Application Thread.
+     * Firestore operations execute away from the JavaFX
+     * Application Thread.
      */
     public CompletableFuture<DashboardStats>
     loadDashboardStats() {
@@ -98,11 +123,15 @@ public class AdminDashboardController {
         });
     }
 
+    // ============================================================
+    // DASHBOARD STATISTICS DTO
+    // ============================================================
+
     /**
      * Dashboard statistics DTO.
      *
-     * This is not a database model.
-     * It only transports dashboard KPI values.
+     * This class does not store Firestore data permanently.
+     * It only carries KPI values to the dashboard view.
      */
     public static class DashboardStats {
 
@@ -111,6 +140,10 @@ public class AdminDashboardController {
         private final int activeDoctors;
 
         private final int pendingVerifications;
+
+        // --------------------------------------------------------
+        // CONSTRUCTOR
+        // --------------------------------------------------------
 
         public DashboardStats(
                 int registeredHospitals,
@@ -126,6 +159,10 @@ public class AdminDashboardController {
             this.pendingVerifications =
                     pendingVerifications;
         }
+
+        // --------------------------------------------------------
+        // GETTERS
+        // --------------------------------------------------------
 
         public int getRegisteredHospitals() {
 

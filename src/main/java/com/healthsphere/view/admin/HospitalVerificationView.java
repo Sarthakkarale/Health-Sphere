@@ -26,41 +26,101 @@ import java.util.Optional;
 public class HospitalVerificationView {
 
     private final Stage stage;
-    private VBox rowList;
 
     private final HospitalVerificationController controller;
 
+    private VBox rowList;
+
+    /*
+     * Root UI is created only once.
+     * This prevents getScene() from rebuilding
+     * the entire page every time it is called.
+     */
+    private final ScrollPane root;
+
+    // =========================================================
+    // CONSTRUCTOR
+    // =========================================================
+
     public HospitalVerificationView(Stage stage) {
+
         this.stage = stage;
-        this.controller = new HospitalVerificationController();
+
+        this.controller =
+                new HospitalVerificationController();
+
+        this.root = createView();
     }
 
-    public Node getView() {
+    // =========================================================
+    // CREATE VIEW
+    // =========================================================
 
-        VBox mainContainer = new VBox(24);
-        mainContainer.setPadding(new Insets(28));
-        mainContainer.setStyle("-fx-background-color: #F8FAFC;");
+    private ScrollPane createView() {
 
-        // Header
-        HBox header = createHeader();
+        VBox mainContainer =
+                new VBox(24);
 
-        // AI OCR Banner
-        HBox aiBanner = createAiOcrBanner();
+        mainContainer.setPadding(
+                new Insets(28)
+        );
 
-        // Verification Card
-        VBox card = new VBox(16);
-        card.setPadding(new Insets(20));
+        mainContainer.setStyle(
+                "-fx-background-color: #F8FAFC;"
+        );
+
+        // =====================================================
+        // HEADER
+        // =====================================================
+
+        HBox header =
+                createHeader();
+
+        // =====================================================
+        // AI OCR BANNER
+        // =====================================================
+
+        HBox aiBanner =
+                createAiOcrBanner();
+
+        // =====================================================
+        // VERIFICATION CARD
+        // =====================================================
+
+        VBox card =
+                new VBox(16);
+
+        card.setPadding(
+                new Insets(20)
+        );
+
         card.setStyle(
                 "-fx-background-color: #FFFFFF;" +
                 "-fx-background-radius: 14;" +
                 "-fx-border-color: #E2E8F0;" +
                 "-fx-border-radius: 14;"
         );
-        card.setEffect(getCardShadow());
 
-        // Table Header
-        HBox tableHeader = new HBox();
-        tableHeader.setPadding(new Insets(10, 16, 10, 16));
+        card.setEffect(
+                getCardShadow()
+        );
+
+        // =====================================================
+        // TABLE HEADER
+        // =====================================================
+
+        HBox tableHeader =
+                new HBox();
+
+        tableHeader.setPadding(
+                new Insets(
+                        10,
+                        16,
+                        10,
+                        16
+                )
+        );
+
         tableHeader.setStyle(
                 "-fx-background-color: #F8FAFC;" +
                 "-fx-background-radius: 8;" +
@@ -69,15 +129,38 @@ public class HospitalVerificationView {
         );
 
         tableHeader.getChildren().addAll(
-                createColHeader("APPLICANT HOSPITAL", 240),
-                createColHeader("NABH LICENSE #", 160),
-                createColHeader("AI OCR MATCH", 160),
-                createColHeader("STATUS", 120),
-                createColHeader("ACTION", 100)
+                createColHeader(
+                        "APPLICANT HOSPITAL",
+                        240
+                ),
+
+                createColHeader(
+                        "NABH LICENSE #",
+                        160
+                ),
+
+                createColHeader(
+                        "AI OCR MATCH",
+                        160
+                ),
+
+                createColHeader(
+                        "STATUS",
+                        120
+                ),
+
+                createColHeader(
+                        "ACTION",
+                        150
+                )
         );
 
-        // Dynamic row container
-        rowList = new VBox(0);
+        // =====================================================
+        // DYNAMIC ROW CONTAINER
+        // =====================================================
+
+        rowList =
+                new VBox(0);
 
         card.getChildren().addAll(
                 tableHeader,
@@ -90,10 +173,14 @@ public class HospitalVerificationView {
                 card
         );
 
-        // Load data from Firestore
-        loadVerificationData();
+        // =====================================================
+        // SCROLL PANE
+        // =====================================================
 
-        ScrollPane scroll = new ScrollPane(mainContainer);
+        ScrollPane scroll =
+                new ScrollPane(
+                        mainContainer
+                );
 
         scroll.setFitToWidth(true);
 
@@ -103,15 +190,48 @@ public class HospitalVerificationView {
                 "-fx-border-color: transparent;"
         );
 
+        /*
+         * Load Firestore data after rowList has been created.
+         */
+        loadVerificationData();
+
         return scroll;
+    }
+
+    // =========================================================
+    // VIEW
+    // =========================================================
+
+    public Node getView() {
+
+        return root;
     }
 
     // =========================================================
     // SCENE
     // =========================================================
 
+    /*
+     * This is the navigation method used by your project.
+     *
+     * Example:
+     *
+     * stage.setScene(
+     *     new HospitalVerificationView(stage).getScene()
+     * );
+     */
     public Scene getScene() {
-        return new Scene((Parent) getView());
+
+        return new Scene(root);
+    }
+
+    // =========================================================
+    // CREATE SCENE COMPATIBILITY
+    // =========================================================
+
+    public Scene createScene() {
+
+        return getScene();
     }
 
     // =========================================================
@@ -120,6 +240,10 @@ public class HospitalVerificationView {
 
     private void loadVerificationData() {
 
+        if (rowList == null) {
+            return;
+        }
+
         rowList.getChildren().clear();
 
         try {
@@ -127,7 +251,8 @@ public class HospitalVerificationView {
             List<HospitalVerification> verifications =
                     controller.getAllVerifications();
 
-            if (verifications == null || verifications.isEmpty()) {
+            if (verifications == null ||
+                    verifications.isEmpty()) {
 
                 Label emptyLabel =
                         new Label(
@@ -157,11 +282,19 @@ public class HospitalVerificationView {
                 return;
             }
 
-            for (HospitalVerification verification : verifications) {
+            for (
+                    HospitalVerification verification
+                    : verifications
+            ) {
 
-                rowList.getChildren().add(
-                        createVerifyRow(verification)
-                );
+                if (verification != null) {
+
+                    rowList.getChildren().add(
+                            createVerifyRow(
+                                    verification
+                            )
+                    );
+                }
             }
 
         } catch (Exception e) {
@@ -201,13 +334,15 @@ public class HospitalVerificationView {
 
     private HBox createHeader() {
 
-        HBox header = new HBox(16);
+        HBox header =
+                new HBox(16);
 
         header.setAlignment(
                 Pos.CENTER_LEFT
         );
 
-        VBox titleBox = new VBox(4);
+        VBox titleBox =
+                new VBox(4);
 
         Label title =
                 new Label(
@@ -243,12 +378,15 @@ public class HospitalVerificationView {
                 Color.web("#64748B")
         );
 
+        sub.setWrapText(true);
+
         titleBox.getChildren().addAll(
                 title,
                 sub
         );
 
-        Region sp = new Region();
+        Region sp =
+                new Region();
 
         HBox.setHgrow(
                 sp,
@@ -270,7 +408,8 @@ public class HospitalVerificationView {
         );
 
         scanBtn.setOnAction(
-                e -> handleRunOcrScan()
+                e ->
+                        handleRunOcrScan()
         );
 
         header.getChildren().addAll(
@@ -296,7 +435,12 @@ public class HospitalVerificationView {
         );
 
         banner.setPadding(
-                new Insets(18, 20, 18, 20)
+                new Insets(
+                        18,
+                        20,
+                        18,
+                        20
+                )
         );
 
         banner.setStyle(
@@ -347,6 +491,8 @@ public class HospitalVerificationView {
         aiTitle.setTextFill(
                 Color.web("#1E40AF")
         );
+
+        aiTitle.setWrapText(true);
 
         Label aiDesc =
                 new Label(
@@ -401,7 +547,12 @@ public class HospitalVerificationView {
         );
 
         row.setPadding(
-                new Insets(12, 16, 12, 16)
+                new Insets(
+                        12,
+                        16,
+                        12,
+                        16
+                )
         );
 
         row.setStyle(
@@ -410,19 +561,25 @@ public class HospitalVerificationView {
                 "-fx-border-width: 0 0 1 0;"
         );
 
-        // Hospital Name
-        String hospitalName =
-                verification.getHospitalName();
+        // =====================================================
+        // HOSPITAL NAME
+        // =====================================================
 
-        if (hospitalName == null ||
-                hospitalName.isBlank()) {
+        String hospitalName =
+                safe(
+                        verification.getHospitalName()
+                );
+
+        if (hospitalName.isBlank()) {
 
             hospitalName =
                     "Unknown Hospital";
         }
 
         Label nameLbl =
-                new Label(hospitalName);
+                new Label(
+                        hospitalName
+                );
 
         nameLbl.setPrefWidth(240);
 
@@ -438,18 +595,27 @@ public class HospitalVerificationView {
                 Color.web("#0F172A")
         );
 
-        // NABH License
+        nameLbl.setWrapText(true);
+
+        // =====================================================
+        // NABH LICENSE
+        // =====================================================
+
         String licenseNumber =
-                verification.getNabhLicenseNumber();
+                safe(
+                        verification.getNabhLicenseNumber()
+                );
 
-        if (licenseNumber == null ||
-                licenseNumber.isBlank()) {
+        if (licenseNumber.isBlank()) {
 
-            licenseNumber = "N/A";
+            licenseNumber =
+                    "N/A";
         }
 
         Label licLbl =
-                new Label(licenseNumber);
+                new Label(
+                        licenseNumber
+                );
 
         licLbl.setPrefWidth(160);
 
@@ -465,7 +631,10 @@ public class HospitalVerificationView {
                 Color.web("#334155")
         );
 
-        // OCR Match
+        // =====================================================
+        // OCR MATCH
+        // =====================================================
+
         String match =
                 String.format(
                         "%.1f%%",
@@ -473,7 +642,9 @@ public class HospitalVerificationView {
                 );
 
         Label matchLbl =
-                new Label(match);
+                new Label(
+                        match
+                );
 
         matchLbl.setPrefWidth(160);
 
@@ -486,17 +657,41 @@ public class HospitalVerificationView {
         );
 
         matchLbl.setTextFill(
-                Color.web("#64748B")
+                getOcrMatchColor(
+                        verification.getAiOcrMatchScore()
+                )
         );
 
-        // Status
+        // =====================================================
+        // STATUS
+        // =====================================================
+
         String status =
-                verification.getVerificationStatus();
+                safe(
+                        verification.getVerificationStatus()
+                );
 
-        if (status == null ||
-                status.isBlank()) {
+        if (status.isBlank()) {
 
-            status = "PENDING";
+            status =
+                    "PENDING";
+
+        } else {
+
+            status =
+                    status
+                            .trim()
+                            .toUpperCase();
+
+            /*
+             * Older DAO records may contain APPROVED.
+             * Current UI convention is VERIFIED.
+             */
+            if ("APPROVED".equals(status)) {
+
+                status =
+                        "VERIFIED";
+            }
         }
 
         HBox stBox =
@@ -516,7 +711,7 @@ public class HospitalVerificationView {
 
         Label stBadge =
                 new Label(
-                        status.toUpperCase()
+                        status
                 );
 
         stBadge.setStyle(
@@ -536,7 +731,10 @@ public class HospitalVerificationView {
                 stBadge
         );
 
-        // Action Button
+        // =====================================================
+        // ACTION BUTTON
+        // =====================================================
+
         Button btn =
                 new Button(
                         "Verify Documents"
@@ -552,9 +750,10 @@ public class HospitalVerificationView {
         );
 
         btn.setOnAction(
-                e -> handleAuditDocument(
-                        verification
-                )
+                e ->
+                        handleAuditDocument(
+                                verification
+                        )
         );
 
         row.getChildren().addAll(
@@ -577,10 +776,14 @@ public class HospitalVerificationView {
     ) {
 
         String hospitalName =
-                verification.getHospitalName();
+                safe(
+                        verification.getHospitalName()
+                );
 
         String licenseNumber =
-                verification.getNabhLicenseNumber();
+                safe(
+                        verification.getNabhLicenseNumber()
+                );
 
         String match =
                 String.format(
@@ -664,10 +867,11 @@ public class HospitalVerificationView {
     ) {
 
         String verificationId =
-                verification.getVerificationId();
+                safe(
+                        verification.getVerificationId()
+                );
 
-        if (verificationId == null ||
-                verificationId.isBlank()) {
+        if (verificationId.isBlank()) {
 
             showAlert(
                     "Error",
@@ -677,26 +881,10 @@ public class HospitalVerificationView {
             return;
         }
 
-        // =====================================================
-        // GET CURRENT ADMIN UID FROM SESSION
-        // =====================================================
+        String adminUid =
+                getCurrentAdminUid();
 
-        String adminUid;
-
-        try {
-
-            adminUid =
-                    SessionManager
-                            .getCurrentUser()
-                            .getUid();
-
-        } catch (IllegalStateException e) {
-
-            showAlert(
-                    "Session Error",
-                    "No active admin session found. Please login again."
-            );
-
+        if (adminUid == null) {
             return;
         }
 
@@ -712,7 +900,9 @@ public class HospitalVerificationView {
 
                 showAlert(
                         "Success",
-                        verification.getHospitalName()
+                        safe(
+                                verification.getHospitalName()
+                        )
                                 + " NABH Accreditation has been APPROVED!"
                 );
 
@@ -732,7 +922,10 @@ public class HospitalVerificationView {
 
             showAlert(
                     "Firebase Error",
-                    "An error occurred while approving the verification."
+                    "An error occurred while approving the verification.\n\n"
+                            + safe(
+                                    e.getMessage()
+                            )
             );
         }
     }
@@ -754,7 +947,9 @@ public class HospitalVerificationView {
 
         dialog.setHeaderText(
                 "Reject: "
-                        + verification.getHospitalName()
+                        + safe(
+                                verification.getHospitalName()
+                        )
         );
 
         dialog.setContentText(
@@ -782,10 +977,11 @@ public class HospitalVerificationView {
         }
 
         String verificationId =
-                verification.getVerificationId();
+                safe(
+                        verification.getVerificationId()
+                );
 
-        if (verificationId == null ||
-                verificationId.isBlank()) {
+        if (verificationId.isBlank()) {
 
             showAlert(
                     "Error",
@@ -795,26 +991,10 @@ public class HospitalVerificationView {
             return;
         }
 
-        // =====================================================
-        // GET CURRENT ADMIN UID FROM SESSION
-        // =====================================================
+        String adminUid =
+                getCurrentAdminUid();
 
-        String adminUid;
-
-        try {
-
-            adminUid =
-                    SessionManager
-                            .getCurrentUser()
-                            .getUid();
-
-        } catch (IllegalStateException e) {
-
-            showAlert(
-                    "Session Error",
-                    "No active admin session found. Please login again."
-            );
-
+        if (adminUid == null) {
             return;
         }
 
@@ -831,7 +1011,9 @@ public class HospitalVerificationView {
 
                 showAlert(
                         "Rejected",
-                        verification.getHospitalName()
+                        safe(
+                                verification.getHospitalName()
+                        )
                                 + " registration has been rejected."
                 );
 
@@ -851,8 +1033,69 @@ public class HospitalVerificationView {
 
             showAlert(
                     "Firebase Error",
-                    "An error occurred while rejecting the verification."
+                    "An error occurred while rejecting the verification.\n\n"
+                            + safe(
+                                    e.getMessage()
+                            )
             );
+        }
+    }
+
+    // =========================================================
+    // CURRENT ADMIN UID
+    // =========================================================
+
+    private String getCurrentAdminUid() {
+
+        try {
+
+            if (SessionManager.getCurrentUser() == null) {
+
+                showAlert(
+                        "Session Error",
+                        "No active admin session found. Please login again."
+                );
+
+                return null;
+            }
+
+            String uid =
+                    SessionManager
+                            .getCurrentUser()
+                            .getUid();
+
+            if (uid == null ||
+                    uid.isBlank()) {
+
+                showAlert(
+                        "Session Error",
+                        "Admin UID is missing. Please login again."
+                );
+
+                return null;
+            }
+
+            return uid;
+
+        } catch (IllegalStateException e) {
+
+            showAlert(
+                    "Session Error",
+                    "No active admin session found. Please login again."
+            );
+
+            return null;
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            showAlert(
+                    "Session Error",
+                    "Unable to retrieve the current admin session."
+            );
+
+            return null;
         }
     }
 
@@ -895,22 +1138,33 @@ public class HospitalVerificationView {
             return "#64748B";
         }
 
-        switch (status.toUpperCase()) {
+        switch (
+                status.toUpperCase()
+        ) {
 
+            case "VERIFIED":
             case "APPROVED":
+
                 return "#059669";
 
             case "REJECTED":
             case "REJECT":
+
                 return "#DC2626";
 
             case "PENDING":
+
                 return "#D97706";
 
             default:
+
                 return "#64748B";
         }
     }
+
+    // =========================================================
+    // STATUS BACKGROUND
+    // =========================================================
 
     private String getStatusBackground(
             String status
@@ -920,20 +1174,55 @@ public class HospitalVerificationView {
             return "#F1F5F9";
         }
 
-        switch (status.toUpperCase()) {
+        switch (
+                status.toUpperCase()
+        ) {
 
+            case "VERIFIED":
             case "APPROVED":
+
                 return "#ECFDF5";
 
             case "REJECTED":
             case "REJECT":
+
                 return "#FEF2F2";
 
             case "PENDING":
+
                 return "#FFFBEB";
 
             default:
+
                 return "#F1F5F9";
+        }
+    }
+
+    // =========================================================
+    // OCR MATCH COLOR
+    // =========================================================
+
+    private Color getOcrMatchColor(
+            double score
+    ) {
+
+        if (score >= 90) {
+
+            return Color.web(
+                    "#059669"
+            );
+
+        } else if (score >= 70) {
+
+            return Color.web(
+                    "#D97706"
+            );
+
+        } else {
+
+            return Color.web(
+                    "#DC2626"
+            );
         }
     }
 
@@ -951,9 +1240,19 @@ public class HospitalVerificationView {
                         Alert.AlertType.INFORMATION
                 );
 
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
+        alert.setTitle(
+                title
+        );
+
+        alert.setHeaderText(
+                null
+        );
+
+        alert.setContentText(
+                message == null
+                        ? "An unexpected error occurred."
+                        : message
+        );
 
         alert.showAndWait();
     }
@@ -973,19 +1272,39 @@ public class HospitalVerificationView {
 
         try {
 
-            img.setImage(
+            Image image =
                     new Image(
                             url,
+                            width,
+                            height,
+                            true,
+                            true,
                             true
-                    )
+                    );
+
+            img.setImage(
+                    image
             );
 
         } catch (Exception ignored) {
-            // Image failure should not crash the UI.
+
+            /*
+             * Image failure must never crash
+             * the Hospital Verification page.
+             */
         }
 
-        img.setFitWidth(width);
-        img.setFitHeight(height);
+        img.setFitWidth(
+                width
+        );
+
+        img.setFitHeight(
+                height
+        );
+
+        img.setPreserveRatio(
+                true
+        );
 
         return img;
     }
@@ -1000,7 +1319,9 @@ public class HospitalVerificationView {
     ) {
 
         Label lbl =
-                new Label(title);
+                new Label(
+                        title
+                );
 
         lbl.setFont(
                 Font.font(
@@ -1014,7 +1335,9 @@ public class HospitalVerificationView {
                 Color.web("#475569")
         );
 
-        lbl.setPrefWidth(width);
+        lbl.setPrefWidth(
+                width
+        );
 
         return lbl;
     }
@@ -1037,9 +1360,27 @@ public class HospitalVerificationView {
                 )
         );
 
-        shadow.setRadius(10);
-        shadow.setOffsetY(4);
+        shadow.setRadius(
+                10
+        );
+
+        shadow.setOffsetY(
+                4
+        );
 
         return shadow;
+    }
+
+    // =========================================================
+    // SAFE STRING
+    // =========================================================
+
+    private String safe(
+            String value
+    ) {
+
+        return value == null
+                ? ""
+                : value;
     }
 }

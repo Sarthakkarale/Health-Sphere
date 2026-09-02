@@ -23,33 +23,26 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class DoctorManagementView extends ScrollPane {
 
     private Stage primaryStage;
 
-    private final DoctorManagementController doctorManagementController;
-
     private TableView<DoctorModel> doctorTable;
 
     private ObservableList<DoctorModel> masterDoctorData;
-
     private FilteredList<DoctorModel> filteredData;
 
     private Label totalCountLabel;
     private Label activeCountLabel;
-    private Label leaveCountLabel;
-    private Label surgeryCountLabel;
+    private Label pendingCountLabel;
+    private Label rejectedCountLabel;
 
-    private BarChart<String, Number> departmentBarChart;
+    private BarChart<String, Number> specializationBarChart;
 
-    // ========================================================
-    // CONSTRUCTOR
-    // ========================================================
+    private final DoctorManagementController doctorController;
 
     public DoctorManagementView() {
         this(null);
@@ -58,67 +51,36 @@ public class DoctorManagementView extends ScrollPane {
     public DoctorManagementView(Stage stage) {
 
         this.primaryStage = stage;
-
-        this.doctorManagementController =
-                new DoctorManagementController();
+        this.doctorController = new DoctorManagementController();
 
         setFitToWidth(true);
-
         setStyle(
-                "-fx-background-color: #F8FAFC; " +
-                "-fx-background: #F8FAFC; " +
+                "-fx-background-color: #F8FAFC;" +
+                "-fx-background: #F8FAFC;" +
                 "-fx-border-color: transparent;"
         );
 
-        VBox mainContainer =
-                new VBox(24);
+        VBox mainContainer = new VBox(24);
+        mainContainer.setPadding(new Insets(28));
+        mainContainer.setStyle("-fx-background-color: #F8FAFC;");
 
-        mainContainer.setPadding(
-                new Insets(28)
-        );
+        HBox header = createHeader();
 
-        mainContainer.setStyle(
-                "-fx-background-color: #F8FAFC;"
-        );
+        HBox analytics = createAnalyticsSection();
 
-        // ====================================================
-        // 1. HEADER
-        // ====================================================
+        HBox filterBar = createFilterBar();
 
-        HBox header =
-                createHeader();
-
-        // ====================================================
-        // 2. ANALYTICS
-        // ====================================================
-
-        HBox topAnalyticsSection =
-                createTopAnalyticsSection();
-
-        // ====================================================
-        // 3. FILTERS
-        // ====================================================
-
-        HBox filterBar =
-                createFilterBar();
-
-        // ====================================================
-        // 4. TABLE
-        // ====================================================
-
-        VBox tableContainer =
-                createTableContainer();
+        VBox tableContainer = createTableContainer();
 
         mainContainer.getChildren().addAll(
                 header,
-                topAnalyticsSection,
+                analytics,
                 filterBar,
                 tableContainer
         );
 
         setContent(mainContainer);
 
-        // Load doctors from Firestore
         loadDoctorData();
     }
 
@@ -130,26 +92,20 @@ public class DoctorManagementView extends ScrollPane {
         return new Scene(this);
     }
 
-    // ========================================================
+    // ============================================================
     // HEADER
-    // ========================================================
+    // ============================================================
 
     private HBox createHeader() {
 
-        HBox header =
-                new HBox();
+        HBox header = new HBox();
+        header.setAlignment(Pos.CENTER_LEFT);
 
-        header.setAlignment(
-                Pos.CENTER_LEFT
+        VBox titleBox = new VBox(4);
+
+        Label title = new Label(
+                "Doctor & Specialist Directory"
         );
-
-        VBox titleBox =
-                new VBox(4);
-
-        Label title =
-                new Label(
-                        "Doctor & Specialist Directory"
-                );
 
         title.setFont(
                 Font.font(
@@ -163,10 +119,9 @@ public class DoctorManagementView extends ScrollPane {
                 Color.web("#0F172A")
         );
 
-        Label subtitle =
-                new Label(
-                        "Manage medical staff credentials, verification approvals, department allocations, and OPD availability."
-                );
+        Label subtitle = new Label(
+                "Manage doctor profiles, credentials and verification approvals."
+        );
 
         subtitle.setFont(
                 Font.font(
@@ -185,24 +140,16 @@ public class DoctorManagementView extends ScrollPane {
                 subtitle
         );
 
-        Region spacer =
-                new Region();
-
+        Region spacer = new Region();
         HBox.setHgrow(
                 spacer,
                 Priority.ALWAYS
         );
 
-        // ====================================================
-        // EXPORT BUTTON
-        // ====================================================
+        Button refreshBtn =
+                new Button("↻ Refresh Doctors");
 
-        Button exportBtn =
-                new Button(
-                        "Export Directory"
-                );
-
-        exportBtn.setFont(
+        refreshBtn.setFont(
                 Font.font(
                         "Segoe UI",
                         FontWeight.BOLD,
@@ -210,137 +157,98 @@ public class DoctorManagementView extends ScrollPane {
                 )
         );
 
-        exportBtn.setStyle(
-                "-fx-background-color: #FFFFFF; " +
-                "-fx-text-fill: #334155; " +
-                "-fx-border-color: #CBD5E1; " +
-                "-fx-border-radius: 8px; " +
-                "-fx-background-radius: 8px; " +
-                "-fx-padding: 8px 16px; " +
+        refreshBtn.setStyle(
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-text-fill: #334155;" +
+                "-fx-border-color: #CBD5E1;" +
+                "-fx-border-radius: 8px;" +
+                "-fx-background-radius: 8px;" +
+                "-fx-padding: 8px 16px;" +
                 "-fx-cursor: hand;"
         );
 
-        exportBtn.setOnAction(
-                e -> showAlert(
-                        "Directory Exported",
-                        "Doctor roster and department metrics exported to CSV successfully."
-                )
-        );
-
-        /*
-         * Add Doctor button intentionally removed.
-         */
-
-        HBox buttonGroup =
-                new HBox(
-                        12,
-                        exportBtn
-                );
-
-        buttonGroup.setAlignment(
-                Pos.CENTER_RIGHT
+        refreshBtn.setOnAction(
+                e -> loadDoctorData()
         );
 
         header.getChildren().addAll(
                 titleBox,
                 spacer,
-                buttonGroup
+                refreshBtn
         );
 
         return header;
     }
 
-    // ========================================================
+    // ============================================================
     // ANALYTICS
-    // ========================================================
+    // ============================================================
 
-    private HBox createTopAnalyticsSection() {
+    private HBox createAnalyticsSection() {
 
-        HBox section =
-                new HBox(20);
+        HBox section = new HBox(20);
+        section.setAlignment(Pos.CENTER);
 
-        section.setAlignment(
-                Pos.CENTER
-        );
-
-        // ====================================================
-        // KPI GRID
-        // ====================================================
-
-        GridPane statsGrid =
-                new GridPane();
+        GridPane statsGrid = new GridPane();
 
         statsGrid.setHgap(16);
-
         statsGrid.setVgap(16);
 
-        // ====================================================
-        // TOTAL DOCTORS
-        // ====================================================
+        HBox.setHgrow(
+                statsGrid,
+                Priority.ALWAYS
+        );
+
+        totalCountLabel = new Label("0");
+        activeCountLabel = new Label("0");
+        pendingCountLabel = new Label("0");
+        rejectedCountLabel = new Label("0");
 
         VBox totalCard =
                 createStatCard(
                         "Total Doctors",
-                        "0",
-                        "Registered specialists",
-                        "#4F46E5",
-                        "#EEF2FF"
+                        totalCountLabel,
+                        "Registered Doctors",
+                        "#4F46E5"
                 );
-
-        totalCountLabel =
-                (Label) totalCard.getChildren().get(1);
-
-        // ====================================================
-        // ON DUTY
-        // ====================================================
 
         VBox activeCard =
                 createStatCard(
-                        "On Duty",
-                        "0",
-                        "Currently available",
-                        "#059669",
-                        "#ECFDF5"
+                        "Approved",
+                        activeCountLabel,
+                        "Verified Doctors",
+                        "#059669"
                 );
 
-        activeCountLabel =
-                (Label) activeCard.getChildren().get(1);
-
-        // ====================================================
-        // ON LEAVE
-        // ====================================================
-
-        VBox leaveCard =
+        VBox pendingCard =
                 createStatCard(
-                        "On Leave",
-                        "0",
-                        "Currently unavailable",
-                        "#D97706",
-                        "#FFFBEB"
+                        "Pending",
+                        pendingCountLabel,
+                        "Awaiting Verification",
+                        "#D97706"
                 );
 
-        leaveCountLabel =
-                (Label) leaveCard.getChildren().get(1);
-
-        // ====================================================
-        // IN SURGERY
-        // ====================================================
-
-        VBox surgeryCard =
+        VBox rejectedCard =
                 createStatCard(
-                        "In Surgery",
-                        "0",
-                        "Currently operating",
-                        "#DC2626",
-                        "#FEF2F2"
+                        "Rejected",
+                        rejectedCountLabel,
+                        "Verification Rejected",
+                        "#DC2626"
                 );
 
-        surgeryCountLabel =
-                (Label) surgeryCard.getChildren().get(1);
+        ColumnConstraints c1 =
+                new ColumnConstraints();
 
-        // ====================================================
-        // 2 x 2 CARD LAYOUT
-        // ====================================================
+        c1.setPercentWidth(50);
+
+        ColumnConstraints c2 =
+                new ColumnConstraints();
+
+        c2.setPercentWidth(50);
+
+        statsGrid
+                .getColumnConstraints()
+                .addAll(c1, c2);
 
         statsGrid.add(
                 totalCard,
@@ -355,20 +263,48 @@ public class DoctorManagementView extends ScrollPane {
         );
 
         statsGrid.add(
-                leaveCard,
+                pendingCard,
                 0,
                 1
         );
 
         statsGrid.add(
-                surgeryCard,
+                rejectedCard,
                 1,
                 1
         );
 
-        // ====================================================
-        // DEPARTMENT GRAPH
-        // ====================================================
+        VBox chartCard = new VBox(12);
+
+        chartCard.setPadding(
+                new Insets(16)
+        );
+
+        chartCard.setMinWidth(420);
+
+        chartCard.setStyle(
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 12px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 12px;"
+        );
+
+        Label chartTitle =
+                new Label(
+                        "Specialization Breakdown"
+                );
+
+        chartTitle.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        14
+                )
+        );
+
+        chartTitle.setTextFill(
+                Color.web("#0F172A")
+        );
 
         CategoryAxis xAxis =
                 new CategoryAxis();
@@ -376,86 +312,55 @@ public class DoctorManagementView extends ScrollPane {
         NumberAxis yAxis =
                 new NumberAxis();
 
-        xAxis.setLabel(
-                "Department"
+        xAxis.setTickLabelFill(
+                Color.web("#64748B")
         );
 
-        yAxis.setLabel(
-                "Doctors"
+        yAxis.setTickLabelFill(
+                Color.web("#64748B")
         );
 
-        departmentBarChart =
+        specializationBarChart =
                 new BarChart<>(
                         xAxis,
                         yAxis
                 );
 
-        departmentBarChart.setTitle(
-                "Doctors by Department"
-        );
+        specializationBarChart.setPrefHeight(180);
+        specializationBarChart.setLegendVisible(false);
+        specializationBarChart.setAnimated(false);
 
-        departmentBarChart.setLegendVisible(
-                false
+        chartCard.getChildren().addAll(
+                chartTitle,
+                specializationBarChart
         );
-
-        departmentBarChart.setPrefWidth(
-                600
-        );
-
-        departmentBarChart.setPrefHeight(
-                300
-        );
-
-        // ====================================================
-        // CARDS + GRAPH
-        // ====================================================
 
         section.getChildren().addAll(
                 statsGrid,
-                departmentBarChart
+                chartCard
         );
 
         return section;
     }
 
-    // ========================================================
-    // KPI CARD
-    // ========================================================
-
     private VBox createStatCard(
             String title,
-            String value,
-            String subtitle,
-            String accentColor,
-            String backgroundColor) {
+            Label valueLabel,
+            String subtext,
+            String accentColorHex) {
 
-        VBox card =
-                new VBox(6);
+        VBox card = new VBox(6);
 
         card.setPadding(
                 new Insets(16)
         );
 
-        card.setPrefWidth(
-                180
-        );
-
-        card.setPrefHeight(
-                120
-        );
-
         card.setStyle(
-                "-fx-background-color: "
-                        + backgroundColor
-                        + "; " +
-                "-fx-background-radius: 10px; " +
-                "-fx-border-color: #E2E8F0; " +
-                "-fx-border-radius: 10px;"
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 12px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 12px;"
         );
-
-        // ====================================================
-        // TITLE
-        // ====================================================
 
         Label titleLabel =
                 new Label(title);
@@ -463,7 +368,7 @@ public class DoctorManagementView extends ScrollPane {
         titleLabel.setFont(
                 Font.font(
                         "Segoe UI",
-                        FontWeight.BOLD,
+                        FontWeight.SEMI_BOLD,
                         12
                 )
         );
@@ -472,33 +377,22 @@ public class DoctorManagementView extends ScrollPane {
                 Color.web("#64748B")
         );
 
-        // ====================================================
-        // VALUE
-        // ====================================================
-
-        Label valueLabel =
-                new Label(value);
-
         valueLabel.setFont(
                 Font.font(
                         "Segoe UI",
                         FontWeight.BOLD,
-                        26
+                        22
                 )
         );
 
         valueLabel.setTextFill(
-                Color.web(accentColor)
+                Color.web("#0F172A")
         );
 
-        // ====================================================
-        // SUBTITLE
-        // ====================================================
+        Label subLabel =
+                new Label(subtext);
 
-        Label subtitleLabel =
-                new Label(subtitle);
-
-        subtitleLabel.setFont(
+        subLabel.setFont(
                 Font.font(
                         "Segoe UI",
                         FontWeight.NORMAL,
@@ -506,237 +400,262 @@ public class DoctorManagementView extends ScrollPane {
                 )
         );
 
-        subtitleLabel.setTextFill(
-                Color.web("#64748B")
-        );
-
-        subtitleLabel.setWrapText(
-                true
+        subLabel.setTextFill(
+                Color.web(accentColorHex)
         );
 
         card.getChildren().addAll(
                 titleLabel,
                 valueLabel,
-                subtitleLabel
+                subLabel
         );
 
         return card;
     }
 
-    // ========================================================
+    // ============================================================
     // FILTER BAR
-    // ========================================================
+    // ============================================================
 
     private HBox createFilterBar() {
 
-        HBox filterBar =
-                new HBox(12);
+        HBox bar = new HBox(14);
 
-        filterBar.setAlignment(
+        bar.setAlignment(
                 Pos.CENTER_LEFT
         );
 
-        filterBar.setPadding(
-                new Insets(12)
+        bar.setPadding(
+                new Insets(14)
         );
 
-        filterBar.setStyle(
-                "-fx-background-color: white; " +
-                "-fx-background-radius: 8px; " +
-                "-fx-border-color: #E2E8F0; " +
-                "-fx-border-radius: 8px;"
+        bar.setStyle(
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 10px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 10px;"
         );
 
-        TextField searchField =
+        TextField searchInput =
                 new TextField();
 
-        searchField.setPromptText(
-                "Search doctor, specialization, hospital..."
+        searchInput.setPromptText(
+                "🔍 Search Doctor, UID, Specialization or Email..."
         );
 
-        searchField.setPrefWidth(
-                320
+        searchInput.setPrefWidth(300);
+
+        searchInput.setStyle(
+                "-fx-background-color: #F8FAFC;" +
+                "-fx-text-fill: #0F172A;" +
+                "-fx-border-color: #CBD5E1;" +
+                "-fx-border-radius: 6px;" +
+                "-fx-padding: 8px 12px;"
         );
 
-        ComboBox<String> departmentFilter =
+        ComboBox<String> verificationFilter =
                 new ComboBox<>();
 
-        departmentFilter.getItems().addAll(
-                "All Departments",
-                "Cardiology",
-                "Neurology",
-                "Orthopedics",
-                "Pediatrics",
-                "Oncology",
-                "General Medicine"
+        verificationFilter.getItems().addAll(
+                "All Approvals",
+                "APPROVED",
+                "PENDING",
+                "REJECTED"
         );
 
-        departmentFilter.setValue(
-                "All Departments"
+        verificationFilter.setValue(
+                "All Approvals"
         );
 
-        ComboBox<String> statusFilter =
+        verificationFilter.setStyle(
+                "-fx-background-color: #F8FAFC;" +
+                "-fx-text-fill: #0F172A;" +
+                "-fx-border-color: #CBD5E1;" +
+                "-fx-border-radius: 6px;"
+        );
+
+        ComboBox<String> specializationFilter =
                 new ComboBox<>();
 
-        statusFilter.getItems().addAll(
-                "All Status",
-                "ON DUTY",
-                "ON LEAVE",
-                "IN SURGERY"
+        specializationFilter.getItems().add(
+                "All Specializations"
         );
 
-        statusFilter.setValue(
-                "All Status"
+        specializationFilter.setValue(
+                "All Specializations"
         );
 
-        searchField.textProperty().addListener(
-                (obs, oldValue, newValue) ->
-                        applyFilters(
-                                searchField.getText(),
-                                departmentFilter.getValue(),
-                                statusFilter.getValue()
-                        )
+        specializationFilter.setStyle(
+                "-fx-background-color: #F8FAFC;" +
+                "-fx-text-fill: #0F172A;" +
+                "-fx-border-color: #CBD5E1;" +
+                "-fx-border-radius: 6px;"
         );
 
-        departmentFilter.valueProperty().addListener(
-                (obs, oldValue, newValue) ->
-                        applyFilters(
-                                searchField.getText(),
-                                departmentFilter.getValue(),
-                                statusFilter.getValue()
-                        )
+        Runnable applyFilter = () -> {
+
+            String query =
+                    searchInput
+                            .getText()
+                            .toLowerCase()
+                            .trim();
+
+            String selectedVerification =
+                    verificationFilter.getValue();
+
+            String selectedSpecialization =
+                    specializationFilter.getValue();
+
+            filteredData.setPredicate(
+                    doctor -> {
+
+                        boolean matchesQuery =
+                                query.isEmpty()
+                                        ||
+                                doctor.getName()
+                                        .toLowerCase()
+                                        .contains(query)
+                                        ||
+                                doctor.getDoctorId()
+                                        .toLowerCase()
+                                        .contains(query)
+                                        ||
+                                doctor.getSpecialization()
+                                        .toLowerCase()
+                                        .contains(query)
+                                        ||
+                                doctor.getEmail()
+                                        .toLowerCase()
+                                        .contains(query);
+
+                        boolean matchesVerification =
+                                selectedVerification.equals(
+                                        "All Approvals"
+                                )
+                                ||
+                                doctor
+                                        .getVerificationStatus()
+                                        .equalsIgnoreCase(
+                                                selectedVerification
+                                        );
+
+                        boolean matchesSpecialization =
+                                selectedSpecialization.equals(
+                                        "All Specializations"
+                                )
+                                ||
+                                doctor
+                                        .getSpecialization()
+                                        .equalsIgnoreCase(
+                                                selectedSpecialization
+                                        );
+
+                        return matchesQuery
+                                && matchesVerification
+                                && matchesSpecialization;
+                    }
+            );
+        };
+
+        searchInput.textProperty()
+                .addListener(
+                        (obs, oldVal, newVal)
+                                -> applyFilter.run()
+                );
+
+        verificationFilter.valueProperty()
+                .addListener(
+                        (obs, oldVal, newVal)
+                                -> applyFilter.run()
+                );
+
+        specializationFilter.valueProperty()
+                .addListener(
+                        (obs, oldVal, newVal)
+                                -> applyFilter.run()
+                );
+
+        Region spacer = new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
         );
 
-        statusFilter.valueProperty().addListener(
-                (obs, oldValue, newValue) ->
-                        applyFilters(
-                                searchField.getText(),
-                                departmentFilter.getValue(),
-                                statusFilter.getValue()
-                        )
+        Button resetBtn =
+                new Button("Reset Filters");
+
+        resetBtn.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        11
+                )
         );
 
-        filterBar.getChildren().addAll(
-                searchField,
-                departmentFilter,
-                statusFilter
+        resetBtn.setStyle(
+                "-fx-background-color: #F1F5F9;" +
+                "-fx-text-fill: #475569;" +
+                "-fx-background-radius: 6px;" +
+                "-fx-padding: 8px 14px;" +
+                "-fx-cursor: hand;"
         );
 
-        return filterBar;
-    }
+        resetBtn.setOnAction(
+                e -> {
 
-    private void applyFilters(
-            String searchText,
-            String department,
-            String status) {
+                    searchInput.clear();
 
-        if (filteredData == null) {
-            return;
-        }
+                    verificationFilter.setValue(
+                            "All Approvals"
+                    );
 
-        String query =
-                searchText == null
-                        ? ""
-                        : searchText.trim().toLowerCase();
-
-        filteredData.setPredicate(
-                doctor -> {
-
-                    boolean matchesSearch =
-                            query.isEmpty()
-                                    ||
-                            contains(
-                                    doctor.getName(),
-                                    query
-                            )
-                                    ||
-                            contains(
-                                    doctor.getDepartment(),
-                                    query
-                            )
-                                    ||
-                            contains(
-                                    doctor.getSpecialization(),
-                                    query
-                            )
-                                    ||
-                            contains(
-                                    doctor.getContactNo(),
-                                    query
-                            )
-                                    ||
-                            contains(
-                                    doctor.getEmail(),
-                                    query
-                            );
-
-                    boolean matchesDepartment =
-                            department == null
-                                    ||
-                            "All Departments"
-                                    .equals(department)
-                                    ||
-                            department.equalsIgnoreCase(
-                                    doctor.getDepartment()
-                            );
-
-                    boolean matchesStatus =
-                            status == null
-                                    ||
-                            "All Status"
-                                    .equals(status)
-                                    ||
-                            status.equalsIgnoreCase(
-                                    doctor.getStatus()
-                            );
-
-                    return matchesSearch
-                            && matchesDepartment
-                            && matchesStatus;
+                    specializationFilter.setValue(
+                            "All Specializations"
+                    );
                 }
         );
+
+        bar.getChildren().addAll(
+                searchInput,
+                verificationFilter,
+                specializationFilter,
+                spacer,
+                resetBtn
+        );
+
+        return bar;
     }
 
-    private boolean contains(
-            String value,
-            String query) {
-
-        return value != null
-                &&
-                value.toLowerCase()
-                        .contains(query);
-    }
-
-    // ========================================================
+    // ============================================================
     // TABLE
-    // ========================================================
+    // ============================================================
 
     private VBox createTableContainer() {
 
-        VBox container =
-                new VBox(12);
+        VBox container = new VBox(12);
 
         container.setPadding(
                 new Insets(16)
         );
 
         container.setStyle(
-                "-fx-background-color: white; " +
-                "-fx-background-radius: 10px; " +
-                "-fx-border-color: #E2E8F0; " +
-                "-fx-border-radius: 10px;"
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 12px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 12px;"
         );
 
         Label tableTitle =
                 new Label(
-                        "Registered Doctors"
+                        "Medical Staff & Specialist Roster"
                 );
 
         tableTitle.setFont(
                 Font.font(
                         "Segoe UI",
                         FontWeight.BOLD,
-                        16
+                        15
                 )
         );
 
@@ -751,19 +670,19 @@ public class DoctorManagementView extends ScrollPane {
                 TableView.CONSTRAINED_RESIZE_POLICY
         );
 
-        doctorTable.setPlaceholder(
-                new Label(
-                        "No doctors found."
-                )
+        doctorTable.setStyle(
+                "-fx-background-color: transparent;"
         );
 
-        // ====================================================
-        // DOCTOR NAME
-        // ====================================================
+        doctorTable.setPrefHeight(500);
+
+        // --------------------------------------------------------
+        // DOCTOR
+        // --------------------------------------------------------
 
         TableColumn<DoctorModel, String> nameCol =
                 new TableColumn<>(
-                        "Doctor"
+                        "Doctor Profile"
                 );
 
         nameCol.setCellValueFactory(
@@ -788,174 +707,256 @@ public class DoctorManagementView extends ScrollPane {
                         if (empty || name == null) {
 
                             setGraphic(null);
-
-                        } else {
-
-                            DoctorModel doctor =
-                                    getTableView()
-                                            .getItems()
-                                            .get(getIndex());
-
-                            HBox box =
-                                    new HBox(8);
-
-                            box.setAlignment(
-                                    Pos.CENTER_LEFT
-                            );
-
-                            StackPane avatar =
-                                    createDoctorAvatar(
-                                            name
-                                    );
-
-                            VBox text =
-                                    new VBox(2);
-
-                            Label nameLabel =
-                                    new Label(
-                                            name
-                                    );
-
-                            nameLabel.setFont(
-                                    Font.font(
-                                            "Segoe UI",
-                                            FontWeight.BOLD,
-                                            12
-                                    )
-                            );
-
-                            Label idLabel =
-                                    new Label(
-                                            doctor.getDoctorId()
-                                    );
-
-                            idLabel.setFont(
-                                    Font.font(
-                                            "Segoe UI",
-                                            FontWeight.NORMAL,
-                                            10
-                                    )
-                            );
-
-                            idLabel.setTextFill(
-                                    Color.web("#64748B")
-                            );
-
-                            text.getChildren().addAll(
-                                    nameLabel,
-                                    idLabel
-                            );
-
-                            box.getChildren().addAll(
-                                    avatar,
-                                    text
-                            );
-
-                            setGraphic(box);
+                            return;
                         }
+
+                        DoctorModel doctor =
+                                getTableView()
+                                        .getItems()
+                                        .get(getIndex());
+
+                        HBox box =
+                                new HBox(12);
+
+                        box.setAlignment(
+                                Pos.CENTER_LEFT
+                        );
+
+                        StackPane icon =
+                                createDoctorAvatar(
+                                        name
+                                );
+
+                        VBox text =
+                                new VBox(2);
+
+                        Label nameLbl =
+                                new Label(name);
+
+                        nameLbl.setFont(
+                                Font.font(
+                                        "Segoe UI",
+                                        FontWeight.BOLD,
+                                        13
+                                )
+                        );
+
+                        nameLbl.setTextFill(
+                                Color.web("#0F172A")
+                        );
+
+                        Label idLbl =
+                                new Label(
+                                        "UID: "
+                                                + doctor.getDoctorId()
+                                );
+
+                        idLbl.setFont(
+                                Font.font(
+                                        "Segoe UI",
+                                        10
+                                )
+                        );
+
+                        idLbl.setTextFill(
+                                Color.web("#64748B")
+                        );
+
+                        text.getChildren().addAll(
+                                nameLbl,
+                                idLbl
+                        );
+
+                        box.getChildren().addAll(
+                                icon,
+                                text
+                        );
+
+                        setGraphic(box);
                     }
                 }
         );
 
-        // ====================================================
-        // DEPARTMENT
-        // ====================================================
+        // --------------------------------------------------------
+        // SPECIALIZATION
+        // --------------------------------------------------------
 
-        TableColumn<DoctorModel, String> deptCol =
+        TableColumn<DoctorModel, String> specializationCol =
                 new TableColumn<>(
-                        "Department"
+                        "Specialization"
                 );
 
-        deptCol.setCellValueFactory(
+        specializationCol.setCellValueFactory(
                 new PropertyValueFactory<>(
-                        "department"
+                        "specialization"
                 )
         );
 
-        deptCol.setCellFactory(
+        specializationCol.setCellFactory(
                 col -> new TableCell<>() {
 
                     @Override
                     protected void updateItem(
-                            String dept,
+                            String specialization,
                             boolean empty) {
 
                         super.updateItem(
-                                dept,
+                                specialization,
                                 empty
                         );
 
-                        if (empty || dept == null) {
+                        if (empty ||
+                                specialization == null) {
 
                             setGraphic(null);
-
-                        } else {
-
-                            DoctorModel doctor =
-                                    getTableView()
-                                            .getItems()
-                                            .get(getIndex());
-
-                            VBox textContainer =
-                                    new VBox(2);
-
-                            Label deptLbl =
-                                    new Label(
-                                            dept
-                                    );
-
-                            deptLbl.setFont(
-                                    Font.font(
-                                            "Segoe UI",
-                                            FontWeight.SEMI_BOLD,
-                                            12
-                                    )
-                            );
-
-                            deptLbl.setTextFill(
-                                    Color.web("#334155")
-                            );
-
-                            Label roomLbl =
-                                    new Label(
-                                            "OPD Room: "
-                                                    + doctor.getOpdRoom()
-                                    );
-
-                            roomLbl.setFont(
-                                    Font.font(
-                                            "Segoe UI",
-                                            FontWeight.NORMAL,
-                                            11
-                                    )
-                            );
-
-                            roomLbl.setTextFill(
-                                    Color.web("#64748B")
-                            );
-
-                            textContainer
-                                    .getChildren()
-                                    .addAll(
-                                            deptLbl,
-                                            roomLbl
-                                    );
-
-                            setGraphic(
-                                    textContainer
-                            );
+                            return;
                         }
+
+                        DoctorModel doctor =
+                                getTableView()
+                                        .getItems()
+                                        .get(getIndex());
+
+                        VBox box =
+                                new VBox(3);
+
+                        Label spec =
+                                new Label(
+                                        specialization
+                                );
+
+                        spec.setFont(
+                                Font.font(
+                                        "Segoe UI",
+                                        FontWeight.SEMI_BOLD,
+                                        12
+                                )
+                        );
+
+                        spec.setTextFill(
+                                Color.web("#334155")
+                        );
+
+                        Label experience =
+                                new Label(
+                                        "Experience: "
+                                                + doctor.getExperience()
+                                                + " years"
+                                );
+
+                        experience.setFont(
+                                Font.font(
+                                        "Segoe UI",
+                                        10
+                                )
+                        );
+
+                        experience.setTextFill(
+                                Color.web("#64748B")
+                        );
+
+                        box.getChildren().addAll(
+                                spec,
+                                experience
+                        );
+
+                        setGraphic(box);
                     }
                 }
         );
 
-        // ====================================================
+        // --------------------------------------------------------
+        // HOSPITAL
+        // --------------------------------------------------------
+
+        TableColumn<DoctorModel, String> hospitalCol =
+                new TableColumn<>(
+                        "Hospital Affiliation"
+                );
+
+        hospitalCol.setCellValueFactory(
+                new PropertyValueFactory<>(
+                        "hospitalAffiliation"
+                )
+        );
+
+        hospitalCol.setCellFactory(
+                col -> new TableCell<>() {
+
+                    @Override
+                    protected void updateItem(
+                            String hospital,
+                            boolean empty) {
+
+                        super.updateItem(
+                                hospital,
+                                empty
+                        );
+
+                        if (empty ||
+                                hospital == null) {
+
+                            setGraphic(null);
+                            return;
+                        }
+
+                        VBox box =
+                                new VBox(3);
+
+                        Label hospitalLabel =
+                                new Label(hospital);
+
+                        hospitalLabel.setFont(
+                                Font.font(
+                                        "Segoe UI",
+                                        FontWeight.SEMI_BOLD,
+                                        12
+                                )
+                        );
+
+                        hospitalLabel.setTextFill(
+                                Color.web("#334155")
+                        );
+
+                        DoctorModel doctor =
+                                getTableView()
+                                        .getItems()
+                                        .get(getIndex());
+
+                        Label council =
+                                new Label(
+                                        "Council: "
+                                                + doctor.getMedicalCouncil()
+                                );
+
+                        council.setFont(
+                                Font.font(
+                                        "Segoe UI",
+                                        10
+                                )
+                        );
+
+                        council.setTextFill(
+                                Color.web("#64748B")
+                        );
+
+                        box.getChildren().addAll(
+                                hospitalLabel,
+                                council
+                        );
+
+                        setGraphic(box);
+                    }
+                }
+        );
+
+        // --------------------------------------------------------
         // CONTACT
-        // ====================================================
+        // --------------------------------------------------------
 
         TableColumn<DoctorModel, String> contactCol =
                 new TableColumn<>(
-                        "Contact & Email"
+                        "Contact"
                 );
 
         contactCol.setCellValueFactory(
@@ -969,84 +970,91 @@ public class DoctorManagementView extends ScrollPane {
 
                     @Override
                     protected void updateItem(
-                            String contact,
+                            String phone,
                             boolean empty) {
 
                         super.updateItem(
-                                contact,
+                                phone,
                                 empty
                         );
 
-                        if (empty || contact == null) {
+                        if (empty ||
+                                phone == null) {
 
                             setGraphic(null);
-
-                        } else {
-
-                            DoctorModel doctor =
-                                    getTableView()
-                                            .getItems()
-                                            .get(getIndex());
-
-                            VBox textContainer =
-                                    new VBox(2);
-
-                            Label phoneLbl =
-                                    new Label(
-                                            contact
-                                    );
-
-                            phoneLbl.setFont(
-                                    Font.font(
-                                            "Segoe UI",
-                                            FontWeight.NORMAL,
-                                            12
-                                    )
-                            );
-
-                            phoneLbl.setTextFill(
-                                    Color.web("#334155")
-                            );
-
-                            Label emailLbl =
-                                    new Label(
-                                            doctor.getEmail()
-                                    );
-
-                            emailLbl.setFont(
-                                    Font.font(
-                                            "Segoe UI",
-                                            FontWeight.NORMAL,
-                                            11
-                                    )
-                            );
-
-                            emailLbl.setTextFill(
-                                    Color.web("#64748B")
-                            );
-
-                            textContainer
-                                    .getChildren()
-                                    .addAll(
-                                            phoneLbl,
-                                            emailLbl
-                                    );
-
-                            setGraphic(
-                                    textContainer
-                            );
+                            return;
                         }
+
+                        DoctorModel doctor =
+                                getTableView()
+                                        .getItems()
+                                        .get(getIndex());
+
+                        VBox box =
+                                new VBox(3);
+
+                        Label phoneLabel =
+                                new Label(phone);
+
+                        phoneLabel.setFont(
+                                Font.font(
+                                        "Segoe UI",
+                                        12
+                                )
+                        );
+
+                        phoneLabel.setTextFill(
+                                Color.web("#334155")
+                        );
+
+                        Label emailLabel =
+                                new Label(
+                                        doctor.getEmail()
+                                );
+
+                        emailLabel.setFont(
+                                Font.font(
+                                        "Segoe UI",
+                                        10
+                                )
+                        );
+
+                        emailLabel.setTextFill(
+                                Color.web("#64748B")
+                        );
+
+                        box.getChildren().addAll(
+                                phoneLabel,
+                                emailLabel
+                        );
+
+                        setGraphic(box);
                     }
                 }
         );
 
-        // ====================================================
-        // VERIFICATION STATUS
-        // ====================================================
+        // --------------------------------------------------------
+        // REGISTRATION NUMBER
+        // --------------------------------------------------------
+
+        TableColumn<DoctorModel, String> registrationCol =
+                new TableColumn<>(
+                        "Registration No."
+                );
+
+        registrationCol.setCellValueFactory(
+                new PropertyValueFactory<>(
+                        "registrationNumber"
+                )
+        );
+
+        // --------------------------------------------------------
+        // VERIFICATION
+        // --------------------------------------------------------
 
         TableColumn<DoctorModel, String> verificationCol =
                 new TableColumn<>(
-                        "App Approval"
+                        "Approval Status"
                 );
 
         verificationCol.setCellValueFactory(
@@ -1071,175 +1079,65 @@ public class DoctorManagementView extends ScrollPane {
                         if (empty || status == null) {
 
                             setGraphic(null);
-
-                        } else {
-
-                            Label badge =
-                                    new Label(
-                                            status.toUpperCase()
-                                    );
-
-                            badge.setPadding(
-                                    new Insets(
-                                            4,
-                                            10,
-                                            4,
-                                            10
-                                    )
-                            );
-
-                            badge.setFont(
-                                    Font.font(
-                                            "Segoe UI",
-                                            FontWeight.BOLD,
-                                            10
-                                    )
-                            );
-
-                            switch (
-                                    status.toUpperCase()
-                            ) {
-
-                                case "VERIFIED" ->
-
-                                        badge.setStyle(
-                                                "-fx-background-color: #DCFCE7; " +
-                                                "-fx-text-fill: #15803D; " +
-                                                "-fx-background-radius: 20px;"
-                                        );
-
-                                case "PENDING" ->
-
-                                        badge.setStyle(
-                                                "-fx-background-color: #FEF3C7; " +
-                                                "-fx-text-fill: #D97706; " +
-                                                "-fx-background-radius: 20px;"
-                                        );
-
-                                default ->
-
-                                        badge.setStyle(
-                                                "-fx-background-color: #FEE2E2; " +
-                                                "-fx-text-fill: #B91C1C; " +
-                                                "-fx-background-radius: 20px;"
-                                        );
-                            }
-
-                            setGraphic(badge);
+                            return;
                         }
-                    }
-                }
-        );
 
-        // ====================================================
-        // DUTY STATUS
-        // ====================================================
+                        Label badge =
+                                new Label(
+                                        status.toUpperCase()
+                                );
 
-        TableColumn<DoctorModel, String> statusCol =
-                new TableColumn<>(
-                        "Availability Status"
-                );
-
-        statusCol.setCellValueFactory(
-                new PropertyValueFactory<>(
-                        "status"
-                )
-        );
-
-        statusCol.setCellFactory(
-                col -> new TableCell<>() {
-
-                    @Override
-                    protected void updateItem(
-                            String status,
-                            boolean empty) {
-
-                        super.updateItem(
-                                status,
-                                empty
+                        badge.setPadding(
+                                new Insets(
+                                        4,
+                                        10,
+                                        4,
+                                        10
+                                )
                         );
 
-                        if (empty || status == null) {
+                        badge.setFont(
+                                Font.font(
+                                        "Segoe UI",
+                                        FontWeight.BOLD,
+                                        10
+                                )
+                        );
 
-                            setGraphic(null);
+                        switch (
+                                status.toUpperCase()
+                        ) {
 
-                        } else {
-
-                            Label badge =
-                                    new Label(
-                                            status.toUpperCase()
+                            case "APPROVED" ->
+                                    badge.setStyle(
+                                            "-fx-background-color: #DCFCE7;" +
+                                            "-fx-text-fill: #15803D;" +
+                                            "-fx-background-radius: 20px;"
                                     );
 
-                            badge.setPadding(
-                                    new Insets(
-                                            4,
-                                            10,
-                                            4,
-                                            10
-                                    )
-                            );
+                            case "PENDING" ->
+                                    badge.setStyle(
+                                            "-fx-background-color: #FEF3C7;" +
+                                            "-fx-text-fill: #D97706;" +
+                                            "-fx-background-radius: 20px;"
+                                    );
 
-                            badge.setFont(
-                                    Font.font(
-                                            "Segoe UI",
-                                            FontWeight.BOLD,
-                                            10
-                                    )
-                            );
-
-                            switch (
-                                    status.toUpperCase()
-                            ) {
-
-                                case "ON DUTY" ->
-
-                                        badge.setStyle(
-                                                "-fx-background-color: #DCFCE7; " +
-                                                "-fx-text-fill: #15803D; " +
-                                                "-fx-background-radius: 20px;"
-                                        );
-
-                                case "IN SURGERY" ->
-
-                                        badge.setStyle(
-                                                "-fx-background-color: #FEE2E2; " +
-                                                "-fx-text-fill: #B91C1C; " +
-                                                "-fx-background-radius: 20px;"
-                                        );
-
-                                default ->
-
-                                        badge.setStyle(
-                                                "-fx-background-color: #FEF3C7; " +
-                                                "-fx-text-fill: #D97706; " +
-                                                "-fx-background-radius: 20px;"
-                                        );
-                            }
-
-                            setGraphic(badge);
+                            default ->
+                                    badge.setStyle(
+                                            "-fx-background-color: #FEE2E2;" +
+                                            "-fx-text-fill: #B91C1C;" +
+                                            "-fx-background-radius: 20px;"
+                                    );
                         }
+
+                        setGraphic(badge);
                     }
                 }
         );
 
-        // ====================================================
-        // SHIFT
-        // ====================================================
-
-        TableColumn<DoctorModel, String> shiftCol =
-                new TableColumn<>(
-                        "Current Shift"
-                );
-
-        shiftCol.setCellValueFactory(
-                new PropertyValueFactory<>(
-                        "shift"
-                )
-        );
-
-        // ====================================================
+        // --------------------------------------------------------
         // ACTIONS
-        // ====================================================
+        // --------------------------------------------------------
 
         TableColumn<DoctorModel, Void> actionCol =
                 new TableColumn<>(
@@ -1249,97 +1147,84 @@ public class DoctorManagementView extends ScrollPane {
         actionCol.setCellFactory(
                 col -> new TableCell<>() {
 
-                    private final Button profileBtn =
+                    private final Button viewBtn =
                             new Button("View");
 
-                    private final Button toggleStatusBtn =
-                            new Button("Duty");
+                    private final Button verifyBtn =
+                            new Button("Verify");
 
-                    private final HBox btnGroup =
+                    private final HBox buttons =
                             new HBox(
                                     5,
-                                    profileBtn,
-                                    toggleStatusBtn
+                                    viewBtn,
+                                    verifyBtn
                             );
 
                     {
-                        btnGroup.setAlignment(
+
+                        buttons.setAlignment(
                                 Pos.CENTER
                         );
 
-                        profileBtn.setStyle(
-                                "-fx-background-color: #EEF2FF; " +
-                                "-fx-text-fill: #4338CA; " +
-                                "-fx-cursor: hand; " +
-                                "-fx-font-size: 10px; " +
+                        viewBtn.setStyle(
+                                "-fx-background-color: #EEF2FF;" +
+                                "-fx-text-fill: #4338CA;" +
+                                "-fx-cursor: hand;" +
+                                "-fx-font-size: 10px;" +
                                 "-fx-background-radius: 4px;"
                         );
 
-                        toggleStatusBtn.setStyle(
-                                "-fx-background-color: #F1F5F9; " +
-                                "-fx-text-fill: #334155; " +
-                                "-fx-cursor: hand; " +
-                                "-fx-font-size: 10px; " +
+                        verifyBtn.setStyle(
+                                "-fx-background-color: #DCFCE7;" +
+                                "-fx-text-fill: #15803D;" +
+                                "-fx-cursor: hand;" +
+                                "-fx-font-size: 10px;" +
                                 "-fx-background-radius: 4px;"
                         );
 
-                        profileBtn.setOnAction(e -> {
+                        viewBtn.setOnAction(
+                                e -> {
 
-                            if (getIndex() < 0 ||
-                                    getIndex() >=
+                                    if (getIndex() < 0 ||
+                                            getIndex() >=
+                                                    getTableView()
+                                                            .getItems()
+                                                            .size()) {
+                                        return;
+                                    }
+
+                                    DoctorModel doctor =
                                             getTableView()
                                                     .getItems()
-                                                    .size()) {
-                                return;
-                            }
+                                                    .get(getIndex());
 
-                            DoctorModel doctor =
-                                    getTableView()
-                                            .getItems()
-                                            .get(getIndex());
+                                    showDoctorProfileModal(
+                                            doctor
+                                    );
+                                }
+                        );
 
-                            showDoctorProfileModal(
-                                    doctor
-                            );
-                        });
+                        verifyBtn.setOnAction(
+                                e -> {
 
-                        toggleStatusBtn.setOnAction(e -> {
+                                    if (getIndex() < 0 ||
+                                            getIndex() >=
+                                                    getTableView()
+                                                            .getItems()
+                                                            .size()) {
+                                        return;
+                                    }
 
-                            if (getIndex() < 0 ||
-                                    getIndex() >=
+                                    DoctorModel doctor =
                                             getTableView()
                                                     .getItems()
-                                                    .size()) {
-                                return;
-                            }
+                                                    .get(getIndex());
 
-                            DoctorModel doctor =
-                                    getTableView()
-                                            .getItems()
-                                            .get(getIndex());
-
-                            if (
-                                    "ON DUTY"
-                                            .equalsIgnoreCase(
-                                                    doctor.getStatus()
-                                            )
-                            ) {
-
-                                doctor.setStatus(
-                                        "ON LEAVE"
-                                );
-
-                            } else {
-
-                                doctor.setStatus(
-                                        "ON DUTY"
-                                );
-                            }
-
-                            doctorTable.refresh();
-
-                            updateCountersAndChart();
-                        });
+                                    approveDoctor(
+                                            doctor
+                                    );
+                                }
+                        );
                     }
 
                     @Override
@@ -1358,7 +1243,38 @@ public class DoctorManagementView extends ScrollPane {
 
                         } else {
 
-                            setGraphic(btnGroup);
+                            DoctorModel doctor =
+                                    getTableView()
+                                            .getItems()
+                                            .get(getIndex());
+
+                            if (
+                                    "APPROVED"
+                                            .equalsIgnoreCase(
+                                                    doctor.getVerificationStatus()
+                                            )
+                            ) {
+
+                                verifyBtn.setText(
+                                        "Approved"
+                                );
+
+                                verifyBtn.setDisable(
+                                        true
+                                );
+
+                            } else {
+
+                                verifyBtn.setText(
+                                        "Verify"
+                                );
+
+                                verifyBtn.setDisable(
+                                        false
+                                );
+                            }
+
+                            setGraphic(buttons);
                         }
                     }
                 }
@@ -1366,11 +1282,11 @@ public class DoctorManagementView extends ScrollPane {
 
         doctorTable.getColumns().addAll(
                 nameCol,
-                deptCol,
+                specializationCol,
+                hospitalCol,
                 contactCol,
+                registrationCol,
                 verificationCol,
-                statusCol,
-                shiftCol,
                 actionCol
         );
 
@@ -1379,35 +1295,554 @@ public class DoctorManagementView extends ScrollPane {
                 doctorTable
         );
 
-        VBox.setVgrow(
-                doctorTable,
-                Priority.ALWAYS
-        );
-
         return container;
     }
 
-    // ========================================================
+    // ============================================================
+    // LOAD REAL FIRESTORE DOCTORS
+    // ============================================================
+
+    private void loadDoctorData() {
+
+        try {
+
+            ListWrapper doctors =
+                    new ListWrapper(
+                            doctorController.getAllDoctors()
+                    );
+
+            masterDoctorData =
+                    FXCollections.observableArrayList();
+
+            for (
+                    DoctorProfile profile :
+                    doctors.getDoctors()
+            ) {
+
+                if (profile == null) {
+                    continue;
+                }
+
+                String status =
+                        doctorController
+                                .getVerificationStatus(
+                                        profile.getUid()
+                                );
+
+                if (status == null ||
+                        status.trim().isEmpty()) {
+
+                    status = "PENDING";
+                }
+
+                masterDoctorData.add(
+                        convertToDoctorModel(
+                                profile,
+                                status
+                        )
+                );
+            }
+
+            filteredData =
+                    new FilteredList<>(
+                            masterDoctorData,
+                            doctor -> true
+                    );
+
+            doctorTable.setItems(
+                    filteredData
+            );
+
+            updateCountersAndChart();
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            masterDoctorData =
+                    FXCollections.observableArrayList();
+
+            filteredData =
+                    new FilteredList<>(
+                            masterDoctorData,
+                            doctor -> true
+                    );
+
+            doctorTable.setItems(
+                    filteredData
+            );
+
+            updateCountersAndChart();
+
+            showAlert(
+                    "Unable to Load Doctors",
+                    "Could not load doctor profiles from Firestore.\n\n"
+                            + e.getMessage()
+            );
+        }
+    }
+
+    private DoctorModel convertToDoctorModel(
+            DoctorProfile profile,
+            String verificationStatus) {
+
+        String firstName =
+                safe(profile.getFirstName());
+
+        String lastName =
+                safe(profile.getLastName());
+
+        String name =
+                ("Dr. "
+                        + firstName
+                        + " "
+                        + lastName)
+                        .trim();
+
+        if (name.equals("Dr.")) {
+            name = "Doctor";
+        }
+
+        return new DoctorModel(
+                safe(profile.getUid()),
+                name,
+                safe(profile.getSpecialization()),
+                safe(profile.getPhone()),
+                safe(profile.getEmail()),
+                safe(profile.getRegistrationNumber()),
+                safe(profile.getExperience()),
+                safe(profile.getHospitalAffiliation()),
+                safe(profile.getMedicalCouncil()),
+                verificationStatus
+        );
+    }
+
+    // ============================================================
+    // ANALYTICS UPDATE
+    // ============================================================
+
+    private void updateCountersAndChart() {
+
+        if (masterDoctorData == null) {
+            return;
+        }
+
+        int total =
+                masterDoctorData.size();
+
+        long approved =
+                masterDoctorData
+                        .stream()
+                        .filter(
+                                d -> "APPROVED"
+                                        .equalsIgnoreCase(
+                                                d.getVerificationStatus()
+                                        )
+                        )
+                        .count();
+
+        long pending =
+                masterDoctorData
+                        .stream()
+                        .filter(
+                                d -> "PENDING"
+                                        .equalsIgnoreCase(
+                                                d.getVerificationStatus()
+                                        )
+                        )
+                        .count();
+
+        long rejected =
+                masterDoctorData
+                        .stream()
+                        .filter(
+                                d -> "REJECTED"
+                                        .equalsIgnoreCase(
+                                                d.getVerificationStatus()
+                                        )
+                        )
+                        .count();
+
+        totalCountLabel.setText(
+                String.valueOf(total)
+        );
+
+        activeCountLabel.setText(
+                String.valueOf(approved)
+        );
+
+        pendingCountLabel.setText(
+                String.valueOf(pending)
+        );
+
+        rejectedCountLabel.setText(
+                String.valueOf(rejected)
+        );
+
+        specializationBarChart
+                .getData()
+                .clear();
+
+        Map<String, Long> counts =
+                masterDoctorData
+                        .stream()
+                        .collect(
+                                Collectors.groupingBy(
+                                        d -> {
+
+                                            String spec =
+                                                    d.getSpecialization();
+
+                                            return spec.isEmpty()
+                                                    ? "Not Specified"
+                                                    : spec;
+                                        },
+                                        Collectors.counting()
+                                )
+                        );
+
+        XYChart.Series<String, Number> series =
+                new XYChart.Series<>();
+
+        counts.forEach(
+                (specialization, count) ->
+                        series.getData().add(
+                                new XYChart.Data<>(
+                                        specialization,
+                                        count
+                                )
+                        )
+        );
+
+        specializationBarChart
+                .getData()
+                .add(series);
+    }
+
+    // ============================================================
+    // VIEW PROFILE
+    // ============================================================
+
+    private void showDoctorProfileModal(
+            DoctorModel doctor) {
+
+        Dialog<Void> dialog =
+                new Dialog<>();
+
+        dialog.setTitle(
+                "Doctor Credentials & Verification"
+        );
+
+        dialog.setHeaderText(
+                doctor.getName()
+                        + "\nUID: "
+                        + doctor.getDoctorId()
+        );
+
+        VBox content =
+                new VBox(14);
+
+        content.setPadding(
+                new Insets(15)
+        );
+
+        content.setPrefWidth(480);
+
+        Label details =
+                new Label(
+                        "🩺 Specialization: "
+                                + doctor.getSpecialization()
+                                + "\n\n"
+                                + "🏢 Hospital Affiliation: "
+                                + doctor.getHospitalAffiliation()
+                                + "\n\n"
+                                + "📞 Phone: "
+                                + doctor.getContactNo()
+                                + "\n\n"
+                                + "✉️ Email: "
+                                + doctor.getEmail()
+                                + "\n\n"
+                                + "🏷️ Registration Number: "
+                                + doctor.getRegistrationNumber()
+                                + "\n\n"
+                                + "🎓 Experience: "
+                                + doctor.getExperience()
+                                + "\n\n"
+                                + "🏛️ Medical Council: "
+                                + doctor.getMedicalCouncil()
+                                + "\n\n"
+                                + "🛡️ Verification Status: "
+                                + doctor.getVerificationStatus()
+                );
+
+        details.setWrapText(true);
+
+        Label actionTitle =
+                new Label(
+                        "Change Verification Status:"
+                );
+
+        actionTitle.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        12
+                )
+        );
+
+        actionTitle.setTextFill(
+                Color.web("#0F172A")
+        );
+
+        Button verifyBtn =
+                new Button(
+                        "✓ Verify & Approve"
+                );
+
+        verifyBtn.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        verifyBtn.setStyle(
+                "-fx-background-color: #DCFCE7;" +
+                "-fx-text-fill: #15803D;" +
+                "-fx-cursor: hand;" +
+                "-fx-font-weight: bold;" +
+                "-fx-padding: 8px;" +
+                "-fx-background-radius: 6px;"
+        );
+
+        Button pendingBtn =
+                new Button(
+                        "⏳ Set as Pending"
+                );
+
+        pendingBtn.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        pendingBtn.setStyle(
+                "-fx-background-color: #FEF3C7;" +
+                "-fx-text-fill: #D97706;" +
+                "-fx-cursor: hand;" +
+                "-fx-font-weight: bold;" +
+                "-fx-padding: 8px;" +
+                "-fx-background-radius: 6px;"
+        );
+
+        Button rejectBtn =
+                new Button(
+                        "✕ Reject Verification"
+                );
+
+        rejectBtn.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        rejectBtn.setStyle(
+                "-fx-background-color: #FEE2E2;" +
+                "-fx-text-fill: #B91C1C;" +
+                "-fx-cursor: hand;" +
+                "-fx-font-weight: bold;" +
+                "-fx-padding: 8px;" +
+                "-fx-background-radius: 6px;"
+        );
+
+        verifyBtn.setOnAction(
+                e -> {
+
+                    if (
+                            doctorController.verifyDoctor(
+                                    doctor.getDoctorId()
+                            )
+                    ) {
+
+                        doctor.setVerificationStatus(
+                                "APPROVED"
+                        );
+
+                        doctorTable.refresh();
+
+                        updateCountersAndChart();
+
+                        showAlert(
+                                "Doctor Approved",
+                                doctor.getName()
+                                        + " has been successfully approved."
+                        );
+
+                        dialog.close();
+
+                    } else {
+
+                        showAlert(
+                                "Update Failed",
+                                "Unable to approve "
+                                        + doctor.getName()
+                        );
+                    }
+                }
+        );
+
+        pendingBtn.setOnAction(
+                e -> {
+
+                    if (
+                            doctorController.setDoctorPending(
+                                    doctor.getDoctorId()
+                            )
+                    ) {
+
+                        doctor.setVerificationStatus(
+                                "PENDING"
+                        );
+
+                        doctorTable.refresh();
+
+                        updateCountersAndChart();
+
+                        showAlert(
+                                "Status Updated",
+                                doctor.getName()
+                                        + " is now PENDING."
+                        );
+
+                        dialog.close();
+
+                    } else {
+
+                        showAlert(
+                                "Update Failed",
+                                "Unable to change verification status."
+                        );
+                    }
+                }
+        );
+
+        rejectBtn.setOnAction(
+                e -> {
+
+                    if (
+                            doctorController.rejectDoctor(
+                                    doctor.getDoctorId()
+                            )
+                    ) {
+
+                        doctor.setVerificationStatus(
+                                "REJECTED"
+                        );
+
+                        doctorTable.refresh();
+
+                        updateCountersAndChart();
+
+                        showAlert(
+                                "Verification Rejected",
+                                doctor.getName()
+                                        + " has been rejected."
+                        );
+
+                        dialog.close();
+
+                    } else {
+
+                        showAlert(
+                                "Update Failed",
+                                "Unable to reject "
+                                        + doctor.getName()
+                        );
+                    }
+                }
+        );
+
+        content.getChildren().addAll(
+                details,
+                new Separator(),
+                actionTitle,
+                verifyBtn,
+                pendingBtn,
+                rejectBtn
+        );
+
+        dialog.getDialogPane()
+                .setContent(content);
+
+        dialog.getDialogPane()
+                .getButtonTypes()
+                .add(
+                        ButtonType.CLOSE
+                );
+
+        dialog.showAndWait();
+    }
+
+    // ============================================================
+    // QUICK APPROVE
+    // ============================================================
+
+    private void approveDoctor(
+            DoctorModel doctor) {
+
+        if (
+                "APPROVED"
+                        .equalsIgnoreCase(
+                                doctor.getVerificationStatus()
+                        )
+        ) {
+            return;
+        }
+
+        boolean success =
+                doctorController.verifyDoctor(
+                        doctor.getDoctorId()
+                );
+
+        if (success) {
+
+            doctor.setVerificationStatus(
+                    "APPROVED"
+            );
+
+            doctorTable.refresh();
+
+            updateCountersAndChart();
+
+            showAlert(
+                    "Doctor Approved",
+                    doctor.getName()
+                            + " has been successfully approved."
+            );
+
+        } else {
+
+            showAlert(
+                    "Approval Failed",
+                    "Unable to approve "
+                            + doctor.getName()
+            );
+        }
+    }
+
+    // ============================================================
     // AVATAR
-    // ========================================================
+    // ============================================================
 
     private StackPane createDoctorAvatar(
             String name) {
 
-        String initials =
-                "DR";
+        String initials = "DR";
 
-        if (
-                name != null
-                        &&
-                name.contains(" ")
-        ) {
+        if (name != null &&
+                !name.trim().isEmpty()) {
+
+            String cleaned =
+                    name.replace(
+                            "Dr.",
+                            ""
+                    ).trim();
 
             String[] parts =
-                    name.replace(
-                            "Dr. ",
-                            ""
-                    ).split(" ");
+                    cleaned.split("\\s+");
 
             if (parts.length >= 2) {
 
@@ -1418,22 +1853,17 @@ public class DoctorManagementView extends ScrollPane {
                                         + parts[1].charAt(0)
                         ).toUpperCase();
 
-            } else if (
-                    parts.length == 1
-                            &&
-                    !parts[0].isEmpty()
-            ) {
+            } else {
 
                 initials =
-                        (
-                                ""
-                                        + parts[0].charAt(0)
+                        String.valueOf(
+                                cleaned.charAt(0)
                         ).toUpperCase();
             }
         }
 
         Circle circle =
-                new Circle(16);
+                new Circle(17);
 
         circle.setFill(
                 Color.web("#E0E7FF")
@@ -1468,660 +1898,16 @@ public class DoctorManagementView extends ScrollPane {
         );
     }
 
-    // ========================================================
-    // DATA MANAGEMENT
-    // ========================================================
+    // ============================================================
+    // HELPERS
+    // ============================================================
 
-    private void loadDoctorData() {
-
-        try {
-
-            List<DoctorProfile> doctors =
-                    doctorManagementController
-                            .getAllDoctors();
-
-            masterDoctorData =
-                    FXCollections.observableArrayList();
-
-            for (
-                    DoctorProfile profile :
-                    doctors
-            ) {
-
-                if (profile == null) {
-                    continue;
-                }
-
-                String firstName =
-                        safe(
-                                profile.getFirstName()
-                        );
-
-                String lastName =
-                        safe(
-                                profile.getLastName()
-                        );
-
-                String fullName =
-                        (
-                                "Dr. "
-                                        + firstName
-                                        + " "
-                                        + lastName
-                        ).trim();
-
-                if (
-                        firstName.isEmpty()
-                                &&
-                        lastName.isEmpty()
-                ) {
-
-                    fullName =
-                            "Doctor";
-                }
-
-                String doctorId =
-                        safe(
-                                profile
-                                        .getRegistrationNumber()
-                        );
-
-                if (doctorId.isEmpty()) {
-
-                    doctorId =
-                            safe(
-                                    profile.getUid()
-                            );
-                }
-
-                if (doctorId.isEmpty()) {
-
-                    doctorId =
-                            "N/A";
-                }
-
-                String department =
-                        safe(
-                                profile
-                                        .getHospitalAffiliation()
-                        );
-
-                if (department.isEmpty()) {
-
-                    department =
-                            "Not specified";
-                }
-
-                String specialization =
-                        safe(
-                                profile.getSpecialization()
-                        );
-
-                if (specialization.isEmpty()) {
-
-                    specialization =
-                            "Not specified";
-                }
-
-                String contact =
-                        safe(
-                                profile.getPhone()
-                        );
-
-                if (contact.isEmpty()) {
-
-                    contact =
-                            "Not available";
-                }
-
-                String email =
-                        safe(
-                                profile.getEmail()
-                        );
-
-                if (email.isEmpty()) {
-
-                    email =
-                            "Not available";
-                }
-
-                /*
-                 * These fields are not currently part
-                 * of DoctorProfile.
-                 */
-                String opdRoom =
-                        "Not configured";
-
-                String status =
-                        "Not configured";
-
-                String shift =
-                        "Not configured";
-
-                String joiningDate =
-                        "Not available";
-
-                String verificationStatus =
-                        doctorManagementController
-                                .getVerificationStatus(
-                                        profile.getUid()
-                                );
-
-                if (
-                        verificationStatus == null
-                                ||
-                        verificationStatus
-                                .trim()
-                                .isEmpty()
-                ) {
-
-                    verificationStatus =
-                            "PENDING";
-                }
-
-                masterDoctorData.add(
-                        new DoctorModel(
-                                safe(
-                                        profile.getUid()
-                                ),
-                                doctorId,
-                                fullName,
-                                department,
-                                specialization,
-                                contact,
-                                email,
-                                opdRoom,
-                                status,
-                                shift,
-                                joiningDate,
-                                verificationStatus
-                        )
-                );
-            }
-
-            filteredData =
-                    new FilteredList<>(
-                            masterDoctorData,
-                            d -> true
-                    );
-
-            doctorTable.setItems(
-                    filteredData
-            );
-
-            updateCountersAndChart();
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            masterDoctorData =
-                    FXCollections.observableArrayList();
-
-            filteredData =
-                    new FilteredList<>(
-                            masterDoctorData,
-                            d -> true
-                    );
-
-            doctorTable.setItems(
-                    filteredData
-            );
-
-            updateCountersAndChart();
-
-            showAlert(
-                    "Unable to Load Doctors",
-                    "The doctor directory could not be loaded from Firestore.\n\n"
-                            + e.getMessage()
-            );
-        }
-    }
-
-    private String safe(
-            String value) {
+    private String safe(String value) {
 
         return value == null
                 ? ""
-                : value.trim();
+                : value;
     }
-
-    // ========================================================
-    // COUNTERS + GRAPH
-    // ========================================================
-
-    private void updateCountersAndChart() {
-
-        if (masterDoctorData == null) {
-            return;
-        }
-
-        int total =
-                masterDoctorData.size();
-
-        long active =
-                masterDoctorData.stream()
-                        .filter(
-                                d ->
-                                        d.getStatus()
-                                                .equalsIgnoreCase(
-                                                        "ON DUTY"
-                                                )
-                        )
-                        .count();
-
-        long leave =
-                masterDoctorData.stream()
-                        .filter(
-                                d ->
-                                        d.getStatus()
-                                                .equalsIgnoreCase(
-                                                        "ON LEAVE"
-                                                )
-                        )
-                        .count();
-
-        long surgery =
-                masterDoctorData.stream()
-                        .filter(
-                                d ->
-                                        d.getStatus()
-                                                .equalsIgnoreCase(
-                                                        "IN SURGERY"
-                                                )
-                        )
-                        .count();
-
-        totalCountLabel.setText(
-                String.valueOf(total)
-        );
-
-        activeCountLabel.setText(
-                String.valueOf(active)
-        );
-
-        leaveCountLabel.setText(
-                String.valueOf(leave)
-        );
-
-        surgeryCountLabel.setText(
-                String.valueOf(surgery)
-        );
-
-        // ====================================================
-        // KEEP GRAPH
-        // ====================================================
-
-        departmentBarChart
-                .getData()
-                .clear();
-
-        Map<String, Long> deptCounts =
-                masterDoctorData.stream()
-                        .collect(
-                                Collectors.groupingBy(
-                                        DoctorModel::getDepartment,
-                                        Collectors.counting()
-                                )
-                        );
-
-        XYChart.Series<String, Number> series =
-                new XYChart.Series<>();
-
-        deptCounts.forEach(
-                (dept, count) ->
-                        series.getData().add(
-                                new XYChart.Data<>(
-                                        dept,
-                                        count
-                                )
-                        )
-        );
-
-        departmentBarChart
-                .getData()
-                .add(series);
-    }
-
-    // ========================================================
-    // DOCTOR PROFILE MODAL
-    // ========================================================
-
-    private void showDoctorProfileModal(
-            DoctorModel doctor) {
-
-        Dialog<Void> dialog =
-                new Dialog<>();
-
-        dialog.setTitle(
-                "Doctor Credentials & Verification"
-        );
-
-        dialog.setHeaderText(
-                "Specialist Profile: "
-                        + doctor.getName()
-                        + " ("
-                        + doctor.getDoctorId()
-                        + ")"
-        );
-
-        VBox content =
-                new VBox(14);
-
-        content.setPadding(
-                new Insets(15)
-        );
-
-        content.setPrefWidth(
-                420
-        );
-
-        Label details =
-                new Label(
-                        "🩺 Department: "
-                                + doctor.getDepartment()
-                                + " | Specialization: "
-                                + doctor.getSpecialization()
-                                + "\n"
-                                + "🏢 OPD Location: "
-                                + doctor.getOpdRoom()
-                                + "\n"
-                                + "📞 Contact: "
-                                + doctor.getContactNo()
-                                + "\n"
-                                + "✉️ Email: "
-                                + doctor.getEmail()
-                                + "\n"
-                                + "⏰ Shift Schedule: "
-                                + doctor.getShift()
-                                + "\n"
-                                + "📅 Joining Date: "
-                                + doctor.getJoiningDate()
-                                + "\n"
-                                + "🏷️ Current Duty Status: "
-                                + doctor.getStatus()
-                                + "\n"
-                                + "🛡️ Current Approval Status: "
-                                + doctor.getVerificationStatus()
-                                + "\n\n"
-                                + "Weekly Consultation Hours:\n"
-                                + "• Mon - Thu: 09:00 AM - 01:00 PM (OPD)\n"
-                                + "• Fri: 02:00 PM - 06:00 PM (Rounds / Consultations)"
-                );
-
-        details.setWrapText(
-                true
-        );
-
-        Label actionTitle =
-                new Label(
-                        "Change Verification Status:"
-                );
-
-        actionTitle.setFont(
-                Font.font(
-                        "Segoe UI",
-                        FontWeight.BOLD,
-                        12
-                )
-        );
-
-        actionTitle.setTextFill(
-                Color.web("#0F172A")
-        );
-
-        // ====================================================
-        // VERIFY
-        // ====================================================
-
-        Button verifyBtn =
-                new Button(
-                        "✓ Verify & Approve"
-                );
-
-        verifyBtn.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        verifyBtn.setStyle(
-                "-fx-background-color: #DCFCE7; " +
-                "-fx-text-fill: #15803D; " +
-                "-fx-cursor: hand; " +
-                "-fx-font-weight: bold; " +
-                "-fx-padding: 8px; " +
-                "-fx-background-radius: 6px;"
-        );
-
-        // ====================================================
-        // PENDING
-        // ====================================================
-
-        Button pendingBtn =
-                new Button(
-                        "⏳ Set as Pending"
-                );
-
-        pendingBtn.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        pendingBtn.setStyle(
-                "-fx-background-color: #FEF3C7; " +
-                "-fx-text-fill: #D97706; " +
-                "-fx-cursor: hand; " +
-                "-fx-font-weight: bold; " +
-                "-fx-padding: 8px; " +
-                "-fx-background-radius: 6px;"
-        );
-
-        // ====================================================
-        // REJECT
-        // ====================================================
-
-        Button rejectBtn =
-                new Button(
-                        "✕ Reject Verification"
-                );
-
-        rejectBtn.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        rejectBtn.setStyle(
-                "-fx-background-color: #FEE2E2; " +
-                "-fx-text-fill: #B91C1C; " +
-                "-fx-cursor: hand; " +
-                "-fx-font-weight: bold; " +
-                "-fx-padding: 8px; " +
-                "-fx-background-radius: 6px;"
-        );
-
-        // ====================================================
-        // VERIFY ACTION
-        // ====================================================
-
-        verifyBtn.setOnAction(
-                e -> {
-
-                    try {
-
-                        boolean success =
-                                doctorManagementController
-                                        .verifyDoctor(
-                                                doctor.getUid()
-                                        );
-
-                        if (success) {
-
-                            doctor.setVerificationStatus(
-                                    "VERIFIED"
-                            );
-
-                            doctorTable.refresh();
-
-                            showAlert(
-                                    "Doctor Verified",
-                                    doctor.getName()
-                                            + " has been successfully verified and approved."
-                            );
-
-                            dialog.close();
-
-                        } else {
-
-                            showAlert(
-                                    "Verification Failed",
-                                    "Unable to verify "
-                                            + doctor.getName()
-                                            + ". Please try again."
-                            );
-                        }
-
-                    } catch (Exception ex) {
-
-                        ex.printStackTrace();
-
-                        showAlert(
-                                "Verification Error",
-                                "An error occurred while verifying the doctor.\n\n"
-                                        + ex.getMessage()
-                        );
-                    }
-                }
-        );
-
-        // ====================================================
-        // PENDING ACTION
-        // ====================================================
-
-        pendingBtn.setOnAction(
-                e -> {
-
-                    try {
-
-                        boolean success =
-                                doctorManagementController
-                                        .setDoctorPending(
-                                                doctor.getUid()
-                                        );
-
-                        if (success) {
-
-                            doctor.setVerificationStatus(
-                                    "PENDING"
-                            );
-
-                            doctorTable.refresh();
-
-                            showAlert(
-                                    "Status Updated",
-                                    doctor.getName()
-                                            + " verification status is now set to PENDING."
-                            );
-
-                            dialog.close();
-
-                        } else {
-
-                            showAlert(
-                                    "Update Failed",
-                                    "Unable to update "
-                                            + doctor.getName()
-                                            + " verification status."
-                            );
-                        }
-
-                    } catch (Exception ex) {
-
-                        ex.printStackTrace();
-
-                        showAlert(
-                                "Update Error",
-                                "An error occurred while updating the doctor status.\n\n"
-                                        + ex.getMessage()
-                        );
-                    }
-                }
-        );
-
-        // ====================================================
-        // REJECT ACTION
-        // ====================================================
-
-        rejectBtn.setOnAction(
-                e -> {
-
-                    try {
-
-                        boolean success =
-                                doctorManagementController
-                                        .rejectDoctor(
-                                                doctor.getUid()
-                                        );
-
-                        if (success) {
-
-                            doctor.setVerificationStatus(
-                                    "REJECTED"
-                            );
-
-                            doctorTable.refresh();
-
-                            showAlert(
-                                    "Verification Rejected",
-                                    doctor.getName()
-                                            + " verification has been rejected."
-                            );
-
-                            dialog.close();
-
-                        } else {
-
-                            showAlert(
-                                    "Rejection Failed",
-                                    "Unable to reject "
-                                            + doctor.getName()
-                                            + " verification."
-                            );
-                        }
-
-                    } catch (Exception ex) {
-
-                        ex.printStackTrace();
-
-                        showAlert(
-                                "Rejection Error",
-                                "An error occurred while rejecting the doctor.\n\n"
-                                        + ex.getMessage()
-                        );
-                    }
-                }
-        );
-
-        content.getChildren().addAll(
-                details,
-                new Separator(),
-                actionTitle,
-                verifyBtn,
-                pendingBtn,
-                rejectBtn
-        );
-
-        dialog.getDialogPane()
-                .setContent(content);
-
-        dialog.getDialogPane()
-                .getButtonTypes()
-                .add(
-                        ButtonType.CLOSE
-                );
-
-        dialog.showAndWait();
-    }
-
-    // ========================================================
-    // ALERT
-    // ========================================================
 
     private void showAlert(
             String title,
@@ -2132,76 +1918,70 @@ public class DoctorManagementView extends ScrollPane {
                         Alert.AlertType.INFORMATION
                 );
 
-        alert.setTitle(
-                title
-        );
-
-        alert.setHeaderText(
-                null
-        );
-
-        alert.setContentText(
-                content
-        );
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
 
         alert.showAndWait();
     }
 
-    // ========================================================
-    // UI MODEL
-    // ========================================================
+    // ============================================================
+    // SMALL WRAPPER
+    // ============================================================
+
+    private static class ListWrapper {
+
+        private final java.util.List<DoctorProfile> doctors;
+
+        ListWrapper(
+                java.util.List<DoctorProfile> doctors) {
+
+            this.doctors =
+                    doctors == null
+                            ? java.util.List.of()
+                            : doctors;
+        }
+
+        java.util.List<DoctorProfile> getDoctors() {
+            return doctors;
+        }
+    }
+
+    // ============================================================
+    // TABLE MODEL
+    // ============================================================
 
     public static class DoctorModel {
 
-        private final String uid;
-
         private final String doctorId;
-
         private final String name;
-
-        private final String department;
-
         private final String specialization;
-
         private final String contactNo;
-
         private final String email;
-
-        private final String opdRoom;
-
-        private String status;
-
-        private final String shift;
-
-        private final String joiningDate;
+        private final String registrationNumber;
+        private final String experience;
+        private final String hospitalAffiliation;
+        private final String medicalCouncil;
 
         private String verificationStatus;
 
         public DoctorModel(
-                String uid,
                 String doctorId,
                 String name,
-                String department,
                 String specialization,
                 String contactNo,
                 String email,
-                String opdRoom,
-                String status,
-                String shift,
-                String joiningDate,
+                String registrationNumber,
+                String experience,
+                String hospitalAffiliation,
+                String medicalCouncil,
                 String verificationStatus) {
-
-            this.uid =
-                    uid;
 
             this.doctorId =
                     doctorId;
 
             this.name =
                     name;
-
-            this.department =
-                    department;
 
             this.specialization =
                     specialization;
@@ -2212,24 +1992,20 @@ public class DoctorManagementView extends ScrollPane {
             this.email =
                     email;
 
-            this.opdRoom =
-                    opdRoom;
+            this.registrationNumber =
+                    registrationNumber;
 
-            this.status =
-                    status;
+            this.experience =
+                    experience;
 
-            this.shift =
-                    shift;
+            this.hospitalAffiliation =
+                    hospitalAffiliation;
 
-            this.joiningDate =
-                    joiningDate;
+            this.medicalCouncil =
+                    medicalCouncil;
 
             this.verificationStatus =
                     verificationStatus;
-        }
-
-        public String getUid() {
-            return uid;
         }
 
         public String getDoctorId() {
@@ -2238,10 +2014,6 @@ public class DoctorManagementView extends ScrollPane {
 
         public String getName() {
             return name;
-        }
-
-        public String getDepartment() {
-            return department;
         }
 
         public String getSpecialization() {
@@ -2256,27 +2028,20 @@ public class DoctorManagementView extends ScrollPane {
             return email;
         }
 
-        public String getOpdRoom() {
-            return opdRoom;
+        public String getRegistrationNumber() {
+            return registrationNumber;
         }
 
-        public String getStatus() {
-            return status;
+        public String getExperience() {
+            return experience;
         }
 
-        public void setStatus(
-                String status) {
-
-            this.status =
-                    status;
+        public String getHospitalAffiliation() {
+            return hospitalAffiliation;
         }
 
-        public String getShift() {
-            return shift;
-        }
-
-        public String getJoiningDate() {
-            return joiningDate;
+        public String getMedicalCouncil() {
+            return medicalCouncil;
         }
 
         public String getVerificationStatus() {
