@@ -36,8 +36,8 @@ public class AdminMainShell {
     // =========================================================
     // GET SCENE - COMMON NAVIGATION METHOD
     // =========================================================
-    public Scene getScene() {
-        Scene scene = new Scene(rootLayout, 1366, 768);
+    public Scene getScene(Stage st) {
+        Scene scene = new Scene(rootLayout,st.getWidth() , st.getHeight());
 
         primaryStage.setTitle(
                 "HealthSphere AI — Enterprise Command Center"
@@ -48,7 +48,7 @@ public class AdminMainShell {
 
     // Optional method if you still want to directly show the shell
     public void show() {
-        primaryStage.setScene(getScene());
+        primaryStage.setScene(getScene(primaryStage));
         primaryStage.setMaximized(true);
         primaryStage.show();
     }

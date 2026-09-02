@@ -409,7 +409,7 @@ public class LoginView {
                 stage.setScene(new DoctorPendingApprovalView(stage).getScene());
             }
             case ADMIN_DASHBOARD -> {
-                stage.setScene(new AdminMainShell(stage).getScene());
+                stage.setScene(new AdminMainShell(stage).getScene(stage));
             }
             case LOGIN -> {
                 showError("Unable to determine user access.");

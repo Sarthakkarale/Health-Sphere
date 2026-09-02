@@ -135,7 +135,7 @@ public class View extends Application {
         buttonRow.setAlignment(Pos.CENTER_LEFT);
         buttonRow.setPadding(new Insets(8, 0, 0, 0));
 
-        Button signUpBtn = new Button("Sign Up");
+        Button signUpBtn = new Button("Log In");
         signUpBtn.getStyleClass().add("btn-primary");
         signUpBtn.setOnAction(e -> {
             // Direct stage scene switching using shared static stage
