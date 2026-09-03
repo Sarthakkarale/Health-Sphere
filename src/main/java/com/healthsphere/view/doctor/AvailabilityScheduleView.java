@@ -1,19 +1,34 @@
 package com.healthsphere.view.doctor;
 
-import com.healthsphere.controller.appointment.AppointmentController;
-import com.healthsphere.controller.doctor.DoctorScheduleController;
-import com.healthsphere.model.Appointment;
-import com.healthsphere.model.DoctorSchedule;
+import com.healthsphere.controller.doctor.DoctorAvailabilityController;
+import com.healthsphere.model.DoctorAvailability;
+import com.healthsphere.model.DoctorProfile;
+import com.healthsphere.model.UserProfile;
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ResourceImage;
 import com.healthsphere.util.SessionManager;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
@@ -21,578 +36,2556 @@ import javafx.stage.Stage;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.time.format.TextStyle;
-import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
 
 /**
- * AvailabilityScheduleView
+ * Doctor Availability & Schedule
  *
- * Doctor availability and weekly schedule management page.
+ * Responsibilities:
+ *
+ * - Doctor working days
+ * - Doctor working hours
+ * - Appointment duration
+ * - Consultation fee
+ * - Consultation type
+ * - Clinic information
+ * - Booking rules
+ * - Cancellation rules
+ * - Emergency availability
  *
  * Architecture:
  *
  * View
  *   ↓
- * DoctorScheduleController / AppointmentController
+ * DoctorAvailabilityController
  *   ↓
- * DAO
+ * DoctorAvailabilityDAO
  *   ↓
- * Firebase Firestore
+ * Firestore
  *
- * Backend functionality:
+ * Navigation:
  *
- * - Loads doctor's weekly working hours
- * - Loads default appointment slot
- * - Loads emergency availability
- * - Saves working hours
- * - Saves emergency availability
- * - Loads real doctor appointments
- * - Displays appointments in weekly calendar
- * - Supports previous/next week navigation
- *
- * No hardcoded appointment data is used.
+ * - Uses the existing application Stage
+ * - Does not create another Stage
+ * - Returns a Scene
+ * - Uses Navigation.goTo(...)
  */
 public class AvailabilityScheduleView {
 
+    // =========================================================
+    // COLORS
+    // =========================================================
+
+    private static final String PRIMARY_BLUE =
+            "#2563EB";
+
+    private static final String PRIMARY_LIGHT =
+            "#EFF6FF";
+
+    private static final String DARK_TEXT =
+            "#0F172A";
+
+    private static final String SECONDARY_TEXT =
+            "#64748B";
+
+    private static final String LIGHT_BACKGROUND =
+            "#F8FAFC";
+
+    private static final String CARD_BACKGROUND =
+            "#FFFFFF";
+
+    private static final String BORDER =
+            "#E2E8F0";
+
+    private static final String SIDEBAR_BACKGROUND =
+            "#0F172A";
+
+    private static final String SIDEBAR_TEXT =
+            "#94A3B8";
+
+    private static final String SUCCESS_GREEN =
+            "#059669";
+
+    private static final String SUCCESS_LIGHT =
+            "#ECFDF5";
+
+    private static final String WARNING_ORANGE =
+            "#D97706";
+
+    private static final String ERROR_RED =
+            "#DC2626";
+
+    // =========================================================
+    // STAGE
+    // =========================================================
+
     private final Stage stage;
-    private final Scene scene;
 
-    // ============================================================
-    // BACKEND
-    // ============================================================
+    private Scene scene;
 
-    private final DoctorScheduleController scheduleController;
-    private final AppointmentController appointmentController;
+    // =========================================================
+    // CONTROLLER
+    // =========================================================
 
-    private final String doctorUid;
+    private final DoctorAvailabilityController controller;
 
-    private DoctorSchedule currentSchedule;
+    // =========================================================
+    // CURRENT DOCTOR
+    // =========================================================
 
-    // ============================================================
-    // UI REFERENCES
-    // ============================================================
+    private String doctorUid;
 
-    private final java.util.Map<String, CheckBox> dayCheckBoxes =
-            new java.util.HashMap<>();
+    private DoctorProfile doctorProfile;
 
-    private final java.util.Map<String, ComboBox<String>> startTimeCombos =
-            new java.util.HashMap<>();
+    // =========================================================
+    // WORKING DAYS
+    // =========================================================
 
-    private final java.util.Map<String, ComboBox<String>> endTimeCombos =
-            new java.util.HashMap<>();
-
-    private ComboBox<String> slotCombo;
-
-    private ToggleButton emergencyToggle;
-
-    private GridPane scheduleGrid;
-
-    private Label dateRangeLabel;
-
-    private TextField searchInput;
-
-    // ============================================================
-    // CALENDAR STATE
-    // ============================================================
-
-    private LocalDate displayedWeekMonday;
-
-    private List<Appointment> doctorAppointments =
+    private final List<DayControls> dayControls =
             new ArrayList<>();
 
-    // ============================================================
-    // DATE FORMATTERS
-    // ============================================================
+    // =========================================================
+    // APPOINTMENT SETTINGS
+    // =========================================================
 
-    private static final DateTimeFormatter
-            APPOINTMENT_DATE_FORMAT =
-            DateTimeFormatter.ofPattern(
-                    "yyyy-MM-dd"
-            );
+    private ComboBox<String> slotDurationCombo;
 
-    private static final DateTimeFormatter
-            APPOINTMENT_TIME_FORMAT =
-            DateTimeFormatter.ofPattern(
-                    "h:mm a",
-                    Locale.ENGLISH
-            );
+    private TextField consultationFeeField;
 
-    private static final DateTimeFormatter
-            HEADER_MONTH_FORMAT =
-            DateTimeFormatter.ofPattern(
-                    "MMMM yyyy",
-                    Locale.ENGLISH
-            );
+    private CheckBox inClinicCheckBox;
 
+    private CheckBox videoCheckBox;
 
-    // ============================================================
+    private ComboBox<String> advanceBookingCombo;
+
+    private ComboBox<String> cancellationCombo;
+
+    private CheckBox emergencyCheckBox;
+
+    // =========================================================
+    // CLINIC INFORMATION
+    // =========================================================
+
+    private TextField clinicNameField;
+
+    private TextField clinicPhoneField;
+
+    private TextField clinicEmailField;
+
+    private TextField clinicAddressField;
+
+    private TextField consultationRoomField;
+
+    // =========================================================
+    // HEADER
+    // =========================================================
+
+    private Label doctorNameHeader;
+
+    private Label doctorSpecializationHeader;
+
+    private Label statusLabel;
+
+    // =========================================================
+    // CALENDAR
+    // =========================================================
+
+    private VBox calendarContainer;
+
+    private Label weekLabel;
+
+    private LocalDate currentWeekStart;
+
+    // =========================================================
     // CONSTRUCTOR
-    // ============================================================
+    // =========================================================
 
-    public AvailabilityScheduleView(Stage stage) {
+    public AvailabilityScheduleView(
+            Stage stage) {
 
         this.stage = stage;
 
-        this.scheduleController =
-                new DoctorScheduleController();
+        this.controller =
+                new DoctorAvailabilityController();
 
-        this.appointmentController =
-                new AppointmentController();
-
-        this.doctorUid =
-                getCurrentDoctorUid();
-
-        /*
-         * Start calendar on the current week.
-         */
-        this.displayedWeekMonday =
+        this.currentWeekStart =
                 LocalDate.now()
                         .with(
-                                DayOfWeek.MONDAY
+                                TemporalAdjusters
+                                        .previousOrSame(
+                                                DayOfWeek.MONDAY
+                                        )
                         );
 
-        /*
-         * Load doctor's saved schedule.
-         *
-         * If the doctor has never configured availability,
-         * DoctorScheduleController returns a default schedule.
-         */
-        this.currentSchedule =
-                loadDoctorSchedule();
+        loadCurrentDoctor();
 
-        /*
-         * Load real appointments.
-         */
-        loadDoctorAppointments();
-
-        /*
-         * Build UI.
-         */
         this.scene =
                 createScene();
     }
 
-
-    // ============================================================
-    // PUBLIC SCENE
-    // ============================================================
+    // =========================================================
+    // GET SCENE
+    // =========================================================
 
     public Scene getScene() {
 
-        return this.scene;
+        return scene;
     }
 
-
-    // ============================================================
+    // =========================================================
     // CREATE SCENE
-    // ============================================================
+    // =========================================================
 
     private Scene createScene() {
 
-        BorderPane mainRoot =
+        BorderPane root =
                 new BorderPane();
 
-        mainRoot
-                .getStyleClass()
-                .add("root-pane");
-
-
-        // --------------------------------------------------------
-        // FIXED SIDEBAR
-        // --------------------------------------------------------
-
-        VBox sidebar =
-                createSidebar();
-
-        mainRoot.setLeft(
-                sidebar
+        root.setStyle(
+                "-fx-background-color: "
+                        + LIGHT_BACKGROUND
+                        + ";"
         );
 
+        // -----------------------------------------------------
+        // SIDEBAR
+        // -----------------------------------------------------
 
-        // --------------------------------------------------------
-        // MAIN CONTENT
-        // --------------------------------------------------------
+        root.setLeft(
+                createSidebar()
+        );
 
-        VBox contentArea =
+        // -----------------------------------------------------
+        // CONTENT
+        // -----------------------------------------------------
+
+        VBox content =
                 new VBox(20);
 
-        contentArea.setPadding(
+        content.setPadding(
                 new Insets(
-                        24,
-                        32,
-                        32,
-                        32
+                        22,
+                        28,
+                        35,
+                        28
                 )
         );
 
-        contentArea
-                .getStyleClass()
-                .add("content-area");
-
-
-        // Top header
-        contentArea.getChildren()
-                .add(
-                        createTopHeader()
-                );
-
-
-        // Page header
-        contentArea.getChildren()
-                .add(
-                        createPageHeader()
-                );
-
-
-        // Body
-        contentArea.getChildren()
-                .add(
-                        createBodyLayout()
-                );
-
-
-        // --------------------------------------------------------
-        // CONTENT SCROLL
-        // --------------------------------------------------------
-
-        ScrollPane contentScrollPane =
-                new ScrollPane(
-                        contentArea
-                );
-
-        contentScrollPane
-                .setFitToWidth(true);
-
-        contentScrollPane
-                .setFitToHeight(false);
-
-        contentScrollPane
-                .setVbarPolicy(
-                        ScrollPane.ScrollBarPolicy.AS_NEEDED
-                );
-
-        contentScrollPane
-                .setHbarPolicy(
-                        ScrollPane.ScrollBarPolicy.NEVER
-                );
-
-        contentScrollPane
-                .getStyleClass()
-                .add("content-scrollpane");
-
-
-        mainRoot.setCenter(
-                contentScrollPane
+        content.setStyle(
+                "-fx-background-color: "
+                        + LIGHT_BACKGROUND
+                        + ";"
         );
 
+        // -----------------------------------------------------
+        // IMPORTANT
+        //
+        // Create working-day controls BEFORE loading data
+        // and before calendar rendering.
+        // -----------------------------------------------------
 
-        // --------------------------------------------------------
-        // SCENE
-        // --------------------------------------------------------
+        VBox workingHours =
+                createWorkingHoursSection();
 
-        Scene availabilityScene =
-                new Scene(
-                        mainRoot,
-                        stage.getWidth(),
-                        stage.getHeight()
+        content.getChildren().addAll(
+
+                createTopHeader(),
+
+                createPageHeader(),
+
+                workingHours,
+
+                createWeeklyScheduleCard(),
+
+                createConsultationAndContactSection(),
+
+                createRulesAndEmergencySection()
+        );
+
+        // -----------------------------------------------------
+        // SCROLL
+        // -----------------------------------------------------
+
+        ScrollPane scrollPane =
+                new ScrollPane(
+                        content
                 );
 
+        scrollPane.setFitToWidth(
+                true
+        );
+
+        scrollPane.setFitToHeight(
+                false
+        );
+
+        scrollPane.setHbarPolicy(
+                ScrollPane.ScrollBarPolicy.NEVER
+        );
+
+        scrollPane.setVbarPolicy(
+                ScrollPane.ScrollBarPolicy.AS_NEEDED
+        );
+
+        scrollPane.setStyle(
+                "-fx-background-color: transparent;"
+                        + "-fx-background: transparent;"
+                        + "-fx-padding: 0;"
+        );
+
+        root.setCenter(
+                scrollPane
+        );
+
+        // -----------------------------------------------------
+        // SCENE
+        // -----------------------------------------------------
+
+        double width =
+                stage.getWidth() > 0
+                        ? stage.getWidth()
+                        : 1280;
+
+        double height =
+                stage.getHeight() > 0
+                        ? stage.getHeight()
+                        : 800;
+
+        scene =
+                new Scene(
+                        root,
+                        width,
+                        height
+                );
+
+        // -----------------------------------------------------
+        // LOAD FIRESTORE DATA
+        // -----------------------------------------------------
+
+        loadSavedAvailability();
+
+        return scene;
+    }
+
+    // =========================================================
+    // CURRENT DOCTOR
+    // =========================================================
+
+    private void loadCurrentDoctor() {
+
+        SessionManager session =
+                SessionManager.getInstance();
+
+        /*
+         * IMPORTANT:
+         *
+         * getCurrentUser() returns UserProfile.
+         *
+         * Do NOT use AuthenticationResponse here.
+         */
+        UserProfile currentUser =
+                session.getCurrentUser();
+
+        if (currentUser == null) {
+
+            throw new IllegalStateException(
+                    "No logged-in user found."
+            );
+        }
+
+        if (currentUser.getUid() == null
+                || currentUser.getUid()
+                        .trim()
+                        .isEmpty()) {
+
+            throw new IllegalStateException(
+                    "Logged-in user UID is missing."
+            );
+        }
+
+        doctorUid =
+                currentUser.getUid()
+                        .trim();
 
         try {
 
-            availabilityScene
-                    .getStylesheets()
-                    .add(
-                            Objects.requireNonNull(
-                                    getClass()
-                                            .getResource(
-                                                    "/css/availability_schedule.css"
-                                            )
-                            )
-                                    .toExternalForm()
+            doctorProfile =
+                    controller.getDoctorProfile(
+                            doctorUid
                     );
 
-        } catch (Exception ignored) {
-        }
+        } catch (Exception e) {
 
+            doctorProfile = null;
 
-        return availabilityScene;
-    }
-
-
-    // ============================================================
-    // CURRENT DOCTOR
-    // ============================================================
-
-    private String getCurrentDoctorUid() {
-
-        if (SessionManager
-                .getInstance()
-                .getCurrentUser() == null) {
-
-            throw new IllegalStateException(
-                    "No user is currently logged in."
+            System.err.println(
+                    "Unable to load doctor profile: "
+                            + e.getMessage()
             );
         }
-
-
-        String uid =
-                SessionManager
-                        .getInstance()
-                        .getCurrentUser()
-                        .getUid();
-
-
-        if (uid == null
-                || uid.trim().isEmpty()) {
-
-            throw new IllegalStateException(
-                    "Current doctor UID is not available."
-            );
-        }
-
-
-        return uid;
     }
 
+    // =========================================================
+    // LOAD SAVED AVAILABILITY
+    // =========================================================
 
-    // ============================================================
-    // LOAD SCHEDULE
-    // ============================================================
-
-    private DoctorSchedule loadDoctorSchedule() {
+    private void loadSavedAvailability() {
 
         try {
 
-            DoctorSchedule schedule =
-                    scheduleController
-                            .getDoctorSchedule(
-                                    doctorUid
-                            );
+            DoctorAvailability availability =
+                    controller.getAvailability(
+                            doctorUid
+                    );
 
+            if (availability == null) {
 
-            if (schedule == null) {
+                applyDefaultValues();
 
-                return new DoctorSchedule(
-                        doctorUid
+                setStatus(
+                        "New availability settings",
+                        SECONDARY_TEXT
+                );
+
+                refreshCalendar();
+
+                return;
+            }
+
+            applyAvailabilityToUI(
+                    availability
+            );
+
+            setStatus(
+                    "Saved availability loaded",
+                    SUCCESS_GREEN
+            );
+
+            refreshCalendar();
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            applyDefaultValues();
+
+            setStatus(
+                    "Using default settings",
+                    WARNING_ORANGE
+            );
+
+            refreshCalendar();
+        }
+    }
+
+    // =========================================================
+    // DEFAULT VALUES
+    // =========================================================
+
+    private void applyDefaultValues() {
+
+        for (DayControls day :
+                dayControls) {
+
+            day.checkBox.setSelected(
+                    false
+            );
+
+            day.startCombo.setValue(
+                    "09:00 AM"
+            );
+
+            day.endCombo.setValue(
+                    "05:00 PM"
+            );
+
+            day.startCombo.setDisable(
+                    true
+            );
+
+            day.endCombo.setDisable(
+                    true
+            );
+        }
+
+        selectDay(
+                "Monday",
+                true
+        );
+
+        selectDay(
+                "Tuesday",
+                true
+        );
+
+        selectDay(
+                "Wednesday",
+                true
+        );
+
+        selectDay(
+                "Thursday",
+                true
+        );
+
+        selectDay(
+                "Friday",
+                true
+        );
+
+        slotDurationCombo.setValue(
+                "30 Minutes"
+        );
+
+        consultationFeeField.setText(
+                "500"
+        );
+
+        inClinicCheckBox.setSelected(
+                true
+        );
+
+        videoCheckBox.setSelected(
+                false
+        );
+
+        advanceBookingCombo.setValue(
+                "7 Days"
+        );
+
+        cancellationCombo.setValue(
+                "24 Hours"
+        );
+
+        emergencyCheckBox.setSelected(
+                false
+        );
+
+        clinicNameField.setText(
+                doctorProfile != null
+                        ? safe(
+                                doctorProfile
+                                        .getHospitalAffiliation()
+                        )
+                        : ""
+        );
+
+        clinicPhoneField.setText(
+                doctorProfile != null
+                        ? safe(
+                                doctorProfile.getPhone()
+                        )
+                        : ""
+        );
+
+        clinicEmailField.setText(
+                doctorProfile != null
+                        ? safe(
+                                doctorProfile.getEmail()
+                        )
+                        : ""
+        );
+
+        clinicAddressField.setText(
+                ""
+        );
+
+        consultationRoomField.setText(
+                ""
+        );
+    }
+
+    // =========================================================
+    // APPLY SAVED AVAILABILITY
+    // =========================================================
+
+    private void applyAvailabilityToUI(
+            DoctorAvailability availability) {
+
+        setDay(
+                "Monday",
+                availability.isMondayEnabled(),
+                availability.getMondayStartTime(),
+                availability.getMondayEndTime()
+        );
+
+        setDay(
+                "Tuesday",
+                availability.isTuesdayEnabled(),
+                availability.getTuesdayStartTime(),
+                availability.getTuesdayEndTime()
+        );
+
+        setDay(
+                "Wednesday",
+                availability.isWednesdayEnabled(),
+                availability.getWednesdayStartTime(),
+                availability.getWednesdayEndTime()
+        );
+
+        setDay(
+                "Thursday",
+                availability.isThursdayEnabled(),
+                availability.getThursdayStartTime(),
+                availability.getThursdayEndTime()
+        );
+
+        setDay(
+                "Friday",
+                availability.isFridayEnabled(),
+                availability.getFridayStartTime(),
+                availability.getFridayEndTime()
+        );
+
+        setDay(
+                "Saturday",
+                availability.isSaturdayEnabled(),
+                availability.getSaturdayStartTime(),
+                availability.getSaturdayEndTime()
+        );
+
+        setDay(
+                "Sunday",
+                availability.isSundayEnabled(),
+                availability.getSundayStartTime(),
+                availability.getSundayEndTime()
+        );
+
+        slotDurationCombo.setValue(
+                availability.getSlotDurationMinutes()
+                        + " Minutes"
+        );
+
+        consultationFeeField.setText(
+                formatFee(
+                        availability.getConsultationFee()
+                )
+        );
+
+        inClinicCheckBox.setSelected(
+                availability.isInClinicAvailable()
+        );
+
+        videoCheckBox.setSelected(
+                availability
+                        .isVideoConsultationAvailable()
+        );
+
+        advanceBookingCombo.setValue(
+                availability
+                        .getAdvanceBookingDays()
+                        + " Days"
+        );
+
+        cancellationCombo.setValue(
+                availability
+                        .getCancellationNoticeHours()
+                        + " Hours"
+        );
+
+        emergencyCheckBox.setSelected(
+                availability
+                        .isEmergencyAvailability()
+        );
+
+        clinicNameField.setText(
+                safe(
+                        availability.getClinicName()
+                )
+        );
+
+        clinicPhoneField.setText(
+                safe(
+                        availability.getClinicPhone()
+                )
+        );
+
+        clinicEmailField.setText(
+                safe(
+                        availability.getClinicEmail()
+                )
+        );
+
+        clinicAddressField.setText(
+                safe(
+                        availability.getClinicAddress()
+                )
+        );
+
+        consultationRoomField.setText(
+                safe(
+                        availability.getConsultationRoom()
+                )
+        );
+    }
+
+    // =========================================================
+    // SAVE
+    // =========================================================
+
+    private void saveChanges() {
+
+        try {
+
+            validateInput();
+
+            DoctorAvailability availability =
+                    buildAvailabilityFromUI();
+
+            controller.saveAvailability(
+                    availability
+            );
+
+            setStatus(
+                    "Changes saved successfully",
+                    SUCCESS_GREEN
+            );
+
+            refreshCalendar();
+
+            showAlert(
+                    Alert.AlertType.INFORMATION,
+                    "Saved Successfully",
+                    "Your availability, appointment fee, "
+                            + "consultation information and "
+                            + "booking settings were saved."
+            );
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            setStatus(
+                    "Save failed",
+                    ERROR_RED
+            );
+
+            showAlert(
+                    Alert.AlertType.ERROR,
+                    "Unable to Save",
+                    getRootMessage(e)
+            );
+        }
+    }
+
+    // =========================================================
+    // VALIDATE INPUT
+    // =========================================================
+
+    private void validateInput() {
+
+        if (consultationFeeField == null) {
+
+            throw new IllegalStateException(
+                    "Consultation fee field is not initialized."
+            );
+        }
+
+        String fee =
+                consultationFeeField
+                        .getText()
+                        .trim();
+
+        if (fee.isEmpty()) {
+
+            throw new IllegalArgumentException(
+                    "Please enter the consultation fee."
+            );
+        }
+
+        try {
+
+            double value =
+                    Double.parseDouble(
+                            fee
+                    );
+
+            if (value < 0) {
+
+                throw new IllegalArgumentException(
+                        "Consultation fee cannot be negative."
                 );
             }
 
+        } catch (NumberFormatException e) {
 
-            return schedule;
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            /*
-             * The page should still open even if Firestore
-             * temporarily fails.
-             */
-            return new DoctorSchedule(
-                    doctorUid
+            throw new IllegalArgumentException(
+                    "Please enter a valid consultation fee."
             );
         }
-    }
 
+        if (slotDurationCombo.getValue()
+                == null) {
 
-    // ============================================================
-    // LOAD APPOINTMENTS
-    // ============================================================
+            throw new IllegalArgumentException(
+                    "Please select appointment duration."
+            );
+        }
 
-    private void loadDoctorAppointments() {
+        if (inClinicCheckBox.isSelected()
+                == false
+                &&
+                videoCheckBox.isSelected()
+                        == false) {
 
-        try {
+            throw new IllegalArgumentException(
+                    "Select at least one consultation type."
+            );
+        }
 
-            List<Appointment> appointments =
-                    appointmentController
-                            .getDoctorAppointments(
-                                    doctorUid
-                            );
+        for (DayControls day :
+                dayControls) {
 
+            if (!day.checkBox.isSelected()) {
 
-            if (appointments == null) {
-
-                doctorAppointments =
-                        new ArrayList<>();
-
-            } else {
-
-                doctorAppointments =
-                        new ArrayList<>(
-                                appointments
-                        );
+                continue;
             }
 
+            if (day.startCombo.getValue()
+                    == null
+                    ||
+                    day.endCombo.getValue()
+                            == null) {
 
-            System.out.println(
-                    "Availability Schedule - "
-                            + "Doctor appointments loaded: "
-                            + doctorAppointments.size()
-            );
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            doctorAppointments =
-                    new ArrayList<>();
+                throw new IllegalArgumentException(
+                        "Please select start and end time for "
+                                + day.dayName
+                );
+            }
         }
     }
 
+    // =========================================================
+    // BUILD MODEL
+    // =========================================================
 
-    // ============================================================
+    private DoctorAvailability
+    buildAvailabilityFromUI() {
+
+        DoctorAvailability availability =
+                new DoctorAvailability();
+
+        availability.setDoctorUid(
+                doctorUid
+        );
+
+        for (DayControls day :
+                dayControls) {
+
+            setModelDay(
+                    availability,
+                    day
+            );
+        }
+
+        availability.setSlotDurationMinutes(
+                parseMinutes(
+                        slotDurationCombo.getValue()
+                )
+        );
+
+        availability.setConsultationFee(
+                parseFee(
+                        consultationFeeField
+                                .getText()
+                )
+        );
+
+        availability.setInClinicAvailable(
+                inClinicCheckBox.isSelected()
+        );
+
+        availability.setVideoConsultationAvailable(
+                videoCheckBox.isSelected()
+        );
+
+        availability.setAdvanceBookingDays(
+                parseNumber(
+                        advanceBookingCombo.getValue()
+                )
+        );
+
+        availability
+                .setCancellationNoticeHours(
+                        parseNumber(
+                                cancellationCombo
+                                        .getValue()
+                        )
+                );
+
+        availability.setEmergencyAvailability(
+                emergencyCheckBox.isSelected()
+        );
+
+        availability.setClinicName(
+                safe(
+                        clinicNameField.getText()
+                )
+        );
+
+        availability.setClinicPhone(
+                safe(
+                        clinicPhoneField.getText()
+                )
+        );
+
+        availability.setClinicEmail(
+                safe(
+                        clinicEmailField.getText()
+                )
+        );
+
+        availability.setClinicAddress(
+                safe(
+                        clinicAddressField.getText()
+                )
+        );
+
+        availability.setConsultationRoom(
+                safe(
+                        consultationRoomField.getText()
+                )
+        );
+
+        return availability;
+    }
+
+    // =========================================================
+    // SET MODEL DAY
+    // =========================================================
+
+    private void setModelDay(
+            DoctorAvailability model,
+            DayControls day) {
+
+        boolean enabled =
+                day.checkBox.isSelected();
+
+        String start =
+                enabled
+                        ? safe(
+                                day.startCombo
+                                        .getValue()
+                        )
+                        : "";
+
+        String end =
+                enabled
+                        ? safe(
+                                day.endCombo
+                                        .getValue()
+                        )
+                        : "";
+
+        switch (
+                day.dayName.toLowerCase()
+        ) {
+
+            case "monday":
+
+                model.setMondayEnabled(
+                        enabled
+                );
+
+                model.setMondayStartTime(
+                        start
+                );
+
+                model.setMondayEndTime(
+                        end
+                );
+
+                break;
+
+            case "tuesday":
+
+                model.setTuesdayEnabled(
+                        enabled
+                );
+
+                model.setTuesdayStartTime(
+                        start
+                );
+
+                model.setTuesdayEndTime(
+                        end
+                );
+
+                break;
+
+            case "wednesday":
+
+                model.setWednesdayEnabled(
+                        enabled
+                );
+
+                model.setWednesdayStartTime(
+                        start
+                );
+
+                model.setWednesdayEndTime(
+                        end
+                );
+
+                break;
+
+            case "thursday":
+
+                model.setThursdayEnabled(
+                        enabled
+                );
+
+                model.setThursdayStartTime(
+                        start
+                );
+
+                model.setThursdayEndTime(
+                        end
+                );
+
+                break;
+
+            case "friday":
+
+                model.setFridayEnabled(
+                        enabled
+                );
+
+                model.setFridayStartTime(
+                        start
+                );
+
+                model.setFridayEndTime(
+                        end
+                );
+
+                break;
+
+            case "saturday":
+
+                model.setSaturdayEnabled(
+                        enabled
+                );
+
+                model.setSaturdayStartTime(
+                        start
+                );
+
+                model.setSaturdayEndTime(
+                        end
+                );
+
+                break;
+
+            case "sunday":
+
+                model.setSundayEnabled(
+                        enabled
+                );
+
+                model.setSundayStartTime(
+                        start
+                );
+
+                model.setSundayEndTime(
+                        end
+                );
+
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    // =========================================================
+    // WORKING HOURS SECTION
+    // =========================================================
+
+    private VBox createWorkingHoursSection() {
+
+        VBox card =
+                createCard();
+
+        Label title =
+                createSectionTitle(
+                        "Working Hours"
+                );
+
+        Label subtitle =
+                new Label(
+                        "Select the days and hours when patients "
+                                + "can request appointments."
+                );
+
+        subtitle.setStyle(
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+                        + "-fx-font-size: 12px;"
+        );
+
+        VBox days =
+                new VBox(8);
+
+        createDayControls(
+                "Monday",
+                days
+        );
+
+        createDayControls(
+                "Tuesday",
+                days
+        );
+
+        createDayControls(
+                "Wednesday",
+                days
+        );
+
+        createDayControls(
+                "Thursday",
+                days
+        );
+
+        createDayControls(
+                "Friday",
+                days
+        );
+
+        createDayControls(
+                "Saturday",
+                days
+        );
+
+        createDayControls(
+                "Sunday",
+                days
+        );
+
+        card.getChildren().addAll(
+                title,
+                subtitle,
+                days
+        );
+
+        return card;
+    }
+
+    // =========================================================
+    // CREATE DAY CONTROLS
+    // =========================================================
+
+    private void createDayControls(
+            String dayName,
+            VBox container) {
+
+        HBox row =
+                new HBox(12);
+
+        row.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        CheckBox checkBox =
+                new CheckBox(
+                        dayName
+                );
+
+        checkBox.setPrefWidth(
+                100
+        );
+
+        checkBox.setStyle(
+                "-fx-font-size: 13px;"
+                        + "-fx-text-fill: "
+                        + DARK_TEXT
+                        + ";"
+        );
+
+        ComboBox<String> start =
+                createTimeCombo();
+
+        ComboBox<String> end =
+                createTimeCombo();
+
+        start.setValue(
+                "09:00 AM"
+        );
+
+        end.setValue(
+                "05:00 PM"
+        );
+
+        start.setDisable(
+                true
+        );
+
+        end.setDisable(
+                true
+        );
+
+        checkBox.selectedProperty()
+                .addListener(
+                        (observable,
+                         oldValue,
+                         newValue) -> {
+
+                            start.setDisable(
+                                    !newValue
+                            );
+
+                            end.setDisable(
+                                    !newValue
+                            );
+
+                            refreshCalendar();
+                        }
+                );
+
+        Label to =
+                new Label(
+                        "to"
+                );
+
+        to.setStyle(
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+        );
+
+        row.getChildren().addAll(
+                checkBox,
+                start,
+                to,
+                end
+        );
+
+        dayControls.add(
+                new DayControls(
+                        dayName,
+                        checkBox,
+                        start,
+                        end
+                )
+        );
+
+        container.getChildren().add(
+                row
+        );
+    }
+
+    // =========================================================
+    // CONSULTATION + CONTACT
+    // =========================================================
+
+    private HBox createConsultationAndContactSection() {
+
+        HBox section =
+                new HBox(18);
+
+        VBox consultation =
+                createConsultationCard();
+
+        VBox contact =
+                createContactCard();
+
+        HBox.setHgrow(
+                consultation,
+                Priority.ALWAYS
+        );
+
+        HBox.setHgrow(
+                contact,
+                Priority.ALWAYS
+        );
+
+        section.getChildren().addAll(
+                consultation,
+                contact
+        );
+
+        return section;
+    }
+
+    // =========================================================
+    // CONSULTATION CARD
+    // =========================================================
+
+    private VBox createConsultationCard() {
+
+        VBox card =
+                createCard();
+
+        card.setMinWidth(
+                400
+        );
+
+        card.getChildren().add(
+                createSectionTitle(
+                        "Consultation Settings"
+                )
+        );
+
+        Label information =
+                new Label(
+                        "These details will be shown to patients "
+                                + "when they select your profile."
+                );
+
+        information.setWrapText(
+                true
+        );
+
+        information.setStyle(
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+                        + "-fx-font-size: 12px;"
+        );
+
+        consultationFeeField =
+                createTextField(
+                        "500"
+                );
+
+        slotDurationCombo =
+                new ComboBox<>();
+
+        slotDurationCombo.getItems()
+                .addAll(
+                        "15 Minutes",
+                        "30 Minutes",
+                        "45 Minutes",
+                        "60 Minutes"
+                );
+
+        slotDurationCombo.setValue(
+                "30 Minutes"
+        );
+
+        styleCombo(
+                slotDurationCombo
+        );
+
+        inClinicCheckBox =
+                new CheckBox(
+                        "In-Clinic"
+                );
+
+        videoCheckBox =
+                new CheckBox(
+                        "Video Consultation"
+                );
+
+        inClinicCheckBox.setSelected(
+                true
+        );
+
+        inClinicCheckBox.setStyle(
+                "-fx-text-fill: "
+                        + DARK_TEXT
+                        + ";"
+        );
+
+        videoCheckBox.setStyle(
+                "-fx-text-fill: "
+                        + DARK_TEXT
+                        + ";"
+        );
+
+        HBox consultationTypes =
+                new HBox(
+                        20,
+                        inClinicCheckBox,
+                        videoCheckBox
+                );
+
+        GridPane form =
+                createFormGrid();
+
+        addFormRow(
+                form,
+                "Consultation Fee (₹)",
+                consultationFeeField,
+                0
+        );
+
+        addFormRow(
+                form,
+                "Appointment Duration",
+                slotDurationCombo,
+                1
+        );
+
+        addFormRow(
+                form,
+                "Consultation Type",
+                consultationTypes,
+                2
+        );
+
+        card.getChildren().addAll(
+                information,
+                form
+        );
+
+        return card;
+    }
+
+    // =========================================================
+    // CONTACT CARD
+    // =========================================================
+
+    private VBox createContactCard() {
+
+        VBox card =
+                createCard();
+
+        card.setMinWidth(
+                400
+        );
+
+        card.getChildren().add(
+                createSectionTitle(
+                        "Clinic & Contact Information"
+                )
+        );
+
+        Label information =
+                new Label(
+                        "Patients can see these details before "
+                                + "booking an appointment."
+                );
+
+        information.setWrapText(
+                true
+        );
+
+        information.setStyle(
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+                        + "-fx-font-size: 12px;"
+        );
+
+        clinicNameField =
+                createTextField(
+                        ""
+                );
+
+        clinicPhoneField =
+                createTextField(
+                        ""
+                );
+
+        clinicEmailField =
+                createTextField(
+                        ""
+                );
+
+        clinicAddressField =
+                createTextField(
+                        ""
+                );
+
+        consultationRoomField =
+                createTextField(
+                        ""
+                );
+
+        GridPane form =
+                createFormGrid();
+
+        addFormRow(
+                form,
+                "Clinic / Hospital",
+                clinicNameField,
+                0
+        );
+
+        addFormRow(
+                form,
+                "Phone",
+                clinicPhoneField,
+                1
+        );
+
+        addFormRow(
+                form,
+                "Email",
+                clinicEmailField,
+                2
+        );
+
+        addFormRow(
+                form,
+                "Address",
+                clinicAddressField,
+                3
+        );
+
+        addFormRow(
+                form,
+                "Consultation Room",
+                consultationRoomField,
+                4
+        );
+
+        card.getChildren().addAll(
+                information,
+                form
+        );
+
+        return card;
+    }
+
+    // =========================================================
+    // RULES + EMERGENCY
+    // =========================================================
+
+    private HBox createRulesAndEmergencySection() {
+
+        HBox section =
+                new HBox(18);
+
+        VBox rules =
+                createRulesCard();
+
+        VBox emergency =
+                createEmergencyCard();
+
+        HBox.setHgrow(
+                rules,
+                Priority.ALWAYS
+        );
+
+        section.getChildren().addAll(
+                rules,
+                emergency
+        );
+
+        return section;
+    }
+
+    // =========================================================
+    // RULES CARD
+    // =========================================================
+
+    private VBox createRulesCard() {
+
+        VBox card =
+                createCard();
+
+        card.getChildren().add(
+                createSectionTitle(
+                        "Booking & Cancellation Rules"
+                )
+        );
+
+        Label information =
+                new Label(
+                        "Configure how patients can book "
+                                + "appointments."
+                );
+
+        information.setStyle(
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+                        + "-fx-font-size: 12px;"
+        );
+
+        advanceBookingCombo =
+                new ComboBox<>();
+
+        advanceBookingCombo.getItems()
+                .addAll(
+                        "1 Days",
+                        "3 Days",
+                        "7 Days",
+                        "14 Days",
+                        "30 Days"
+                );
+
+        advanceBookingCombo.setValue(
+                "7 Days"
+        );
+
+        styleCombo(
+                advanceBookingCombo
+        );
+
+        cancellationCombo =
+                new ComboBox<>();
+
+        cancellationCombo.getItems()
+                .addAll(
+                        "0 Hours",
+                        "6 Hours",
+                        "12 Hours",
+                        "24 Hours",
+                        "48 Hours"
+                );
+
+        cancellationCombo.setValue(
+                "24 Hours"
+        );
+
+        styleCombo(
+                cancellationCombo
+        );
+
+        GridPane form =
+                createFormGrid();
+
+        addFormRow(
+                form,
+                "Advance Booking",
+                advanceBookingCombo,
+                0
+        );
+
+        addFormRow(
+                form,
+                "Cancellation Notice",
+                cancellationCombo,
+                1
+        );
+
+        card.getChildren().addAll(
+                information,
+                form
+        );
+
+        return card;
+    }
+
+    // =========================================================
+    // EMERGENCY CARD
+    // =========================================================
+
+    private VBox createEmergencyCard() {
+
+        VBox card =
+                createCard();
+
+        card.setPrefWidth(
+                350
+        );
+
+        Label title =
+                createSectionTitle(
+                        "Emergency Availability"
+                );
+
+        Label information =
+                new Label(
+                        "Allow patients to request urgent "
+                                + "appointments outside regular hours."
+                );
+
+        information.setWrapText(
+                true
+        );
+
+        information.setStyle(
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+                        + "-fx-font-size: 12px;"
+        );
+
+        emergencyCheckBox =
+                new CheckBox(
+                        "Accept Emergency Requests"
+                );
+
+        emergencyCheckBox.setStyle(
+                "-fx-text-fill: "
+                        + WARNING_ORANGE
+                        + ";"
+                        + "-fx-font-weight: bold;"
+        );
+
+        card.getChildren().addAll(
+                title,
+                information,
+                emergencyCheckBox
+        );
+
+        return card;
+    }
+
+    // =========================================================
+    // WEEKLY CALENDAR
+    // =========================================================
+
+    private VBox createWeeklyScheduleCard() {
+
+        VBox card =
+                createCard();
+
+        BorderPane header =
+                new BorderPane();
+
+        VBox titleBox =
+                new VBox(3);
+
+        Label title =
+                createSectionTitle(
+                        "Weekly Availability Preview"
+                );
+
+        Label subtitle =
+                new Label(
+                        "Preview of the availability that patients "
+                                + "will use when selecting appointment slots."
+                );
+
+        subtitle.setStyle(
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+                        + "-fx-font-size: 12px;"
+        );
+
+        titleBox.getChildren().addAll(
+                title,
+                subtitle
+        );
+
+        HBox navigation =
+                new HBox(7);
+
+        Button previous =
+                createSmallButton(
+                        "‹"
+                );
+
+        Button today =
+                createSmallButton(
+                        "Today"
+                );
+
+        Button next =
+                createSmallButton(
+                        "›"
+                );
+
+        weekLabel =
+                new Label();
+
+        weekLabel.setStyle(
+                "-fx-text-fill: "
+                        + DARK_TEXT
+                        + ";"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-font-size: 12px;"
+        );
+
+        previous.setOnAction(
+                event -> {
+
+                    currentWeekStart =
+                            currentWeekStart
+                                    .minusWeeks(
+                                            1
+                                    );
+
+                    refreshCalendar();
+                }
+        );
+
+        today.setOnAction(
+                event -> {
+
+                    currentWeekStart =
+                            LocalDate.now()
+                                    .with(
+                                            TemporalAdjusters
+                                                    .previousOrSame(
+                                                            DayOfWeek.MONDAY
+                                                    )
+                                    );
+
+                    refreshCalendar();
+                }
+        );
+
+        next.setOnAction(
+                event -> {
+
+                    currentWeekStart =
+                            currentWeekStart
+                                    .plusWeeks(
+                                            1
+                                    );
+
+                    refreshCalendar();
+                }
+        );
+
+        navigation.getChildren()
+                .addAll(
+                        previous,
+                        weekLabel,
+                        today,
+                        next
+                );
+
+        header.setLeft(
+                titleBox
+        );
+
+        header.setRight(
+                navigation
+        );
+
+        calendarContainer =
+                new VBox(8);
+
+        card.getChildren().addAll(
+                header,
+                calendarContainer
+        );
+
+        return card;
+    }
+
+    // =========================================================
+    // REFRESH CALENDAR
+    // =========================================================
+
+    private void refreshCalendar() {
+
+        if (calendarContainer == null) {
+
+            return;
+        }
+
+        calendarContainer
+                .getChildren()
+                .clear();
+
+        DateTimeFormatter formatter =
+                DateTimeFormatter.ofPattern(
+                        "MMM d"
+                );
+
+        LocalDate end =
+                currentWeekStart
+                        .plusDays(
+                                6
+                        );
+
+        if (weekLabel != null) {
+
+            weekLabel.setText(
+                    currentWeekStart
+                            .format(
+                                    formatter
+                            )
+                            + " - "
+                            + end.format(
+                                    formatter
+                            )
+            );
+        }
+
+        GridPane grid =
+                new GridPane();
+
+        grid.setHgap(
+                1
+        );
+
+        grid.setVgap(
+                1
+        );
+
+        grid.setStyle(
+                "-fx-background-color: "
+                        + BORDER
+                        + ";"
+        );
+
+        ColumnConstraints timeColumn =
+                new ColumnConstraints();
+
+        timeColumn.setPrefWidth(
+                80
+        );
+
+        grid.getColumnConstraints()
+                .add(
+                        timeColumn
+                );
+
+        for (int i = 0;
+             i < 7;
+             i++) {
+
+            ColumnConstraints column =
+                    new ColumnConstraints();
+
+            column.setHgrow(
+                    Priority.ALWAYS
+            );
+
+            grid.getColumnConstraints()
+                    .add(
+                            column
+                    );
+        }
+
+        grid.add(
+                createCalendarHeader(
+                        ""
+                ),
+                0,
+                0
+        );
+
+        for (int i = 0;
+             i < 7;
+             i++) {
+
+            LocalDate date =
+                    currentWeekStart
+                            .plusDays(
+                                    i
+                            );
+
+            String day =
+                    capitalize(
+                            date.getDayOfWeek()
+                                    .toString()
+                                    .toLowerCase()
+                    );
+
+            String shortDay =
+                    day.substring(
+                            0,
+                            3
+                    );
+
+            String text =
+                    shortDay
+                            + "\n"
+                            + date.format(
+                                    formatter
+                            );
+
+            Label header =
+                    createCalendarHeader(
+                            text
+                    );
+
+            if (date.equals(
+                    LocalDate.now()
+            )) {
+
+                header.setStyle(
+                        "-fx-background-color: "
+                                + PRIMARY_LIGHT
+                                + ";"
+                                + "-fx-text-fill: "
+                                + PRIMARY_BLUE
+                                + ";"
+                                + "-fx-font-weight: bold;"
+                                + "-fx-padding: 10;"
+                );
+            }
+
+            grid.add(
+                    header,
+                    i + 1,
+                    0
+            );
+        }
+
+        String[] times = {
+                "8 AM",
+                "9 AM",
+                "10 AM",
+                "11 AM",
+                "12 PM",
+                "1 PM",
+                "2 PM",
+                "3 PM",
+                "4 PM",
+                "5 PM"
+        };
+
+        for (int row = 0;
+             row < times.length;
+             row++) {
+
+            Label time =
+                    new Label(
+                            times[row]
+                    );
+
+            time.setStyle(
+                    "-fx-background-color: white;"
+                            + "-fx-text-fill: "
+                            + SECONDARY_TEXT
+                            + ";"
+                            + "-fx-font-size: 11px;"
+                            + "-fx-padding: 10;"
+            );
+
+            grid.add(
+                    time,
+                    0,
+                    row + 1
+            );
+
+            for (int column = 0;
+                 column < 7;
+                 column++) {
+
+                LocalDate date =
+                        currentWeekStart
+                                .plusDays(
+                                        column
+                                );
+
+                VBox cell =
+                        createCalendarCell(
+                                date
+                        );
+
+                grid.add(
+                        cell,
+                        column + 1,
+                        row + 1
+                );
+            }
+        }
+
+        calendarContainer
+                .getChildren()
+                .add(
+                        grid
+                );
+
+        calendarContainer
+                .getChildren()
+                .add(
+                        createCalendarLegend()
+                );
+    }
+
+    // =========================================================
+    // CALENDAR CELL
+    // =========================================================
+
+    private VBox createCalendarCell(
+            LocalDate date) {
+
+        VBox cell =
+                new VBox(3);
+
+        cell.setMinHeight(
+                42
+        );
+
+        cell.setPadding(
+                new Insets(
+                        6
+                )
+        );
+
+        DayControls day =
+                findDay(
+                        capitalize(
+                                date.getDayOfWeek()
+                                        .toString()
+                                        .toLowerCase()
+                        )
+                );
+
+        if (day != null
+                && day.checkBox
+                        .isSelected()) {
+
+            cell.setStyle(
+                    "-fx-background-color: "
+                            + SUCCESS_LIGHT
+                            + ";"
+            );
+
+            Label available =
+                    new Label(
+                            "Available"
+                    );
+
+            available.setStyle(
+                    "-fx-text-fill: "
+                            + SUCCESS_GREEN
+                            + ";"
+                            + "-fx-font-size: 10px;"
+                            + "-fx-font-weight: bold;"
+            );
+
+            cell.getChildren().add(
+                    available
+            );
+
+        } else {
+
+            cell.setStyle(
+                    "-fx-background-color: white;"
+            );
+
+            Label off =
+                    new Label(
+                            "Off"
+                    );
+
+            off.setStyle(
+                    "-fx-text-fill: #94A3B8;"
+                            + "-fx-font-size: 10px;"
+            );
+
+            cell.getChildren().add(
+                    off
+            );
+        }
+
+        return cell;
+    }
+
+    // =========================================================
+    // CALENDAR LEGEND
+    // =========================================================
+
+    private HBox createCalendarLegend() {
+
+        HBox legend =
+                new HBox(18);
+
+        legend.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        legend.getChildren().addAll(
+                createLegendItem(
+                        SUCCESS_GREEN,
+                        "Working day"
+                ),
+                createLegendItem(
+                        "#94A3B8",
+                        "Day off"
+                )
+        );
+
+        return legend;
+    }
+
+    private HBox createLegendItem(
+            String color,
+            String text) {
+
+        HBox item =
+                new HBox(6);
+
+        item.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        Circle circle =
+                new Circle(
+                        4,
+                        Color.web(
+                                color
+                        )
+                );
+
+        Label label =
+                new Label(
+                        text
+                );
+
+        label.setStyle(
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+                        + "-fx-font-size: 11px;"
+        );
+
+        item.getChildren().addAll(
+                circle,
+                label
+        );
+
+        return item;
+    }
+
+    // =========================================================
+    // TOP HEADER
+    // =========================================================
+
+    private HBox createTopHeader() {
+
+        HBox header =
+                new HBox();
+
+        header.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        Label doctor =
+                new Label(
+                        "Doctor"
+                );
+
+        doctor.setStyle(
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+                        + "-fx-font-size: 12px;"
+        );
+
+        Label separator =
+                new Label(
+                        "  ›  "
+                );
+
+        separator.setStyle(
+                "-fx-text-fill: #CBD5E1;"
+        );
+
+        Label page =
+                new Label(
+                        "Availability & Schedule"
+                );
+
+        page.setStyle(
+                "-fx-text-fill: "
+                        + PRIMARY_BLUE
+                        + ";"
+                        + "-fx-font-size: 12px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        Circle avatar =
+                new Circle(
+                        19
+                );
+
+        avatar.setFill(
+                Color.web(
+                        PRIMARY_LIGHT
+                )
+        );
+
+        Label initials =
+                new Label(
+                        getDoctorInitials()
+                );
+
+        initials.setStyle(
+                "-fx-text-fill: "
+                        + PRIMARY_BLUE
+                        + ";"
+                        + "-fx-font-size: 11px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        StackPane avatarBox =
+                new StackPane(
+                        avatar,
+                        initials
+                );
+
+        VBox doctorBox =
+                new VBox(1);
+
+        doctorNameHeader =
+                new Label(
+                        getDoctorDisplayName()
+                );
+
+        doctorNameHeader.setStyle(
+                "-fx-text-fill: "
+                        + DARK_TEXT
+                        + ";"
+                        + "-fx-font-size: 13px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        doctorSpecializationHeader =
+                new Label(
+                        getDoctorSpecialization()
+                );
+
+        doctorSpecializationHeader.setStyle(
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+                        + "-fx-font-size: 10px;"
+        );
+
+        doctorBox.getChildren().addAll(
+                doctorNameHeader,
+                doctorSpecializationHeader
+        );
+
+        header.getChildren().addAll(
+                doctor,
+                separator,
+                page,
+                spacer,
+                avatarBox,
+                doctorBox
+        );
+
+        return header;
+    }
+
+    // =========================================================
+    // PAGE HEADER
+    // =========================================================
+
+    private BorderPane createPageHeader() {
+
+        BorderPane header =
+                new BorderPane();
+
+        VBox titleBox =
+                new VBox(5);
+
+        Label title =
+                new Label(
+                        "Schedule Management"
+                );
+
+        title.setStyle(
+                "-fx-text-fill: "
+                        + DARK_TEXT
+                        + ";"
+                        + "-fx-font-size: 25px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        Label subtitle =
+                new Label(
+                        "Manage your appointment availability "
+                                + "and information visible to patients."
+                );
+
+        subtitle.setStyle(
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+                        + "-fx-font-size: 13px;"
+        );
+
+        statusLabel =
+                new Label(
+                        "Loading..."
+                );
+
+        statusLabel.setStyle(
+                "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+                        + "-fx-font-size: 11px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        titleBox.getChildren().addAll(
+                title,
+                subtitle,
+                statusLabel
+        );
+
+        HBox actions =
+                new HBox(8);
+
+        Button refresh =
+                createSecondaryButton(
+                        "Refresh"
+                );
+
+        refresh.setOnAction(
+                event ->
+                        loadSavedAvailability()
+        );
+
+        Button save =
+                createPrimaryButton(
+                        "Save Changes"
+                );
+
+        save.setOnAction(
+                event ->
+                        saveChanges()
+        );
+
+        actions.getChildren().addAll(
+                refresh,
+                save
+        );
+
+        header.setLeft(
+                titleBox
+        );
+
+        header.setRight(
+                actions
+        );
+
+        return header;
+    }
+
+    // =========================================================
     // SIDEBAR
-    // ============================================================
+    // =========================================================
 
     private VBox createSidebar() {
 
         VBox sidebar =
-                new VBox();
+                new VBox(6);
 
+        sidebar.setPrefWidth(
+                250
+        );
+
+        sidebar.setMinWidth(
+                250
+        );
+
+        sidebar.setMaxWidth(
+                250
+        );
 
         sidebar.setPadding(
                 new Insets(
-                        25,
+                        24,
                         15,
-                        25,
+                        20,
                         15
                 )
         );
 
-
-        sidebar
-                .getStyleClass()
-                .add("sidebar");
-
-
         sidebar.setStyle(
-                "-fx-background-color: #0F172A;"
+                "-fx-background-color: "
+                        + SIDEBAR_BACKGROUND
+                        + ";"
         );
 
-
-        sidebar.setMinWidth(260);
-        sidebar.setPrefWidth(260);
-        sidebar.setMaxWidth(260);
-
-
-        // --------------------------------------------------------
+        // -----------------------------------------------------
         // LOGO
-        // --------------------------------------------------------
+        // -----------------------------------------------------
 
-        HBox logoSection =
-                new HBox(12);
+        HBox logo =
+                new HBox(10);
 
-        logoSection.setPadding(
-                new Insets(
-                        0,
-                        0,
-                        25,
-                        5
-                )
-        );
-
-        logoSection.setAlignment(
+        logo.setAlignment(
                 Pos.CENTER_LEFT
         );
 
-
-        StackPane logoIconBox =
+        StackPane logoIcon =
                 new StackPane();
 
-        logoIconBox
-                .getStyleClass()
-                .add("logo-icon-box");
-
-
-        logoIconBox.setStyle(
-                "-fx-background-color: #3B82F6;"
-                        + "-fx-background-radius: 8px;"
-                        + "-fx-padding: 8px;"
+        logoIcon.setPrefSize(
+                40,
+                40
         );
 
+        logoIcon.setStyle(
+                "-fx-background-color: "
+                        + PRIMARY_BLUE
+                        + ";"
+                        + "-fx-background-radius: 9;"
+        );
 
-        ImageView logoIcon =
-                new ImageView(
-                        ResourceImage.load(
-                                "/images/icons/ic_shield.png"
-                        )
+        Label plus =
+                new Label(
+                        "+"
                 );
 
-        logoIcon.setFitWidth(20);
-        logoIcon.setFitHeight(20);
+        plus.setStyle(
+                "-fx-text-fill: white;"
+                        + "-fx-font-size: 24px;"
+                        + "-fx-font-weight: bold;"
+        );
 
-
-        logoIconBox
-                .getChildren()
-                .add(logoIcon);
-
+        logoIcon.getChildren().add(
+                plus
+        );
 
         VBox logoText =
-                new VBox(2);
-
+                new VBox(1);
 
         Label appName =
                 new Label(
                         "Health-Sphere"
                 );
 
-        appName
-                .getStyleClass()
-                .add("logo-name");
-
         appName.setStyle(
-                "-fx-text-fill: #FFFFFF;"
+                "-fx-text-fill: white;"
+                        + "-fx-font-size: 17px;"
                         + "-fx-font-weight: bold;"
-                        + "-fx-font-size: 16px;"
         );
 
-
-        Label doctorSubtext =
+        Label dashboard =
                 new Label(
                         "Doctor Dashboard"
                 );
 
-        doctorSubtext
-                .getStyleClass()
-                .add("logo-subtext");
-
-        doctorSubtext.setStyle(
-                "-fx-text-fill: #94A3B8;"
-                        + "-fx-font-size: 12px;"
+        dashboard.setStyle(
+                "-fx-text-fill: "
+                        + SIDEBAR_TEXT
+                        + ";"
+                        + "-fx-font-size: 10px;"
         );
 
+        logoText.getChildren().addAll(
+                appName,
+                dashboard
+        );
 
-        logoText
-                .getChildren()
-                .addAll(
-                        appName,
-                        doctorSubtext
-                );
+        logo.getChildren().addAll(
+                logoIcon,
+                logoText
+        );
 
+        sidebar.getChildren().add(
+                logo
+        );
 
-        logoSection
-                .getChildren()
-                .addAll(
-                        logoIconBox,
-                        logoText
-                );
-
-
-        // --------------------------------------------------------
+        // -----------------------------------------------------
         // NAVIGATION
-        // --------------------------------------------------------
+        // -----------------------------------------------------
 
-        VBox navItems =
-                new VBox(6);
+        VBox navigation =
+                new VBox(5);
 
+        navigation.setPadding(
+                new Insets(
+                        25,
+                        0,
+                        0,
+                        0
+                )
+        );
 
-        String[] tabs = {
+        String[] names = {
                 "Dashboard",
                 "Today's Schedule",
                 "Appointments",
@@ -602,7 +2595,6 @@ public class AvailabilityScheduleView {
                 "Doctor Profile",
                 "AI Health Assistant"
         };
-
 
         String[] icons = {
                 "ic_dashboard",
@@ -615,128 +2607,40 @@ public class AvailabilityScheduleView {
                 "ic_ai"
         };
 
-
         for (int i = 0;
-             i < tabs.length;
+             i < names.length;
              i++) {
 
-            HBox navTab =
-                    new HBox(12);
+            final int index =
+                    i;
 
-
-            navTab.setAlignment(
-                    Pos.CENTER_LEFT
-            );
-
-
-            navTab.setPadding(
-                    new Insets(
-                            10,
-                            14,
-                            10,
-                            14
-                    )
-            );
-
-
-            navTab
-                    .getStyleClass()
-                    .add("nav-tab");
-
-
-            ImageView icon =
-                    new ImageView(
-                            ResourceImage.load(
-                                    "/images/icons/"
-                                            + icons[i]
-                                            + ".png"
-                            )
+            HBox item =
+                    createNavigationItem(
+                            names[i],
+                            icons[i],
+                            i == 5
                     );
 
-
-            icon.setFitWidth(18);
-            icon.setFitHeight(18);
-            icon.setMouseTransparent(true);
-
-
-            Label tabLabel =
-                    new Label(
-                            tabs[i]
-                    );
-
-
-            tabLabel
-                    .getStyleClass()
-                    .add("nav-text");
-
-
-            tabLabel.setMouseTransparent(
-                    true
-            );
-
-
-            if (i == 5) {
-
-                navTab
-                        .getStyleClass()
-                        .add("nav-tab-active");
-
-
-                navTab.setStyle(
-                        "-fx-background-color: #3B82F6;"
-                                + "-fx-background-radius: 8px;"
-                                + "-fx-cursor: hand;"
-                );
-
-
-                tabLabel.setStyle(
-                        "-fx-text-fill: #FFFFFF;"
-                                + "-fx-font-weight: bold;"
-                );
-
-            } else {
-
-                navTab.setStyle(
-                        "-fx-background-color: transparent;"
-                                + "-fx-background-radius: 8px;"
-                                + "-fx-cursor: hand;"
-                );
-
-
-                tabLabel.setStyle(
-                        "-fx-text-fill: #94A3B8;"
-                );
-            }
-
-
-            navTab
-                    .getChildren()
-                    .addAll(
-                            icon,
-                            tabLabel
-                    );
-
-
-            navItems
-                    .getChildren()
-                    .add(navTab);
-
-
-            final int index = i;
-
-
-            navTab.setOnMouseClicked(
+            item.setOnMouseClicked(
                     event ->
                             handleSidebarTabClick(
                                     index
                             )
             );
+
+            navigation.getChildren()
+                    .add(
+                            item
+                    );
         }
 
+        sidebar.getChildren().add(
+                navigation
+        );
 
-        // --------------------------------------------------------
-        // FOOTER
-        // --------------------------------------------------------
+        // -----------------------------------------------------
+        // SPACER
+        // -----------------------------------------------------
 
         Region spacer =
                 new Region();
@@ -746,31 +2650,126 @@ public class AvailabilityScheduleView {
                 Priority.ALWAYS
         );
 
-
-        VBox footer =
-                new VBox(10);
-
-        footer.setPadding(
-                new Insets(
-                        15,
-                        0,
-                        0,
-                        0
-                )
+        sidebar.getChildren().add(
+                spacer
         );
 
+        // -----------------------------------------------------
+        // PROFILE
+        // -----------------------------------------------------
 
-        // Doctor profile
-        HBox sidebarProfile =
-                new HBox(12);
+        HBox profile =
+                new HBox(10);
 
-
-        sidebarProfile.setAlignment(
+        profile.setAlignment(
                 Pos.CENTER_LEFT
         );
 
+        profile.setPadding(
+                new Insets(
+                        10
+                )
+        );
 
-        sidebarProfile.setPadding(
+        profile.setStyle(
+                "-fx-background-color: #1E293B;"
+                        + "-fx-background-radius: 9;"
+                        + "-fx-cursor: hand;"
+        );
+
+        Circle circle =
+                new Circle(
+                        18
+                );
+
+        circle.setFill(
+                Color.web(
+                        PRIMARY_LIGHT
+                )
+        );
+
+        Label initials =
+                new Label(
+                        getDoctorInitials()
+                );
+
+        initials.setStyle(
+                "-fx-text-fill: "
+                        + PRIMARY_BLUE
+                        + ";"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-font-size: 11px;"
+        );
+
+        StackPane profileAvatar =
+                new StackPane(
+                        circle,
+                        initials
+                );
+
+        VBox profileText =
+                new VBox(2);
+
+        Label role =
+                new Label(
+                        "Doctor Profile"
+                );
+
+        role.setStyle(
+                "-fx-text-fill: "
+                        + SIDEBAR_TEXT
+                        + ";"
+                        + "-fx-font-size: 9px;"
+        );
+
+        Label name =
+                new Label(
+                        getDoctorDisplayName()
+                );
+
+        name.setStyle(
+                "-fx-text-fill: white;"
+                        + "-fx-font-size: 12px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        profileText.getChildren().addAll(
+                role,
+                name
+        );
+
+        profile.getChildren().addAll(
+                profileAvatar,
+                profileText
+        );
+
+        profile.setOnMouseClicked(
+                event ->
+                        Navigation.goTo(
+                                stage,
+                                () ->
+                                        new DoctorProfileView(
+                                                stage
+                                        ).getScene()
+                        )
+        );
+
+        sidebar.getChildren().add(
+                profile
+        );
+
+        // -----------------------------------------------------
+        // LOGOUT
+        // -----------------------------------------------------
+
+        HBox logout =
+                new HBox(12);
+
+        logout.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        logout.setPadding(
                 new Insets(
                         10,
                         12,
@@ -779,3566 +2778,1202 @@ public class AvailabilityScheduleView {
                 )
         );
 
-
-        sidebarProfile
-                .getStyleClass()
-                .add(
-                        "sidebar-profile-box"
-                );
-
-
-        sidebarProfile.setStyle(
-                "-fx-background-color: #1E293B;"
-                        + "-fx-background-radius: 10px;"
-                        + "-fx-cursor: hand;"
-        );
-
-
-        ImageView profileAvatar =
-                new ImageView(
-                        ResourceImage.load(
-                                "/images/doctor/"
-                                        + "portrait-3d-male-doctor.png"
-                        )
-                );
-
-
-        profileAvatar.setFitWidth(36);
-        profileAvatar.setFitHeight(36);
-
-
-        Circle profileClip =
-                new Circle(
-                        18,
-                        18,
-                        18
-                );
-
-
-        profileAvatar.setClip(
-                profileClip
-        );
-
-
-        VBox profileTexts =
-                new VBox(2);
-
-
-        Label profSubText =
-                new Label(
-                        "Doctor Profile"
-                );
-
-
-        profSubText.setStyle(
-                "-fx-text-fill: #64748B;"
-                        + "-fx-font-size: 11px;"
-        );
-
-
-        Label profName =
-                new Label(
-                        "Dr. Sarah"
-                );
-
-
-        profName
-                .getStyleClass()
-                .add(
-                        "sidebar-profile-name"
-                );
-
-
-        profName.setStyle(
-                "-fx-text-fill: #FFFFFF;"
-                        + "-fx-font-weight: bold;"
-                        + "-fx-font-size: 13px;"
-        );
-
-
-        profileTexts
-                .getChildren()
-                .addAll(
-                        profSubText,
-                        profName
-                );
-
-
-        sidebarProfile
-                .getChildren()
-                .addAll(
-                        profileAvatar,
-                        profileTexts
-                );
-
-
-        sidebarProfile.setOnMouseClicked(
-                event ->
-                        Navigation.goTo(
-                                stage,
-                                () ->
-                                        new DoctorProfileView(
-                                                stage
-                                        ).getScene()
-                        )
-        );
-
-
-        // Logout
-        HBox logoutTab =
-                new HBox(12);
-
-
-        logoutTab.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-
-        logoutTab.setPadding(
-                new Insets(
-                        10,
-                        14,
-                        10,
-                        14
-                )
-        );
-
-
-        logoutTab
-                .getStyleClass()
-                .add("nav-tab");
-
-
-        logoutTab.setStyle(
+        logout.setStyle(
                 "-fx-cursor: hand;"
         );
 
-
-        ImageView logoutIcon =
-                new ImageView(
-                        ResourceImage.load(
-                                "/images/icons/ic_logout.png"
-                        )
+        Label logoutIcon =
+                new Label(
+                        "↪"
                 );
 
+        logoutIcon.setStyle(
+                "-fx-text-fill: "
+                        + SIDEBAR_TEXT
+                        + ";"
+                        + "-fx-font-size: 17px;"
+        );
 
-        logoutIcon.setFitWidth(18);
-        logoutIcon.setFitHeight(18);
-
-
-        Label logoutLabel =
+        Label logoutText =
                 new Label(
                         "Logout"
                 );
 
-
-        logoutLabel
-                .getStyleClass()
-                .add("nav-text");
-
-
-        logoutLabel.setStyle(
-                "-fx-text-fill: #94A3B8;"
+        logoutText.setStyle(
+                "-fx-text-fill: "
+                        + SIDEBAR_TEXT
+                        + ";"
+                        + "-fx-font-size: 12px;"
         );
 
+        logout.getChildren().addAll(
+                logoutIcon,
+                logoutText
+        );
 
-        logoutTab
-                .getChildren()
-                .addAll(
-                        logoutIcon,
-                        logoutLabel
-                );
-
-
-        logoutTab.setOnMouseClicked(
+        logout.setOnMouseClicked(
                 event ->
-                        showInformationAlert(
-                                "Logout",
-                                "Logout functionality is handled by the authentication module."
-                        )
+                        handleLogout()
         );
 
-
-        footer
-                .getChildren()
-                .addAll(
-                        sidebarProfile,
-                        logoutTab
-                );
-
-
-        sidebar
-                .getChildren()
-                .addAll(
-                        logoSection,
-                        navItems,
-                        spacer,
-                        footer
-                );
-
+        sidebar.getChildren().add(
+                logout
+        );
 
         return sidebar;
     }
 
-
-    // ============================================================
-    // SIDEBAR NAVIGATION
-    // ============================================================
-
-    private void handleSidebarTabClick(
-            int index) {
-
-        switch (index) {
-
-            case 0:
-                Navigation.goTo(
-                        stage,
-                        () ->
-                                new DoctorDashboardView(
-                                        stage
-                                ).getScene()
-                );
-                break;
-
-
-            case 1:
-                Navigation.goTo(
-                        stage,
-                        () ->
-                                new TodaysScheduleView(
-                                        stage
-                                ).getScene()
-                );
-                break;
-
-
-            case 2:
-                Navigation.goTo(
-                        stage,
-                        () ->
-                                new AppointmentsView(
-                                        stage
-                                ).getScene()
-                );
-                break;
-
-
-            case 3:
-                Navigation.goTo(
-                        stage,
-                        () ->
-                                new PatientDetailsView(
-                                        stage
-                                ).getScene()
-                );
-                break;
-
-
-            case 4:
-                Navigation.goTo(
-                        stage,
-                        () ->
-                                new MedicalReportsView(
-                                        stage
-                                ).getScene()
-                );
-                break;
-
-
-            case 5:
-                Navigation.goTo(
-                        stage,
-                        () ->
-                                new AvailabilityScheduleView(
-                                        stage
-                                ).getScene()
-                );
-                break;
-
-
-            case 6:
-                Navigation.goTo(
-                        stage,
-                        () ->
-                                new DoctorProfileView(
-                                        stage
-                                ).getScene()
-                );
-                break;
-
-
-            case 7:
-                Navigation.goTo(
-                        stage,
-                        () ->
-                                new AIHealthAssistantView(
-                                        stage
-                                ).getScene()
-                );
-                break;
-
-
-            default:
-                break;
-        }
-    }
-
-
-    // ============================================================
-    // TOP HEADER
-    // ============================================================
-
-    private HBox createTopHeader() {
-
-        HBox topBar =
-                new HBox();
-
-        topBar.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-
-        HBox breadcrumbs =
-                new HBox(6);
-
-        breadcrumbs.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-
-        Label p1 =
-                new Label(
-                        "Patients"
-                );
-
-        p1.getStyleClass()
-                .add(
-                        "breadcrumb-inactive"
-                );
-
-
-        p1.setStyle(
-                "-fx-cursor: hand;"
-        );
-
-
-        p1.setOnMouseClicked(
-                e ->
-                        Navigation.goTo(
-                                stage,
-                                () ->
-                                        new PatientDetailsView(
-                                                stage
-                                        ).getScene()
-                        )
-        );
-
-
-        Label sep =
-                new Label(
-                        "›"
-                );
-
-
-        sep.getStyleClass()
-                .add(
-                        "breadcrumb-separator"
-                );
-
-
-        Label p2 =
-                new Label(
-                        "Availability & Schedule"
-                );
-
-
-        p2.getStyleClass()
-                .add(
-                        "breadcrumb-active"
-                );
-
-
-        breadcrumbs
-                .getChildren()
-                .addAll(
-                        p1,
-                        sep,
-                        p2
-                );
-
-
-        Region spacer =
-                new Region();
-
-        HBox.setHgrow(
-                spacer,
-                Priority.ALWAYS
-        );
-
-
-        // --------------------------------------------------------
-        // SEARCH
-        // --------------------------------------------------------
-
-        HBox searchField =
-                new HBox(10);
-
-        searchField
-                .getStyleClass()
-                .add(
-                        "search-input-box"
-                );
-
-
-        searchField.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-
-        searchField.setPrefWidth(
-                260
-        );
-
-
-        ImageView searchIcon =
-                new ImageView(
-                        ResourceImage.load(
-                                "/images/icons/ic_search.png"
-                        )
-                );
-
-
-        searchIcon.setFitWidth(16);
-        searchIcon.setFitHeight(16);
-
-
-        searchInput =
-                new TextField();
-
-
-        searchInput.setPromptText(
-                "Search appointments..."
-        );
-
-
-        searchInput
-                .getStyleClass()
-                .add(
-                        "search-text-field"
-                );
-
-
-        searchInput
-                .textProperty()
-                .addListener(
-                        (obs, oldValue, newValue) ->
-                                refreshCalendar()
-                );
-
-
-        HBox.setHgrow(
-                searchInput,
-                Priority.ALWAYS
-        );
-
-
-        searchField
-                .getChildren()
-                .addAll(
-                        searchIcon,
-                        searchInput
-                );
-
-
-        // --------------------------------------------------------
-        // RIGHT SIDE
-        // --------------------------------------------------------
-
-        HBox rightIcons =
-                new HBox(16);
-
-
-        rightIcons.setAlignment(
-                Pos.CENTER_RIGHT
-        );
-
-
-        StackPane notificationBox =
-                new StackPane();
-
-
-        ImageView bellIcon =
-                new ImageView(
-                        ResourceImage.load(
-                                "/images/icons/ic_bell.png"
-                        )
-                );
-
-
-        bellIcon.setFitWidth(18);
-        bellIcon.setFitHeight(18);
-        bellIcon.setMouseTransparent(true);
-
-
-        Circle badge =
-                new Circle(
-                        4,
-                        Color.web(
-                                "#EF4444"
-                        )
-                );
-
-
-        badge.setMouseTransparent(true);
-
-
-        StackPane.setAlignment(
-                badge,
-                Pos.TOP_RIGHT
-        );
-
-
-        notificationBox
-                .getChildren()
-                .addAll(
-                        bellIcon,
-                        badge
-                );
-
-
-        notificationBox
-                .getStyleClass()
-                .add(
-                        "clickable-icon"
-                );
-
-
-        notificationBox.setStyle(
-                "-fx-cursor: hand;"
-        );
-
-
-        notificationBox.setOnMouseClicked(
-                e ->
-                        showInformationAlert(
-                                "Notifications",
-                                "No new notifications."
-                        )
-        );
-
-
-        HBox userProfile =
-                new HBox(10);
-
-
-        userProfile.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-
-        userProfile
-                .getStyleClass()
-                .add(
-                        "clickable-icon"
-                );
-
-
-        userProfile.setStyle(
-                "-fx-cursor: hand;"
-        );
-
-
-        ImageView userAvatar =
-                new ImageView(
-                        ResourceImage.load(
-                                "/images/doctor/"
-                                        + "portrait-3d-male-doctor.png"
-                        )
-                );
-
-
-        userAvatar.setFitWidth(36);
-        userAvatar.setFitHeight(36);
-
-
-        Circle clip =
-                new Circle(
-                        18,
-                        18,
-                        18
-                );
-
-
-        userAvatar.setClip(
-                clip
-        );
-
-
-        VBox userDetails =
-                new VBox(0);
-
-
-        Label docName =
-                new Label(
-                        "Dr. Sarah Jenkins"
-                );
-
-
-        docName.getStyleClass()
-                .add(
-                        "profile-name"
-                );
-
-
-        Label docDept =
-                new Label(
-                        "Cardiology"
-                );
-
-
-        docDept.getStyleClass()
-                .add(
-                        "profile-dept"
-                );
-
-
-        userDetails
-                .getChildren()
-                .addAll(
-                        docName,
-                        docDept
-                );
-
-
-        userProfile
-                .getChildren()
-                .addAll(
-                        userAvatar,
-                        userDetails
-                );
-
-
-        userProfile.setOnMouseClicked(
-                e ->
-                        Navigation.goTo(
-                                stage,
-                                () ->
-                                        new DoctorProfileView(
-                                                stage
-                                        ).getScene()
-                        )
-        );
-
-
-        rightIcons
-                .getChildren()
-                .addAll(
-                        notificationBox,
-                        userProfile
-                );
-
-
-        topBar
-                .getChildren()
-                .addAll(
-                        breadcrumbs,
-                        spacer,
-                        searchField,
-                        rightIcons
-                );
-
-
-        return topBar;
-    }
-
-
-    // ============================================================
-    // PAGE HEADER
-    // ============================================================
-
-    private BorderPane createPageHeader() {
-
-        BorderPane header =
-                new BorderPane();
-
-
-        header.setPadding(
-                new Insets(
-                        4,
-                        0,
-                        8,
-                        0
-                )
-        );
-
-
-        VBox titles =
-                new VBox(4);
-
-
-        Label title =
-                new Label(
-                        "Schedule Management"
-                );
-
-
-        title.getStyleClass()
-                .add(
-                        "page-title"
-                );
-
-
-        Label subtext =
-                new Label(
-                        "Configure your working hours, breaks, and view your weekly calendar."
-                );
-
-
-        subtext.getStyleClass()
-                .add(
-                        "page-subtext"
-                );
-
-
-        titles
-                .getChildren()
-                .addAll(
-                        title,
-                        subtext
-                );
-
-
-        HBox actionBtns =
-                new HBox(12);
-
-
-        actionBtns.setAlignment(
-                Pos.CENTER_RIGHT
-        );
-
-
-        // --------------------------------------------------------
-        // EXPORT
-        // --------------------------------------------------------
-
-        Button exportBtn =
-                new Button(
-                        "Export"
-                );
-
-
-        ImageView exportIcon =
-                new ImageView(
-                        ResourceImage.load(
-                                "/images/icons/ic_export.png"
-                        )
-                );
-
-
-        exportIcon.setFitWidth(14);
-        exportIcon.setFitHeight(14);
-
-
-        exportBtn.setGraphic(
-                exportIcon
-        );
-
-
-        exportBtn
-                .getStyleClass()
-                .add(
-                        "btn-secondary-action"
-                );
-
-
-        exportBtn.setOnAction(
-                e ->
-                        exportSchedule()
-        );
-
-
-        // --------------------------------------------------------
-        // SAVE
-        // --------------------------------------------------------
-
-        Button saveBtn =
-                new Button(
-                        "Save Changes"
-                );
-
-
-        ImageView saveIcon =
-                new ImageView(
-                        ResourceImage.load(
-                                "/images/icons/ic_save.png"
-                        )
-                );
-
-
-        saveIcon.setFitWidth(14);
-        saveIcon.setFitHeight(14);
-
-
-        saveBtn.setGraphic(
-                saveIcon
-        );
-
-
-        saveBtn
-                .getStyleClass()
-                .add(
-                        "btn-primary-action"
-                );
-
-
-        saveBtn.setOnAction(
-                e ->
-                        saveSchedule()
-        );
-
-
-        actionBtns
-                .getChildren()
-                .addAll(
-                        exportBtn,
-                        saveBtn
-                );
-
-
-        header.setLeft(
-                titles
-        );
-
-
-        header.setRight(
-                actionBtns
-        );
-
-
-        return header;
-    }
-
-
-    // ============================================================
-    // BODY
-    // ============================================================
-
-    private HBox createBodyLayout() {
-
-        HBox layout =
-                new HBox(20);
-
-
-        VBox scheduleCard =
-                createScheduleCalendarCard();
-
-
-        HBox.setHgrow(
-                scheduleCard,
-                Priority.ALWAYS
-        );
-
-
-        VBox controlsPanel =
-                new VBox(20);
-
-
-        controlsPanel.setMinWidth(
-                320
-        );
-
-
-        controlsPanel.setPrefWidth(
-                340
-        );
-
-
-        controlsPanel.setMaxWidth(
-                340
-        );
-
-
-        VBox aiAssistantCard =
-                createAIAssistantCard();
-
-
-        VBox workingHoursCard =
-                createWorkingHoursCard();
-
-
-        VBox emergencyCard =
-                createEmergencyCard();
-
-
-        controlsPanel
-                .getChildren()
-                .addAll(
-                        aiAssistantCard,
-                        workingHoursCard,
-                        emergencyCard
-                );
-
-
-        layout
-                .getChildren()
-                .addAll(
-                        scheduleCard,
-                        controlsPanel
-                );
-
-
-        return layout;
-    }
-
-
-    // ============================================================
-    // CALENDAR CARD
-    // ============================================================
-
-    private VBox createScheduleCalendarCard() {
-
-        VBox card =
-                new VBox(16);
-
-
-        card.getStyleClass()
-                .add(
-                        "panel-card"
-                );
-
-
-        card.setPadding(
-                new Insets(20)
-        );
-
-
-        // --------------------------------------------------------
-        // CALENDAR HEADER
-        // --------------------------------------------------------
-
-        BorderPane calHeader =
-                new BorderPane();
-
-
-        Label calTitle =
-                new Label(
-                        "Weekly Schedule View"
-                );
-
-
-        calTitle.getStyleClass()
-                .add(
-                        "card-title"
-                );
-
-
-        HBox toggleGroup =
-                new HBox(0);
-
-
-        toggleGroup
-                .getStyleClass()
-                .add(
-                        "segmented-button-bar"
-                );
-
-
-        Button weekBtn =
-                new Button(
-                        "Week"
-                );
-
-
-        weekBtn.getStyleClass()
-                .addAll(
-                        "segmented-btn",
-                        "segmented-btn-active"
-                );
-
-
-        Button monthBtn =
-                new Button(
-                        "Month"
-                );
-
-
-        monthBtn
-                .getStyleClass()
-                .add(
-                        "segmented-btn"
-                );
-
-
-        /*
-         * Backend currently stores a recurring weekly schedule.
-         *
-         * Therefore Week is the real supported calendar view.
-         * Month remains in the UI but does not invent monthly data.
-         */
-        weekBtn.setOnAction(
-                e -> {
-
-                    weekBtn
-                            .getStyleClass()
-                            .add(
-                                    "segmented-btn-active"
-                            );
-
-                    monthBtn
-                            .getStyleClass()
-                            .remove(
-                                    "segmented-btn-active"
-                            );
-
-                    refreshCalendar();
-                }
-        );
-
-
-        monthBtn.setOnAction(
-                e -> {
-
-                    monthBtn
-                            .getStyleClass()
-                            .add(
-                                    "segmented-btn-active"
-                            );
-
-                    weekBtn
-                            .getStyleClass()
-                            .remove(
-                                    "segmented-btn-active"
-                            );
-
-                    showInformationAlert(
-                            "Month View",
-                            "Monthly view is not connected yet. "
-                                    + "The weekly schedule and real appointments are currently displayed."
-                    );
-
-                    /*
-                     * Keep Week as the actual data view.
-                     */
-                    monthBtn
-                            .getStyleClass()
-                            .remove(
-                                    "segmented-btn-active"
-                            );
-
-                    weekBtn
-                            .getStyleClass()
-                            .add(
-                                    "segmented-btn-active"
-                            );
-                }
-        );
-
-
-        toggleGroup
-                .getChildren()
-                .addAll(
-                        weekBtn,
-                        monthBtn
-                );
-
-
-        calHeader.setLeft(
-                calTitle
-        );
-
-
-        calHeader.setRight(
-                toggleGroup
-        );
-
-
-        // --------------------------------------------------------
-        // DATE NAVIGATION
-        // --------------------------------------------------------
-
-        BorderPane navLegendRow =
-                new BorderPane();
-
-
-        navLegendRow.setPadding(
-                new Insets(
-                        4,
-                        0,
-                        4,
-                        0
-                )
-        );
-
-
-        HBox dateNav =
-                new HBox(12);
-
-
-        dateNav.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-
-        Button prevArrow =
-                new Button(
-                        "‹"
-                );
-
-
-        prevArrow
-                .getStyleClass()
-                .add(
-                        "nav-arrow-btn"
-                );
-
-
-        prevArrow.setStyle(
-                "-fx-cursor: hand;"
-        );
-
-
-        prevArrow.setOnAction(
-                e -> {
-
-                    displayedWeekMonday =
-                            displayedWeekMonday
-                                    .minusWeeks(
-                                            1
-                                    );
-
-                    refreshCalendar();
-                }
-        );
-
-
-        dateRangeLabel =
-                new Label();
-
-
-        dateRangeLabel
-                .getStyleClass()
-                .add(
-                        "nav-date-label"
-                );
-
-
-        updateDateRangeLabel();
-
-
-        Button nextArrow =
-                new Button(
-                        "›"
-                );
-
-
-        nextArrow
-                .getStyleClass()
-                .add(
-                        "nav-arrow-btn"
-                );
-
-
-        nextArrow.setStyle(
-                "-fx-cursor: hand;"
-        );
-
-
-        nextArrow.setOnAction(
-                e -> {
-
-                    displayedWeekMonday =
-                            displayedWeekMonday
-                                    .plusWeeks(
-                                            1
-                                    );
-
-                    refreshCalendar();
-                }
-        );
-
-
-        Button todayButton =
-                new Button(
-                        "Today"
-                );
-
-
-        todayButton
-                .getStyleClass()
-                .add(
-                        "segmented-btn"
-                );
-
-
-        todayButton.setOnAction(
-                e -> {
-
-                    displayedWeekMonday =
-                            LocalDate.now()
-                                    .with(
-                                            DayOfWeek.MONDAY
-                                    );
-
-                    refreshCalendar();
-                }
-        );
-
-
-        dateNav
-                .getChildren()
-                .addAll(
-                        prevArrow,
-                        dateRangeLabel,
-                        nextArrow,
-                        todayButton
-                );
-
-
-        // --------------------------------------------------------
-        // LEGENDS
-        // --------------------------------------------------------
-
-        HBox legends =
-                new HBox(16);
-
-
-        legends.setAlignment(
-                Pos.CENTER_RIGHT
-        );
-
-
-        legends
-                .getChildren()
-                .addAll(
-                        createLegendItem(
-                                "Clinical",
-                                "#2563EB"
-                        ),
-                        createLegendItem(
-                                "Surgery",
-                                "#0891B2"
-                        ),
-                        createLegendItem(
-                                "Unavailable",
-                                "#94A3B8"
-                        )
-                );
-
-
-        navLegendRow.setLeft(
-                dateNav
-        );
-
-
-        navLegendRow.setRight(
-                legends
-        );
-
-
-        // --------------------------------------------------------
-        // GRID
-        // --------------------------------------------------------
-
-        scheduleGrid =
-                createScheduleGrid();
-
-
-        card
-                .getChildren()
-                .addAll(
-                        calHeader,
-                        navLegendRow,
-                        scheduleGrid
-                );
-
-
-        return card;
-    }
-
-
-    // ============================================================
-    // LEGEND
-    // ============================================================
-
-    private HBox createLegendItem(
-            String label,
-            String hexColor) {
-
-        HBox box =
-                new HBox(6);
-
-
-        box.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-
-        Circle dot =
-                new Circle(
-                        4,
-                        Color.web(
-                                hexColor
-                        )
-                );
-
-
-        Label l =
-                new Label(
-                        label
-                );
-
-
-        l.getStyleClass()
-                .add(
-                        "legend-text"
-                );
-
-
-        box
-                .getChildren()
-                .addAll(
-                        dot,
-                        l
-                );
-
-
-        return box;
-    }
-
-
-    // ============================================================
-    // CALENDAR GRID
-    // ============================================================
-
-    private GridPane createScheduleGrid() {
-
-        GridPane grid =
-                new GridPane();
-
-
-        grid.getStyleClass()
-                .add(
-                        "calendar-grid"
-                );
-
-
-        LocalDate monday =
-                displayedWeekMonday;
-
-
-        // --------------------------------------------------------
-        // HEADER
-        // --------------------------------------------------------
-
-        Label emptyHeader =
-                new Label();
-
-
-        emptyHeader
-                .getStyleClass()
-                .add(
-                        "calendar-header-cell"
-                );
-
-
-        emptyHeader.setPrefWidth(
-                55
-        );
-
-
-        grid.add(
-                emptyHeader,
-                0,
-                0
-        );
-
-
-        for (int i = 0;
-             i < 5;
-             i++) {
-
-            LocalDate date =
-                    monday.plusDays(
-                            i
-                    );
-
-
-            String dayName =
-                    date.getDayOfWeek()
-                            .getDisplayName(
-                                    TextStyle.SHORT,
-                                    Locale.ENGLISH
-                            );
-
-
-            Label headerLabel =
-                    new Label(
-                            dayName
-                                    + " "
-                                    + date.getDayOfMonth()
-                    );
-
-
-            headerLabel
-                    .getStyleClass()
-                    .add(
-                            "calendar-header-cell"
-                    );
-
-
-            if (date.equals(
-                    LocalDate.now()
-            )) {
-
-                headerLabel
-                        .getStyleClass()
-                        .add(
-                                "calendar-header-active"
-                        );
-            }
-
-
-            headerLabel.setPrefWidth(
-                    100
-            );
-
-
-            headerLabel.setAlignment(
-                    Pos.CENTER
-            );
-
-
-            grid.add(
-                    headerLabel,
-                    i + 1,
-                    0
-            );
-        }
-
-
-        // --------------------------------------------------------
-        // TIME ROWS
-        // --------------------------------------------------------
-
-        String[] timeSlots = {
-                "8 AM",
-                "9 AM",
-                "10 AM",
-                "11 AM",
-                "12 PM",
-                "1 PM"
-        };
-
-
-        for (int row = 0;
-             row < timeSlots.length;
-             row++) {
-
-            Label timeLabel =
-                    new Label(
-                            timeSlots[row]
-                    );
-
-
-            timeLabel
-                    .getStyleClass()
-                    .add(
-                            "calendar-time-cell"
-                    );
-
-
-            timeLabel.setAlignment(
-                    Pos.CENTER_RIGHT
-            );
-
-
-            timeLabel.setPadding(
-                    new Insets(
-                            0,
-                            10,
-                            0,
-                            0
-                    )
-            );
-
-
-            grid.add(
-                    timeLabel,
-                    0,
-                    row + 1
-            );
-
-
-            for (int col = 1;
-                 col <= 5;
-                 col++) {
-
-                Pane emptyCell =
-                        new Pane();
-
-
-                emptyCell
-                        .getStyleClass()
-                        .add(
-                                "calendar-slot-cell"
-                        );
-
-
-                emptyCell.setPrefHeight(
-                        60
-                );
-
-
-                final int selectedColumn =
-                        col;
-
-
-                final int selectedRow =
-                        row;
-
-
-                emptyCell.setOnMouseClicked(
-                        e ->
-                                handleEmptyCalendarSlot(
-                                        selectedColumn,
-                                        selectedRow
-                                )
-                );
-
-
-                grid.add(
-                        emptyCell,
-                        col,
-                        row + 1
-                );
-            }
-        }
-
-
-        // --------------------------------------------------------
-        // COLUMN WIDTHS
-        // --------------------------------------------------------
-
-        ColumnConstraints firstColumn =
-                new ColumnConstraints();
-
-
-        firstColumn.setMinWidth(
-                55
-        );
-
-
-        firstColumn.setPrefWidth(
-                55
-        );
-
-
-        grid.getColumnConstraints()
-                .add(
-                        firstColumn
-                );
-
-
-        for (int i = 1;
-             i <= 5;
-             i++) {
-
-            ColumnConstraints column =
-                    new ColumnConstraints();
-
-
-            column.setPercentWidth(
-                    20
-            );
-
-
-            grid.getColumnConstraints()
-                    .add(
-                            column
-                    );
-        }
-
-
-        // --------------------------------------------------------
-        // REAL APPOINTMENTS
-        // --------------------------------------------------------
-
-        addRealAppointments(
-                grid
-        );
-
-
-        return grid;
-    }
-
-
-    // ============================================================
-    // REAL APPOINTMENTS
-    // ============================================================
-
-    private void addRealAppointments(
-            GridPane grid) {
-
-        if (doctorAppointments == null) {
-            return;
-        }
-
-
-        String searchText =
-                searchInput == null
-                        ? ""
-                        : searchInput
-                                .getText()
-                                .trim()
-                                .toLowerCase(
-                                        Locale.ROOT
-                                );
-
-
-        LocalDate monday =
-                displayedWeekMonday;
-
-
-        for (Appointment appointment :
-                doctorAppointments) {
-
-            if (appointment == null) {
-                continue;
-            }
-
-
-            String patientName =
-                    safeText(
-                            appointment.getPatientName(),
-                            "Patient"
-                    );
-
-
-            String reason =
-                    safeText(
-                            appointment.getReason(),
-                            "Consultation"
-                    );
-
-
-            /*
-             * Search filter.
-             */
-            if (!searchText.isEmpty()) {
-
-                String searchable =
-                        (
-                                patientName
-                                        + " "
-                                        + reason
-                                        + " "
-                                        + safeText(
-                                                appointment.getDoctorName(),
-                                                ""
-                                        )
-                        )
-                                .toLowerCase(
-                                        Locale.ROOT
-                                );
-
-
-                if (!searchable.contains(
-                        searchText
-                )) {
-
-                    continue;
-                }
-            }
-
-
-            LocalDate appointmentDate =
-                    parseAppointmentDate(
-                            appointment
-                                    .getAppointmentDate()
-                    );
-
-
-            if (appointmentDate == null) {
-                continue;
-            }
-
-
-            long dayDifference =
-                    ChronoUnit.DAYS.between(
-                            monday,
-                            appointmentDate
-                    );
-
-
-            /*
-             * The UI displays Monday-Friday.
-             */
-            if (dayDifference < 0
-                    || dayDifference > 4) {
-
-                continue;
-            }
-
-
-            int column =
-                    (int) dayDifference + 1;
-
-
-            String appointmentTime =
-                    appointment.getAppointmentTime();
-
-
-            if (appointmentTime == null
-                    || appointmentTime
-                            .trim()
-                            .isEmpty()) {
-
-                continue;
-            }
-
-
-            int row =
-                    getCalendarRow(
-                            appointmentTime
-                    );
-
-
-            if (row < 1) {
-
-                /*
-                 * Appointment outside the visible 8 AM-1 PM
-                 * range.
-                 */
-                continue;
-            }
-
-
-            String status =
-                    safeText(
-                            appointment.getStatus(),
-                            "Pending"
-                    );
-
-
-            String type =
-                    safeText(
-                            appointment.getBookingType(),
-                            "DOCTOR"
-                    );
-
-
-            String text =
-                    patientName
-                            + "\n"
-                            + appointmentTime
-                            + "\n"
-                            + status;
-
-
-            String styleClass =
-                    getAppointmentStyleClass(
-                            type
-                    );
-
-
-            VBox block =
-                    createCalendarBlock(
-                            text,
-                            styleClass
-                    );
-
-
-            grid.add(
-                    block,
-                    column,
-                    row
-            );
-        }
-    }
-
-
-    // ============================================================
-    // CALENDAR BLOCK
-    // ============================================================
-
-    private VBox createCalendarBlock(
+    // =========================================================
+    // NAVIGATION ITEM
+    // =========================================================
+
+    private HBox createNavigationItem(
             String text,
-            String styleClass) {
+            String iconName,
+            boolean selected) {
 
-        VBox block =
-                new VBox();
+        HBox item =
+                new HBox(11);
 
+        item.setAlignment(
+                Pos.CENTER_LEFT
+        );
 
-        block.getStyleClass()
-                .addAll(
-                        "calendar-block",
-                        styleClass
-                );
-
-
-        block.setPadding(
+        item.setPadding(
                 new Insets(
-                        8
+                        10,
+                        12,
+                        10,
+                        12
                 )
         );
 
+        if (selected) {
 
-        block.setStyle(
-                "-fx-cursor: hand;"
+            item.setStyle(
+                    "-fx-background-color: "
+                            + PRIMARY_BLUE
+                            + ";"
+                            + "-fx-background-radius: 8;"
+                            + "-fx-cursor: hand;"
+            );
+
+        } else {
+
+            item.setStyle(
+                    "-fx-background-color: transparent;"
+                            + "-fx-background-radius: 8;"
+                            + "-fx-cursor: hand;"
+            );
+        }
+
+        ImageView icon;
+
+        try {
+
+            icon =
+                    new ImageView(
+                            ResourceImage.load(
+                                    "/images/icons/"
+                                            + iconName
+                                            + ".png"
+                            )
+                    );
+
+        } catch (Exception e) {
+
+            icon =
+                    new ImageView();
+        }
+
+        icon.setFitWidth(
+                17
         );
 
+        icon.setFitHeight(
+                17
+        );
 
         Label label =
                 new Label(
                         text
                 );
 
-
-        label
-                .getStyleClass()
-                .add(
-                        "calendar-block-text"
-                );
-
-
-        label.setWrapText(
-                true
+        label.setStyle(
+                "-fx-text-fill: "
+                        + (
+                        selected
+                                ? "white"
+                                : SIDEBAR_TEXT
+                )
+                        + ";"
+                        + "-fx-font-size: 12px;"
+                        + (
+                        selected
+                                ? "-fx-font-weight: bold;"
+                                : ""
+                )
         );
 
-
-        label.setMouseTransparent(
-                true
+        item.getChildren().addAll(
+                icon,
+                label
         );
 
-
-        block
-                .getChildren()
-                .add(
-                        label
-                );
-
-
-        block.setOnMouseClicked(
-                e ->
-                        showAppointmentDetails(
-                                text
-                        )
-        );
-
-
-        return block;
+        return item;
     }
 
+    // =========================================================
+    // SIDEBAR NAVIGATION
+    // =========================================================
 
-    // ============================================================
-    // APPOINTMENT STYLE
-    // ============================================================
-
-    private String getAppointmentStyleClass(
-            String bookingType) {
-
-        if (bookingType == null) {
-
-            return "block-clinical";
-        }
-
-
-        if (bookingType
-                .equalsIgnoreCase(
-                        "HOSPITAL"
-                )) {
-
-            return "block-surgery";
-        }
-
-
-        return "block-clinical";
-    }
-
-
-    // ============================================================
-    // TIME → GRID ROW
-    // ============================================================
-
-    private int getCalendarRow(
-            String appointmentTime) {
+    private void handleSidebarTabClick(
+            int index) {
 
         try {
 
-            String normalized =
-                    appointmentTime
-                            .trim()
-                            .toUpperCase(
-                                    Locale.ENGLISH
-                            );
+            switch (index) {
 
+                case 0:
 
-            java.time.LocalTime time =
-                    java.time.LocalTime.parse(
-                            normalized,
-                            APPOINTMENT_TIME_FORMAT
+                    Navigation.goTo(
+                            stage,
+                            () ->
+                                    new DoctorDashboardView(
+                                            stage
+                                    ).getScene()
                     );
 
+                    break;
 
-            int hour =
-                    time.getHour();
+                case 1:
 
+                    Navigation.goTo(
+                            stage,
+                            () ->
+                                    new TodaysScheduleView(
+                                            stage
+                                    ).getScene()
+                    );
 
-            /*
-             * Calendar starts at 8 AM.
-             *
-             * 8 AM  → row 1
-             * 9 AM  → row 2
-             * 10 AM → row 3
-             * 11 AM → row 4
-             * 12 PM → row 5
-             * 1 PM  → row 6
-             */
-            if (hour < 8
-                    || hour > 13) {
+                    break;
 
-                return -1;
+                case 2:
+
+                    Navigation.goTo(
+                            stage,
+                            () ->
+                                    new AppointmentsView(
+                                            stage
+                                    ).getScene()
+                    );
+
+                    break;
+
+                case 3:
+
+                    Navigation.goTo(
+                            stage,
+                            () ->
+                                    new PatientDetailsView(
+                                            stage
+                                    ).getScene()
+                    );
+
+                    break;
+
+                case 4:
+
+                    Navigation.goTo(
+                            stage,
+                            () ->
+                                    new MedicalReportsView(
+                                            stage
+                                    ).getScene()
+                    );
+
+                    break;
+
+                case 5:
+
+                    break;
+
+                case 6:
+
+                    Navigation.goTo(
+                            stage,
+                            () ->
+                                    new DoctorProfileView(
+                                            stage
+                                    ).getScene()
+                    );
+
+                    break;
+
+                case 7:
+
+                    Navigation.goTo(
+                            stage,
+                            () ->
+                                    new AIHealthAssistantView(
+                                            stage
+                                    ).getScene()
+                    );
+
+                    break;
+
+                default:
+
+                    break;
             }
-
-
-            return hour - 7;
 
         } catch (Exception e) {
 
-            /*
-             * Some appointments may use formats such as:
-             *
-             * 10:00 AM
-             * 10 AM
-             *
-             * Try the simpler format.
-             */
-            try {
-
-                java.time.LocalTime time =
-                        java.time.LocalTime.parse(
-                                appointmentTime
-                                        .trim()
-                                        .toUpperCase(
-                                                Locale.ENGLISH
-                                        ),
-                                DateTimeFormatter.ofPattern(
-                                        "h a",
-                                        Locale.ENGLISH
-                                )
-                        );
-
-
-                int hour =
-                        time.getHour();
-
-
-                if (hour < 8
-                        || hour > 13) {
-
-                    return -1;
-                }
-
-
-                return hour - 7;
-
-            } catch (Exception ignored) {
-
-                return -1;
-            }
+            showAlert(
+                    Alert.AlertType.ERROR,
+                    "Navigation Error",
+                    getRootMessage(e)
+            );
         }
     }
 
+    // =========================================================
+    // LOGOUT
+    // =========================================================
 
-    // ============================================================
-    // DATE PARSER
-    // ============================================================
+    private void handleLogout() {
 
-    private LocalDate parseAppointmentDate(
-            String date) {
+        Alert alert =
+                new Alert(
+                        Alert.AlertType.CONFIRMATION
+                );
 
-        if (date == null
-                || date.trim().isEmpty()) {
+        alert.setTitle(
+                "Logout"
+        );
 
-            return null;
+        alert.setHeaderText(
+                "Logout from Health-Sphere?"
+        );
+
+        alert.setContentText(
+                "Are you sure you want to logout?"
+        );
+
+        alert.showAndWait()
+                .ifPresent(
+                        result -> {
+
+                            if (result
+                                    == ButtonType.OK) {
+
+                                SessionManager
+                                        .getInstance()
+                                        .clearSession();
+
+                                stage.close();
+                            }
+                        }
+                );
+    }
+
+    // =========================================================
+    // FIND DAY
+    // =========================================================
+
+    private DayControls findDay(
+            String dayName) {
+
+        for (DayControls day :
+                dayControls) {
+
+            if (day.dayName.equalsIgnoreCase(
+                    dayName
+            )) {
+
+                return day;
+            }
         }
-
-
-        String value =
-                date.trim();
-
-
-        /*
-         * Normal project format:
-         *
-         * yyyy-MM-dd
-         */
-        try {
-
-            return LocalDate.parse(
-                    value,
-                    APPOINTMENT_DATE_FORMAT
-            );
-
-        } catch (DateTimeParseException ignored) {
-        }
-
-
-        /*
-         * Fallback for dd/MM/yyyy.
-         */
-        try {
-
-            return LocalDate.parse(
-                    value,
-                    DateTimeFormatter.ofPattern(
-                            "dd/MM/yyyy"
-                    )
-            );
-
-        } catch (DateTimeParseException ignored) {
-        }
-
-
-        /*
-         * Fallback for MM/dd/yyyy.
-         */
-        try {
-
-            return LocalDate.parse(
-                    value,
-                    DateTimeFormatter.ofPattern(
-                            "MM/dd/yyyy"
-                    )
-            );
-
-        } catch (DateTimeParseException ignored) {
-        }
-
 
         return null;
     }
 
+    // =========================================================
+    // SELECT DAY
+    // =========================================================
 
-    // ============================================================
-    // DATE RANGE LABEL
-    // ============================================================
+    private void selectDay(
+            String dayName,
+            boolean enabled) {
 
-    private void updateDateRangeLabel() {
-
-        if (dateRangeLabel == null) {
-            return;
-        }
-
-
-        LocalDate start =
-                displayedWeekMonday;
-
-
-        LocalDate end =
-                start.plusDays(
-                        4
+        DayControls day =
+                findDay(
+                        dayName
                 );
 
-
-        String monthYear =
-                start.format(
-                        HEADER_MONTH_FORMAT
-                );
-
-
-        /*
-         * If week crosses month boundary, display both months.
-         */
-        if (start.getMonth()
-                != end.getMonth()) {
-
-            monthYear =
-                    start.format(
-                            DateTimeFormatter.ofPattern(
-                                    "MMM",
-                                    Locale.ENGLISH
-                            )
-                    )
-                            + " - "
-                            + end.format(
-                            DateTimeFormatter.ofPattern(
-                                    "MMM yyyy",
-                                    Locale.ENGLISH
-                            )
-                    );
-        }
-
-
-        long weekNumber =
-                java.time.temporal.WeekFields
-                        .of(
-                                Locale.getDefault()
-                        )
-                        .weekOfYear()
-                        .getFrom(
-                                start
-                        );
-
-
-        dateRangeLabel.setText(
-                monthYear
-                        + ", Week "
-                        + weekNumber
-        );
-    }
-
-
-    // ============================================================
-    // REFRESH CALENDAR
-    // ============================================================
-
-    private void refreshCalendar() {
-
-        updateDateRangeLabel();
-
-
-        if (scheduleGrid == null) {
-            return;
-        }
-
-
-        GridPane newGrid =
-                createScheduleGrid();
-
-
-        /*
-         * Replace the existing grid inside the card.
-         */
-        VBox parent =
-                (VBox) scheduleGrid.getParent();
-
-
-        int index =
-                parent
-                        .getChildren()
-                        .indexOf(
-                                scheduleGrid
-                        );
-
-
-        if (index >= 0) {
-
-            parent
-                    .getChildren()
-                    .set(
-                            index,
-                            newGrid
-                    );
-
-
-            scheduleGrid =
-                    newGrid;
-        }
-    }
-
-
-    // ============================================================
-    // EMPTY SLOT
-    // ============================================================
-
-    private void handleEmptyCalendarSlot(
-            int column,
-            int row) {
-
-        if (column < 1
-                || column > 5
-                || row < 0) {
+        if (day == null) {
 
             return;
         }
 
+        day.checkBox.setSelected(
+                enabled
+        );
 
-        LocalDate selectedDate =
-                displayedWeekMonday
-                        .plusDays(
-                                column - 1
-                        );
+        day.startCombo.setDisable(
+                !enabled
+        );
 
-
-        int hour =
-                8 + row;
-
-
-        String formattedTime =
-                String.format(
-                        Locale.ENGLISH,
-                        "%d:00 %s",
-                        hour > 12
-                                ? hour - 12
-                                : hour,
-                        hour >= 12
-                                ? "PM"
-                                : "AM"
-                );
-
-
-        showInformationAlert(
-                "Schedule Slot",
-                "Date: "
-                        + selectedDate
-                        + "\nTime: "
-                        + formattedTime
-                        + "\n\nAppointment booking is handled by the Appointments module."
+        day.endCombo.setDisable(
+                !enabled
         );
     }
 
-
-    // ============================================================
-    // APPOINTMENT DETAILS
-    // ============================================================
-
-    private void showAppointmentDetails(
-            String text) {
-
-        String cleanText =
-                text.replace(
-                        "\n",
-                        " • "
-                );
-
-
-        showInformationAlert(
-                "Appointment",
-                cleanText
-        );
-    }
-
-
-    // ============================================================
-    // AI ASSISTANT
-    // ============================================================
-
-    private VBox createAIAssistantCard() {
-
-        VBox card =
-                new VBox(12);
-
-
-        card.getStyleClass()
-                .add(
-                        "ai-assistant-card"
-                );
-
-
-        card.setPadding(
-                new Insets(
-                        18
-                )
-        );
-
-
-        HBox titleBox =
-                new HBox(8);
-
-
-        titleBox.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-
-        ImageView aiIcon =
-                new ImageView(
-                        ResourceImage.load(
-                                "/images/icons/ic_robot.png"
-                        )
-                );
-
-
-        aiIcon.setFitWidth(18);
-        aiIcon.setFitHeight(18);
-
-
-        Label titleLbl =
-                new Label(
-                        "AI Scheduling Assistant"
-                );
-
-
-        titleLbl.getStyleClass()
-                .add(
-                        "ai-card-title"
-                );
-
-
-        titleBox
-                .getChildren()
-                .addAll(
-                        aiIcon,
-                        titleLbl
-                );
-
-
-        /*
-         * Keep the AI text as presentation content.
-         * It is not falsely presented as a Firebase-generated
-         * recommendation.
-         */
-        Label suggestion =
-                new Label(
-                        "Review your weekly availability and real appointment load to optimize patient flow."
-                );
-
-
-        suggestion.setWrapText(
-                true
-        );
-
-
-        suggestion
-                .getStyleClass()
-                .add(
-                        "ai-card-desc"
-                );
-
-
-        Hyperlink optLink =
-                new Hyperlink(
-                        "View Optimization Suggestions →"
-                );
-
-
-        optLink
-                .getStyleClass()
-                .add(
-                        "ai-card-link"
-                );
-
-
-        optLink.setOnAction(
-                e ->
-                        Navigation.goTo(
-                                stage,
-                                () ->
-                                        new AIHealthAssistantView(
-                                                stage
-                                        ).getScene()
-                        )
-        );
-
-
-        card
-                .getChildren()
-                .addAll(
-                        titleBox,
-                        suggestion,
-                        optLink
-                );
-
-
-        return card;
-    }
-
-
-    // ============================================================
-    // WORKING HOURS
-    // ============================================================
-
-    private VBox createWorkingHoursCard() {
-
-        VBox card =
-                new VBox(14);
-
-
-        card.getStyleClass()
-                .add(
-                        "panel-card"
-                );
-
-
-        card.setPadding(
-                new Insets(
-                        18
-                )
-        );
-
-
-        BorderPane header =
-                new BorderPane();
-
-
-        Label title =
-                new Label(
-                        "Working Hours"
-                );
-
-
-        title.getStyleClass()
-                .add(
-                        "card-title"
-                );
-
-
-        ImageView gearIcon =
-                new ImageView(
-                        ResourceImage.load(
-                                "/images/icons/ic_settings.png"
-                        )
-                );
-
-
-        gearIcon.setFitWidth(16);
-        gearIcon.setFitHeight(16);
-
-
-        gearIcon
-                .getStyleClass()
-                .add(
-                        "clickable-icon"
-                );
-
-
-        gearIcon.setStyle(
-                "-fx-cursor: hand;"
-        );
-
-
-        gearIcon.setOnMouseClicked(
-                e ->
-                        showInformationAlert(
-                                "Working Hours",
-                                "Change the working hours below and click Save Changes."
-                        )
-        );
-
-
-        header.setLeft(
-                title
-        );
-
-
-        header.setRight(
-                gearIcon
-        );
-
-
-        VBox daysList =
-                new VBox(10);
-
-
-        daysList.getChildren()
-                .add(
-                        createWorkingDayRow(
-                                "Mon",
-                                currentSchedule
-                                        .isMondayEnabled(),
-                                currentSchedule
-                                        .getMondayStartTime(),
-                                currentSchedule
-                                        .getMondayEndTime()
-                        )
-                );
-
-
-        daysList.getChildren()
-                .add(
-                        createWorkingDayRow(
-                                "Tue",
-                                currentSchedule
-                                        .isTuesdayEnabled(),
-                                currentSchedule
-                                        .getTuesdayStartTime(),
-                                currentSchedule
-                                        .getTuesdayEndTime()
-                        )
-                );
-
-
-        daysList.getChildren()
-                .add(
-                        createWorkingDayRow(
-                                "Wed",
-                                currentSchedule
-                                        .isWednesdayEnabled(),
-                                currentSchedule
-                                        .getWednesdayStartTime(),
-                                currentSchedule
-                                        .getWednesdayEndTime()
-                        )
-                );
-
-
-        daysList.getChildren()
-                .add(
-                        createWorkingDayRow(
-                                "Thu",
-                                currentSchedule
-                                        .isThursdayEnabled(),
-                                currentSchedule
-                                        .getThursdayStartTime(),
-                                currentSchedule
-                                        .getThursdayEndTime()
-                        )
-                );
-
-
-        daysList.getChildren()
-                .add(
-                        createWorkingDayRow(
-                                "Fri",
-                                currentSchedule
-                                        .isFridayEnabled(),
-                                currentSchedule
-                                        .getFridayStartTime(),
-                                currentSchedule
-                                        .getFridayEndTime()
-                        )
-                );
-
-
-        // --------------------------------------------------------
-        // APPOINTMENT SLOT
-        // --------------------------------------------------------
-
-        VBox slotBox =
-                new VBox(6);
-
-
-        slotBox.setPadding(
-                new Insets(
-                        10,
-                        0,
-                        0,
-                        0
-                )
-        );
-
-
-        Label slotLabel =
-                new Label(
-                        "Default Appointment Slot"
-                );
-
-
-        slotLabel.getStyleClass()
-                .add(
-                        "input-label"
-                );
-
-
-        slotCombo =
-                new ComboBox<>();
-
-
-        slotCombo
-                .getItems()
-                .addAll(
-                        "15 Minutes",
-                        "30 Minutes",
-                        "45 Minutes",
-                        "60 Minutes"
-                );
-
-
-        slotCombo.setValue(
-                convertMinutesToSlot(
-                        currentSchedule
-                                .getDefaultAppointmentSlotMinutes()
-                )
-        );
-
-
-        slotCombo.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-
-        slotCombo
-                .getStyleClass()
-                .add(
-                        "input-select"
-                );
-
-
-        slotBox
-                .getChildren()
-                .addAll(
-                        slotLabel,
-                        slotCombo
-                );
-
-
-        card
-                .getChildren()
-                .addAll(
-                        header,
-                        daysList,
-                        slotBox
-                );
-
-
-        return card;
-    }
-
-
-    // ============================================================
-    // WORKING DAY ROW
-    // ============================================================
-
-    private HBox createWorkingDayRow(
-            String day,
-            boolean isChecked,
-            String startTime,
-            String endTime) {
-
-        HBox row =
-                new HBox(6);
-
-
-        row.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-
-        CheckBox cb =
-                new CheckBox(
-                        day
-                );
-
-
-        cb.setSelected(
-                isChecked
-        );
-
-
-        cb.getStyleClass()
-                .add(
-                        "day-checkbox"
-                );
-
-
-        cb.setPrefWidth(
-                54
-        );
-
-
-        dayCheckBoxes.put(
-                day,
-                cb
-        );
-
-
-        ComboBox<String> startCombo =
-                createTimeCombo(
-                        startTime
-                );
-
-
-        ComboBox<String> endCombo =
-                createTimeCombo(
-                        endTime
-                );
-
-
-        startTimeCombos.put(
-                day,
-                startCombo
-        );
-
-
-        endTimeCombos.put(
-                day,
-                endCombo
-        );
-
-
-        Label sep =
-                new Label(
-                        "-"
-                );
-
-
-        sep.getStyleClass()
-                .add(
-                        "time-separator"
-                );
-
-
-        startCombo.setDisable(
-                !isChecked
-        );
-
-
-        endCombo.setDisable(
-                !isChecked
-        );
-
-
-        /*
-         * When checkbox changes, enable/disable time selectors.
-         */
-        cb.selectedProperty()
-                .addListener(
-                        (obs, oldValue, newValue) -> {
-
-                            startCombo.setDisable(
-                                    !newValue
-                            );
-
-                            endCombo.setDisable(
-                                    !newValue
-                            );
-                        }
-                );
-
-
-        row
-                .getChildren()
-                .addAll(
-                        cb,
-                        startCombo,
-                        sep,
-                        endCombo
-                );
-
-
-        return row;
-    }
-
-
-    // ============================================================
-    // TIME COMBO
-    // ============================================================
-
-    private ComboBox<String> createTimeCombo(
-            String selectedTime) {
-
-        ComboBox<String> combo =
-                new ComboBox<>();
-
-
-        combo
-                .getItems()
-                .addAll(
-                        "08:00 AM",
-                        "08:30 AM",
-                        "09:00 AM",
-                        "09:30 AM",
-                        "10:00 AM",
-                        "10:30 AM",
-                        "11:00 AM",
-                        "11:30 AM",
-                        "12:00 PM",
-                        "12:30 PM",
-                        "01:00 PM",
-                        "01:30 PM",
-                        "02:00 PM",
-                        "02:30 PM",
-                        "03:00 PM",
-                        "03:30 PM",
-                        "04:00 PM",
-                        "04:30 PM",
-                        "05:00 PM",
-                        "05:30 PM",
-                        "06:00 PM",
-                        "06:30 PM",
-                        "07:00 PM",
-                        "07:30 PM",
-                        "08:00 PM"
-                );
-
-
-        String value =
-                selectedTime;
-
-
-        if (value != null
-                && combo
-                        .getItems()
-                        .contains(
-                                value
-                        )) {
-
-            combo.setValue(
-                    value
-            );
-
-        } else {
-
-            combo.setValue(
-                    "09:00 AM"
-            );
-        }
-
-
-        combo
-                .getStyleClass()
-                .add(
-                        "time-select"
-                );
-
-
-        combo.setPrefWidth(
-                95
-        );
-
-
-        return combo;
-    }
-
-
-    // ============================================================
-    // EMERGENCY CARD
-    // ============================================================
-
-    private VBox createEmergencyCard() {
-
-        VBox card =
-                new VBox(8);
-
-
-        card.getStyleClass()
-                .add(
-                        "panel-card"
-                );
-
-
-        card.setPadding(
-                new Insets(
-                        16
-                )
-        );
-
-
-        BorderPane header =
-                new BorderPane();
-
-
-        HBox left =
-                new HBox(6);
-
-
-        left.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-
-        Label aster =
-                new Label(
-                        "✻"
-                );
-
-
-        aster.getStyleClass()
-                .add(
-                        "emergency-asterisk"
-                );
-
-
-        Label title =
-                new Label(
-                        "Emergency Availability"
-                );
-
-
-        title.getStyleClass()
-                .add(
-                        "card-title"
-                );
-
-
-        left
-                .getChildren()
-                .addAll(
-                        aster,
-                        title
-                );
-
-
-        emergencyToggle =
-                new ToggleButton();
-
-
-        emergencyToggle.setSelected(
-                currentSchedule
-                        .isEmergencyAvailable()
-        );
-
-
-        emergencyToggle
-                .getStyleClass()
-                .add(
-                        "switch-toggle"
-                );
-
-
-        header.setLeft(
-                left
-        );
-
-
-        header.setRight(
-                emergencyToggle
-        );
-
-
-        Label desc =
-                new Label(
-                        "Accept urgent cases outside regular slots."
-                );
-
-
-        desc.getStyleClass()
-                .add(
-                        "emergency-desc"
-                );
-
-
-        card
-                .getChildren()
-                .addAll(
-                        header,
-                        desc
-                );
-
-
-        return card;
-    }
-
-
-    // ============================================================
-    // SAVE SCHEDULE
-    // ============================================================
-
-    private void saveSchedule() {
-
-        try {
-
-            updateScheduleFromUI();
-
-
-            scheduleController
-                    .saveDoctorSchedule(
-                            currentSchedule
-                    );
-
-
-            /*
-             * Reload from Firestore after save.
-             *
-             * This verifies that the UI now represents the
-             * persisted backend state.
-             */
-            currentSchedule =
-                    scheduleController
-                            .getDoctorSchedule(
-                                    doctorUid
-                            );
-
-
-            showInformationAlert(
-                    "Schedule Saved",
-                    "Your working hours, appointment slot, and emergency availability have been saved successfully."
-            );
-
-
-            refreshCalendar();
-
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-
-            showErrorAlert(
-                    "Save Failed",
-                    getRootErrorMessage(
-                            e
-                    )
-            );
-        }
-    }
-
-
-    // ============================================================
-    // UI → MODEL
-    // ============================================================
-
-    private void updateScheduleFromUI() {
-
-        currentSchedule.setDoctorUid(
-                doctorUid
-        );
-
-
-        // Monday
-        currentSchedule.setMondayEnabled(
-                dayCheckBoxes
-                        .get("Mon")
-                        .isSelected()
-        );
-
-
-        currentSchedule.setMondayStartTime(
-                startTimeCombos
-                        .get("Mon")
-                        .getValue()
-        );
-
-
-        currentSchedule.setMondayEndTime(
-                endTimeCombos
-                        .get("Mon")
-                        .getValue()
-        );
-
-
-        // Tuesday
-        currentSchedule.setTuesdayEnabled(
-                dayCheckBoxes
-                        .get("Tue")
-                        .isSelected()
-        );
-
-
-        currentSchedule.setTuesdayStartTime(
-                startTimeCombos
-                        .get("Tue")
-                        .getValue()
-        );
-
-
-        currentSchedule.setTuesdayEndTime(
-                endTimeCombos
-                        .get("Tue")
-                        .getValue()
-        );
-
-
-        // Wednesday
-        currentSchedule.setWednesdayEnabled(
-                dayCheckBoxes
-                        .get("Wed")
-                        .isSelected()
-        );
-
-
-        currentSchedule.setWednesdayStartTime(
-                startTimeCombos
-                        .get("Wed")
-                        .getValue()
-        );
-
-
-        currentSchedule.setWednesdayEndTime(
-                endTimeCombos
-                        .get("Wed")
-                        .getValue()
-        );
-
-
-        // Thursday
-        currentSchedule.setThursdayEnabled(
-                dayCheckBoxes
-                        .get("Thu")
-                        .isSelected()
-        );
-
-
-        currentSchedule.setThursdayStartTime(
-                startTimeCombos
-                        .get("Thu")
-                        .getValue()
-        );
-
-
-        currentSchedule.setThursdayEndTime(
-                endTimeCombos
-                        .get("Thu")
-                        .getValue()
-        );
-
-
-        // Friday
-        currentSchedule.setFridayEnabled(
-                dayCheckBoxes
-                        .get("Fri")
-                        .isSelected()
-        );
-
-
-        currentSchedule.setFridayStartTime(
-                startTimeCombos
-                        .get("Fri")
-                        .getValue()
-        );
-
-
-        currentSchedule.setFridayEndTime(
-                endTimeCombos
-                        .get("Fri")
-                        .getValue()
-        );
-
-
-        // Appointment slot
-        currentSchedule.setDefaultAppointmentSlotMinutes(
-                convertSlotToMinutes(
-                        slotCombo.getValue()
-                )
-        );
-
-
-        // Emergency
-        currentSchedule.setEmergencyAvailable(
-                emergencyToggle.isSelected()
-        );
-    }
-
-
-    // ============================================================
-    // SLOT CONVERSION
-    // ============================================================
-
-    private int convertSlotToMinutes(
-            String slot) {
-
-        if (slot == null) {
-            return 30;
-        }
-
-
-        switch (slot) {
-
-            case "15 Minutes":
-                return 15;
-
-            case "30 Minutes":
-                return 30;
-
-            case "45 Minutes":
-                return 45;
-
-            case "60 Minutes":
-                return 60;
-
-            default:
-                return 30;
-        }
-    }
-
-
-    private String convertMinutesToSlot(
-            int minutes) {
-
-        switch (minutes) {
-
-            case 15:
-                return "15 Minutes";
-
-            case 30:
-                return "30 Minutes";
-
-            case 45:
-                return "45 Minutes";
-
-            case 60:
-                return "60 Minutes";
-
-            default:
-                return "30 Minutes";
-        }
-    }
-
-
-    // ============================================================
-    // EXPORT
-    // ============================================================
-
-    private void exportSchedule() {
-
-        /*
-         * Export currently creates a readable text summary.
-         *
-         * It does not invent data and uses the values currently
-         * loaded from Firestore.
-         */
-        StringBuilder builder =
-                new StringBuilder();
-
-
-        builder.append(
-                "Health-Sphere Doctor Schedule\n"
-        );
-
-
-        builder.append(
-                "Doctor UID: "
-        );
-
-
-        builder.append(
-                doctorUid
-        );
-
-
-        builder.append(
-                "\n\nWorking Hours\n"
-        );
-
-
-        appendScheduleLine(
-                builder,
-                "Monday",
-                currentSchedule.isMondayEnabled(),
-                currentSchedule.getMondayStartTime(),
-                currentSchedule.getMondayEndTime()
-        );
-
-
-        appendScheduleLine(
-                builder,
-                "Tuesday",
-                currentSchedule.isTuesdayEnabled(),
-                currentSchedule.getTuesdayStartTime(),
-                currentSchedule.getTuesdayEndTime()
-        );
-
-
-        appendScheduleLine(
-                builder,
-                "Wednesday",
-                currentSchedule.isWednesdayEnabled(),
-                currentSchedule.getWednesdayStartTime(),
-                currentSchedule.getWednesdayEndTime()
-        );
-
-
-        appendScheduleLine(
-                builder,
-                "Thursday",
-                currentSchedule.isThursdayEnabled(),
-                currentSchedule.getThursdayStartTime(),
-                currentSchedule.getThursdayEndTime()
-        );
-
-
-        appendScheduleLine(
-                builder,
-                "Friday",
-                currentSchedule.isFridayEnabled(),
-                currentSchedule.getFridayStartTime(),
-                currentSchedule.getFridayEndTime()
-        );
-
-
-        builder.append(
-                "\nDefault Appointment Slot: "
-        );
-
-
-        builder.append(
-                currentSchedule
-                        .getDefaultAppointmentSlotMinutes()
-        );
-
-
-        builder.append(
-                " Minutes"
-        );
-
-
-        builder.append(
-                "\nEmergency Availability: "
-        );
-
-
-        builder.append(
-                currentSchedule
-                        .isEmergencyAvailable()
-                        ? "Enabled"
-                        : "Disabled"
-        );
-
-
-        builder.append(
-                "\n\nDisplayed Week: "
-        );
-
-
-        builder.append(
-                displayedWeekMonday
-        );
-
-
-        builder.append(
-                " to "
-        );
-
-
-        builder.append(
-                displayedWeekMonday
-                        .plusDays(4)
-        );
-
-
-        builder.append(
-                "\nAppointments Displayed: "
-        );
-
-
-        builder.append(
-                getAppointmentsForDisplayedWeek()
-                        .size()
-        );
-
-
-        TextArea area =
-                new TextArea(
-                        builder.toString()
-                );
-
-
-        area.setEditable(
-                false
-        );
-
-
-        area.setWrapText(
-                true
-        );
-
-
-        area.setPrefRowCount(
-                18
-        );
-
-
-        Alert alert =
-                new Alert(
-                        Alert.AlertType.INFORMATION
-                );
-
-
-        alert.setTitle(
-                "Schedule Export"
-        );
-
-
-        alert.setHeaderText(
-                "Schedule Summary"
-        );
-
-
-        alert.getDialogPane()
-                .setContent(
-                        area
-                );
-
-
-        alert.showAndWait();
-    }
-
-
-    private void appendScheduleLine(
-            StringBuilder builder,
-            String day,
+    // =========================================================
+    // SET DAY
+    // =========================================================
+
+    private void setDay(
+            String dayName,
             boolean enabled,
             String start,
             String end) {
 
-        builder.append(
-                day
+        DayControls day =
+                findDay(
+                        dayName
+                );
+
+        if (day == null) {
+
+            return;
+        }
+
+        day.checkBox.setSelected(
+                enabled
         );
 
-
-        builder.append(
-                ": "
+        day.startCombo.setDisable(
+                !enabled
         );
 
+        day.endCombo.setDisable(
+                !enabled
+        );
 
-        if (!enabled) {
+        if (start != null
+                && !start.isBlank()) {
 
-            builder.append(
-                    "Off Duty"
-            );
-
-        } else {
-
-            builder.append(
+            selectCombo(
+                    day.startCombo,
                     start
-            );
-
-            builder.append(
-                    " - "
-            );
-
-            builder.append(
-                    end
             );
         }
 
+        if (end != null
+                && !end.isBlank()) {
 
-        builder.append(
-                "\n"
-        );
+            selectCombo(
+                    day.endCombo,
+                    end
+            );
+        }
     }
 
+    // =========================================================
+    // TIME COMBO
+    // =========================================================
 
-    // ============================================================
-    // DISPLAYED WEEK APPOINTMENTS
-    // ============================================================
+    private ComboBox<String>
+    createTimeCombo() {
 
-    private List<Appointment> getAppointmentsForDisplayedWeek() {
+        ComboBox<String> combo =
+                new ComboBox<>();
 
-        List<Appointment> result =
+        combo.getItems()
+                .addAll(
+                        createTimeOptions()
+                );
+
+        combo.setPrefWidth(
+                120
+        );
+
+        styleCombo(
+                combo
+        );
+
+        return combo;
+    }
+
+    private List<String>
+    createTimeOptions() {
+
+        List<String> values =
                 new ArrayList<>();
 
+        for (int hour = 1;
+             hour <= 12;
+             hour++) {
 
-        LocalDate monday =
-                displayedWeekMonday;
+            for (int minute :
+                    new int[]{0, 30}) {
 
-
-        for (Appointment appointment :
-                doctorAppointments) {
-
-            if (appointment == null) {
-                continue;
-            }
-
-
-            LocalDate date =
-                    parseAppointmentDate(
-                            appointment
-                                    .getAppointmentDate()
-                    );
-
-
-            if (date == null) {
-                continue;
-            }
-
-
-            long difference =
-                    ChronoUnit.DAYS.between(
-                            monday,
-                            date
-                    );
-
-
-            if (difference >= 0
-                    && difference <= 4) {
-
-                result.add(
-                        appointment
+                values.add(
+                        String.format(
+                                "%02d:%02d AM",
+                                hour,
+                                minute
+                        )
                 );
             }
         }
 
+        for (int hour = 1;
+             hour <= 12;
+             hour++) {
 
-        return result;
+            for (int minute :
+                    new int[]{0, 30}) {
+
+                values.add(
+                        String.format(
+                                "%02d:%02d PM",
+                                hour,
+                                minute
+                        )
+                );
+            }
+        }
+
+        return values;
     }
 
+    // =========================================================
+    // SELECT COMBO
+    // =========================================================
 
-    // ============================================================
-    // TEXT HELPERS
-    // ============================================================
+    private void selectCombo(
+            ComboBox<String> combo,
+            String value) {
 
-    private String safeText(
-            String value,
-            String fallback) {
+        if (value == null
+                || value.isBlank()) {
+
+            return;
+        }
+
+        if (combo.getItems()
+                .contains(value)) {
+
+            combo.setValue(
+                    value
+            );
+        }
+    }
+
+    // =========================================================
+    // FORM GRID
+    // =========================================================
+
+    private GridPane createFormGrid() {
+
+        GridPane grid =
+                new GridPane();
+
+        grid.setHgap(
+                15
+        );
+
+        grid.setVgap(
+                11
+        );
+
+        ColumnConstraints first =
+                new ColumnConstraints();
+
+        first.setPercentWidth(
+                38
+        );
+
+        ColumnConstraints second =
+                new ColumnConstraints();
+
+        second.setPercentWidth(
+                62
+        );
+
+        grid.getColumnConstraints()
+                .addAll(
+                        first,
+                        second
+                );
+
+        return grid;
+    }
+
+    // =========================================================
+    // FORM ROW
+    // =========================================================
+
+    private void addFormRow(
+            GridPane grid,
+            String labelText,
+            Node control,
+            int row) {
+
+        Label label =
+                new Label(
+                        labelText
+                );
+
+        label.setStyle(
+                "-fx-text-fill: "
+                        + DARK_TEXT
+                        + ";"
+                        + "-fx-font-size: 12px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        grid.add(
+                label,
+                0,
+                row
+        );
+
+        grid.add(
+                control,
+                1,
+                row
+        );
+
+        GridPane.setHgrow(
+                control,
+                Priority.ALWAYS
+        );
+    }
+
+    // =========================================================
+    // TEXT FIELD
+    // =========================================================
+
+    private TextField createTextField(
+            String value) {
+
+        TextField field =
+                new TextField(
+                        value
+                );
+
+        field.setPrefHeight(
+                37
+        );
+
+        field.setStyle(
+                "-fx-background-color: white;"
+                        + "-fx-border-color: "
+                        + BORDER
+                        + ";"
+                        + "-fx-border-radius: 7;"
+                        + "-fx-background-radius: 7;"
+                        + "-fx-padding: 8 10;"
+                        + "-fx-font-size: 12px;"
+        );
+
+        return field;
+    }
+
+    // =========================================================
+    // COMBO STYLE
+    // =========================================================
+
+    private void styleCombo(
+            ComboBox<?> combo) {
+
+        combo.setPrefHeight(
+                37
+        );
+
+        combo.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        combo.setStyle(
+                "-fx-background-color: white;"
+                        + "-fx-border-color: "
+                        + BORDER
+                        + ";"
+                        + "-fx-border-radius: 7;"
+                        + "-fx-background-radius: 7;"
+                        + "-fx-font-size: 12px;"
+        );
+    }
+
+    // =========================================================
+    // CARD
+    // =========================================================
+
+    private VBox createCard() {
+
+        VBox card =
+                new VBox(12);
+
+        card.setPadding(
+                new Insets(
+                        18
+                )
+        );
+
+        card.setStyle(
+                "-fx-background-color: "
+                        + CARD_BACKGROUND
+                        + ";"
+                        + "-fx-border-color: "
+                        + BORDER
+                        + ";"
+                        + "-fx-border-radius: 10;"
+                        + "-fx-background-radius: 10;"
+        );
+
+        return card;
+    }
+
+    // =========================================================
+    // SECTION TITLE
+    // =========================================================
+
+    private Label createSectionTitle(
+            String text) {
+
+        Label label =
+                new Label(
+                        text
+                );
+
+        label.setStyle(
+                "-fx-text-fill: "
+                        + DARK_TEXT
+                        + ";"
+                        + "-fx-font-size: 18px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        return label;
+    }
+
+    // =========================================================
+    // PRIMARY BUTTON
+    // =========================================================
+
+    private Button createPrimaryButton(
+            String text) {
+
+        Button button =
+                new Button(
+                        text
+                );
+
+        button.setStyle(
+                "-fx-background-color: "
+                        + PRIMARY_BLUE
+                        + ";"
+                        + "-fx-text-fill: white;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-padding: 10 18 10 18;"
+                        + "-fx-background-radius: 8;"
+                        + "-fx-cursor: hand;"
+        );
+
+        return button;
+    }
+
+    // =========================================================
+    // SECONDARY BUTTON
+    // =========================================================
+
+    private Button createSecondaryButton(
+            String text) {
+
+        Button button =
+                new Button(
+                        text
+                );
+
+        button.setStyle(
+                "-fx-background-color: white;"
+                        + "-fx-text-fill: "
+                        + DARK_TEXT
+                        + ";"
+                        + "-fx-border-color: "
+                        + BORDER
+                        + ";"
+                        + "-fx-border-radius: 8;"
+                        + "-fx-background-radius: 8;"
+                        + "-fx-padding: 10 16 10 16;"
+                        + "-fx-cursor: hand;"
+        );
+
+        return button;
+    }
+
+    // =========================================================
+    // SMALL BUTTON
+    // =========================================================
+
+    private Button createSmallButton(
+            String text) {
+
+        Button button =
+                new Button(
+                        text
+                );
+
+        button.setStyle(
+                "-fx-background-color: white;"
+                        + "-fx-text-fill: "
+                        + DARK_TEXT
+                        + ";"
+                        + "-fx-border-color: "
+                        + BORDER
+                        + ";"
+                        + "-fx-border-radius: 7;"
+                        + "-fx-background-radius: 7;"
+                        + "-fx-padding: 6 10 6 10;"
+                        + "-fx-font-size: 11px;"
+                        + "-fx-cursor: hand;"
+        );
+
+        return button;
+    }
+
+    // =========================================================
+    // CALENDAR HEADER
+    // =========================================================
+
+    private Label createCalendarHeader(
+            String text) {
+
+        Label label =
+                new Label(
+                        text
+                );
+
+        label.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        label.setAlignment(
+                Pos.CENTER
+        );
+
+        label.setStyle(
+                "-fx-background-color: white;"
+                        + "-fx-text-fill: "
+                        + SECONDARY_TEXT
+                        + ";"
+                        + "-fx-font-size: 11px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-padding: 9;"
+        );
+
+        return label;
+    }
+
+    // =========================================================
+    // DOCTOR DISPLAY NAME
+    // =========================================================
+
+    private String getDoctorDisplayName() {
+
+        if (doctorProfile == null) {
+
+            return "Doctor";
+        }
+
+        String first =
+                safe(
+                        doctorProfile
+                                .getFirstName()
+                );
+
+        String last =
+                safe(
+                        doctorProfile
+                                .getLastName()
+                );
+
+        String fullName =
+                (
+                        first
+                                + " "
+                                + last
+                ).trim();
+
+        if (fullName.isEmpty()) {
+
+            return "Doctor";
+        }
+
+        return "Dr. " + fullName;
+    }
+
+    // =========================================================
+    // DOCTOR SPECIALIZATION
+    // =========================================================
+
+    private String getDoctorSpecialization() {
+
+        if (doctorProfile == null) {
+
+            return "Doctor";
+        }
+
+        String specialization =
+                safe(
+                        doctorProfile
+                                .getSpecialization()
+                );
+
+        if (specialization.isEmpty()) {
+
+            return "Doctor";
+        }
+
+        return specialization;
+    }
+
+    // =========================================================
+    // INITIALS
+    // =========================================================
+
+    private String getDoctorInitials() {
+
+        if (doctorProfile == null) {
+
+            return "DR";
+        }
+
+        String first =
+                safe(
+                        doctorProfile
+                                .getFirstName()
+                );
+
+        String last =
+                safe(
+                        doctorProfile
+                                .getLastName()
+                );
+
+        String initials =
+                "";
+
+        if (!first.isEmpty()) {
+
+            initials +=
+                    first.substring(
+                            0,
+                            1
+                    );
+        }
+
+        if (!last.isEmpty()) {
+
+            initials +=
+                    last.substring(
+                            0,
+                            1
+                    );
+        }
+
+        if (initials.isEmpty()) {
+
+            return "DR";
+        }
+
+        return initials.toUpperCase();
+    }
+
+    // =========================================================
+    // PARSE MINUTES
+    // =========================================================
+
+    private int parseMinutes(
+            String value) {
+
+        if (value == null
+                || value.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Appointment duration is required."
+            );
+        }
+
+        String number =
+                value.replaceAll(
+                        "[^0-9]",
+                        ""
+                );
+
+        return Integer.parseInt(
+                number
+        );
+    }
+
+    // =========================================================
+    // PARSE NUMBER
+    // =========================================================
+
+    private int parseNumber(
+            String value) {
+
+        if (value == null
+                || value.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Required value is missing."
+            );
+        }
+
+        String number =
+                value.replaceAll(
+                        "[^0-9]",
+                        ""
+                );
+
+        return Integer.parseInt(
+                number
+        );
+    }
+
+    // =========================================================
+    // PARSE FEE
+    // =========================================================
+
+    private double parseFee(
+            String value) {
 
         if (value == null
                 || value.trim().isEmpty()) {
 
-            return fallback;
+            throw new IllegalArgumentException(
+                    "Consultation fee is required."
+            );
         }
 
+        try {
+
+            double fee =
+                    Double.parseDouble(
+                            value.trim()
+                    );
+
+            if (fee < 0) {
+
+                throw new IllegalArgumentException(
+                        "Consultation fee cannot be negative."
+                );
+            }
+
+            return fee;
+
+        } catch (NumberFormatException e) {
+
+            throw new IllegalArgumentException(
+                    "Please enter a valid consultation fee."
+            );
+        }
+    }
+
+    // =========================================================
+    // FORMAT FEE
+    // =========================================================
+
+    private String formatFee(
+            double fee) {
+
+        if (fee == Math.rint(fee)) {
+
+            return String.valueOf(
+                    (long) fee
+            );
+        }
+
+        return String.format(
+                "%.2f",
+                fee
+        );
+    }
+
+    // =========================================================
+    // SAFE STRING
+    // =========================================================
+
+    private String safe(
+            String value) {
+
+        if (value == null) {
+
+            return "";
+        }
 
         return value.trim();
     }
 
+    // =========================================================
+    // CAPITALIZE
+    // =========================================================
 
-    private String getRootErrorMessage(
+    private String capitalize(
+            String value) {
+
+        if (value == null
+                || value.isEmpty()) {
+
+            return "";
+        }
+
+        return value.substring(
+                0,
+                1
+        ).toUpperCase()
+                + value.substring(
+                        1
+                ).toLowerCase();
+    }
+
+    // =========================================================
+    // STATUS
+    // =========================================================
+
+    private void setStatus(
+            String text,
+            String color) {
+
+        if (statusLabel == null) {
+
+            return;
+        }
+
+        statusLabel.setText(
+                text
+        );
+
+        statusLabel.setStyle(
+                "-fx-text-fill: "
+                        + color
+                        + ";"
+                        + "-fx-font-size: 11px;"
+                        + "-fx-font-weight: bold;"
+        );
+    }
+
+    // =========================================================
+    // ERROR MESSAGE
+    // =========================================================
+
+    private String getRootMessage(
             Throwable throwable) {
+
+        if (throwable == null) {
+
+            return "Unknown error.";
+        }
 
         Throwable current =
                 throwable;
 
+        String message =
+                throwable.getMessage();
 
-        while (current.getCause() != null) {
+        while (
+                current.getCause() != null
+        ) {
 
             current =
                     current.getCause();
+
+            if (current.getMessage() != null
+                    && !current.getMessage()
+                            .trim()
+                            .isEmpty()) {
+
+                message =
+                        current.getMessage();
+            }
         }
 
-
-        if (current.getMessage() == null
-                || current.getMessage()
-                        .trim()
-                        .isEmpty()) {
+        if (message == null
+                || message.trim().isEmpty()) {
 
             return "An unexpected error occurred.";
         }
 
-
-        return current.getMessage();
+        return message;
     }
 
+    // =========================================================
+    // ALERT
+    // =========================================================
 
-    // ============================================================
-    // ALERTS
-    // ============================================================
-
-    private void showInformationAlert(
+    private void showAlert(
+            Alert.AlertType type,
             String title,
             String message) {
 
         Alert alert =
                 new Alert(
-                        Alert.AlertType.INFORMATION
+                        type
                 );
-
 
         alert.setTitle(
                 title
         );
 
-
         alert.setHeaderText(
                 null
         );
 
-
         alert.setContentText(
                 message
         );
-
 
         alert.showAndWait();
     }
 
+    // =========================================================
+    // DAY CONTROLS
+    // =========================================================
 
-    private void showErrorAlert(
-            String title,
-            String message) {
+    private static class DayControls {
 
-        Alert alert =
-                new Alert(
-                        Alert.AlertType.ERROR
-                );
+        private final String dayName;
 
+        private final CheckBox checkBox;
 
-        alert.setTitle(
-                title
-        );
+        private final ComboBox<String>
+                startCombo;
 
+        private final ComboBox<String>
+                endCombo;
 
-        alert.setHeaderText(
-                null
-        );
+        private DayControls(
+                String dayName,
+                CheckBox checkBox,
+                ComboBox<String> startCombo,
+                ComboBox<String> endCombo) {
 
+            this.dayName =
+                    dayName;
 
-        alert.setContentText(
-                message
-        );
+            this.checkBox =
+                    checkBox;
 
+            this.startCombo =
+                    startCombo;
 
-        alert.showAndWait();
+            this.endCombo =
+                    endCombo;
+        }
     }
 }

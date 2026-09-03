@@ -1,7 +1,10 @@
 package com.healthsphere.view.doctor;
 
 import com.healthsphere.controller.doctor.PatientController;
-import com.healthsphere.model.AuthenticationResponse;
+import com.healthsphere.dao.appointment.AppointmentDAO;
+import com.healthsphere.dao.medical.MedicalRecordDAO;
+import com.healthsphere.model.Appointment;
+import com.healthsphere.model.MedicalRecord;
 import com.healthsphere.model.PatientProfile;
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ResourceImage;
@@ -15,347 +18,421 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
 /**
- * PatientDetailsView displays detailed patient information.
+ * PatientDetailsView
  *
- * Features:
- * - Loads real patients from Firestore
- * - Shows only patients who have appointments with logged-in doctor
- * - Dynamic patient selection
- * - Existing patient details UI preserved
- * - Sidebar navigation preserved
- * - Existing CSS preserved
+ * Doctor-side patient details screen.
  *
- * Backend flow:
+ * Architecture:
  *
- * SessionManager
- * ↓
- * Doctor UID
- * ↓
- * PatientController
- * ↓
- * AppointmentDAO
- * ↓
- * patientUid
- * ↓
- * PatientDAO
- * ↓
- * PatientProfile
+ * View
+ *   ↓
+ * Controller / DAO
+ *   ↓
+ * Firebase Firestore
+ *
+ * Important project rules:
+ * - Uses the existing application Stage.
+ * - Does not create a new application Stage.
+ * - Creates and returns a Scene.
+ * - Uses Navigation.goTo(...) for navigation.
+ * - Uses SessionManager for current doctor identity.
+ * - Uses real Firestore data.
+ * - No mock patient data.
  */
 public class PatientDetailsView {
 
+    // ============================================================
+    // COMMON APPLICATION STAGE
+    // ============================================================
+
     private final Stage stage;
-    private final Scene scene;
+
+    private Scene scene;
 
     // ============================================================
-    // BACKEND CONTROLLER
+    // CONTROLLERS / DAOS
     // ============================================================
 
     private final PatientController patientController;
+    private final MedicalRecordDAO medicalRecordDAO;
+    private final AppointmentDAO appointmentDAO;
 
     // ============================================================
-    // DYNAMIC UI COMPONENT REFERENCES
+    // CURRENT DOCTOR
     // ============================================================
 
-    private Label nameLbl;
-    private Label metaLbl;
-    private Label idLbl;
-
-    private ImageView profileImg;
-
-    private VBox vitalsContent;
-
-    private Label historyText;
-
-    private HBox patientSelectorBar;
-
-    private final List<Button> patientTabButtons = new ArrayList<>();
+    private String doctorUid;
 
     // ============================================================
-    // PATIENT DATA FOR EXISTING UI
+    // PATIENT DATA
     // ============================================================
 
-    private static class PatientData {
+    private List<PatientProfile> doctorPatients =
+            new ArrayList<>();
 
-        String name;
-        String meta;
-        String id;
-        String imgPath;
-        String[] vitals;
-        String history;
+    private PatientProfile selectedPatient;
 
-        PatientData(
-                String name,
-                String meta,
-                String id,
-                String imgPath,
-                String[] vitals,
-                String history) {
+    private List<MedicalRecord> medicalRecords =
+            new ArrayList<>();
 
-            this.name = name;
-            this.meta = meta;
-            this.id = id;
-            this.imgPath = imgPath;
-            this.vitals = vitals;
-            this.history = history;
-        }
+    private List<Appointment> appointments =
+            new ArrayList<>();
+
+    // ============================================================
+    // UI REFERENCES
+    // ============================================================
+
+    private TextField searchField;
+
+    private Label matchingCountLabel;
+
+    private ComboBox<PatientProfile> patientSelector;
+
+    private VBox patientListContainer;
+
+    private Label patientNameLabel;
+    private Label patientMetaLabel;
+    private Label patientIdLabel;
+
+    private Label relationshipLabel;
+
+    private Label doctorNameLabel;
+    private Label doctorSpecializationLabel;
+
+    private VBox patientInformationContainer;
+
+    private VBox latestVitalsContainer;
+
+    private VBox medicalRecordsContainer;
+
+    private VBox appointmentsContainer;
+
+    private Label recordsCountLabel;
+
+    // ============================================================
+    // CONSTRUCTORS
+    // ============================================================
+
+    /**
+     * Default constructor.
+     *
+     * Used by existing sidebar navigation.
+     */
+    public PatientDetailsView(Stage stage) {
+
+        this(stage, null);
     }
 
-    private final List<PatientData> patientList = new ArrayList<>();
+    /**
+     * Patient-specific constructor.
+     *
+     * Can be used when opening Patient Details for
+     * a particular patient.
+     */
+    public PatientDetailsView(
+            Stage stage,
+            String patientUid
+    ) {
 
-    // ============================================================
-    // CONSTRUCTOR
-    // ============================================================
+        if (stage == null) {
 
-    public PatientDetailsView(Stage stage) {
+            throw new IllegalArgumentException(
+                    "Application Stage cannot be null."
+            );
+        }
 
         this.stage = stage;
 
-        /*
-         * Create backend controller.
-         */
-        this.patientController = new PatientController();
+        this.patientController =
+                new PatientController();
 
-        /*
-         * Load real patients from Firestore.
-         */
-        initPatientData();
+        this.medicalRecordDAO =
+                new MedicalRecordDAO();
 
-        /*
-         * Create existing UI.
-         */
-        this.scene = createScene();
+        this.appointmentDAO =
+                new AppointmentDAO();
+
+        this.doctorUid =
+                getCurrentDoctorUid();
+
+        loadDoctorPatients();
+
+        if (patientUid != null
+                && !patientUid.trim().isEmpty()) {
+
+            selectPatientByUid(patientUid);
+
+        } else if (!doctorPatients.isEmpty()) {
+
+            selectedPatient =
+                    doctorPatients.get(0);
+        }
+
+        loadSelectedPatientData();
+
+        this.scene =
+                createScene();
     }
 
     // ============================================================
-    // GET SCENE
+    // PUBLIC SCENE
     // ============================================================
 
     public Scene getScene() {
 
-        return this.scene;
+        return scene;
     }
 
     // ============================================================
-    // LOAD PATIENT DATA FROM FIRESTORE
+    // LOAD CURRENT DOCTOR
     // ============================================================
 
-    private void initPatientData() {
+    private String getCurrentDoctorUid() {
 
-        patientList.clear();
+        SessionManager session =
+                SessionManager.getInstance();
+
+        if (session == null) {
+
+            return null;
+        }
+
+        if (!session.isLoggedIn()) {
+
+            return null;
+        }
+
+        if (session.getCurrentUser() == null) {
+
+            return null;
+        }
+
+        String uid =
+                session.getCurrentUser().getUid();
+
+        if (uid == null
+                || uid.trim().isEmpty()) {
+
+            return null;
+        }
+
+        return uid.trim();
+    }
+
+    // ============================================================
+    // LOAD DOCTOR PATIENTS
+    // ============================================================
+
+    private void loadDoctorPatients() {
+
+        doctorPatients =
+                new ArrayList<>();
+
+        if (doctorUid == null
+                || doctorUid.trim().isEmpty()) {
+
+            return;
+        }
 
         try {
 
-            // ====================================================
-            // GET CURRENT LOGGED-IN USER
-            // ====================================================
+            List<PatientProfile> patients =
+                    patientController
+                            .getPatientsForDoctorSafe(
+                                    doctorUid
+                            );
 
-            AuthenticationResponse authenticationResponse = SessionManager
-                    .getInstance()
-                    .getAuthenticationResponse();
+            if (patients != null) {
 
-            String doctorUid = authenticationResponse.getUid();
-
-            if (doctorUid == null ||
-                    doctorUid.trim().isEmpty()) {
-
-                System.err.println(
-                        "Doctor UID is missing.");
-
-                return;
+                doctorPatients.addAll(
+                        patients
+                );
             }
-
-            System.out.println(
-                    "Loading patients for doctor: "
-                            + doctorUid);
-
-            // ====================================================
-            // GET PATIENTS FOR DOCTOR
-            // ====================================================
-
-            List<PatientProfile> patients = patientController
-                    .getPatientsForDoctor(
-                            doctorUid);
-
-            // ====================================================
-            // CONVERT PATIENT PROFILE TO EXISTING UI DATA
-            // ====================================================
-
-            for (PatientProfile patientProfile : patients) {
-
-                PatientData patientData = convertPatientProfile(
-                        patientProfile);
-
-                patientList.add(
-                        patientData);
-            }
-
-            System.out.println(
-                    "Patients loaded successfully: "
-                            + patientList.size());
 
         } catch (Exception e) {
 
             System.err.println(
-                    "Unable to load patients from Firestore.");
+                    "Unable to load doctor patients: "
+                            + e.getMessage()
+            );
 
-            e.printStackTrace();
+            doctorPatients.clear();
+        }
+
+        doctorPatients.removeIf(
+                Objects::isNull
+        );
+    }
+
+    // ============================================================
+    // SELECT PATIENT
+    // ============================================================
+
+    private void selectPatientByUid(
+            String patientUid
+    ) {
+
+        if (patientUid == null
+                || patientUid.trim().isEmpty()) {
+
+            return;
+        }
+
+        for (PatientProfile patient :
+                doctorPatients) {
+
+            if (patient != null
+                    && patientUid.equals(
+                            patient.getUid()
+                    )) {
+
+                selectedPatient =
+                        patient;
+
+                return;
+            }
+        }
+
+        /*
+         * If the patient is not already in the
+         * doctor patient list, try Firestore.
+         */
+        try {
+
+            PatientProfile patient =
+                    patientController
+                            .getPatientProfile(
+                                    patientUid
+                            );
+
+            if (patient != null) {
+
+                selectedPatient =
+                        patient;
+            }
+
+        } catch (Exception e) {
+
+            System.err.println(
+                    "Unable to load patient "
+                            + patientUid
+                            + ": "
+                            + e.getMessage()
+            );
         }
     }
 
     // ============================================================
-    // CONVERT FIRESTORE PATIENT PROFILE
-    // TO EXISTING PATIENT DATA
+    // LOAD SELECTED PATIENT DATA
     // ============================================================
 
-    private PatientData convertPatientProfile(
-            PatientProfile patientProfile) {
+    private void loadSelectedPatientData() {
 
-        String firstName = patientProfile.getFirstName();
+        medicalRecords =
+                new ArrayList<>();
 
-        String lastName = patientProfile.getLastName();
+        appointments =
+                new ArrayList<>();
 
-        if (firstName == null) {
-            firstName = "";
+        if (selectedPatient == null
+                || selectedPatient.getUid() == null
+                || selectedPatient.getUid().trim().isEmpty()) {
+
+            return;
         }
 
-        if (lastName == null) {
-            lastName = "";
+        String patientUid =
+                selectedPatient.getUid();
+
+        // --------------------------------------------------------
+        // MEDICAL RECORDS
+        // --------------------------------------------------------
+
+        try {
+
+            List<MedicalRecord> records =
+                    medicalRecordDAO
+                            .getPatientMedicalRecords(
+                                    patientUid
+                            );
+
+            if (records != null) {
+
+                medicalRecords.addAll(
+                        records
+                );
+            }
+
+        } catch (Exception e) {
+
+            System.err.println(
+                    "Unable to load medical records: "
+                            + e.getMessage()
+            );
         }
 
-        String fullName = (firstName
-                + " "
-                + lastName).trim();
+        // --------------------------------------------------------
+        // APPOINTMENTS
+        // --------------------------------------------------------
 
-        if (fullName.isEmpty()) {
+        try {
 
-            fullName = "Unknown Patient";
+            List<Appointment> patientAppointments =
+                    appointmentDAO
+                            .getPatientAppointments(
+                                    patientUid
+                            );
+
+            if (patientAppointments != null) {
+
+                appointments.addAll(
+                        patientAppointments
+                );
+            }
+
+        } catch (Exception e) {
+
+            System.err.println(
+                    "Unable to load appointments: "
+                            + e.getMessage()
+            );
         }
 
-        // ========================================================
-        // GENDER
-        // ========================================================
+        // --------------------------------------------------------
+        // SORT MEDICAL RECORDS
+        // --------------------------------------------------------
 
-        String gender = patientProfile.getGender();
+        medicalRecords.sort(
+                Comparator.comparing(
+                        this::getRecordDateValue,
+                        Comparator.nullsLast(
+                                Comparator.reverseOrder()
+                        )
+                )
+        );
 
-        if (gender == null ||
-                gender.trim().isEmpty()) {
+        // --------------------------------------------------------
+        // SORT APPOINTMENTS
+        // --------------------------------------------------------
 
-            gender = "Not specified";
-        }
-
-        // ========================================================
-        // DATE OF BIRTH
-        // ========================================================
-
-        String dateOfBirth = patientProfile.getDateOfBirth();
-
-        if (dateOfBirth == null ||
-                dateOfBirth.trim().isEmpty()) {
-
-            dateOfBirth = "Date of birth not available";
-        }
-
-        // ========================================================
-        // BLOOD GROUP
-        // ========================================================
-
-        String bloodGroup = patientProfile.getBloodGroup();
-
-        if (bloodGroup == null ||
-                bloodGroup.trim().isEmpty()) {
-
-            bloodGroup = "Not specified";
-        }
-
-        // ========================================================
-        // META INFORMATION
-        // ========================================================
-
-        String meta = gender
-                + " • DOB: "
-                + dateOfBirth
-                + " • Blood Group: "
-                + bloodGroup;
-
-        // ========================================================
-        // PATIENT ID
-        // ========================================================
-
-        String uid = patientProfile.getUid();
-
-        if (uid == null ||
-                uid.trim().isEmpty()) {
-
-            uid = "Unknown";
-        }
-
-        String patientId = "Patient ID: #"
-                + uid;
-
-        // ========================================================
-        // DEFAULT PROFILE IMAGE
-        // ========================================================
-
-        String imagePath = "/images/mocks/robert_chen.png";
-
-        // ========================================================
-        // VITALS
-        // ========================================================
-        //
-        // PatientProfile currently does not contain vital fields.
-        //
-        // Therefore we do NOT invent medical values.
-        //
-        // These can later be loaded from a medical-record/vitals
-        // collection.
-        //
-
-        String[] vitals = {
-
-                "• Heart Rate: Not available",
-
-                "• Blood Pressure: Not available",
-
-                "• Temperature: Not available",
-
-                "• SpO2: Not available"
-        };
-
-        // ========================================================
-        // MEDICAL HISTORY
-        // ========================================================
-        //
-        // PatientProfile currently does not contain a history
-        // field.
-        //
-        // Therefore we display a clear message instead of fake
-        // medical information.
-        //
-
-        String history = "No medical history or clinical notes "
-                + "are currently available for this patient.";
-
-        return new PatientData(
-
-                fullName,
-
-                meta,
-
-                patientId,
-
-                imagePath,
-
-                vitals,
-
-                history);
+        appointments.sort(
+                Comparator.comparing(
+                        this::getAppointmentDateValue,
+                        Comparator.nullsLast(
+                                Comparator.reverseOrder()
+                        )
+                )
+        );
     }
 
     // ============================================================
@@ -364,108 +441,130 @@ public class PatientDetailsView {
 
     private Scene createScene() {
 
-        BorderPane mainRoot = new BorderPane();
+        BorderPane root =
+                new BorderPane();
 
-        mainRoot.getStyleClass()
-                .add("root-pane");
+        root.setStyle(
+                "-fx-background-color: #F5F7FB;"
+        );
 
         // ========================================================
         // SIDEBAR
         // ========================================================
 
-        VBox sidebar = createSidebar();
+        VBox sidebar =
+                createSidebar();
 
-        mainRoot.setLeft(
-                sidebar);
+        root.setLeft(sidebar);
 
         // ========================================================
-        // MAIN CONTENT AREA
+        // MAIN CONTENT
         // ========================================================
 
-        VBox contentArea = new VBox(20);
+        VBox content =
+                new VBox(20);
 
-        contentArea.setPadding(
+        content.setPadding(
                 new Insets(
-                        20,
-                        30,
-                        30,
-                        30));
+                        24,
+                        32,
+                        32,
+                        32
+                )
+        );
 
-        contentArea.getStyleClass()
-                .add("content-area");
+        // Header
+        content.getChildren().add(
+                createTopHeader()
+        );
 
-        // ========================================================
-        // TOP HEADER
-        // ========================================================
+        // Page heading
+        content.getChildren().add(
+                createPageHeader()
+        );
 
-        HBox topHeader = createTopHeader();
+        // Search
+        content.getChildren().add(
+                createSearchSection()
+        );
 
-        contentArea.getChildren()
-                .add(topHeader);
+        // Patient selector
+        content.getChildren().add(
+                createPatientSelectorSection()
+        );
 
-        // ========================================================
-        // TITLE
-        // ========================================================
+        // Patient profile header
+        content.getChildren().add(
+                createPatientHeader()
+        );
 
-        BorderPane titleSection = createTitleSection();
+        // Information sections
+        content.getChildren().add(
+                createPatientInformationSection()
+        );
 
-        contentArea.getChildren()
-                .add(titleSection);
+        content.getChildren().add(
+                createMedicalOverviewSection()
+        );
 
-        // ========================================================
-        // PATIENT SELECTOR
-        // ========================================================
+        content.getChildren().add(
+                createMedicalRecordsSection()
+        );
 
-        patientSelectorBar = createPatientSelectorBar();
-
-        contentArea.getChildren()
-                .add(
-                        patientSelectorBar);
-
-        // ========================================================
-        // PATIENT OVERVIEW
-        // ========================================================
-
-        VBox patientCard = createPatientOverviewCard();
-
-        contentArea.getChildren()
-                .add(
-                        patientCard);
-
-        // ========================================================
-        // DETAILS GRID
-        // ========================================================
-
-        GridPane detailsGrid = createDetailsGrid();
-
-        contentArea.getChildren()
-                .add(
-                        detailsGrid);
-
-        mainRoot.setCenter(
-                contentArea);
+        content.getChildren().add(
+                createAppointmentsSection()
+        );
 
         // ========================================================
-        // OUTER SCROLL PANE
+        // SCROLL PANE
         // ========================================================
 
-        ScrollPane outerScrollPane = new ScrollPane(
-                mainRoot);
+        ScrollPane scrollPane =
+                new ScrollPane(
+                        content
+                );
 
-        outerScrollPane.setFitToWidth(
-                true);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(false);
 
-        outerScrollPane.setFitToHeight(
-                true);
+        scrollPane.setHbarPolicy(
+                ScrollPane.ScrollBarPolicy.NEVER
+        );
 
-        outerScrollPane.getStyleClass()
-                .add(
-                        "content-scrollpane");
+        scrollPane.setVbarPolicy(
+                ScrollPane.ScrollBarPolicy.AS_NEEDED
+        );
 
-        Scene patientDetailsScene = new Scene(
-                outerScrollPane,
-                stage.getWidth(),
-                stage.getHeight());
+        scrollPane.setStyle(
+                "-fx-background-color: transparent;"
+                        + "-fx-background: transparent;"
+                        + "-fx-border-color: transparent;"
+        );
+
+        root.setCenter(
+                scrollPane
+        );
+
+        // ========================================================
+        // COMMON SCENE SIZE
+        // ========================================================
+
+        double width =
+                stage.getWidth() > 0
+                        ? stage.getWidth()
+                        : 1400;
+
+        double height =
+                stage.getHeight() > 0
+                        ? stage.getHeight()
+                        : 850;
+
+        Scene patientScene =
+                new Scene(
+                        root,
+                        width,
+                        height
+                );
 
         // ========================================================
         // CSS
@@ -473,19 +572,2029 @@ public class PatientDetailsView {
 
         try {
 
-            patientDetailsScene
-                    .getStylesheets()
-                    .add(
-                            Objects.requireNonNull(
-                                    getClass()
-                                            .getResource(
-                                                    "/css/appointments.css"))
-                                    .toExternalForm());
+            String css =
+                    Objects.requireNonNull(
+                            getClass()
+                                    .getResource(
+                                            "/css/patient_details.css"
+                                    )
+                    ).toExternalForm();
 
-        } catch (Exception ignored) {
+            patientScene
+                    .getStylesheets()
+                    .add(css);
+
+        } catch (Exception e) {
+
+            System.err.println(
+                    "patient_details.css could not be loaded: "
+                            + e.getMessage()
+            );
         }
 
-        return patientDetailsScene;
+        return patientScene;
+    }
+
+    // ============================================================
+    // TOP HEADER
+    // ============================================================
+
+    private HBox createTopHeader() {
+
+        HBox topBar =
+                new HBox();
+
+        topBar.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        // --------------------------------------------------------
+        // Search
+        // --------------------------------------------------------
+
+        HBox searchContainer =
+                new HBox(8);
+
+        searchContainer.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        searchContainer
+                .getStyleClass()
+                .add(
+                        "search-input-box"
+                );
+
+        searchContainer.setPrefWidth(
+                300
+        );
+
+        ImageView searchIcon =
+                createImageView(
+                        "/images/icons/ic_search.png",
+                        16,
+                        16
+                );
+
+        searchField =
+                new TextField();
+
+        searchField.setPromptText(
+                "Search patients by name or ID..."
+        );
+
+        searchField
+                .getStyleClass()
+                .add(
+                        "search-text-field"
+                );
+
+        HBox.setHgrow(
+                searchField,
+                Priority.ALWAYS
+        );
+
+        searchField.textProperty()
+                .addListener(
+                        (obs, oldValue, newValue) ->
+                                filterPatients(
+                                        newValue
+                                )
+                );
+
+        if (searchIcon != null) {
+
+            searchContainer
+                    .getChildren()
+                    .add(searchIcon);
+        }
+
+        searchContainer
+                .getChildren()
+                .add(searchField);
+
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        // --------------------------------------------------------
+        // Doctor information
+        // --------------------------------------------------------
+
+        VBox doctorInfo =
+                new VBox(2);
+
+        doctorInfo.setAlignment(
+                Pos.CENTER_RIGHT
+        );
+
+        doctorNameLabel =
+                new Label(
+                        getLoggedInDoctorDisplayName()
+                );
+
+        doctorNameLabel
+                .getStyleClass()
+                .add(
+                        "profile-name"
+                );
+
+        doctorSpecializationLabel =
+                new Label(
+                        "Doctor"
+                );
+
+        doctorSpecializationLabel
+                .getStyleClass()
+                .add(
+                        "profile-dept"
+                );
+
+        doctorInfo
+                .getChildren()
+                .addAll(
+                        doctorNameLabel,
+                        doctorSpecializationLabel
+                );
+
+        StackPane notificationBox =
+                new StackPane();
+
+        ImageView bellIcon =
+                createImageView(
+                        "/images/icons/ic_bell.png",
+                        18,
+                        18
+                );
+
+        if (bellIcon != null) {
+
+            notificationBox
+                    .getChildren()
+                    .add(
+                            bellIcon
+                    );
+        }
+
+        Circle notificationBadge =
+                new Circle(
+                        4,
+                        Color.web(
+                                "#EF4444"
+                        )
+                );
+
+        StackPane.setAlignment(
+                notificationBadge,
+                Pos.TOP_RIGHT
+        );
+
+        notificationBox
+                .getChildren()
+                .add(
+                        notificationBadge
+                );
+
+        HBox doctorProfile =
+                new HBox(10);
+
+        doctorProfile.setAlignment(
+                Pos.CENTER_RIGHT
+        );
+
+        ImageView doctorAvatar =
+                createImageView(
+                        "/images/doctor/portrait-3d-male-doctor.png",
+                        36,
+                        36
+                );
+
+        if (doctorAvatar != null) {
+
+            Circle clip =
+                    new Circle(
+                            18,
+                            18,
+                            18
+                    );
+
+            doctorAvatar.setClip(
+                    clip
+            );
+
+            doctorProfile
+                    .getChildren()
+                    .add(
+                            doctorAvatar
+                    );
+        }
+
+        doctorProfile
+                .getChildren()
+                .add(
+                        doctorInfo
+                );
+
+        doctorProfile.setStyle(
+                "-fx-cursor: hand;"
+        );
+
+        doctorProfile.setOnMouseClicked(
+                e -> Navigation.goTo(
+                        stage,
+                        () ->
+                                new DoctorProfileView(
+                                        stage
+                                ).getScene()
+                )
+        );
+
+        topBar
+                .getChildren()
+                .addAll(
+                        searchContainer,
+                        spacer,
+                        notificationBox,
+                        doctorProfile
+                );
+
+        return topBar;
+    }
+
+    // ============================================================
+    // PAGE HEADER
+    // ============================================================
+
+    private HBox createPageHeader() {
+
+        HBox header =
+                new HBox();
+
+        header.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        VBox titleBox =
+                new VBox(4);
+
+        Label title =
+                new Label(
+                        "Patient Details"
+                );
+
+        title.setStyle(
+                "-fx-font-size: 28px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #0F172A;"
+        );
+
+        Label subtitle =
+                new Label(
+                        "Patient profiles, clinical history, vitals and appointments"
+                );
+
+        subtitle.setStyle(
+                "-fx-font-size: 14px;"
+                        + "-fx-text-fill: #64748B;"
+        );
+
+        titleBox
+                .getChildren()
+                .addAll(
+                        title,
+                        subtitle
+                );
+
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        Label doctorStatus =
+                new Label(
+                        doctorUid == null
+                                ? "Not signed in"
+                                : "Doctor workspace"
+                );
+
+        doctorStatus.setStyle(
+                "-fx-font-size: 12px;"
+                        + "-fx-text-fill: #64748B;"
+        );
+
+        header
+                .getChildren()
+                .addAll(
+                        titleBox,
+                        spacer,
+                        doctorStatus
+                );
+
+        return header;
+    }
+
+    // ============================================================
+    // SEARCH SECTION
+    // ============================================================
+
+    private VBox createSearchSection() {
+
+        VBox card =
+                createCard();
+
+        HBox row =
+                new HBox(12);
+
+        row.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        Label icon =
+                new Label(
+                        "⌕"
+                );
+
+        icon.setStyle(
+                "-fx-font-size: 22px;"
+                        + "-fx-text-fill: #2563EB;"
+        );
+
+        matchingCountLabel =
+                new Label();
+
+        matchingCountLabel.setStyle(
+                "-fx-font-size: 13px;"
+                        + "-fx-text-fill: #64748B;"
+        );
+
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        Button clearButton =
+                new Button(
+                        "Clear"
+                );
+
+        clearButton.setStyle(
+                "-fx-background-color: white;"
+                        + "-fx-border-color: #CBD5E1;"
+                        + "-fx-border-radius: 7;"
+                        + "-fx-background-radius: 7;"
+                        + "-fx-padding: 8 16;"
+                        + "-fx-cursor: hand;"
+        );
+
+        clearButton.setOnAction(
+                e -> {
+
+                    searchField.clear();
+
+                    if (!doctorPatients.isEmpty()) {
+
+                        selectedPatient =
+                                doctorPatients.get(0);
+
+                        loadSelectedPatientData();
+
+                        refreshPatientUI();
+                    }
+                }
+        );
+
+        row
+                .getChildren()
+                .addAll(
+                        icon,
+                        matchingCountLabel,
+                        spacer,
+                        clearButton
+                );
+
+        card.getChildren()
+                .add(row);
+
+        updateMatchingCount(
+                doctorPatients.size()
+        );
+
+        return card;
+    }
+
+    // ============================================================
+    // PATIENT SELECTOR
+    // ============================================================
+
+    private VBox createPatientSelectorSection() {
+
+        VBox card =
+                createCard();
+
+        Label title =
+                new Label(
+                        "Select Patient"
+                );
+
+        title.setStyle(
+                "-fx-font-size: 15px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #334155;"
+        );
+
+        patientSelector =
+                new ComboBox<>();
+
+        patientSelector
+                .setMaxWidth(
+                        Double.MAX_VALUE
+                );
+
+        patientSelector
+                .getItems()
+                .addAll(
+                        doctorPatients
+                );
+
+        patientSelector
+                .setPromptText(
+                        doctorPatients.isEmpty()
+                                ? "No patients found"
+                                : "Choose a patient"
+                );
+
+        patientSelector.setCellFactory(
+                list -> new ListCell<>() {
+
+                    @Override
+                    protected void updateItem(
+                            PatientProfile item,
+                            boolean empty
+                    ) {
+
+                        super.updateItem(
+                                item,
+                                empty
+                        );
+
+                        if (empty
+                                || item == null) {
+
+                            setText(null);
+
+                        } else {
+
+                            setText(
+                                    getPatientDisplayName(
+                                            item
+                                    )
+                            );
+                        }
+                    }
+                }
+        );
+
+        patientSelector.setButtonCell(
+                new ListCell<>() {
+
+                    @Override
+                    protected void updateItem(
+                            PatientProfile item,
+                            boolean empty
+                    ) {
+
+                        super.updateItem(
+                                item,
+                                empty
+                        );
+
+                        if (empty
+                                || item == null) {
+
+                            setText(
+                                    "Choose a patient"
+                            );
+
+                        } else {
+
+                            setText(
+                                    getPatientDisplayName(
+                                            item
+                                    )
+                            );
+                        }
+                    }
+                }
+        );
+
+        patientSelector.setOnAction(
+                e -> {
+
+                    PatientProfile patient =
+                            patientSelector
+                                    .getValue();
+
+                    if (patient == null) {
+
+                        return;
+                    }
+
+                    selectedPatient =
+                            patient;
+
+                    loadSelectedPatientData();
+
+                    refreshPatientUI();
+                }
+        );
+
+        if (selectedPatient != null) {
+
+            patientSelector
+                    .setValue(
+                            selectedPatient
+                    );
+        }
+
+        card.getChildren()
+                .addAll(
+                        title,
+                        patientSelector
+                );
+
+        return card;
+    }
+
+    // ============================================================
+    // PATIENT HEADER
+    // ============================================================
+
+    private VBox createPatientHeader() {
+
+        VBox card =
+                createCard();
+
+        HBox row =
+                new HBox(18);
+
+        row.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        StackPane avatar =
+                createPatientAvatar(
+                        selectedPatient
+                );
+
+        VBox details =
+                new VBox(5);
+
+        patientNameLabel =
+                new Label(
+                        getPatientDisplayName(
+                                selectedPatient
+                        )
+                );
+
+        patientNameLabel.setStyle(
+                "-fx-font-size: 24px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #0F172A;"
+        );
+
+        patientMetaLabel =
+                new Label(
+                        getPatientMeta(
+                                selectedPatient
+                        )
+                );
+
+        patientMetaLabel.setStyle(
+                "-fx-font-size: 14px;"
+                        + "-fx-text-fill: #64748B;"
+        );
+
+        patientIdLabel =
+                new Label(
+                        getPatientIdText(
+                                selectedPatient
+                        )
+                );
+
+        patientIdLabel.setStyle(
+                "-fx-font-size: 13px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #2563EB;"
+        );
+
+        details
+                .getChildren()
+                .addAll(
+                        patientNameLabel,
+                        patientMetaLabel,
+                        patientIdLabel
+                );
+
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        VBox relationshipBox =
+                new VBox(5);
+
+        relationshipBox.setAlignment(
+                Pos.CENTER_RIGHT
+        );
+
+        Label relationshipTitle =
+                new Label(
+                        "Doctor Relationship"
+                );
+
+        relationshipTitle.setStyle(
+                "-fx-font-size: 12px;"
+                        + "-fx-text-fill: #64748B;"
+        );
+
+        relationshipLabel =
+                new Label(
+                        selectedPatient == null
+                                ? "No patient selected"
+                                : "Active patient"
+                );
+
+        relationshipLabel.setStyle(
+                "-fx-font-size: 14px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #059669;"
+        );
+
+        relationshipBox
+                .getChildren()
+                .addAll(
+                        relationshipTitle,
+                        relationshipLabel
+                );
+
+        row.getChildren()
+                .addAll(
+                        avatar,
+                        details,
+                        spacer,
+                        relationshipBox
+                );
+
+        card.getChildren()
+                .add(row);
+
+        return card;
+    }
+
+    // ============================================================
+    // PATIENT INFORMATION
+    // ============================================================
+
+    private VBox createPatientInformationSection() {
+
+        VBox card =
+                createCard();
+
+        Label title =
+                sectionTitle(
+                        "Patient Information"
+                );
+
+        patientInformationContainer =
+                new VBox(14);
+
+        populatePatientInformation();
+
+        card.getChildren()
+                .addAll(
+                        title,
+                        patientInformationContainer
+                );
+
+        return card;
+    }
+
+    private void populatePatientInformation() {
+
+        if (patientInformationContainer == null) {
+
+            return;
+        }
+
+        patientInformationContainer
+                .getChildren()
+                .clear();
+
+        if (selectedPatient == null) {
+
+            patientInformationContainer
+                    .getChildren()
+                    .add(
+                            emptyMessage(
+                                    "Select a patient to view their profile."
+                            )
+                    );
+
+            return;
+        }
+
+        GridPane grid =
+                new GridPane();
+
+        grid.setHgap(40);
+        grid.setVgap(16);
+
+        addInfoField(
+                grid,
+                "Email",
+                safeText(
+                        selectedPatient.getEmail(),
+                        "Not available"
+                ),
+                0,
+                0
+        );
+
+        addInfoField(
+                grid,
+                "Phone",
+                safeText(
+                        selectedPatient.getPhone(),
+                        "Not available"
+                ),
+                1,
+                0
+        );
+
+        addInfoField(
+                grid,
+                "Date of Birth",
+                safeText(
+                        selectedPatient.getDateOfBirth(),
+                        "Not available"
+                ),
+                0,
+                1
+        );
+
+        addInfoField(
+                grid,
+                "Gender",
+                safeText(
+                        selectedPatient.getGender(),
+                        "Not available"
+                ),
+                1,
+                1
+        );
+
+        addInfoField(
+                grid,
+                "Blood Group",
+                safeText(
+                        selectedPatient.getBloodGroup(),
+                        "Not available"
+                ),
+                0,
+                2
+        );
+
+        addInfoField(
+                grid,
+                "Emergency Contact",
+                safeText(
+                        selectedPatient.getEmergencyContact(),
+                        "Not available"
+                ),
+                1,
+                2
+        );
+
+        addInfoField(
+                grid,
+                "Address",
+                safeText(
+                        selectedPatient.getAddress(),
+                        "Not available"
+                ),
+                0,
+                3,
+                2
+        );
+
+        ColumnConstraints c1 =
+                new ColumnConstraints();
+
+        c1.setPercentWidth(
+                50
+        );
+
+        ColumnConstraints c2 =
+                new ColumnConstraints();
+
+        c2.setPercentWidth(
+                50
+        );
+
+        grid.getColumnConstraints()
+                .addAll(
+                        c1,
+                        c2
+                );
+
+        patientInformationContainer
+                .getChildren()
+                .add(grid);
+    }
+
+    // ============================================================
+    // MEDICAL OVERVIEW
+    // ============================================================
+
+    private HBox createMedicalOverviewSection() {
+
+        HBox layout =
+                new HBox(18);
+
+        layout.setFillHeight(
+                true
+        );
+
+        // --------------------------------------------------------
+        // VITALS
+        // --------------------------------------------------------
+
+        VBox vitalsCard =
+                createCard();
+
+        HBox.setHgrow(
+                vitalsCard,
+                Priority.ALWAYS
+        );
+
+        Label vitalsTitle =
+                sectionTitle(
+                        "Latest Vitals"
+                );
+
+        latestVitalsContainer =
+                new VBox(10);
+
+        populateLatestVitals();
+
+        vitalsCard
+                .getChildren()
+                .addAll(
+                        vitalsTitle,
+                        latestVitalsContainer
+                );
+
+        // --------------------------------------------------------
+        // LATEST CLINICAL SUMMARY
+        // --------------------------------------------------------
+
+        VBox summaryCard =
+                createCard();
+
+        HBox.setHgrow(
+                summaryCard,
+                Priority.ALWAYS
+        );
+
+        Label summaryTitle =
+                sectionTitle(
+                        "Latest Clinical Summary"
+                );
+
+        VBox summaryContent =
+                new VBox(10);
+
+        populateLatestClinicalSummary(
+                summaryContent
+        );
+
+        summaryCard
+                .getChildren()
+                .addAll(
+                        summaryTitle,
+                        summaryContent
+                );
+
+        layout.getChildren()
+                .addAll(
+                        vitalsCard,
+                        summaryCard
+                );
+
+        return layout;
+    }
+
+    // ============================================================
+    // LATEST VITALS
+    // ============================================================
+
+    private void populateLatestVitals() {
+
+        latestVitalsContainer
+                .getChildren()
+                .clear();
+
+        if (medicalRecords.isEmpty()) {
+
+            latestVitalsContainer
+                    .getChildren()
+                    .add(
+                            emptyMessage(
+                                    "No medical record with vitals is available."
+                            )
+                    );
+
+            return;
+        }
+
+        MedicalRecord latest =
+                medicalRecords.get(0);
+
+        addVital(
+                latestVitalsContainer,
+                "Heart Rate",
+                latest.getHeartRate()
+        );
+
+        addVital(
+                latestVitalsContainer,
+                "Blood Pressure",
+                latest.getBloodPressure()
+        );
+
+        addVital(
+                latestVitalsContainer,
+                "Temperature",
+                latest.getTemperature()
+        );
+
+        addVital(
+                latestVitalsContainer,
+                "SpO2",
+                latest.getSpo2()
+        );
+
+        Label updated =
+                new Label(
+                        "Latest record: "
+                                + getRecordDate(
+                                latest
+                        )
+                );
+
+        updated.setStyle(
+                "-fx-font-size: 11px;"
+                        + "-fx-text-fill: #94A3B8;"
+        );
+
+        latestVitalsContainer
+                .getChildren()
+                .add(
+                        updated
+                );
+    }
+
+    private void addVital(
+            VBox container,
+            String name,
+            String value
+    ) {
+
+        HBox row =
+                new HBox(8);
+
+        Label bullet =
+                new Label(
+                        "•"
+                );
+
+        bullet.setStyle(
+                "-fx-text-fill: #2563EB;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        Label text =
+                new Label(
+                        name
+                                + ": "
+                                + safeText(
+                                value,
+                                "Not available"
+                        )
+                );
+
+        text.setStyle(
+                "-fx-font-size: 13px;"
+                        + "-fx-text-fill: #334155;"
+        );
+
+        row.getChildren()
+                .addAll(
+                        bullet,
+                        text
+                );
+
+        container
+                .getChildren()
+                .add(
+                        row
+                );
+    }
+
+    // ============================================================
+    // CLINICAL SUMMARY
+    // ============================================================
+
+    private void populateLatestClinicalSummary(
+            VBox container
+    ) {
+
+        container
+                .getChildren()
+                .clear();
+
+        if (medicalRecords.isEmpty()) {
+
+            container
+                    .getChildren()
+                    .add(
+                            emptyMessage(
+                                    "No clinical records are currently available."
+                            )
+                    );
+
+            return;
+        }
+
+        MedicalRecord record =
+                medicalRecords.get(0);
+
+        addSummaryField(
+                container,
+                "Symptoms",
+                record.getSymptoms()
+        );
+
+        addSummaryField(
+                container,
+                "Diagnosis",
+                record.getDiagnosis()
+        );
+
+        addSummaryField(
+                container,
+                "Clinical Notes",
+                record.getClinicalNotes()
+        );
+
+        addSummaryField(
+                container,
+                "Prescription",
+                record.getPrescription()
+        );
+    }
+
+    private void addSummaryField(
+            VBox container,
+            String title,
+            String value
+    ) {
+
+        VBox box =
+                new VBox(3);
+
+        Label titleLabel =
+                new Label(
+                        title
+                );
+
+        titleLabel.setStyle(
+                "-fx-font-size: 11px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #64748B;"
+        );
+
+        Label valueLabel =
+                new Label(
+                        safeText(
+                                value,
+                                "Not available"
+                        )
+                );
+
+        valueLabel.setWrapText(
+                true
+        );
+
+        valueLabel.setStyle(
+                "-fx-font-size: 13px;"
+                        + "-fx-text-fill: #334155;"
+        );
+
+        box.getChildren()
+                .addAll(
+                        titleLabel,
+                        valueLabel
+                );
+
+        container
+                .getChildren()
+                .add(
+                        box
+                );
+    }
+
+    // ============================================================
+    // MEDICAL RECORDS
+    // ============================================================
+
+    private VBox createMedicalRecordsSection() {
+
+        VBox card =
+                createCard();
+
+        BorderPane header =
+                new BorderPane();
+
+        Label title =
+                sectionTitle(
+                        "Medical Records"
+                );
+
+        recordsCountLabel =
+                new Label();
+
+        recordsCountLabel.setStyle(
+                "-fx-font-size: 12px;"
+                        + "-fx-text-fill: #64748B;"
+        );
+
+        updateRecordsCount();
+
+        header.setLeft(
+                title
+        );
+
+        header.setRight(
+                recordsCountLabel
+        );
+
+        medicalRecordsContainer =
+                new VBox(12);
+
+        populateMedicalRecords();
+
+        card.getChildren()
+                .addAll(
+                        header,
+                        medicalRecordsContainer
+                );
+
+        return card;
+    }
+
+    private void populateMedicalRecords() {
+
+        if (medicalRecordsContainer == null) {
+
+            return;
+        }
+
+        medicalRecordsContainer
+                .getChildren()
+                .clear();
+
+        updateRecordsCount();
+
+        if (medicalRecords.isEmpty()) {
+
+            medicalRecordsContainer
+                    .getChildren()
+                    .add(
+                            emptyMessage(
+                                    "No medical history or clinical records are currently available for this patient."
+                            )
+                    );
+
+            return;
+        }
+
+        for (MedicalRecord record :
+                medicalRecords) {
+
+            medicalRecordsContainer
+                    .getChildren()
+                    .add(
+                            createMedicalRecordCard(
+                                    record
+                            )
+                    );
+        }
+    }
+
+    private VBox createMedicalRecordCard(
+            MedicalRecord record
+    ) {
+
+        VBox card =
+                new VBox(10);
+
+        card.setPadding(
+                new Insets(16)
+        );
+
+        card.setStyle(
+                "-fx-background-color: #F8FAFC;"
+                        + "-fx-background-radius: 10;"
+                        + "-fx-border-color: #E2E8F0;"
+                        + "-fx-border-radius: 10;"
+        );
+
+        BorderPane header =
+                new BorderPane();
+
+        VBox titleBox =
+                new VBox(3);
+
+        Label diagnosis =
+                new Label(
+                        safeText(
+                                record.getDiagnosis(),
+                                "Clinical consultation"
+                        )
+                );
+
+        diagnosis.setStyle(
+                "-fx-font-size: 15px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #0F172A;"
+        );
+
+        Label date =
+                new Label(
+                        getRecordDate(
+                                record
+                        )
+                );
+
+        date.setStyle(
+                "-fx-font-size: 11px;"
+                        + "-fx-text-fill: #64748B;"
+        );
+
+        titleBox
+                .getChildren()
+                .addAll(
+                        diagnosis,
+                        date
+                );
+
+        Label status =
+                new Label(
+                        safeText(
+                                record.getStatus(),
+                                "RECORDED"
+                        ).toUpperCase()
+                );
+
+        status.setStyle(
+                "-fx-background-color: #DBEAFE;"
+                        + "-fx-text-fill: #1D4ED8;"
+                        + "-fx-font-size: 10px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-padding: 5 9;"
+                        + "-fx-background-radius: 12;"
+        );
+
+        header.setLeft(
+                titleBox
+        );
+
+        header.setRight(
+                status
+        );
+
+        VBox details =
+                new VBox(8);
+
+        addRecordDetail(
+                details,
+                "Symptoms",
+                record.getSymptoms()
+        );
+
+        addRecordDetail(
+                details,
+                "Diagnosis",
+                record.getDiagnosis()
+        );
+
+        addRecordDetail(
+                details,
+                "Blood Pressure",
+                record.getBloodPressure()
+        );
+
+        addRecordDetail(
+                details,
+                "Heart Rate",
+                record.getHeartRate()
+        );
+
+        addRecordDetail(
+                details,
+                "Temperature",
+                record.getTemperature()
+        );
+
+        addRecordDetail(
+                details,
+                "SpO2",
+                record.getSpo2()
+        );
+
+        addRecordDetail(
+                details,
+                "Clinical Notes",
+                record.getClinicalNotes()
+        );
+
+        addRecordDetail(
+                details,
+                "Prescription",
+                record.getPrescription()
+        );
+
+        addRecordDetail(
+                details,
+                "Doctor",
+                record.getDoctorName()
+        );
+
+        addRecordDetail(
+                details,
+                "Appointment ID",
+                record.getAppointmentId()
+        );
+
+        card.getChildren()
+                .addAll(
+                        header,
+                        details
+                );
+
+        return card;
+    }
+
+    private void addRecordDetail(
+            VBox container,
+            String label,
+            String value
+    ) {
+
+        if (value == null
+                || value.trim().isEmpty()) {
+
+            return;
+        }
+
+        VBox box =
+                new VBox(2);
+
+        Label title =
+                new Label(
+                        label
+                );
+
+        title.setStyle(
+                "-fx-font-size: 11px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #64748B;"
+        );
+
+        Label valueLabel =
+                new Label(
+                        value
+                );
+
+        valueLabel.setWrapText(
+                true
+        );
+
+        valueLabel.setStyle(
+                "-fx-font-size: 13px;"
+                        + "-fx-text-fill: #334155;"
+        );
+
+        box.getChildren()
+                .addAll(
+                        title,
+                        valueLabel
+                );
+
+        container
+                .getChildren()
+                .add(
+                        box
+                );
+    }
+
+    // ============================================================
+    // APPOINTMENTS
+    // ============================================================
+
+    private VBox createAppointmentsSection() {
+
+        VBox card =
+                createCard();
+
+        BorderPane header =
+                new BorderPane();
+
+        Label title =
+                sectionTitle(
+                        "Appointment History"
+                );
+
+        Label count =
+                new Label(
+                        appointments.size()
+                                + " appointments"
+                );
+
+        count.setStyle(
+                "-fx-font-size: 12px;"
+                        + "-fx-text-fill: #64748B;"
+        );
+
+        header.setLeft(
+                title
+        );
+
+        header.setRight(
+                count
+        );
+
+        appointmentsContainer =
+                new VBox(10);
+
+        populateAppointments();
+
+        card.getChildren()
+                .addAll(
+                        header,
+                        appointmentsContainer
+                );
+
+        return card;
+    }
+
+    private void populateAppointments() {
+
+        if (appointmentsContainer == null) {
+
+            return;
+        }
+
+        appointmentsContainer
+                .getChildren()
+                .clear();
+
+        if (appointments.isEmpty()) {
+
+            appointmentsContainer
+                    .getChildren()
+                    .add(
+                            emptyMessage(
+                                    "No appointments are available for this patient."
+                            )
+                    );
+
+            return;
+        }
+
+        for (Appointment appointment :
+                appointments) {
+
+            appointmentsContainer
+                    .getChildren()
+                    .add(
+                            createAppointmentCard(
+                                    appointment
+                            )
+                    );
+        }
+    }
+
+    private HBox createAppointmentCard(
+            Appointment appointment
+    ) {
+
+        HBox card =
+                new HBox(16);
+
+        card.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        card.setPadding(
+                new Insets(14)
+        );
+
+        card.setStyle(
+                "-fx-background-color: #F8FAFC;"
+                        + "-fx-background-radius: 10;"
+                        + "-fx-border-color: #E2E8F0;"
+                        + "-fx-border-radius: 10;"
+        );
+
+        VBox dateBox =
+                new VBox(3);
+
+        Label date =
+                new Label(
+                        safeText(
+                                appointment.getAppointmentDate(),
+                                "Date unavailable"
+                        )
+                );
+
+        date.setStyle(
+                "-fx-font-size: 13px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #2563EB;"
+        );
+
+        Label time =
+                new Label(
+                        safeText(
+                                appointment.getAppointmentTime(),
+                                "Time unavailable"
+                        )
+                );
+
+        time.setStyle(
+                "-fx-font-size: 12px;"
+                        + "-fx-text-fill: #64748B;"
+        );
+
+        dateBox
+                .getChildren()
+                .addAll(
+                        date,
+                        time
+                );
+
+        VBox details =
+                new VBox(4);
+
+        Label reason =
+                new Label(
+                        safeText(
+                                appointment.getReason(),
+                                "Appointment"
+                        )
+                );
+
+        reason.setStyle(
+                "-fx-font-size: 13px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #334155;"
+        );
+
+        Label type =
+                new Label(
+                        safeText(
+                                appointment.getBookingType(),
+                                "Appointment"
+                        )
+                );
+
+        type.setStyle(
+                "-fx-font-size: 11px;"
+                        + "-fx-text-fill: #64748B;"
+        );
+
+        details
+                .getChildren()
+                .addAll(
+                        reason,
+                        type
+                );
+
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        Label status =
+                new Label(
+                        safeText(
+                                appointment.getStatus(),
+                                "PENDING"
+                        ).toUpperCase()
+                );
+
+        status.setStyle(
+                getAppointmentStatusStyle(
+                        appointment.getStatus()
+                )
+        );
+
+        card.getChildren()
+                .addAll(
+                        dateBox,
+                        details,
+                        spacer,
+                        status
+                );
+
+        return card;
+    }
+
+    // ============================================================
+    // SEARCH / FILTER
+    // ============================================================
+
+    private void filterPatients(
+            String query
+    ) {
+
+        if (patientListContainer == null) {
+
+            return;
+        }
+
+        String search =
+                query == null
+                        ? ""
+                        : query.trim()
+                        .toLowerCase();
+
+        patientListContainer
+                .getChildren()
+                .clear();
+
+        int matches = 0;
+
+        for (PatientProfile patient :
+                doctorPatients) {
+
+            if (patient == null) {
+
+                continue;
+            }
+
+            String name =
+                    getPatientDisplayName(
+                            patient
+                    ).toLowerCase();
+
+            String uid =
+                    safeText(
+                            patient.getUid(),
+                            ""
+                    ).toLowerCase();
+
+            String email =
+                    safeText(
+                            patient.getEmail(),
+                            ""
+                    ).toLowerCase();
+
+            if (search.isEmpty()
+                    || name.contains(search)
+                    || uid.contains(search)
+                    || email.contains(search)) {
+
+                patientListContainer
+                        .getChildren()
+                        .add(
+                                createPatientSearchItem(
+                                        patient
+                                )
+                        );
+
+                matches++;
+            }
+        }
+
+        updateMatchingCount(
+                matches
+        );
+    }
+
+    private HBox createPatientSearchItem(
+            PatientProfile patient
+    ) {
+
+        HBox item =
+                new HBox(10);
+
+        item.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        item.setPadding(
+                new Insets(9)
+        );
+
+        item.setStyle(
+                "-fx-background-color: white;"
+                        + "-fx-background-radius: 8;"
+                        + "-fx-border-color: #E2E8F0;"
+                        + "-fx-border-radius: 8;"
+                        + "-fx-cursor: hand;"
+        );
+
+        StackPane avatar =
+                createPatientAvatar(
+                        patient
+                );
+
+        avatar.setScaleX(
+                0.65
+        );
+
+        avatar.setScaleY(
+                0.65
+        );
+
+        VBox details =
+                new VBox(2);
+
+        Label name =
+                new Label(
+                        getPatientDisplayName(
+                                patient
+                        )
+                );
+
+        name.setStyle(
+                "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #334155;"
+        );
+
+        Label id =
+                new Label(
+                        safeText(
+                                patient.getUid(),
+                                "ID unavailable"
+                        )
+                );
+
+        id.setStyle(
+                "-fx-font-size: 10px;"
+                        + "-fx-text-fill: #94A3B8;"
+        );
+
+        details
+                .getChildren()
+                .addAll(
+                        name,
+                        id
+                );
+
+        item.getChildren()
+                .addAll(
+                        avatar,
+                        details
+                );
+
+        item.setOnMouseClicked(
+                e -> {
+
+                    selectedPatient =
+                            patient;
+
+                    if (patientSelector != null) {
+
+                        patientSelector
+                                .setValue(
+                                        patient
+                                );
+                    }
+
+                    loadSelectedPatientData();
+
+                    refreshPatientUI();
+                }
+        );
+
+        return item;
+    }
+
+    // ============================================================
+    // REFRESH UI AFTER PATIENT SELECTION
+    // ============================================================
+
+    private void refreshPatientUI() {
+
+        if (patientNameLabel != null) {
+
+            patientNameLabel.setText(
+                    getPatientDisplayName(
+                            selectedPatient
+                    )
+            );
+        }
+
+        if (patientMetaLabel != null) {
+
+            patientMetaLabel.setText(
+                    getPatientMeta(
+                            selectedPatient
+                    )
+            );
+        }
+
+        if (patientIdLabel != null) {
+
+            patientIdLabel.setText(
+                    getPatientIdText(
+                            selectedPatient
+                    )
+            );
+        }
+
+        if (relationshipLabel != null) {
+
+            relationshipLabel.setText(
+                    selectedPatient == null
+                            ? "No patient selected"
+                            : "Active patient"
+            );
+        }
+
+        populatePatientInformation();
+
+        populateLatestVitals();
+
+        populateLatestClinicalSummary(
+                findClinicalSummaryContainer()
+        );
+
+        populateMedicalRecords();
+
+        populateAppointments();
+
+        updateDoctorHeader();
+    }
+
+    /**
+     * Finds the summary container from the overview section.
+     *
+     * This is intentionally rebuilt during scene creation, so
+     * there is no need to maintain another global UI reference.
+     */
+    private VBox findClinicalSummaryContainer() {
+
+        VBox container =
+                new VBox(10);
+
+        if (!medicalRecords.isEmpty()) {
+
+            populateLatestClinicalSummary(
+                    container
+            );
+
+        } else {
+
+            container
+                    .getChildren()
+                    .add(
+                            emptyMessage(
+                                    "No clinical records are currently available."
+                            )
+                    );
+        }
+
+        return container;
+    }
+
+    // ============================================================
+    // UPDATE DOCTOR HEADER
+    // ============================================================
+
+    private void updateDoctorHeader() {
+
+        if (doctorNameLabel != null) {
+
+            doctorNameLabel.setText(
+                    getLoggedInDoctorDisplayName()
+            );
+        }
+
+        if (doctorSpecializationLabel != null) {
+
+            doctorSpecializationLabel.setText(
+                    getLoggedInDoctorSpecialization()
+            );
+        }
+    }
+
+    // ============================================================
+    // LOGGED-IN DOCTOR DISPLAY
+    // ============================================================
+
+    private String getLoggedInDoctorDisplayName() {
+
+        /*
+         * Prefer the real doctor name stored in the latest
+         * medical record associated with this doctor.
+         */
+        for (MedicalRecord record :
+                medicalRecords) {
+
+            if (record == null) {
+
+                continue;
+            }
+
+            if (doctorUid != null
+                    && doctorUid.equals(
+                            record.getDoctorUid()
+                    )) {
+
+                String doctorName =
+                        record.getDoctorName();
+
+                if (doctorName != null
+                        && !doctorName.trim().isEmpty()) {
+
+                    return doctorName;
+                }
+            }
+        }
+
+        /*
+         * Otherwise use the doctor name from appointments.
+         */
+        for (Appointment appointment :
+                appointments) {
+
+            if (appointment == null) {
+
+                continue;
+            }
+
+            if (doctorUid != null
+                    && doctorUid.equals(
+                            appointment.getDoctorUid()
+                    )) {
+
+                String doctorName =
+                        appointment.getDoctorName();
+
+                if (doctorName != null
+                        && !doctorName.trim().isEmpty()) {
+
+                    return doctorName;
+                }
+            }
+        }
+
+        /*
+         * Do not show a fake doctor name.
+         */
+        return "Doctor";
+    }
+
+    private String getLoggedInDoctorSpecialization() {
+
+        /*
+         * Specialization is not stored in MedicalRecord or
+         * Appointment according to the existing model structure.
+         *
+         * Therefore do not invent one.
+         */
+        return "Doctor";
     }
 
     // ============================================================
@@ -494,388 +2603,411 @@ public class PatientDetailsView {
 
     private VBox createSidebar() {
 
-        VBox sidebar = new VBox();
+        VBox sidebar =
+                new VBox();
 
         sidebar.setPadding(
                 new Insets(
                         25,
                         15,
                         25,
-                        15));
+                        15
+                )
+        );
 
-        sidebar.getStyleClass()
-                .add("sidebar");
+        sidebar.setMinWidth(
+                260
+        );
+
+        sidebar.setPrefWidth(
+                260
+        );
+
+        sidebar.setMaxWidth(
+                260
+        );
 
         sidebar.setStyle(
-                "-fx-background-color: #0F172A;");
+                "-fx-background-color: #0F172A;"
+        );
 
-        sidebar.setMinWidth(260);
+        // --------------------------------------------------------
+        // Logo
+        // --------------------------------------------------------
 
-        sidebar.setPrefWidth(260);
+        HBox logoSection =
+                new HBox(12);
 
-        sidebar.setMaxWidth(260);
-
-        // ========================================================
-        // LOGO
-        // ========================================================
-
-        HBox logoSection = new HBox(12);
+        logoSection.setAlignment(
+                Pos.CENTER_LEFT
+        );
 
         logoSection.setPadding(
                 new Insets(
                         0,
                         0,
                         25,
-                        5));
+                        5
+                )
+        );
 
-        logoSection.setAlignment(
-                Pos.CENTER_LEFT);
+        StackPane logoIconBox =
+                new StackPane();
 
-        StackPane logoIconBox = new StackPane();
-
-        logoIconBox.getStyleClass()
-                .add(
-                        "logo-icon-box");
+        logoIconBox.setPrefSize(
+                42,
+                42
+        );
 
         logoIconBox.setStyle(
-                "-fx-background-color: #3B82F6; "
-                        + "-fx-background-radius: 8px; "
-                        + "-fx-padding: 8px;");
+                "-fx-background-color: #2563EB;"
+                        + "-fx-background-radius: 10;"
+        );
 
-        ImageView logoIcon = new ImageView(
-                ResourceImage.load(
-                        "/images/icons/ic_shield.png"));
+        Label logo =
+                new Label(
+                        "+"
+                );
 
-        logoIcon.setFitWidth(20);
+        logo.setStyle(
+                "-fx-text-fill: white;"
+                        + "-fx-font-size: 25px;"
+                        + "-fx-font-weight: bold;"
+        );
 
-        logoIcon.setFitHeight(20);
-
-        logoIconBox.getChildren()
+        logoIconBox
+                .getChildren()
                 .add(
-                        logoIcon);
+                        logo
+                );
 
-        VBox logoText = new VBox(2);
+        VBox logoText =
+                new VBox(1);
 
-        Label appName = new Label(
-                "Health-Sphere");
-
-        appName.getStyleClass()
-                .add("logo-name");
+        Label appName =
+                new Label(
+                        "Health-Sphere"
+                );
 
         appName.setStyle(
-                "-fx-text-fill: #FFFFFF; "
-                        + "-fx-font-weight: bold; "
-                        + "-fx-font-size: 16px;");
+                "-fx-text-fill: white;"
+                        + "-fx-font-size: 17px;"
+                        + "-fx-font-weight: bold;"
+        );
 
-        Label doctorSubtext = new Label(
-                "Doctor Dashboard");
+        Label sub =
+                new Label(
+                        "Doctor Dashboard"
+                );
 
-        doctorSubtext.getStyleClass()
-                .add("logo-subtext");
+        sub.setStyle(
+                "-fx-text-fill: #94A3B8;"
+                        + "-fx-font-size: 11px;"
+        );
 
-        doctorSubtext.setStyle(
-                "-fx-text-fill: #94A3B8; "
-                        + "-fx-font-size: 12px;");
-
-        logoText.getChildren()
+        logoText
+                .getChildren()
                 .addAll(
                         appName,
-                        doctorSubtext);
+                        sub
+                );
 
-        logoSection.getChildren()
+        logoSection
+                .getChildren()
                 .addAll(
                         logoIconBox,
-                        logoText);
+                        logoText
+                );
 
-        // ========================================================
-        // NAVIGATION
-        // ========================================================
+        // --------------------------------------------------------
+        // Navigation
+        // --------------------------------------------------------
 
-        VBox navItems = new VBox(6);
+        VBox navItems =
+                new VBox(6);
 
         String[] tabs = {
-
                 "Dashboard",
-
                 "Today's Schedule",
-
                 "Appointments",
-
                 "Patient Details",
-
                 "Medical Reports & Prescription",
-
                 "Availability & Schedule",
-
                 "Doctor Profile",
-
                 "AI Health Assistant"
         };
 
         String[] icons = {
-
                 "ic_dashboard",
-
                 "ic_schedule",
-
                 "ic_appointments",
-
                 "ic_patient",
-
                 "ic_reports",
-
                 "ic_availability",
-
                 "ic_profile",
-
                 "ic_ai"
         };
 
-        for (int i = 0; i < tabs.length; i++) {
+        for (int i = 0;
+             i < tabs.length;
+             i++) {
 
-            HBox navTab = new HBox(12);
+            final int index =
+                    i;
+
+            HBox navTab =
+                    new HBox(14);
 
             navTab.setAlignment(
-                    Pos.CENTER_LEFT);
+                    Pos.CENTER_LEFT
+            );
 
             navTab.setPadding(
                     new Insets(
                             10,
                             14,
                             10,
-                            14));
+                            14
+                    )
+            );
 
             navTab.getStyleClass()
                     .add(
-                            "nav-tab");
-
-            ImageView icon = new ImageView(
-                    ResourceImage.load(
-                            "/images/icons/"
-                                    + icons[i]
-                                    + ".png"));
-
-            icon.setFitWidth(18);
-
-            icon.setFitHeight(18);
-
-            Label tabLabel = new Label(
-                    tabs[i]);
-
-            tabLabel.getStyleClass()
-                    .add(
-                            "nav-text");
-
-            // ====================================================
-            // ACTIVE PATIENT DETAILS TAB
-            // ====================================================
+                            "nav-tab"
+                    );
 
             if (i == 3) {
 
                 navTab.getStyleClass()
                         .add(
-                                "nav-tab-active");
-
-                navTab.setStyle(
-                        "-fx-background-color: #3B82F6; "
-                                + "-fx-background-radius: 8px;");
-
-                tabLabel.setStyle(
-                        "-fx-text-fill: #FFFFFF; "
-                                + "-fx-font-weight: bold; "
-                                + "-fx-font-size: 14px;");
-
-            } else {
-
-                navTab.setStyle(
-                        "-fx-background-color: transparent; "
-                                + "-fx-background-radius: 8px;");
-
-                tabLabel.setStyle(
-                        "-fx-text-fill: #94A3B8; "
-                                + "-fx-font-size: 14px;");
+                                "nav-tab-active"
+                        );
             }
 
-            navTab.getChildren()
-                    .addAll(
-                            icon,
-                            tabLabel);
+            ImageView icon =
+                    createImageView(
+                            "/images/icons/"
+                                    + icons[i]
+                                    + ".png",
+                            18,
+                            18
+                    );
 
-            navItems.getChildren()
+            Label label =
+                    new Label(
+                            tabs[i]
+                    );
+
+            label.getStyleClass()
                     .add(
-                            navTab);
+                            "nav-text"
+                    );
 
-            final int index = i;
+            if (icon != null) {
+
+                navTab
+                        .getChildren()
+                        .add(
+                                icon
+                        );
+            }
+
+            navTab
+                    .getChildren()
+                    .add(
+                            label
+                    );
 
             navTab.setOnMouseClicked(
-                    e -> handleSidebarTabClick(
-                            index));
+                    e ->
+                            handleSidebarTabClick(
+                                    index
+                            )
+            );
+
+            navItems
+                    .getChildren()
+                    .add(
+                            navTab
+                    );
         }
 
-        // ========================================================
-        // SPACER
-        // ========================================================
+        // --------------------------------------------------------
+        // Footer
+        // --------------------------------------------------------
 
-        Region spacer = new Region();
+        VBox footer =
+                new VBox(12);
+
+        footer.setAlignment(
+                Pos.BOTTOM_CENTER
+        );
 
         VBox.setVgrow(
-                spacer,
-                Priority.ALWAYS);
+                footer,
+                Priority.ALWAYS
+        );
 
-        // ========================================================
-        // FOOTER
-        // ========================================================
+        HBox doctorProfile =
+                new HBox(12);
 
-        VBox footer = new VBox(10);
+        doctorProfile.setAlignment(
+                Pos.CENTER_LEFT
+        );
 
-        footer.setPadding(
-                new Insets(
-                        15,
-                        0,
-                        0,
-                        0));
-
-        // ========================================================
-        // DOCTOR PROFILE
-        // ========================================================
-
-        HBox sidebarProfile = new HBox(12);
-
-        sidebarProfile.setAlignment(
-                Pos.CENTER_LEFT);
-
-        sidebarProfile.setPadding(
-                new Insets(
-                        10,
-                        12,
-                        10,
-                        12));
-
-        sidebarProfile.getStyleClass()
-                .add(
-                        "sidebar-profile-box");
-
-        sidebarProfile.setStyle(
-                "-fx-background-color: #1E293B; "
-                        + "-fx-background-radius: 10px; "
-                        + "-fx-cursor: hand;");
-
-        ImageView profileAvatar = new ImageView(
-                ResourceImage.load(
-                        "/images/doctor/"
-                                + "portrait-3d-male-doctor.png"));
-
-        profileAvatar.setFitWidth(36);
-
-        profileAvatar.setFitHeight(36);
-
-        Circle profileClip = new Circle(
-                18,
-                18,
-                18);
-
-        profileAvatar.setClip(
-                profileClip);
-
-        VBox profileTexts = new VBox(2);
-
-        Label profSubText = new Label(
-                "Doctor Profile");
-
-        profSubText.setStyle(
-                "-fx-text-fill: #64748B; "
-                        + "-fx-font-size: 11px;");
-
-        Label profName = new Label(
-                "Dr. Sarah");
-
-        profName.getStyleClass()
-                .add(
-                        "sidebar-profile-name");
-
-        profName.setStyle(
-                "-fx-text-fill: #FFFFFF; "
-                        + "-fx-font-weight: bold; "
-                        + "-fx-font-size: 13px;");
-
-        profileTexts.getChildren()
-                .addAll(
-                        profSubText,
-                        profName);
-
-        sidebarProfile.getChildren()
-                .addAll(
-                        profileAvatar,
-                        profileTexts);
-
-        sidebarProfile.setOnMouseClicked(
-                e -> Navigation.goTo(
-                        stage,
-                        () -> new DoctorProfileView(
-                                stage).getScene()));
-
-        // ========================================================
-        // LOGOUT
-        // ========================================================
-
-        HBox logoutTab = new HBox(12);
-
-        logoutTab.setAlignment(
-                Pos.CENTER_LEFT);
-
-        logoutTab.setPadding(
+        doctorProfile.setPadding(
                 new Insets(
                         10,
                         14,
                         10,
-                        14));
+                        14
+                )
+        );
 
-        logoutTab.getStyleClass()
+        doctorProfile.getStyleClass()
                 .add(
-                        "nav-tab");
+                        "sidebar-profile"
+                );
 
-        logoutTab.setStyle(
-                "-fx-cursor: hand;");
+        ImageView profileIcon =
+                createImageView(
+                        "/images/doctor/doctor_profile.png",
+                        32,
+                        32
+                );
 
-        ImageView logoutIcon = new ImageView(
-                ResourceImage.load(
-                        "/images/icons/ic_logout.png"));
+        VBox profileText =
+                new VBox(2);
 
-        logoutIcon.setFitWidth(18);
+        Label profileTitle =
+                new Label(
+                        "Doctor Profile"
+                );
 
-        logoutIcon.setFitHeight(18);
+        profileTitle.getStyleClass()
+                .add(
+                        "sidebar-profile-role"
+                );
 
-        Label logoutLabel = new Label(
-                "Logout");
+        Label profileName =
+                new Label(
+                        getLoggedInDoctorDisplayName()
+                );
+
+        profileName.getStyleClass()
+                .add(
+                        "sidebar-profile-name"
+                );
+
+        profileText
+                .getChildren()
+                .addAll(
+                        profileTitle,
+                        profileName
+                );
+
+        if (profileIcon != null) {
+
+            doctorProfile
+                    .getChildren()
+                    .add(
+                            profileIcon
+                    );
+        }
+
+        doctorProfile
+                .getChildren()
+                .add(
+                        profileText
+                );
+
+        doctorProfile.setOnMouseClicked(
+                e ->
+                        Navigation.goTo(
+                                stage,
+                                () ->
+                                        new DoctorProfileView(
+                                                stage
+                                        ).getScene()
+                        )
+        );
+
+        // --------------------------------------------------------
+        // Logout
+        // --------------------------------------------------------
+
+        HBox logout =
+                new HBox(14);
+
+        logout.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        logout.setPadding(
+                new Insets(
+                        10,
+                        14,
+                        10,
+                        14
+                )
+        );
+
+        logout.getStyleClass()
+                .add(
+                        "nav-tab"
+                );
+
+        ImageView logoutIcon =
+                createImageView(
+                        "/images/icons/ic_logout.png",
+                        18,
+                        18
+                );
+
+        Label logoutLabel =
+                new Label(
+                        "Logout"
+                );
 
         logoutLabel.getStyleClass()
                 .add(
-                        "nav-text");
+                        "nav-text"
+                );
 
-        logoutLabel.setStyle(
-                "-fx-text-fill: #94A3B8; "
-                        + "-fx-font-size: 14px;");
+        if (logoutIcon != null) {
 
-        logoutTab.getChildren()
+            logout
+                    .getChildren()
+                    .add(
+                            logoutIcon
+                    );
+        }
+
+        logout
+                .getChildren()
+                .add(
+                        logoutLabel
+                );
+
+        logout.setOnMouseClicked(
+                e ->
+                        handleLogout()
+        );
+
+        footer
+                .getChildren()
                 .addAll(
-                        logoutIcon,
-                        logoutLabel);
+                        doctorProfile,
+                        logout
+                );
 
-        logoutTab.setOnMouseClicked(
-                e -> System.out.println(
-                        "Logging out..."));
-
-        footer.getChildren()
-                .addAll(
-                        sidebarProfile,
-                        logoutTab);
-
-        sidebar.getChildren()
+        sidebar
+                .getChildren()
                 .addAll(
                         logoSection,
                         navItems,
-                        spacer,
-                        footer);
+                        footer
+                );
 
         return sidebar;
     }
@@ -885,7 +3017,8 @@ public class PatientDetailsView {
     // ============================================================
 
     private void handleSidebarTabClick(
-            int index) {
+            int index
+    ) {
 
         switch (index) {
 
@@ -893,8 +3026,11 @@ public class PatientDetailsView {
 
                 Navigation.goTo(
                         stage,
-                        () -> new DoctorDashboardView(
-                                stage).getScene());
+                        () ->
+                                new DoctorDashboardView(
+                                        stage
+                                ).getScene()
+                );
 
                 break;
 
@@ -902,8 +3038,11 @@ public class PatientDetailsView {
 
                 Navigation.goTo(
                         stage,
-                        () -> new TodaysScheduleView(
-                                stage).getScene());
+                        () ->
+                                new TodaysScheduleView(
+                                        stage
+                                ).getScene()
+                );
 
                 break;
 
@@ -911,8 +3050,11 @@ public class PatientDetailsView {
 
                 Navigation.goTo(
                         stage,
-                        () -> new AppointmentsView(
-                                stage).getScene());
+                        () ->
+                                new AppointmentsView(
+                                        stage
+                                ).getScene()
+                );
 
                 break;
 
@@ -920,17 +3062,38 @@ public class PatientDetailsView {
 
                 Navigation.goTo(
                         stage,
-                        () -> new PatientDetailsView(
-                                stage).getScene());
+                        () ->
+                                new PatientDetailsView(
+                                        stage
+                                ).getScene()
+                );
 
                 break;
 
             case 4:
 
-                Navigation.goTo(
-                        stage,
-                        () -> new MedicalReportsView(
-                                stage).getScene());
+                if (selectedPatient != null
+                        && selectedPatient.getUid() != null) {
+
+                    Navigation.goTo(
+                            stage,
+                            () ->
+                                    new MedicalReportsView(
+                                            stage,
+                                            selectedPatient.getUid()
+                                    ).getScene()
+                    );
+
+                } else {
+
+                    Navigation.goTo(
+                            stage,
+                            () ->
+                                    new MedicalReportsView(
+                                            stage
+                                    ).getScene()
+                    );
+                }
 
                 break;
 
@@ -938,8 +3101,11 @@ public class PatientDetailsView {
 
                 Navigation.goTo(
                         stage,
-                        () -> new AvailabilityScheduleView(
-                                stage).getScene());
+                        () ->
+                                new AvailabilityScheduleView(
+                                        stage
+                                ).getScene()
+                );
 
                 break;
 
@@ -947,8 +3113,11 @@ public class PatientDetailsView {
 
                 Navigation.goTo(
                         stage,
-                        () -> new DoctorProfileView(
-                                stage).getScene());
+                        () ->
+                                new DoctorProfileView(
+                                        stage
+                                ).getScene()
+                );
 
                 break;
 
@@ -956,8 +3125,11 @@ public class PatientDetailsView {
 
                 Navigation.goTo(
                         stage,
-                        () -> new AIHealthAssistantView(
-                                stage).getScene());
+                        () ->
+                                new AIHealthAssistantView(
+                                        stage
+                                ).getScene()
+                );
 
                 break;
 
@@ -967,952 +3139,718 @@ public class PatientDetailsView {
     }
 
     // ============================================================
-    // PATIENT SELECTOR BAR
+    // LOGOUT
     // ============================================================
 
-    private HBox createPatientSelectorBar() {
+    private void handleLogout() {
 
-        HBox bar = new HBox(10);
+        try {
 
-        bar.setAlignment(
-                Pos.CENTER_LEFT);
+            SessionManager
+                    .getInstance()
+                    .clearSession();
 
-        bar.setPadding(
-                new Insets(
-                        5,
-                        0,
-                        5,
-                        0));
+            System.out.println(
+                    "Doctor logged out."
+            );
 
-        Label selectLabel = new Label(
-                "Select Patient:");
+        } catch (Exception e) {
 
-        selectLabel.setStyle(
-                "-fx-font-weight: bold; "
-                        + "-fx-text-fill: #475569; "
-                        + "-fx-font-size: 13px;");
+            showAlert(
+                    Alert.AlertType.ERROR,
+                    "Logout Error",
+                    "Unable to clear the current session."
+            );
 
-        bar.getChildren()
-                .add(
-                        selectLabel);
-
-        rebuildPatientTabs(
-                bar);
-
-        return bar;
-    }
-
-    // ============================================================
-    // REBUILD PATIENT TABS
-    // ============================================================
-
-    private void rebuildPatientTabs(
-            HBox bar) {
-
-        bar.getChildren()
-                .removeIf(
-                        node -> node instanceof Button);
-
-        patientTabButtons.clear();
-
-        for (int i = 0; i < patientList.size(); i++) {
-
-            PatientData patient = patientList.get(i);
-
-            Button patientBtn = new Button(
-                    patient.name);
-
-            patientBtn.setCursor(
-                    javafx.scene.Cursor.HAND);
-
-            final int index = i;
-
-            patientBtn.setOnAction(
-                    e -> switchPatient(
-                            index));
-
-            patientTabButtons.add(
-                    patientBtn);
-
-            bar.getChildren()
-                    .add(
-                            patientBtn);
-        }
-
-        if (!patientList.isEmpty()) {
-
-            updatePatientTabStyles(
-                    0);
+            System.err.println(
+                    "Logout error: "
+                            + e.getMessage()
+            );
         }
     }
 
     // ============================================================
-    // SWITCH PATIENT
+    // HELPERS - CARD
     // ============================================================
 
-    private void switchPatient(
-            int index) {
+    private VBox createCard() {
 
-        if (index < 0 ||
-                index >= patientList.size()) {
-
-            return;
-        }
-
-        PatientData patient = patientList.get(index);
-
-        nameLbl.setText(
-                patient.name);
-
-        metaLbl.setText(
-                patient.meta);
-
-        idLbl.setText(
-                patient.id);
-
-        if (patient.imgPath != null) {
-
-            profileImg.setImage(
-                    ResourceImage.load(
-                            patient.imgPath));
-        }
-
-        vitalsContent
-                .getChildren()
-                .clear();
-
-        for (String vital : patient.vitals) {
-
-            vitalsContent
-                    .getChildren()
-                    .add(
-                            new Label(
-                                    vital));
-        }
-
-        historyText.setText(
-                patient.history);
-
-        updatePatientTabStyles(
-                index);
-    }
-
-    // ============================================================
-    // UPDATE PATIENT TAB STYLES
-    // ============================================================
-
-    private void updatePatientTabStyles(
-            int activeIndex) {
-
-        for (int i = 0; i < patientTabButtons.size(); i++) {
-
-            Button btn = patientTabButtons.get(i);
-
-            if (i == activeIndex) {
-
-                btn.setStyle(
-                        "-fx-background-color: #3B82F6; "
-                                + "-fx-text-fill: white; "
-                                + "-fx-font-weight: bold; "
-                                + "-fx-background-radius: 6px; "
-                                + "-fx-padding: 6 14;");
-
-            } else {
-
-                btn.setStyle(
-                        "-fx-background-color: #E2E8F0; "
-                                + "-fx-text-fill: #334155; "
-                                + "-fx-font-weight: normal; "
-                                + "-fx-background-radius: 6px; "
-                                + "-fx-padding: 6 14;");
-            }
-        }
-    }
-
-    // ============================================================
-    // TITLE SECTION
-    // ============================================================
-
-    private BorderPane createTitleSection() {
-
-        BorderPane section = new BorderPane();
-
-        VBox titleBox = new VBox(2);
-
-        Label mainTitle = new Label(
-                "Patient Details");
-
-        mainTitle.getStyleClass()
-                .add(
-                        "page-title");
-
-        Label subTitle = new Label(
-                "Comprehensive medical record and personal profile");
-
-        subTitle.getStyleClass()
-                .add(
-                        "page-subtitle");
-
-        titleBox.getChildren()
-                .addAll(
-                        mainTitle,
-                        subTitle);
-
-        Button addPatientBtn = new Button(
-                "+ Add Patient");
-
-        addPatientBtn.getStyleClass()
-                .add(
-                        "btn-primary-action");
-
-        /*
-         * Keep original button behavior.
-         *
-         * Note:
-         * This still adds only temporary UI data.
-         * We will later decide whether doctors should be
-         * allowed to create patient profiles.
-         */
-        addPatientBtn.setOnAction(
-                e -> openAddPatientDialog());
-
-        section.setLeft(
-                titleBox);
-
-        section.setRight(
-                addPatientBtn);
-
-        return section;
-    }
-
-    // ============================================================
-    // ADD PATIENT DIALOG
-    // ============================================================
-
-    private void openAddPatientDialog() {
-
-        Stage dialog = new Stage();
-
-        dialog.initModality(
-                Modality.APPLICATION_MODAL);
-
-        dialog.initOwner(
-                stage);
-
-        dialog.setTitle(
-                "Add New Patient");
-
-        VBox form = new VBox(12);
-
-        form.setPadding(
-                new Insets(20));
-
-        form.setStyle(
-                "-fx-background-color: #FFFFFF;");
-
-        Label dialogTitle = new Label(
-                "New Patient Information");
-
-        dialogTitle.setStyle(
-                "-fx-font-size: 16px; "
-                        + "-fx-font-weight: bold; "
-                        + "-fx-text-fill: #1E293B;");
-
-        TextField nameField = new TextField();
-
-        nameField.setPromptText(
-                "Full Name (e.g. John Doe)");
-
-        TextField ageField = new TextField();
-
-        ageField.setPromptText(
-                "Age (e.g. 30)");
-
-        ComboBox<String> genderBox = new ComboBox<>();
-
-        genderBox.getItems()
-                .addAll(
-                        "Male",
-                        "Female",
-                        "Other");
-
-        genderBox
-                .getSelectionModel()
-                .selectFirst();
-
-        TextField bloodGroupField = new TextField();
-
-        bloodGroupField.setPromptText(
-                "Blood Group (e.g. O+)");
-
-        TextField vitalsField = new TextField();
-
-        vitalsField.setPromptText(
-                "Vitals (comma-separated)");
-
-        TextArea historyArea = new TextArea();
-
-        historyArea.setPromptText(
-                "Medical History & Notes...");
-
-        historyArea.setPrefRowCount(
-                3);
-
-        HBox actionButtons = new HBox(10);
-
-        actionButtons.setAlignment(
-                Pos.CENTER_RIGHT);
-
-        Button cancelBtn = new Button(
-                "Cancel");
-
-        cancelBtn.setOnAction(
-                e -> dialog.close());
-
-        Button saveBtn = new Button(
-                "Add Patient");
-
-        saveBtn.setStyle(
-                "-fx-background-color: #3B82F6; "
-                        + "-fx-text-fill: white; "
-                        + "-fx-font-weight: bold;");
-
-        saveBtn.setOnAction(e -> {
-
-            String name = nameField
-                    .getText()
-                    .trim();
-
-            if (name.isEmpty()) {
-
-                name = "New Patient";
-            }
-
-            String age = ageField
-                    .getText()
-                    .trim();
-
-            if (age.isEmpty()) {
-
-                age = "30";
-            }
-
-            String gender = genderBox.getValue();
-
-            String bloodGroup = bloodGroupField
-                    .getText()
-                    .trim();
-
-            if (bloodGroup.isEmpty()) {
-
-                bloodGroup = "A+";
-            }
-
-            String meta = gender
-                    + " • "
-                    + age
-                    + " Years Old • Blood Group: "
-                    + bloodGroup;
-
-            String[] vitals;
-
-            if (!vitalsField
-                    .getText()
-                    .trim()
-                    .isEmpty()) {
-
-                String[] rawVitals = vitalsField
-                        .getText()
-                        .split(",");
-
-                vitals = new String[rawVitals.length];
-
-                for (int i = 0; i < rawVitals.length; i++) {
-
-                    vitals[i] = "• "
-                            + rawVitals[i]
-                                    .trim();
-                }
-
-            } else {
-
-                vitals = new String[] {
-                        "• Heart Rate: 72 bpm",
-                        "• Blood Pressure: 120/80 mmHg",
-                        "• Temperature: 98.6 °F",
-                        "• SpO2: 99%"
-                };
-            }
-
-            String history = historyArea
-                    .getText()
-                    .trim();
-
-            if (history.isEmpty()) {
-
-                history = "No prior medical history recorded.";
-            }
-
-            /*
-             * Keep original temporary UI behavior.
-             */
-            String randomId = "Patient ID: #TEMP-"
-                    + System.currentTimeMillis();
-
-            PatientData newPatient = new PatientData(
-
-                    name,
-
-                    meta,
-
-                    randomId,
-
-                    "/images/mocks/robert_chen.png",
-
-                    vitals,
-
-                    history);
-
-            patientList.add(
-                    newPatient);
-
-            rebuildPatientTabs(
-                    patientSelectorBar);
-
-            if (!patientList.isEmpty()) {
-
-                switchPatient(
-                        patientList.size() - 1);
-            }
-
-            dialog.close();
-        });
-
-        actionButtons.getChildren()
-                .addAll(
-                        cancelBtn,
-                        saveBtn);
-
-        form.getChildren()
-                .addAll(
-
-                        dialogTitle,
-
-                        new Label("Name:"),
-                        nameField,
-
-                        new Label("Age:"),
-                        ageField,
-
-                        new Label("Gender:"),
-                        genderBox,
-
-                        new Label("Blood Group:"),
-                        bloodGroupField,
-
-                        new Label("Vitals:"),
-                        vitalsField,
-
-                        new Label("History & Notes:"),
-                        historyArea,
-
-                        actionButtons);
-
-        Scene dialogScene = new Scene(
-                form,
-                400,
-                500);
-
-        dialog.setScene(
-                dialogScene);
-
-        dialog.showAndWait();
-    }
-
-    // ============================================================
-    // PATIENT OVERVIEW CARD
-    // ============================================================
-
-    private VBox createPatientOverviewCard() {
-
-        VBox card = new VBox(15);
-
-        card.getStyleClass()
-                .add(
-                        "filter-container-card");
+        VBox card =
+                new VBox(14);
 
         card.setPadding(
-                new Insets(20));
+                new Insets(
+                        20
+                )
+        );
 
-        HBox profileHeader = new HBox(20);
-
-        profileHeader.setAlignment(
-                Pos.CENTER_LEFT);
-
-        /*
-         * ========================================================
-         * NO PATIENTS
-         * ========================================================
-         */
-
-        if (patientList.isEmpty()) {
-
-            profileImg = new ImageView();
-
-            profileImg.setFitWidth(70);
-
-            profileImg.setFitHeight(70);
-
-            StackPane emptyAvatar = new StackPane();
-
-            emptyAvatar.setPrefSize(
-                    70,
-                    70);
-
-            emptyAvatar.setStyle(
-                    "-fx-background-color: #E2E8F0; "
-                            + "-fx-background-radius: 35px;");
-
-            Label emptyInitial = new Label(
-                    "?");
-
-            emptyInitial.setStyle(
-                    "-fx-font-size: 24px; "
-                            + "-fx-font-weight: bold; "
-                            + "-fx-text-fill: #64748B;");
-
-            emptyAvatar.getChildren()
-                    .add(
-                            emptyInitial);
-
-            VBox infoBox = new VBox(4);
-
-            nameLbl = new Label(
-                    "No Patients Found");
-
-            nameLbl.setStyle(
-                    "-fx-font-size: 20px; "
-                            + "-fx-font-weight: bold; "
-                            + "-fx-text-fill: #1E293B;");
-
-            metaLbl = new Label(
-                    "Patients will appear here "
-                            + "after they book an appointment "
-                            + "with you.");
-
-            metaLbl.setWrapText(
-                    true);
-
-            metaLbl.setStyle(
-                    "-fx-font-size: 14px; "
-                            + "-fx-text-fill: #64748B;");
-
-            idLbl = new Label(
-                    "");
-
-            infoBox.getChildren()
-                    .addAll(
-                            nameLbl,
-                            metaLbl,
-                            idLbl);
-
-            profileHeader.getChildren()
-                    .addAll(
-                            emptyAvatar,
-                            infoBox);
-
-            card.getChildren()
-                    .add(
-                            profileHeader);
-
-            return card;
-        }
-
-        // ========================================================
-        // FIRST PATIENT
-        // ========================================================
-
-        PatientData initialData = patientList.get(0);
-
-        profileImg = new ImageView(
-                ResourceImage.load(
-                        initialData.imgPath));
-
-        profileImg.setFitWidth(70);
-
-        profileImg.setFitHeight(70);
-
-        Circle clip = new Circle(
-                35,
-                35,
-                35);
-
-        profileImg.setClip(
-                clip);
-
-        VBox infoBox = new VBox(4);
-
-        nameLbl = new Label(
-                initialData.name);
-
-        nameLbl.setStyle(
-                "-fx-font-size: 20px; "
-                        + "-fx-font-weight: bold; "
-                        + "-fx-text-fill: #1E293B;");
-
-        metaLbl = new Label(
-                initialData.meta);
-
-        metaLbl.setWrapText(
-                true);
-
-        metaLbl.setStyle(
-                "-fx-font-size: 14px; "
-                        + "-fx-text-fill: #64748B;");
-
-        idLbl = new Label(
-                initialData.id);
-
-        idLbl.setStyle(
-                "-fx-font-size: 13px; "
-                        + "-fx-text-fill: #3B82F6; "
-                        + "-fx-font-weight: bold;");
-
-        infoBox.getChildren()
-                .addAll(
-                        nameLbl,
-                        metaLbl,
-                        idLbl);
-
-        profileHeader.getChildren()
-                .addAll(
-                        profileImg,
-                        infoBox);
-
-        card.getChildren()
-                .add(
-                        profileHeader);
+        card.setStyle(
+                "-fx-background-color: white;"
+                        + "-fx-background-radius: 12;"
+                        + "-fx-border-color: #E2E8F0;"
+                        + "-fx-border-radius: 12;"
+        );
 
         return card;
     }
 
-    // ============================================================
-    // DETAILS GRID
-    // ============================================================
+    private Label sectionTitle(
+            String text
+    ) {
 
-    private GridPane createDetailsGrid() {
+        Label label =
+                new Label(
+                        text
+                );
 
-        GridPane grid = new GridPane();
+        label.setStyle(
+                "-fx-font-size: 17px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #0F172A;"
+        );
 
-        grid.setHgap(20);
-
-        grid.setVgap(20);
-
-        // ========================================================
-        // NO PATIENTS
-        // ========================================================
-
-        if (patientList.isEmpty()) {
-
-            VBox emptyCard = new VBox(12);
-
-            emptyCard.getStyleClass()
-                    .add(
-                            "filter-container-card");
-
-            emptyCard.setPadding(
-                    new Insets(20));
-
-            Label title = new Label(
-                    "Patient Information");
-
-            title.setStyle(
-                    "-fx-font-size: 16px; "
-                            + "-fx-font-weight: bold; "
-                            + "-fx-text-fill: #1E293B;");
-
-            Label message = new Label(
-                    "There are currently no patients "
-                            + "associated with your appointments.");
-
-            message.setWrapText(
-                    true);
-
-            message.setStyle(
-                    "-fx-text-fill: #64748B; "
-                            + "-fx-font-size: 13px;");
-
-            emptyCard.getChildren()
-                    .addAll(
-                            title,
-                            message);
-
-            ColumnConstraints fullColumn = new ColumnConstraints();
-
-            fullColumn.setPercentWidth(
-                    100);
-
-            grid.getColumnConstraints()
-                    .add(
-                            fullColumn);
-
-            grid.add(
-                    emptyCard,
-                    0,
-                    0);
-
-            return grid;
-        }
-
-        // ========================================================
-        // INITIAL PATIENT
-        // ========================================================
-
-        PatientData initialData = patientList.get(0);
-
-        // ========================================================
-        // VITALS CARD
-        // ========================================================
-
-        VBox vitalsCard = new VBox(12);
-
-        vitalsCard.getStyleClass()
-                .add(
-                        "filter-container-card");
-
-        vitalsCard.setPadding(
-                new Insets(20));
-
-        Label vitalsTitle = new Label(
-                "Recent Vitals");
-
-        vitalsTitle.setStyle(
-                "-fx-font-size: 16px; "
-                        + "-fx-font-weight: bold; "
-                        + "-fx-text-fill: #1E293B;");
-
-        vitalsContent = new VBox(8);
-
-        for (String vital : initialData.vitals) {
-
-            vitalsContent
-                    .getChildren()
-                    .add(
-                            new Label(
-                                    vital));
-        }
-
-        vitalsCard.getChildren()
-                .addAll(
-                        vitalsTitle,
-                        vitalsContent);
-
-        // ========================================================
-        // HISTORY CARD
-        // ========================================================
-
-        VBox historyCard = new VBox(12);
-
-        historyCard.getStyleClass()
-                .add(
-                        "filter-container-card");
-
-        historyCard.setPadding(
-                new Insets(20));
-
-        Label historyTitle = new Label(
-                "Medical History & Notes");
-
-        historyTitle.setStyle(
-                "-fx-font-size: 16px; "
-                        + "-fx-font-weight: bold; "
-                        + "-fx-text-fill: #1E293B;");
-
-        historyText = new Label(
-                initialData.history);
-
-        historyText.setWrapText(
-                true);
-
-        historyText.setStyle(
-                "-fx-text-fill: #475569; "
-                        + "-fx-font-size: 13px;");
-
-        historyCard.getChildren()
-                .addAll(
-                        historyTitle,
-                        historyText);
-
-        // ========================================================
-        // COLUMNS
-        // ========================================================
-
-        ColumnConstraints col1 = new ColumnConstraints();
-
-        col1.setPercentWidth(
-                50);
-
-        ColumnConstraints col2 = new ColumnConstraints();
-
-        col2.setPercentWidth(
-                50);
-
-        grid.getColumnConstraints()
-                .addAll(
-                        col1,
-                        col2);
-
-        grid.add(
-                vitalsCard,
-                0,
-                0);
-
-        grid.add(
-                historyCard,
-                1,
-                0);
-
-        return grid;
+        return label;
     }
 
     // ============================================================
-    // TOP HEADER
+    // INFO FIELD
     // ============================================================
 
-    private HBox createTopHeader() {
+    private void addInfoField(
+            GridPane grid,
+            String title,
+            String value,
+            int column,
+            int row
+    ) {
 
-        HBox topBar = new HBox();
+        addInfoField(
+                grid,
+                title,
+                value,
+                column,
+                row,
+                1
+        );
+    }
 
-        topBar.setAlignment(
-                Pos.CENTER_RIGHT);
+    private void addInfoField(
+            GridPane grid,
+            String title,
+            String value,
+            int column,
+            int row,
+            int colspan
+    ) {
 
-        // ========================================================
-        // SEARCH
-        // ========================================================
+        VBox box =
+                new VBox(4);
 
-        HBox searchField = new HBox(8);
+        Label titleLabel =
+                new Label(
+                        title
+                );
 
-        searchField.getStyleClass()
-                .add(
-                        "search-input-box");
+        titleLabel.setStyle(
+                "-fx-font-size: 11px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #64748B;"
+        );
 
-        searchField.setAlignment(
-                Pos.CENTER_LEFT);
+        Label valueLabel =
+                new Label(
+                        value
+                );
 
-        ImageView searchIcon = new ImageView(
-                ResourceImage.load(
-                        "/images/icons/ic_search.png"));
+        valueLabel.setWrapText(
+                true
+        );
 
-        searchIcon.setFitWidth(16);
+        valueLabel.setStyle(
+                "-fx-font-size: 13px;"
+                        + "-fx-text-fill: #334155;"
+        );
 
-        searchIcon.setFitHeight(16);
-
-        TextField searchInput = new TextField();
-
-        searchInput.setPromptText(
-                "Search patients or IDs...");
-
-        searchInput.getStyleClass()
-                .add(
-                        "search-text-field");
-
-        searchField.getChildren()
+        box.getChildren()
                 .addAll(
-                        searchIcon,
-                        searchInput);
+                        titleLabel,
+                        valueLabel
+                );
 
-        // ========================================================
-        // SPACER
-        // ========================================================
+        grid.add(
+                box,
+                column,
+                row,
+                colspan,
+                1
+        );
+    }
 
-        Region spacer = new Region();
+    // ============================================================
+    // PATIENT AVATAR
+    // ============================================================
 
-        HBox.setHgrow(
-                spacer,
-                Priority.ALWAYS);
+    private StackPane createPatientAvatar(
+            PatientProfile patient
+    ) {
 
-        // ========================================================
-        // RIGHT ICONS
-        // ========================================================
+        StackPane avatar =
+                new StackPane();
 
-        HBox rightIcons = new HBox(18);
+        avatar.setPrefSize(
+                70,
+                70
+        );
 
-        rightIcons.setAlignment(
-                Pos.CENTER_RIGHT);
+        avatar.setStyle(
+                "-fx-background-color: #DBEAFE;"
+                        + "-fx-background-radius: 50;"
+        );
 
-        // ========================================================
-        // NOTIFICATION
-        // ========================================================
+        String initials =
+                getPatientInitials(
+                        patient
+                );
 
-        StackPane notificationBox = new StackPane();
+        Label initialsLabel =
+                new Label(
+                        initials
+                );
 
-        ImageView bellIcon = new ImageView(
-                ResourceImage.load(
-                        "/images/icons/ic_bell.png"));
+        initialsLabel.setStyle(
+                "-fx-font-size: 20px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #2563EB;"
+        );
 
-        bellIcon.setFitWidth(18);
-
-        bellIcon.setFitHeight(18);
-
-        Circle badge = new Circle(
-                4,
-                Color.RED);
-
-        StackPane.setAlignment(
-                badge,
-                Pos.TOP_RIGHT);
-
-        notificationBox.getChildren()
-                .addAll(
-                        bellIcon,
-                        badge);
-
-        notificationBox.getStyleClass()
+        avatar.getChildren()
                 .add(
-                        "clickable-icon");
+                        initialsLabel
+                );
 
-        // ========================================================
-        // USER AVATAR
-        // ========================================================
+        return avatar;
+    }
 
-        ImageView userAvatar = new ImageView(
-                ResourceImage.load(
-                        "/images/doctor/"
-                                + "portrait-3d-male-doctor.png"));
+    private String getPatientInitials(
+            PatientProfile patient
+    ) {
 
-        userAvatar.setFitWidth(32);
+        if (patient == null) {
 
-        userAvatar.setFitHeight(32);
+            return "P";
+        }
 
-        Circle clip = new Circle(
-                16,
-                16,
-                16);
+        String first =
+                safeText(
+                        patient.getFirstName(),
+                        ""
+                ).trim();
 
-        userAvatar.setClip(
-                clip);
+        String last =
+                safeText(
+                        patient.getLastName(),
+                        ""
+                ).trim();
 
-        userAvatar.getStyleClass()
-                .add(
-                        "clickable-icon");
+        StringBuilder result =
+                new StringBuilder();
 
-        userAvatar.setOnMouseClicked(
-                e -> Navigation.goTo(
-                        stage,
-                        () -> new DoctorProfileView(
-                                stage).getScene()));
+        if (!first.isEmpty()) {
 
-        rightIcons.getChildren()
-                .addAll(
-                        notificationBox,
-                        userAvatar);
+            result.append(
+                    Character.toUpperCase(
+                            first.charAt(0)
+                    )
+            );
+        }
 
-        topBar.getChildren()
-                .addAll(
-                        searchField,
-                        spacer,
-                        rightIcons);
+        if (!last.isEmpty()) {
 
-        return topBar;
+            result.append(
+                    Character.toUpperCase(
+                            last.charAt(0)
+                    )
+            );
+        }
+
+        if (result.length() == 0) {
+
+            return "P";
+        }
+
+        return result.toString();
+    }
+
+    // ============================================================
+    // PATIENT DISPLAY
+    // ============================================================
+
+    private String getPatientDisplayName(
+            PatientProfile patient
+    ) {
+
+        if (patient == null) {
+
+            return "No Patient Selected";
+        }
+
+        String first =
+                safeText(
+                        patient.getFirstName(),
+                        ""
+                ).trim();
+
+        String last =
+                safeText(
+                        patient.getLastName(),
+                        ""
+                ).trim();
+
+        String fullName =
+                (first + " " + last)
+                        .trim();
+
+        if (!fullName.isEmpty()) {
+
+            return fullName;
+        }
+
+        return "Unnamed Patient";
+    }
+
+    private String getPatientMeta(
+            PatientProfile patient
+    ) {
+
+        if (patient == null) {
+
+            return "No patient selected";
+        }
+
+        String gender =
+                safeText(
+                        patient.getGender(),
+                        "Gender unavailable"
+                );
+
+        String dob =
+                safeText(
+                        patient.getDateOfBirth(),
+                        "DOB unavailable"
+                );
+
+        String bloodGroup =
+                safeText(
+                        patient.getBloodGroup(),
+                        "Blood group unavailable"
+                );
+
+        String age =
+                calculateAge(
+                        patient.getDateOfBirth()
+                );
+
+        if (!age.isEmpty()) {
+
+            return gender
+                    + " • "
+                    + age
+                    + " • DOB: "
+                    + dob
+                    + " • Blood Group: "
+                    + bloodGroup;
+        }
+
+        return gender
+                + " • DOB: "
+                + dob
+                + " • Blood Group: "
+                + bloodGroup;
+    }
+
+    private String getPatientIdText(
+            PatientProfile patient
+    ) {
+
+        if (patient == null) {
+
+            return "Patient ID: unavailable";
+        }
+
+        return "Patient ID: #"
+                + safeText(
+                patient.getUid(),
+                "unavailable"
+        );
+    }
+
+    // ============================================================
+    // AGE
+    // ============================================================
+
+    private String calculateAge(
+            String dateOfBirth
+    ) {
+
+        if (dateOfBirth == null
+                || dateOfBirth.trim().isEmpty()) {
+
+            return "";
+        }
+
+        try {
+
+            LocalDate dob =
+                    LocalDate.parse(
+                            dateOfBirth
+                    );
+
+            LocalDate today =
+                    LocalDate.now();
+
+            int age =
+                    Period.between(
+                            dob,
+                            today
+                    ).getYears();
+
+            return age + " yrs";
+
+        } catch (Exception e) {
+
+            return "";
+        }
+    }
+
+    // ============================================================
+    // MEDICAL RECORD DATE
+    // ============================================================
+
+    private String getRecordDate(
+            MedicalRecord record
+    ) {
+
+        if (record == null) {
+
+            return "Date unavailable";
+        }
+
+        String updated =
+                record.getUpdatedAt();
+
+        if (updated != null
+                && !updated.trim().isEmpty()) {
+
+            return formatTimestamp(
+                    updated
+            );
+        }
+
+        String created =
+                record.getCreatedAt();
+
+        if (created != null
+                && !created.trim().isEmpty()) {
+
+            return formatTimestamp(
+                    created
+            );
+        }
+
+        return "Date unavailable";
+    }
+
+    private String getRecordDateValue(
+            MedicalRecord record
+    ) {
+
+        if (record == null) {
+
+            return null;
+        }
+
+        if (record.getUpdatedAt() != null
+                && !record.getUpdatedAt()
+                .trim()
+                .isEmpty()) {
+
+            return record.getUpdatedAt();
+        }
+
+        return record.getCreatedAt();
+    }
+
+    // ============================================================
+    // APPOINTMENT DATE
+    // ============================================================
+
+    private String getAppointmentDateValue(
+            Appointment appointment
+    ) {
+
+        if (appointment == null) {
+
+            return null;
+        }
+
+        return appointment.getAppointmentDate();
+    }
+
+    // ============================================================
+    // TIMESTAMP FORMAT
+    // ============================================================
+
+    private String formatTimestamp(
+            String value
+    ) {
+
+        if (value == null
+                || value.trim().isEmpty()) {
+
+            return "Date unavailable";
+        }
+
+        try {
+
+            if (value.length() >= 10) {
+
+                return value.substring(
+                        0,
+                        10
+                );
+            }
+
+        } catch (Exception ignored) {
+
+            // Fall through to original value.
+        }
+
+        return value;
+    }
+
+    // ============================================================
+    // APPOINTMENT STATUS STYLE
+    // ============================================================
+
+    private String getAppointmentStatusStyle(
+            String status
+    ) {
+
+        String normalized =
+                safeText(
+                        status,
+                        "PENDING"
+                ).toUpperCase();
+
+        if (normalized.equals(
+                "COMPLETED"
+        )) {
+
+            return
+                    "-fx-background-color: #DCFCE7;"
+                            + "-fx-text-fill: #15803D;"
+                            + "-fx-font-size: 10px;"
+                            + "-fx-font-weight: bold;"
+                            + "-fx-padding: 5 9;"
+                            + "-fx-background-radius: 12;";
+        }
+
+        if (normalized.equals(
+                "CANCELLED"
+        )
+                || normalized.equals(
+                "CANCELED"
+        )
+                || normalized.equals(
+                "REJECTED"
+        )) {
+
+            return
+                    "-fx-background-color: #FEE2E2;"
+                            + "-fx-text-fill: #B91C1C;"
+                            + "-fx-font-size: 10px;"
+                            + "-fx-font-weight: bold;"
+                            + "-fx-padding: 5 9;"
+                            + "-fx-background-radius: 12;";
+        }
+
+        if (normalized.equals(
+                "ACCEPTED"
+        )
+                || normalized.equals(
+                "CONFIRMED"
+        )) {
+
+            return
+                    "-fx-background-color: #DBEAFE;"
+                            + "-fx-text-fill: #1D4ED8;"
+                            + "-fx-font-size: 10px;"
+                            + "-fx-font-weight: bold;"
+                            + "-fx-padding: 5 9;"
+                            + "-fx-background-radius: 12;";
+        }
+
+        return
+                "-fx-background-color: #FEF3C7;"
+                        + "-fx-text-fill: #92400E;"
+                        + "-fx-font-size: 10px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-padding: 5 9;"
+                        + "-fx-background-radius: 12;";
+    }
+
+    // ============================================================
+    // RECORD COUNT
+    // ============================================================
+
+    private void updateRecordsCount() {
+
+        if (recordsCountLabel == null) {
+
+            return;
+        }
+
+        int count =
+                medicalRecords == null
+                        ? 0
+                        : medicalRecords.size();
+
+        recordsCountLabel.setText(
+                count
+                        + (count == 1
+                        ? " record"
+                        : " records")
+        );
+    }
+
+    // ============================================================
+    // SEARCH COUNT
+    // ============================================================
+
+    private void updateMatchingCount(
+            int count
+    ) {
+
+        if (matchingCountLabel != null) {
+
+            matchingCountLabel.setText(
+                    count
+                            + (count == 1
+                            ? " matching patient"
+                            : " matching patients")
+            );
+        }
+    }
+
+    // ============================================================
+    // EMPTY MESSAGE
+    // ============================================================
+
+    private Label emptyMessage(
+            String message
+    ) {
+
+        Label label =
+                new Label(
+                        message
+                );
+
+        label.setWrapText(
+                true
+        );
+
+        label.setStyle(
+                "-fx-font-size: 13px;"
+                        + "-fx-text-fill: #64748B;"
+        );
+
+        return label;
+    }
+
+    // ============================================================
+    // SAFE TEXT
+    // ============================================================
+
+    private String safeText(
+            String value,
+            String fallback
+    ) {
+
+        if (value == null
+                || value.trim().isEmpty()) {
+
+            return fallback;
+        }
+
+        return value.trim();
+    }
+
+    // ============================================================
+    // IMAGE HELPER
+    // ============================================================
+
+    private ImageView createImageView(
+            String path,
+            double width,
+            double height
+    ) {
+
+        try {
+
+            ImageView image =
+                    new ImageView(
+                            ResourceImage.load(
+                                    path
+                            )
+                    );
+
+            image.setFitWidth(
+                    width
+            );
+
+            image.setFitHeight(
+                    height
+            );
+
+            image.setPreserveRatio(
+                    true
+            );
+
+            return image;
+
+        } catch (Exception e) {
+
+            return null;
+        }
+    }
+
+    // ============================================================
+    // ALERT
+    // ============================================================
+
+    private void showAlert(
+            Alert.AlertType type,
+            String title,
+            String message
+    ) {
+
+        Alert alert =
+                new Alert(
+                        type
+                );
+
+        alert.setTitle(
+                title
+        );
+
+        alert.setHeaderText(
+                null
+        );
+
+        alert.setContentText(
+                message
+        );
+
+        alert.showAndWait();
     }
 }

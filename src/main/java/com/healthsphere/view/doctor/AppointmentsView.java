@@ -2,737 +2,572 @@ package com.healthsphere.view.doctor;
 
 import com.healthsphere.controller.appointment.AppointmentController;
 import com.healthsphere.model.Appointment;
-import com.healthsphere.model.AuthenticationResponse;
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ResourceImage;
 import com.healthsphere.util.SessionManager;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.image.ImageView;
 import javafx.scene.Node;
-import javafx.scene.layout.*;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 
-import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 /**
- * AppointmentsView represents the appointment management screen for Doctors in
- * Health-Sphere.
- * Fully interactive filter tabs, navigation, horizontal and vertical scrolling
- * cards container,
- * with a static left sidebar matching DoctorDashboardView.
+ * Doctor Appointments Screen
+ *
+ * Backend flow:
+ *
+ * JavaFX View
+ *      ↓
+ * AppointmentController
+ *      ↓
+ * AppointmentDAO
+ *      ↓
+ * Firebase Firestore
+ *
+ * Appointment workflow:
+ *
+ * PENDING / CONFIRMED
+ *      ↓
+ * APPROVE → ACCEPTED
+ *      ↓
+ * COMPLETE → COMPLETED
+ *
+ * PENDING / CONFIRMED
+ *      ↓
+ * REJECT → REJECTED
+ *
+ * ACCEPTED
+ *      ↓
+ * CANCEL → CANCELLED
  */
 public class AppointmentsView {
+
+    // ============================================================
+    // BASIC
+    // ============================================================
 
     private final Stage stage;
     private final Scene scene;
 
-    /*
-     * ============================================================
-     * APPOINTMENT BACKEND CONTROLLER
-     * ============================================================
-     */
+    // ============================================================
+    // BACKEND
+    // ============================================================
+
     private final AppointmentController appointmentController;
 
-    // FlowPane inside ScrollPane to handle horizontal flow & vertical multi-row
-    // card display
+    private final String doctorUid;
+
+    // ============================================================
+    // REAL FIREBASE DATA
+    // ============================================================
+
+    private final List<Appointment> appointmentList =
+            new ArrayList<>();
+
+    // ============================================================
+    // UI REFERENCES
+    // ============================================================
+
     private FlowPane cardsGrid;
 
-    // Store master list of appointment model data for UI filtering
-    private final List<AppointmentData> appointmentList = new ArrayList<>();
+    private Label totalAppointmentsLabel;
+
+    private TextField searchField;
+
+    private DatePicker datePicker;
+
+    // ============================================================
+    // FILTER STATE
+    // ============================================================
+
+    private String selectedFilter = "All";
+
+    // ============================================================
+    // DATE FORMAT
+    // ============================================================
+
+    private static final DateTimeFormatter DATE_FORMAT =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+    // ============================================================
+    // CONSTRUCTOR
+    // ============================================================
 
     public AppointmentsView(Stage stage) {
 
         this.stage = stage;
 
-        /*
-         * ========================================================
-         * BACKEND CONTROLLER
-         * ========================================================
-         */
-        this.appointmentController = new AppointmentController();
+        this.appointmentController =
+                new AppointmentController();
+
+        this.doctorUid =
+                getCurrentDoctorUid();
 
         /*
-         * ========================================================
-         * LOAD REAL APPOINTMENTS FROM FIRESTORE
-         * ========================================================
-         *
-         * Original UI remains unchanged.
-         * Only the source of appointment data is changed.
+         * Load REAL appointments from Firebase.
          */
-        loadAppointmentsFromFirestore();
+        loadAppointmentsFromFirebase();
 
-        this.scene = createScene();
+        this.scene =
+                createScene();
     }
+
+    // ============================================================
+    // GET SCENE
+    // ============================================================
 
     public Scene getScene() {
-        return this.scene;
+
+        return scene;
     }
 
-    /** Helper Data Class to store appointment attributes for filtering */
-    private static class AppointmentData {
+    // ============================================================
+    // CURRENT DOCTOR UID
+    // ============================================================
 
-        String aptId;
-        String status;
-        String filterCategory;
-        String statusClass;
-        String avatarPath;
-        String initials;
-        String patientName;
-        String consultationType;
-        String typeIconPath;
-        String dateTime;
-        String notes;
-        boolean isHighlighted;
+    private String getCurrentDoctorUid() {
 
-        public AppointmentData(
-                String aptId,
-                String status,
-                String filterCategory,
-                String statusClass,
-                String avatarPath,
-                String initials,
-                String patientName,
-                String consultationType,
-                String typeIconPath,
-                String dateTime,
-                String notes,
-                boolean isHighlighted) {
+        if (SessionManager
+                .getInstance()
+                .getCurrentUser() == null) {
 
-            this.aptId = aptId;
-            this.status = status;
-            this.filterCategory = filterCategory;
-            this.statusClass = statusClass;
-            this.avatarPath = avatarPath;
-            this.initials = initials;
-            this.patientName = patientName;
-            this.consultationType = consultationType;
-            this.typeIconPath = typeIconPath;
-            this.dateTime = dateTime;
-            this.notes = notes;
-            this.isHighlighted = isHighlighted;
+            throw new IllegalStateException(
+                    "No logged-in user was found."
+            );
         }
+
+        String uid =
+                SessionManager
+                        .getInstance()
+                        .getCurrentUser()
+                        .getUid();
+
+        if (uid == null
+                || uid.trim().isEmpty()) {
+
+            throw new IllegalStateException(
+                    "Doctor UID is not available in the current session."
+            );
+        }
+
+        return uid;
     }
 
-    /*
-     * ============================================================
-     * LOAD APPOINTMENTS FROM FIRESTORE
-     * ============================================================
-     *
-     * This replaces the old hardcoded sample data.
-     *
-     * Doctor UID is obtained from SessionManager.
-     *
-     * Firestore query:
-     *
-     * appointments
-     * where doctorUid == currentDoctorUid
-     *
-     * This includes:
-     *
-     * 1. Patient -> Doctor appointments
-     * 2. Patient -> Hospital -> Doctor assigned appointments
-     */
-    private void loadAppointmentsFromFirestore() {
+    // ============================================================
+    // LOAD REAL APPOINTMENTS
+    // ============================================================
+
+    private void loadAppointmentsFromFirebase() {
 
         appointmentList.clear();
 
         try {
 
-            /*
-             * ====================================================
-             * GET CURRENT LOGGED-IN USER
-             * ====================================================
-             */
+            List<Appointment> appointments =
+                    appointmentController
+                            .getDoctorAppointments(
+                                    doctorUid
+                            );
 
-            AuthenticationResponse authenticationResponse = SessionManager.getInstance()
-                    .getAuthenticationResponse();
+            if (appointments != null) {
 
-            String doctorUid = authenticationResponse.getUid();
-
-            if (doctorUid == null ||
-                    doctorUid.trim().isEmpty()) {
-
-                System.err.println(
-                        "Doctor UID is missing.");
-
-                return;
+                appointmentList.addAll(
+                        appointments
+                );
             }
 
             /*
-             * ====================================================
-             * GET DOCTOR APPOINTMENTS
-             * ====================================================
+             * Sort by appointment date and time.
              */
-
-            List<Appointment> appointments = appointmentController
-                    .getDoctorAppointments(
-                            doctorUid);
-
-            /*
-             * ====================================================
-             * CONVERT BACKEND MODEL TO EXISTING UI MODEL
-             * ====================================================
-             */
-
-            for (Appointment appointment : appointments) {
-
-                AppointmentData data = convertAppointmentToUIData(
-                        appointment);
-
-                appointmentList.add(data);
-            }
+            appointmentList.sort(
+                    Comparator
+                            .comparing(
+                                    this::getSortableDateTime
+                            )
+            );
 
             System.out.println(
-                    "Doctor appointments loaded: "
-                            + appointmentList.size());
+                    "========================================"
+            );
+
+            System.out.println(
+                    "Doctor UID: "
+                            + doctorUid
+            );
+
+            System.out.println(
+                    "REAL APPOINTMENTS LOADED: "
+                            + appointmentList.size()
+            );
+
+            System.out.println(
+                    "========================================"
+            );
 
         } catch (Exception e) {
 
-            System.err.println(
-                    "Unable to load doctor appointments.");
-
             e.printStackTrace();
 
-            /*
-             * Do not crash the entire Doctor UI.
-             */
-            showInformationAlert(
-                    "Appointments",
-                    "Unable to load appointments from Firebase.");
+            showErrorAlert(
+                    "Appointments Error",
+                    getRootErrorMessage(e)
+            );
         }
     }
 
-    /*
-     * ============================================================
-     * CONVERT APPOINTMENT TO UI DATA
-     * ============================================================
-     */
-    private AppointmentData convertAppointmentToUIData(
+    // ============================================================
+    // SORT DATE/TIME
+    // ============================================================
+
+    private String getSortableDateTime(
             Appointment appointment) {
 
-        String status = appointment.getStatus();
+        if (appointment == null) {
 
-        String normalizedStatus = status != null
-                ? status.trim().toUpperCase()
-                : "PENDING";
-
-        String displayStatus = getDisplayStatus(
-                normalizedStatus);
-
-        String filterCategory = getFilterCategory(
-                normalizedStatus);
-
-        String statusClass = getStatusClass(
-                normalizedStatus);
-
-        /*
-         * ========================================================
-         * PATIENT NAME
-         * ========================================================
-         */
-
-        String patientName = appointment.getPatientName();
-
-        if (patientName == null ||
-                patientName.trim().isEmpty()) {
-
-            patientName = "Unknown Patient";
+            return "9999-99-99-99-99";
         }
 
-        /*
-         * ========================================================
-         * PATIENT INITIALS
-         * ========================================================
-         */
+        String date =
+                safe(
+                        appointment.getAppointmentDate(),
+                        "9999-99-99"
+                );
 
-        String initials = generateInitials(
-                patientName);
+        String time =
+                safe(
+                        appointment.getAppointmentTime(),
+                        "99:99"
+                );
 
-        /*
-         * ========================================================
-         * CONSULTATION TYPE
-         * ========================================================
-         */
-
-        String consultationType = getConsultationType(
-                appointment);
-
-        /*
-         * ========================================================
-         * CONSULTATION ICON
-         * ========================================================
-         */
-
-        String typeIconPath = getConsultationIcon(
-                appointment);
-
-        /*
-         * ========================================================
-         * DATE + TIME
-         * ========================================================
-         */
-
-        String dateTime = buildDateTime(
-                appointment);
-
-        /*
-         * ========================================================
-         * NOTES / REASON
-         * ========================================================
-         */
-
-        String notes = appointment.getReason();
-
-        if (notes == null ||
-                notes.trim().isEmpty()) {
-
-            notes = "No appointment notes available.";
-        }
-
-        /*
-         * ========================================================
-         * RETURN EXISTING UI MODEL
-         * ========================================================
-         */
-
-        return new AppointmentData(
-
-                appointment.getAppointmentId(),
-
-                displayStatus,
-
-                filterCategory,
-
-                statusClass,
-
-                null,
-
-                initials,
-
-                patientName,
-
-                consultationType,
-
-                typeIconPath,
-
-                dateTime,
-
-                notes,
-
-                "IN_PROGRESS".equals(
-                        normalizedStatus));
+        return date + " " + time;
     }
 
-    /*
-     * ============================================================
-     * DISPLAY STATUS
-     * ============================================================
-     */
-    private String getDisplayStatus(
-            String status) {
-
-        switch (status) {
-
-            case "CONFIRMED":
-                return "Confirmed";
-
-            case "IN_PROGRESS":
-                return "In Progress";
-
-            case "PENDING":
-                return "Pending";
-
-            case "PENDING_ASSIGNMENT":
-                return "Pending Assignment";
-
-            case "COMPLETED":
-                return "Completed";
-
-            case "CANCELLED":
-                return "Cancelled";
-
-            default:
-                return status;
-        }
-    }
-
-    /*
-     * ============================================================
-     * FILTER CATEGORY
-     * ============================================================
-     */
-    private String getFilterCategory(
-            String status) {
-
-        switch (status) {
-
-            case "COMPLETED":
-                return "Completed";
-
-            case "CANCELLED":
-                return "Cancelled";
-
-            case "CONFIRMED":
-            case "IN_PROGRESS":
-            case "PENDING":
-            case "PENDING_ASSIGNMENT":
-            default:
-                return "Upcoming";
-        }
-    }
-
-    /*
-     * ============================================================
-     * STATUS CSS CLASS
-     * ============================================================
-     */
-    private String getStatusClass(
-            String status) {
-
-        switch (status) {
-
-            case "CONFIRMED":
-                return "pill-status-confirmed";
-
-            case "IN_PROGRESS":
-                return "pill-status-inprogress";
-
-            case "PENDING":
-            case "PENDING_ASSIGNMENT":
-                return "pill-status-pending";
-
-            case "COMPLETED":
-                return "pill-status-completed";
-
-            case "CANCELLED":
-                return "pill-status-cancelled";
-
-            default:
-                return "pill-status-pending";
-        }
-    }
-
-    /*
-     * ============================================================
-     * CONSULTATION TYPE
-     * ============================================================
-     */
-    private String getConsultationType(
-            Appointment appointment) {
-
-        String bookingType = appointment.getBookingType();
-
-        if ("HOSPITAL".equalsIgnoreCase(
-                bookingType)) {
-
-            return "Hospital Appointment";
-        }
-
-        return "Doctor Consultation";
-    }
-
-    /*
-     * ============================================================
-     * CONSULTATION ICON
-     * ============================================================
-     */
-    private String getConsultationIcon(
-            Appointment appointment) {
-
-        String bookingType = appointment.getBookingType();
-
-        if ("HOSPITAL".equalsIgnoreCase(
-                bookingType)) {
-
-            return "/images/icons/ic_hospital.png";
-        }
-
-        return "/images/icons/ic_appointments.png";
-    }
-
-    /*
-     * ============================================================
-     * BUILD DATE + TIME
-     * ============================================================
-     */
-    private String buildDateTime(
-            Appointment appointment) {
-
-        String date = appointment.getAppointmentDate();
-
-        String time = appointment.getAppointmentTime();
-
-        if (date == null) {
-            date = "";
-        }
-
-        if (time == null) {
-            time = "";
-        }
-
-        if (date.isEmpty() &&
-                time.isEmpty()) {
-
-            return "Date/time unavailable";
-        }
-
-        if (date.isEmpty()) {
-            return time;
-        }
-
-        if (time.isEmpty()) {
-            return date;
-        }
-
-        return date + " | " + time;
-    }
-
-    /*
-     * ============================================================
-     * GENERATE PATIENT INITIALS
-     * ============================================================
-     */
-    private String generateInitials(
-            String name) {
-
-        if (name == null ||
-                name.trim().isEmpty()) {
-
-            return "--";
-        }
-
-        String[] parts = name.trim().split("\\s+");
-
-        if (parts.length == 1) {
-
-            return parts[0]
-                    .substring(
-                            0,
-                            Math.min(
-                                    2,
-                                    parts[0].length()))
-                    .toUpperCase();
-        }
-
-        String first = parts[0]
-                .substring(0, 1);
-
-        String last = parts[parts.length - 1]
-                .substring(0, 1);
-
-        return (first + last).toUpperCase();
-    }
+    // ============================================================
+    // CREATE SCENE
+    // ============================================================
 
     private Scene createScene() {
 
-        BorderPane mainRoot = new BorderPane();
+        BorderPane root =
+                new BorderPane();
 
-        mainRoot.getStyleClass()
+        root.getStyleClass()
                 .add("root-pane");
 
-        // --- Sidebar (LEFT - Static matching Dashboard) ---
-        VBox sidebar = createSidebar();
+        // --------------------------------------------------------
+        // SIDEBAR
+        // --------------------------------------------------------
 
-        mainRoot.setLeft(sidebar);
+        root.setLeft(
+                createSidebar()
+        );
 
-        // --- Main Content Area ---
-        VBox contentArea = new VBox(20);
+        // --------------------------------------------------------
+        // CONTENT
+        // --------------------------------------------------------
 
-        contentArea.setPadding(
+        VBox content =
+                new VBox(20);
+
+        content.setPadding(
                 new Insets(
                         20,
                         30,
                         30,
-                        30));
+                        30
+                )
+        );
 
-        contentArea.getStyleClass()
+        content.getStyleClass()
                 .add("content-area");
 
-        // Top Header
-        HBox topHeader = createTopHeader();
+        // Top bar
+        content.getChildren()
+                .add(
+                        createTopHeader()
+                );
 
-        contentArea.getChildren()
-                .add(topHeader);
+        // Title
+        content.getChildren()
+                .add(
+                        createTitleSection()
+                );
 
-        // Title and Action Header
-        BorderPane titleSection = createTitleSection();
+        // Filter section
+        content.getChildren()
+                .add(
+                        createFilterBar()
+                );
 
-        contentArea.getChildren()
-                .add(titleSection);
-
-        // Filter Bar
-        HBox filterBar = createFilterBar();
-
-        contentArea.getChildren()
-                .add(filterBar);
-
-        // Appointments Grid
-        cardsGrid = new FlowPane(
-                20,
-                20);
+        // Cards
+        cardsGrid =
+                new FlowPane(
+                        20,
+                        20
+                );
 
         cardsGrid.setAlignment(
-                Pos.TOP_LEFT);
+                Pos.TOP_LEFT
+        );
 
-        ScrollPane cardsScrollPane = new ScrollPane(
-                cardsGrid);
+        cardsGrid.setPadding(
+                new Insets(5)
+        );
 
-        cardsScrollPane.setFitToWidth(
-                true);
+        ScrollPane cardsScroll =
+                new ScrollPane(
+                        cardsGrid
+                );
 
-        cardsScrollPane.setPannable(
-                true);
+        cardsScroll.setFitToWidth(
+                true
+        );
 
-        cardsScrollPane.setStyle(
-                "-fx-background-color: transparent; "
-                        + "-fx-background: transparent;");
+        cardsScroll.setPannable(
+                true
+        );
 
-        renderFilteredAppointments(
-                "All");
+        cardsScroll.setHbarPolicy(
+                ScrollPane.ScrollBarPolicy.NEVER
+        );
 
-        contentArea.getChildren()
-                .add(cardsScrollPane);
+        cardsScroll.setVbarPolicy(
+                ScrollPane.ScrollBarPolicy.AS_NEEDED
+        );
 
-        // ScrollPane wrapping ONLY contentArea
-        ScrollPane contentScrollPane = new ScrollPane(
-                contentArea);
+        cardsScroll.setStyle(
+                "-fx-background-color: transparent;"
+                        + "-fx-background: transparent;"
+        );
 
-        contentScrollPane.setFitToWidth(
-                true);
+        VBox.setVgrow(
+                cardsScroll,
+                Priority.ALWAYS
+        );
 
-        contentScrollPane.setFitToHeight(
-                true);
+        content.getChildren()
+                .add(
+                        cardsScroll
+                );
 
-        contentScrollPane.getStyleClass()
-                .add("content-scrollpane");
+        // --------------------------------------------------------
+        // OUTER SCROLL
+        // --------------------------------------------------------
 
-        mainRoot.setCenter(
-                contentScrollPane);
+        ScrollPane outerScroll =
+                new ScrollPane(
+                        content
+                );
 
-        Scene appointmentsScene = new Scene(
-                mainRoot,
-                stage.getWidth(),
-                stage.getHeight());
+        outerScroll.setFitToWidth(
+                true
+        );
+
+        outerScroll.setFitToHeight(
+                true
+        );
+
+        outerScroll.setHbarPolicy(
+                ScrollPane.ScrollBarPolicy.NEVER
+        );
+
+        outerScroll.setStyle(
+                "-fx-background-color: transparent;"
+                        + "-fx-background: transparent;"
+        );
+
+        root.setCenter(
+                outerScroll
+        );
+
+        // --------------------------------------------------------
+        // SCENE
+        // --------------------------------------------------------
+
+        Scene result =
+                new Scene(
+                        root,
+                        stage.getWidth(),
+                        stage.getHeight()
+                );
 
         try {
 
-            appointmentsScene
-                    .getStylesheets()
+            result.getStylesheets()
                     .add(
                             Objects.requireNonNull(
-                                    getClass().getResource(
-                                            "/css/appointments.css"))
-                                    .toExternalForm());
+                                    getClass()
+                                            .getResource(
+                                                    "/css/appointments.css"
+                                            )
+                            ).toExternalForm()
+                    );
 
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+
+            System.out.println(
+                    "appointments.css could not be loaded."
+            );
         }
 
-        return appointmentsScene;
+        // Initial display
+        renderAppointments();
+
+        return result;
     }
 
-    /**
-     * Sidebar navigation styled strictly like Dashboard.
-     */
+    // ============================================================
+    // SIDEBAR
+    // ============================================================
+
     private VBox createSidebar() {
 
-        VBox sidebar = new VBox();
+        VBox sidebar =
+                new VBox();
 
         sidebar.setPadding(
                 new Insets(
                         25,
                         15,
                         25,
-                        15));
+                        15
+                )
+        );
 
-        sidebar.getStyleClass()
-                .add("sidebar");
+        sidebar.setMinWidth(
+                260
+        );
+
+        sidebar.setPrefWidth(
+                260
+        );
+
+        sidebar.setMaxWidth(
+                260
+        );
 
         sidebar.setStyle(
-                "-fx-background-color: #0F172A;");
+                "-fx-background-color: #0F172A;"
+        );
 
-        sidebar.setMinWidth(260);
-        sidebar.setPrefWidth(260);
-        sidebar.setMaxWidth(260);
+        // --------------------------------------------------------
+        // LOGO
+        // --------------------------------------------------------
 
-        // Logo Section
-        HBox logoSection = new HBox(12);
+        HBox logoSection =
+                new HBox(12);
+
+        logoSection.setAlignment(
+                Pos.CENTER_LEFT
+        );
 
         logoSection.setPadding(
                 new Insets(
                         0,
                         0,
                         25,
-                        5));
+                        5
+                )
+        );
 
-        logoSection.setAlignment(
-                Pos.CENTER_LEFT);
+        StackPane logoBox =
+                new StackPane();
 
-        StackPane logoIconBox = new StackPane();
+        logoBox.setStyle(
+                "-fx-background-color: #3B82F6;"
+                        + "-fx-background-radius: 8px;"
+                        + "-fx-padding: 8px;"
+        );
 
-        logoIconBox.getStyleClass()
-                .add("logo-icon-box");
+        ImageView logo =
+                createImageView(
+                        "/images/icons/ic_shield.png",
+                        20,
+                        20
+                );
 
-        logoIconBox.setStyle(
-                "-fx-background-color: #3B82F6; "
-                        + "-fx-background-radius: 8px; "
-                        + "-fx-padding: 8px;");
+        if (logo != null) {
 
-        ImageView logoIcon = createImageView(
-                "/images/icons/ic_shield.png",
-                20,
-                20);
-
-        if (logoIcon != null) {
-            logoIconBox.getChildren()
-                    .add(logoIcon);
+            logoBox
+                    .getChildren()
+                    .add(
+                            logo
+                    );
         }
 
-        VBox logoText = new VBox(2);
+        VBox logoText =
+                new VBox(2);
 
-        Label appName = new Label(
-                "Health-Sphere");
-
-        appName.getStyleClass()
-                .add("logo-name");
+        Label appName =
+                new Label(
+                        "Health-Sphere"
+                );
 
         appName.setStyle(
-                "-fx-text-fill: #FFFFFF; "
-                        + "-fx-font-weight: bold; "
-                        + "-fx-font-size: 16px;");
+                "-fx-text-fill: white;"
+                        + "-fx-font-size: 16px;"
+                        + "-fx-font-weight: bold;"
+        );
 
-        Label doctorSubtext = new Label(
-                "Doctor Dashboard");
+        Label subtitle =
+                new Label(
+                        "Doctor Dashboard"
+                );
 
-        doctorSubtext.getStyleClass()
-                .add("logo-subtext");
+        subtitle.setStyle(
+                "-fx-text-fill: #94A3B8;"
+                        + "-fx-font-size: 12px;"
+        );
 
-        doctorSubtext.setStyle(
-                "-fx-text-fill: #94A3B8; "
-                        + "-fx-font-size: 12px;");
-
-        logoText.getChildren()
+        logoText
+                .getChildren()
                 .addAll(
                         appName,
-                        doctorSubtext);
+                        subtitle
+                );
 
-        logoSection.getChildren()
+        logoSection
+                .getChildren()
                 .addAll(
-                        logoIconBox,
-                        logoText);
+                        logoBox,
+                        logoText
+                );
 
-        // Navigation Items
-        VBox navItems = new VBox(6);
+        // --------------------------------------------------------
+        // NAVIGATION
+        // --------------------------------------------------------
 
-        String[] tabs = {
+        VBox navigation =
+                new VBox(6);
+
+        String[] names = {
                 "Dashboard",
                 "Today's Schedule",
                 "Appointments",
@@ -744,308 +579,405 @@ public class AppointmentsView {
         };
 
         String[] icons = {
-                "ic_dashboard",
-                "ic_schedule",
-                "ic_appointments",
-                "ic_patient",
-                "ic_reports",
-                "ic_availability",
-                "ic_profile",
-                "ic_ai"
+                "ic_dashboard.png",
+                "ic_schedule.png",
+                "ic_appointments.png",
+                "ic_patient.png",
+                "ic_reports.png",
+                "ic_availability.png",
+                "ic_profile.png",
+                "ic_ai.png"
         };
 
-        for (int i = 0; i < tabs.length; i++) {
+        for (int i = 0;
+             i < names.length;
+             i++) {
 
-            final int tabIndex = i;
+            HBox navItem =
+                    new HBox(12);
 
-            HBox navTab = new HBox(12);
+            navItem.setAlignment(
+                    Pos.CENTER_LEFT
+            );
 
-            navTab.setAlignment(
-                    Pos.CENTER_LEFT);
-
-            navTab.setPadding(
+            navItem.setPadding(
                     new Insets(
                             10,
                             14,
                             10,
-                            14));
+                            14
+                    )
+            );
 
-            navTab.getStyleClass()
-                    .add("nav-tab");
+            ImageView icon =
+                    createImageView(
+                            "/images/icons/"
+                                    + icons[i],
+                            18,
+                            18
+                    );
 
-            ImageView icon = createImageView(
-                    "/images/icons/"
-                            + icons[i]
-                            + ".png",
-                    18,
-                    18);
+            Label label =
+                    new Label(
+                            names[i]
+                    );
 
-            Label tabLabel = new Label(
-                    tabs[i]);
-
-            tabLabel.getStyleClass()
-                    .add("nav-text");
+            // ----------------------------------------------------
+            // ACTIVE APPOINTMENTS
+            // ----------------------------------------------------
 
             if (i == 2) {
 
-                navTab.getStyleClass()
-                        .add(
-                                "nav-tab-active");
+                navItem.setStyle(
+                        "-fx-background-color: #3B82F6;"
+                                + "-fx-background-radius: 8px;"
+                                + "-fx-cursor: hand;"
+                );
 
-                navTab.setStyle(
-                        "-fx-background-color: #3B82F6; "
-                                + "-fx-background-radius: 8px;");
-
-                tabLabel.setStyle(
-                        "-fx-text-fill: #FFFFFF; "
-                                + "-fx-font-weight: bold; "
-                                + "-fx-font-size: 14px;");
+                label.setStyle(
+                        "-fx-text-fill: white;"
+                                + "-fx-font-size: 14px;"
+                                + "-fx-font-weight: bold;"
+                );
 
             } else {
 
-                navTab.setStyle(
-                        "-fx-background-color: transparent; "
-                                + "-fx-background-radius: 8px;");
+                navItem.setStyle(
+                        "-fx-background-color: transparent;"
+                                + "-fx-background-radius: 8px;"
+                                + "-fx-cursor: hand;"
+                );
 
-                tabLabel.setStyle(
-                        "-fx-text-fill: #94A3B8; "
-                                + "-fx-font-size: 14px;");
+                label.setStyle(
+                        "-fx-text-fill: #94A3B8;"
+                                + "-fx-font-size: 14px;"
+                );
             }
 
             if (icon != null) {
-                navTab.getChildren()
-                        .add(icon);
+
+                navItem
+                        .getChildren()
+                        .add(
+                                icon
+                        );
             }
 
-            navTab.getChildren()
-                    .add(tabLabel);
+            navItem
+                    .getChildren()
+                    .add(
+                            label
+                    );
 
-            navTab.setOnMouseClicked(
-                    event -> handleSidebarTabClick(
-                            tabIndex));
+            final int index = i;
 
-            navItems.getChildren()
-                    .add(navTab);
+            navItem.setOnMouseClicked(
+                    e ->
+                            handleSidebarNavigation(
+                                    index
+                            )
+            );
+
+            navigation
+                    .getChildren()
+                    .add(
+                            navItem
+                    );
         }
 
-        // Spacer
-        Region spacer = new Region();
+        // --------------------------------------------------------
+        // SPACER
+        // --------------------------------------------------------
+
+        Region spacer =
+                new Region();
 
         VBox.setVgrow(
                 spacer,
-                Priority.ALWAYS);
+                Priority.ALWAYS
+        );
 
-        // Footer
-        VBox footer = new VBox(10);
+        // --------------------------------------------------------
+        // PROFILE
+        // --------------------------------------------------------
 
-        footer.setPadding(
-                new Insets(
-                        15,
-                        0,
-                        0,
-                        0));
+        HBox profile =
+                new HBox(12);
 
-        // Bottom Doctor Profile Box
-        HBox sidebarProfile = new HBox(12);
+        profile.setAlignment(
+                Pos.CENTER_LEFT
+        );
 
-        sidebarProfile.setAlignment(
-                Pos.CENTER_LEFT);
-
-        sidebarProfile.setPadding(
+        profile.setPadding(
                 new Insets(
                         10,
                         12,
                         10,
-                        12));
+                        12
+                )
+        );
 
-        sidebarProfile.getStyleClass()
-                .add(
-                        "sidebar-profile-box");
+        profile.setStyle(
+                "-fx-background-color: #1E293B;"
+                        + "-fx-background-radius: 10px;"
+                        + "-fx-cursor: hand;"
+        );
 
-        sidebarProfile.setStyle(
-                "-fx-background-color: #1E293B; "
-                        + "-fx-background-radius: 10px; "
-                        + "-fx-cursor: hand;");
+        ImageView profileImage =
+                createImageView(
+                        "/images/mocks/dr_sarah_avatar.png",
+                        36,
+                        36
+                );
 
-        ImageView profileAvatar = createImageView(
-                "/images/doctor/portrait-3d-male-doctor.png",
-                36,
-                36);
+        if (profileImage != null) {
 
-        if (profileAvatar != null) {
+            Circle clip =
+                    new Circle(
+                            18,
+                            18,
+                            18
+                    );
 
-            Circle profileClip = new Circle(
-                    18,
-                    18,
-                    18);
-
-            profileAvatar.setClip(
-                    profileClip);
+            profileImage.setClip(
+                    clip
+            );
         }
 
-        VBox profileTexts = new VBox(2);
+        VBox profileText =
+                new VBox(2);
 
-        Label profSubText = new Label(
-                "Doctor Profile");
+        Label profileCaption =
+                new Label(
+                        "Doctor Profile"
+                );
 
-        profSubText.setStyle(
-                "-fx-text-fill: #64748B; "
-                        + "-fx-font-size: 11px;");
+        profileCaption.setStyle(
+                "-fx-text-fill: #64748B;"
+                        + "-fx-font-size: 11px;"
+        );
 
-        Label profName = new Label(
-                "Dr. Sarah");
+        Label profileName =
+                new Label(
+                        "Dr. Sarah"
+                );
 
-        profName.getStyleClass()
-                .add(
-                        "sidebar-profile-name");
+        profileName.setStyle(
+                "-fx-text-fill: white;"
+                        + "-fx-font-size: 13px;"
+                        + "-fx-font-weight: bold;"
+        );
 
-        profName.setStyle(
-                "-fx-text-fill: #FFFFFF; "
-                        + "-fx-font-weight: bold; "
-                        + "-fx-font-size: 13px;");
-
-        profileTexts.getChildren()
+        profileText
+                .getChildren()
                 .addAll(
-                        profSubText,
-                        profName);
+                        profileCaption,
+                        profileName
+                );
 
-        if (profileAvatar != null) {
+        if (profileImage != null) {
 
-            sidebarProfile.getChildren()
-                    .add(profileAvatar);
+            profile
+                    .getChildren()
+                    .add(
+                            profileImage
+                    );
         }
 
-        sidebarProfile.getChildren()
-                .add(profileTexts);
+        profile
+                .getChildren()
+                .add(
+                        profileText
+                );
 
-        sidebarProfile.setOnMouseClicked(
-                e -> Navigation.goTo(
-                        stage,
-                        () -> new DoctorProfileView(
-                                stage).getScene()));
+        profile.setOnMouseClicked(
+                e ->
+                        Navigation.goTo(
+                                stage,
+                                () ->
+                                        new DoctorProfileView(
+                                                stage
+                                        ).getScene()
+                        )
+        );
 
-        // Logout Tab
-        HBox logoutTab = new HBox(12);
+        // --------------------------------------------------------
+        // LOGOUT
+        // --------------------------------------------------------
 
-        logoutTab.setAlignment(
-                Pos.CENTER_LEFT);
+        HBox logout =
+                new HBox(12);
 
-        logoutTab.setPadding(
+        logout.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        logout.setPadding(
                 new Insets(
                         10,
                         14,
                         10,
-                        14));
+                        14
+                )
+        );
 
-        logoutTab.getStyleClass()
-                .add("nav-tab");
+        logout.setStyle(
+                "-fx-cursor: hand;"
+        );
 
-        logoutTab.setStyle(
-                "-fx-cursor: hand;");
+        ImageView logoutIcon =
+                createImageView(
+                        "/images/icons/ic_logout.png",
+                        18,
+                        18
+                );
 
-        ImageView logoutIcon = createImageView(
-                "/images/icons/ic_logout.png",
-                18,
-                18);
-
-        Label logoutLabel = new Label(
-                "Logout");
-
-        logoutLabel.getStyleClass()
-                .add("nav-text");
+        Label logoutLabel =
+                new Label(
+                        "Logout"
+                );
 
         logoutLabel.setStyle(
-                "-fx-text-fill: #94A3B8; "
-                        + "-fx-font-size: 14px;");
+                "-fx-text-fill: #94A3B8;"
+                        + "-fx-font-size: 14px;"
+        );
 
         if (logoutIcon != null) {
 
-            logoutTab.getChildren()
-                    .add(logoutIcon);
+            logout
+                    .getChildren()
+                    .add(
+                            logoutIcon
+                    );
         }
 
-        logoutTab.getChildren()
-                .add(logoutLabel);
+        logout
+                .getChildren()
+                .add(
+                        logoutLabel
+                );
 
-        logoutTab.setOnMouseClicked(
-                event -> showInformationAlert(
-                        "Logout",
-                        "Logged out successfully."));
+        logout.setOnMouseClicked(
+                e ->
+                        handleLogout()
+        );
 
-        footer.getChildren()
-                .addAll(
-                        sidebarProfile,
-                        logoutTab);
-
-        sidebar.getChildren()
+        sidebar
+                .getChildren()
                 .addAll(
                         logoSection,
-                        navItems,
+                        navigation,
                         spacer,
-                        footer);
+                        profile,
+                        logout
+                );
 
         return sidebar;
     }
 
-    private void handleSidebarTabClick(
+    // ============================================================
+    // SIDEBAR NAVIGATION
+    // ============================================================
+
+    private void handleSidebarNavigation(
             int index) {
 
         switch (index) {
 
             case 0:
+
                 Navigation.goTo(
                         stage,
-                        () -> new DoctorDashboardView(
-                                stage).getScene());
+                        () ->
+                                new DoctorDashboardView(
+                                        stage
+                                ).getScene()
+                );
+
                 break;
 
             case 1:
+
                 Navigation.goTo(
                         stage,
-                        () -> new TodaysScheduleView(
-                                stage).getScene());
+                        () ->
+                                new TodaysScheduleView(
+                                        stage
+                                ).getScene()
+                );
+
                 break;
 
             case 2:
+
                 Navigation.goTo(
                         stage,
-                        () -> new AppointmentsView(
-                                stage).getScene());
+                        () ->
+                                new AppointmentsView(
+                                        stage
+                                ).getScene()
+                );
+
                 break;
 
             case 3:
+
                 Navigation.goTo(
                         stage,
-                        () -> new PatientDetailsView(
-                                stage).getScene());
+                        () ->
+                                new PatientDetailsView(
+                                        stage
+                                ).getScene()
+                );
+
                 break;
 
             case 4:
+
                 Navigation.goTo(
                         stage,
-                        () -> new MedicalReportsView(
-                                stage).getScene());
+                        () ->
+                                new MedicalReportsView(
+                                        stage
+                                ).getScene()
+                );
+
                 break;
 
             case 5:
+
                 Navigation.goTo(
                         stage,
-                        () -> new AvailabilityScheduleView(
-                                stage).getScene());
+                        () ->
+                                new AvailabilityScheduleView(
+                                        stage
+                                ).getScene()
+                );
+
                 break;
 
             case 6:
+
                 Navigation.goTo(
                         stage,
-                        () -> new DoctorProfileView(
-                                stage).getScene());
+                        () ->
+                                new DoctorProfileView(
+                                        stage
+                                ).getScene()
+                );
+
                 break;
 
             case 7:
+
                 Navigation.goTo(
                         stage,
-                        () -> new AIHealthAssistantView(
-                                stage).getScene());
+                        () ->
+                                new AIHealthAssistantView(
+                                        stage
+                                ).getScene()
+                );
+
                 break;
 
             default:
@@ -1053,26 +985,340 @@ public class AppointmentsView {
         }
     }
 
-    /** Creates Filter Bar with dynamic click handling for tabs */
+    // ============================================================
+    // LOGOUT
+    // ============================================================
+
+    private void handleLogout() {
+
+        try {
+
+            SessionManager
+                    .getInstance()
+                    .clearSession();
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+    }
+
+    // ============================================================
+    // TOP HEADER
+    // ============================================================
+
+    private HBox createTopHeader() {
+
+        HBox topBar =
+                new HBox();
+
+        topBar.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        // --------------------------------------------------------
+        // SEARCH BOX
+        // --------------------------------------------------------
+
+        HBox searchContainer =
+                new HBox(10);
+
+        searchContainer.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        searchContainer.setPrefWidth(
+                300
+        );
+
+        searchContainer.setStyle(
+                "-fx-background-color: white;"
+                        + "-fx-background-radius: 24px;"
+                        + "-fx-border-color: #E2E8F0;"
+                        + "-fx-border-radius: 24px;"
+                        + "-fx-padding: 5px 14px;"
+        );
+
+        ImageView searchIcon =
+                createImageView(
+                        "/images/icons/ic_search.png",
+                        16,
+                        16
+                );
+
+        searchField =
+                new TextField();
+
+        searchField.setPromptText(
+                "Search appointments..."
+        );
+
+        searchField.setStyle(
+                "-fx-background-color: transparent;"
+                        + "-fx-border-color: transparent;"
+                        + "-fx-padding: 5px;"
+                        + "-fx-font-size: 13px;"
+        );
+
+        searchField
+                .textProperty()
+                .addListener(
+                        (observable,
+                         oldValue,
+                         newValue) ->
+                                renderAppointments()
+                );
+
+        HBox.setHgrow(
+                searchField,
+                Priority.ALWAYS
+        );
+
+        if (searchIcon != null) {
+
+            searchContainer
+                    .getChildren()
+                    .add(
+                            searchIcon
+                    );
+        }
+
+        searchContainer
+                .getChildren()
+                .add(
+                        searchField
+                );
+
+        // --------------------------------------------------------
+        // SPACER
+        // --------------------------------------------------------
+
+        Region spacer =
+                new Region();
+
+        HBox.setHgrow(
+                spacer,
+                Priority.ALWAYS
+        );
+
+        // --------------------------------------------------------
+        // NOTIFICATION
+        // --------------------------------------------------------
+
+        StackPane notification =
+                new StackPane();
+
+        ImageView bell =
+                createImageView(
+                        "/images/icons/ic_bell.png",
+                        20,
+                        20
+                );
+
+        Circle notificationDot =
+                new Circle(
+                        4,
+                        Color.web(
+                                "#EF4444"
+                        )
+                );
+
+        StackPane.setAlignment(
+                notificationDot,
+                Pos.TOP_RIGHT
+        );
+
+        if (bell != null) {
+
+            notification
+                    .getChildren()
+                    .add(
+                            bell
+                    );
+        }
+
+        notification
+                .getChildren()
+                .add(
+                        notificationDot
+                );
+
+        // --------------------------------------------------------
+        // AVATAR
+        // --------------------------------------------------------
+
+        ImageView avatar =
+                createImageView(
+                        "/images/mocks/dr_sarah_avatar.png",
+                        36,
+                        36
+                );
+
+        if (avatar != null) {
+
+            Circle clip =
+                    new Circle(
+                            18,
+                            18,
+                            18
+                    );
+
+            avatar.setClip(
+                    clip
+            );
+
+            avatar.setStyle(
+                    "-fx-cursor: hand;"
+            );
+
+            avatar.setOnMouseClicked(
+                    e ->
+                            Navigation.goTo(
+                                    stage,
+                                    () ->
+                                            new DoctorProfileView(
+                                                    stage
+                                            ).getScene()
+                            )
+            );
+        }
+
+        topBar
+                .getChildren()
+                .addAll(
+                        searchContainer,
+                        spacer,
+                        notification
+                );
+
+        if (avatar != null) {
+
+            topBar
+                    .getChildren()
+                    .add(
+                            avatar
+                    );
+        }
+
+        return topBar;
+    }
+
+    // ============================================================
+    // TITLE SECTION
+    // ============================================================
+
+    private BorderPane createTitleSection() {
+
+        BorderPane section =
+                new BorderPane();
+
+        VBox titleBox =
+                new VBox(4);
+
+        Label title =
+                new Label(
+                        "Appointments"
+                );
+
+        title.getStyleClass()
+                .add(
+                        "page-title"
+                );
+
+        totalAppointmentsLabel =
+                new Label(
+                        appointmentList.size()
+                                + " Total Appointments"
+                );
+
+        totalAppointmentsLabel
+                .getStyleClass()
+                .add(
+                        "page-subtitle"
+                );
+
+        titleBox
+                .getChildren()
+                .addAll(
+                        title,
+                        totalAppointmentsLabel
+                );
+
+        // --------------------------------------------------------
+        // NEW APPOINTMENT
+        // --------------------------------------------------------
+
+        Button newAppointment =
+                new Button(
+                        "+ New Appointment"
+                );
+
+        newAppointment.setStyle(
+                "-fx-background-color: #0B57D0;"
+                        + "-fx-text-fill: white;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-background-radius: 6px;"
+                        + "-fx-padding: 10px 18px;"
+                        + "-fx-cursor: hand;"
+        );
+
+        newAppointment.setOnAction(
+                e ->
+                        Navigation.goTo(
+                                stage,
+                                () ->
+                                        new NewAppointmentView(
+                                                stage
+                                        ).getScene()
+                        )
+        );
+
+        section.setLeft(
+                titleBox
+        );
+
+        section.setRight(
+                newAppointment
+        );
+
+        return section;
+    }
+
+    // ============================================================
+    // FILTER BAR
+    // ============================================================
+
     private HBox createFilterBar() {
 
-        HBox bar = new HBox(15);
-
-        bar.getStyleClass()
-                .add(
-                        "filter-container-card");
+        HBox bar =
+                new HBox(12);
 
         bar.setAlignment(
-                Pos.CENTER_LEFT);
+                Pos.CENTER_LEFT
+        );
 
         bar.setPadding(
                 new Insets(
                         12,
                         16,
                         12,
-                        16));
+                        16
+                )
+        );
 
-        HBox filterTabs = new HBox(10);
+        bar.setStyle(
+                "-fx-background-color: white;"
+                        + "-fx-background-radius: 10px;"
+                        + "-fx-border-color: #E2E8F0;"
+                        + "-fx-border-radius: 10px;"
+        );
+
+        // --------------------------------------------------------
+        // FILTER BUTTONS
+        // --------------------------------------------------------
+
+        HBox filterButtons =
+                new HBox(8);
 
         String[] filters = {
                 "All",
@@ -1081,715 +1327,1879 @@ public class AppointmentsView {
                 "Cancelled"
         };
 
-        List<Button> tabButtons = new ArrayList<>();
+        for (String filter :
+                filters) {
 
-        for (String filterName : filters) {
+            Button button =
+                    new Button(
+                            filter
+                    );
 
-            Button filterBtn = new Button(
-                    filterName);
+            button.setMinWidth(
+                    90
+            );
 
-            filterBtn.setMinWidth(90);
+            updateFilterButtonStyle(
+                    button,
+                    filter.equals(
+                            selectedFilter
+                    )
+            );
 
-            filterBtn.setAlignment(
-                    Pos.CENTER);
+            button.setOnAction(
+                    e -> {
 
-            if (filterName.equals("All")) {
+                        selectedFilter =
+                                filter;
 
-                filterBtn.getStyleClass()
-                        .add(
-                                "filter-pill-active");
+                        /*
+                         * Refresh all buttons.
+                         */
+                        for (Node node :
+                                filterButtons
+                                        .getChildren()) {
 
-            } else {
+                            if (node instanceof Button) {
 
-                filterBtn.getStyleClass()
-                        .add(
-                                "filter-pill");
-            }
+                                Button current =
+                                        (Button) node;
 
-            tabButtons.add(
-                    filterBtn);
+                                updateFilterButtonStyle(
+                                        current,
+                                        current.getText()
+                                                .equals(
+                                                        selectedFilter
+                                                )
+                                );
+                            }
+                        }
 
-            filterBtn.setOnAction(e -> {
-
-                for (Button btn : tabButtons) {
-
-                    btn.getStyleClass()
-                            .remove(
-                                    "filter-pill-active");
-
-                    if (!btn.getStyleClass()
-                            .contains(
-                                    "filter-pill")) {
-
-                        btn.getStyleClass()
-                                .add(
-                                        "filter-pill");
+                        renderAppointments();
                     }
-                }
+            );
 
-                filterBtn.getStyleClass()
-                        .remove(
-                                "filter-pill");
-
-                filterBtn.getStyleClass()
-                        .add(
-                                "filter-pill-active");
-
-                renderFilteredAppointments(
-                        filterName);
-            });
-
-            filterTabs.getChildren()
-                    .add(filterBtn);
+            filterButtons
+                    .getChildren()
+                    .add(
+                            button
+                    );
         }
 
-        Region spacer = new Region();
+        // --------------------------------------------------------
+        // SPACER
+        // --------------------------------------------------------
+
+        Region spacer =
+                new Region();
 
         HBox.setHgrow(
                 spacer,
-                Priority.ALWAYS);
+                Priority.ALWAYS
+        );
 
-        DatePicker datePicker = new DatePicker();
+        // --------------------------------------------------------
+        // DATE
+        // --------------------------------------------------------
 
-        datePicker.getStyleClass()
-                .add(
-                        "custom-date-picker");
+        datePicker =
+                new DatePicker();
 
+        /*
+         * IMPORTANT:
+         *
+         * Do NOT initialize this with 10/26/2023.
+         *
+         * Empty means "show all real appointments".
+         */
         datePicker.setPromptText(
-                "10/26/2023");
+                "Select date"
+        );
 
-        Button filterIconBtn = new Button();
+        datePicker.setPrefWidth(
+                160
+        );
 
-        filterIconBtn.getStyleClass()
-                .add(
-                        "btn-icon-filter");
+        datePicker
+                .valueProperty()
+                .addListener(
+                        (observable,
+                         oldValue,
+                         newValue) ->
+                                renderAppointments()
+                );
 
-        ImageView filterIcon = createImageView(
-                "/images/icons/ic_filter.png",
-                16,
-                16);
+        // --------------------------------------------------------
+        // CLEAR DATE
+        // --------------------------------------------------------
 
-        if (filterIcon != null) {
+        Button clearDate =
+                new Button(
+                        "Clear"
+                );
 
-            filterIconBtn.setGraphic(
-                    filterIcon);
-        }
+        clearDate.setStyle(
+                "-fx-background-color: white;"
+                        + "-fx-text-fill: #475569;"
+                        + "-fx-border-color: #CBD5E1;"
+                        + "-fx-border-radius: 6px;"
+                        + "-fx-background-radius: 6px;"
+                        + "-fx-padding: 7px 12px;"
+                        + "-fx-cursor: hand;"
+        );
 
-        bar.getChildren()
+        clearDate.setOnAction(
+                e -> {
+
+                    datePicker.setValue(
+                            null
+                    );
+
+                    renderAppointments();
+                }
+        );
+
+        bar
+                .getChildren()
                 .addAll(
-                        filterTabs,
+                        filterButtons,
                         spacer,
                         datePicker,
-                        filterIconBtn);
+                        clearDate
+                );
 
         return bar;
     }
 
-    /** Renders/Filters appointment cards based on selected filter */
-    private void renderFilteredAppointments(
-            String category) {
+    // ============================================================
+    // FILTER BUTTON STYLE
+    // ============================================================
 
-        cardsGrid.getChildren()
-                .clear();
+    private void updateFilterButtonStyle(
+            Button button,
+            boolean active) {
 
-        for (AppointmentData data : appointmentList) {
+        if (active) {
 
-            if (category.equals("All") ||
-                    data.filterCategory
-                            .equalsIgnoreCase(
-                                    category)) {
-
-                VBox card = createAppointmentCard(
-                        data);
-
-                cardsGrid.getChildren()
-                        .add(card);
-            }
-        }
-
-        if (cardsGrid.getChildren()
-                .isEmpty()) {
-
-            Label emptyLabel = new Label(
-                    "No appointments found for '"
-                            + category
-                            + "'.");
-
-            emptyLabel.setStyle(
-                    "-fx-text-fill: #64748B; "
-                            + "-fx-font-size: 14px; "
-                            + "-fx-padding: 20px 0;");
-
-            cardsGrid.getChildren()
-                    .add(emptyLabel);
-        }
-    }
-
-    /** Creates dynamic appointment card from model */
-    private VBox createAppointmentCard(
-            AppointmentData data) {
-
-        VBox card = new VBox(14);
-
-        card.setMinWidth(320);
-        card.setMaxWidth(340);
-
-        card.setPadding(
-                new Insets(18));
-
-        card.getStyleClass()
-                .add(
-                        data.isHighlighted
-                                ? "appointment-card-active"
-                                : "appointment-card");
-
-        // Top Row: ID + Status Pill
-        BorderPane topRow = new BorderPane();
-
-        Label idLabel = new Label(
-                data.aptId);
-
-        idLabel.getStyleClass()
-                .add(
-                        "apt-id-label");
-
-        Label statusPill = new Label(
-                "• " + data.status);
-
-        statusPill.getStyleClass()
-                .addAll(
-                        "pill-status",
-                        data.statusClass);
-
-        topRow.setLeft(
-                idLabel);
-
-        topRow.setRight(
-                statusPill);
-
-        // Profile Row
-        HBox profileRow = new HBox(12);
-
-        profileRow.setAlignment(
-                Pos.CENTER_LEFT);
-
-        Node avatarNode;
-
-        if (data.avatarPath != null) {
-
-            ImageView img = createImageView(
-                    data.avatarPath,
-                    42,
-                    42);
-
-            if (img != null) {
-
-                Circle clip = new Circle(
-                        21,
-                        21,
-                        21);
-
-                img.setClip(clip);
-
-                avatarNode = img;
-
-            } else {
-
-                avatarNode = createInitialsAvatar(
-                        data.initials);
-            }
+            button.setStyle(
+                    "-fx-background-color: #0B57D0;"
+                            + "-fx-text-fill: white;"
+                            + "-fx-font-weight: bold;"
+                            + "-fx-background-radius: 20px;"
+                            + "-fx-padding: 8px 16px;"
+                            + "-fx-cursor: hand;"
+            );
 
         } else {
 
-            avatarNode = createInitialsAvatar(
-                    data.initials);
+            button.setStyle(
+                    "-fx-background-color: white;"
+                            + "-fx-text-fill: #475569;"
+                            + "-fx-border-color: #CBD5E1;"
+                            + "-fx-border-radius: 20px;"
+                            + "-fx-background-radius: 20px;"
+                            + "-fx-padding: 8px 16px;"
+                            + "-fx-cursor: hand;"
+            );
+        }
+    }
+
+    // ============================================================
+    // RENDER APPOINTMENTS
+    // ============================================================
+
+    private void renderAppointments() {
+
+        if (cardsGrid == null) {
+
+            return;
         }
 
-        VBox nameBox = new VBox(2);
+        cardsGrid
+                .getChildren()
+                .clear();
 
-        Label nameLbl = new Label(
-                data.patientName);
+        // --------------------------------------------------------
+        // REAL TOTAL
+        // --------------------------------------------------------
 
-        nameLbl.getStyleClass()
-                .add(
-                        "card-patient-name");
+        if (totalAppointmentsLabel != null) {
 
-        HBox typeBox = new HBox(5);
-
-        typeBox.setAlignment(
-                Pos.CENTER_LEFT);
-
-        ImageView typeIcon = createImageView(
-                data.typeIconPath,
-                14,
-                14);
-
-        Label typeLbl = new Label(
-                data.consultationType);
-
-        typeLbl.getStyleClass()
-                .add(
-                        "card-consult-type");
-
-        if (typeIcon != null) {
-
-            typeBox.getChildren()
-                    .add(typeIcon);
+            totalAppointmentsLabel.setText(
+                    appointmentList.size()
+                            + " Total Appointments"
+            );
         }
 
-        typeBox.getChildren()
-                .add(typeLbl);
+        String search =
+                searchField == null
+                        ? ""
+                        : safe(
+                                searchField.getText(),
+                                ""
+                        )
+                                .toLowerCase(
+                                        Locale.ROOT
+                                )
+                                .trim();
 
-        nameBox.getChildren()
-                .addAll(
-                        nameLbl,
-                        typeBox);
+        LocalDate selectedDate =
+                datePicker == null
+                        ? null
+                        : datePicker.getValue();
 
-        profileRow.getChildren()
-                .addAll(
-                        avatarNode,
-                        nameBox);
+        int displayed =
+                0;
 
-        // Date Row
-        HBox timeRow = new HBox(8);
+        // --------------------------------------------------------
+        // LOOP THROUGH REAL FIREBASE DATA
+        // --------------------------------------------------------
 
-        timeRow.setAlignment(
-                Pos.CENTER_LEFT);
+        for (Appointment appointment :
+                appointmentList) {
 
-        ImageView clockIcon = createImageView(
-                "/images/icons/ic_clock.png",
-                14,
-                14);
+            if (appointment == null) {
 
-        Label timeLbl = new Label(
-                data.dateTime);
-
-        timeLbl.getStyleClass()
-                .add(
-                        "card-time-text");
-
-        if (clockIcon != null) {
-
-            timeRow.getChildren()
-                    .add(clockIcon);
-        }
-
-        timeRow.getChildren()
-                .add(timeLbl);
-
-        // Notes Row
-        HBox notesRow = new HBox(8);
-
-        notesRow.setAlignment(
-                Pos.TOP_LEFT);
-
-        ImageView notesIcon = createImageView(
-                "/images/icons/ic_stethoscope.png",
-                14,
-                14);
-
-        Label notesLbl = new Label(
-                data.notes);
-
-        notesLbl.setWrapText(
-                true);
-
-        notesLbl.getStyleClass()
-                .add(
-                        "card-notes-text");
-
-        if (notesIcon != null) {
-
-            notesRow.getChildren()
-                    .add(notesIcon);
-        }
-
-        notesRow.getChildren()
-                .add(notesLbl);
-
-        // Actions Row
-        HBox actionRow = new HBox(6);
-
-        actionRow.setPadding(
-                new Insets(
-                        10,
-                        0,
-                        0,
-                        0));
-
-        Button completeBtn = new Button(
-                "Complete");
-
-        completeBtn.getStyleClass()
-                .add(
-                        "btn-card-complete");
-
-        completeBtn.setStyle(
-                "-fx-background-color: #10B981; "
-                        + "-fx-text-fill: white; "
-                        + "-fx-background-radius: 6px; "
-                        + "-fx-font-weight: bold; "
-                        + "-fx-font-size: 11px; "
-                        + "-fx-cursor: hand;");
-
-        HBox.setHgrow(
-                completeBtn,
-                Priority.ALWAYS);
-
-        completeBtn.setMaxWidth(
-                Double.MAX_VALUE);
-
-        /*
-         * ========================================================
-         * COMPLETE APPOINTMENT
-         * ========================================================
-         *
-         * IMPORTANT:
-         * This now updates Firestore.
-         */
-        completeBtn.setOnAction(e -> {
-
-            try {
-
-                appointmentController
-                        .updateAppointmentStatus(
-                                data.aptId,
-                                "COMPLETED");
-
-                data.status = "Completed";
-
-                data.filterCategory = "Completed";
-
-                data.statusClass = "pill-status-completed";
-
-                showInformationAlert(
-                        "Appointment Completed",
-                        "Appointment "
-                                + data.aptId
-                                + " marked as completed.");
-
-                renderFilteredAppointments(
-                        "All");
-
-            } catch (Exception ex) {
-
-                ex.printStackTrace();
-
-                showInformationAlert(
-                        "Error",
-                        "Unable to update appointment status.");
+                continue;
             }
-        });
 
-        Button rescheduleBtn = new Button(
-                "Reschedule");
+            // ----------------------------------------------------
+            // STATUS FILTER
+            // ----------------------------------------------------
 
-        rescheduleBtn.getStyleClass()
-                .add(
-                        "btn-card-reschedule");
+            if (!matchesFilter(
+                    appointment
+            )) {
 
-        HBox.setHgrow(
-                rescheduleBtn,
-                Priority.ALWAYS);
+                continue;
+            }
 
-        rescheduleBtn.setMaxWidth(
-                Double.MAX_VALUE);
+            // ----------------------------------------------------
+            // SEARCH
+            // ----------------------------------------------------
 
-        Button detailsBtn = new Button(
-                "View Details");
+            if (!matchesSearch(
+                    appointment,
+                    search
+            )) {
 
-        detailsBtn.getStyleClass()
-                .add(
-                        "btn-card-details");
+                continue;
+            }
 
-        HBox.setHgrow(
-                detailsBtn,
-                Priority.ALWAYS);
+            // ----------------------------------------------------
+            // DATE
+            // ----------------------------------------------------
 
-        detailsBtn.setMaxWidth(
-                Double.MAX_VALUE);
+            if (!matchesDate(
+                    appointment,
+                    selectedDate
+            )) {
 
-        /*
-         * Keep original navigation for now.
-         *
-         * Patient UID integration will be added in the
-         * PatientDetailsView step.
-         */
-        detailsBtn.setOnAction(
-                e -> Navigation.goTo(
-                        stage,
-                        () -> new PatientDetailsView(
-                                stage).getScene()));
+                continue;
+            }
 
-        actionRow.getChildren()
+            // ----------------------------------------------------
+            // CREATE CARD
+            // ----------------------------------------------------
+
+            cardsGrid
+                    .getChildren()
+                    .add(
+                            createAppointmentCard(
+                                    appointment
+                            )
+                    );
+
+            displayed++;
+        }
+
+        // --------------------------------------------------------
+        // EMPTY
+        // --------------------------------------------------------
+
+        if (displayed == 0) {
+
+            VBox emptyBox =
+                    new VBox(10);
+
+            emptyBox.setAlignment(
+                    Pos.CENTER
+            );
+
+            emptyBox.setPadding(
+                    new Insets(
+                            40
+                    )
+            );
+
+            Label emptyTitle =
+                    new Label(
+                            "No appointments found"
+                    );
+
+            emptyTitle.setStyle(
+                    "-fx-font-size: 16px;"
+                            + "-fx-font-weight: bold;"
+                            + "-fx-text-fill: #334155;"
+            );
+
+            Label emptyText =
+                    new Label(
+                            getEmptyMessage()
+                    );
+
+            emptyText.setStyle(
+                    "-fx-font-size: 13px;"
+                            + "-fx-text-fill: #64748B;"
+            );
+
+            emptyBox
+                    .getChildren()
+                    .addAll(
+                            emptyTitle,
+                            emptyText
+                    );
+
+            cardsGrid
+                    .getChildren()
+                    .add(
+                            emptyBox
+                    );
+        }
+    }
+
+    // ============================================================
+    // FILTER MATCH
+    // ============================================================
+
+    private boolean matchesFilter(
+            Appointment appointment) {
+
+        if ("All".equalsIgnoreCase(
+                selectedFilter
+        )) {
+
+            return true;
+        }
+
+        String status =
+                normalizeStatus(
+                        appointment.getStatus()
+                );
+
+        // --------------------------------------------------------
+        // UPCOMING
+        // --------------------------------------------------------
+
+        if ("Upcoming".equalsIgnoreCase(
+                selectedFilter
+        )) {
+
+            return status.equals(
+                    "PENDING"
+            )
+                    || status.equals(
+                    "CONFIRMED"
+            )
+                    || status.equals(
+                    "ACCEPTED"
+            );
+        }
+
+        // --------------------------------------------------------
+        // COMPLETED
+        // --------------------------------------------------------
+
+        if ("Completed".equalsIgnoreCase(
+                selectedFilter
+        )) {
+
+            return status.equals(
+                    "COMPLETED"
+            );
+        }
+
+        // --------------------------------------------------------
+        // CANCELLED
+        // --------------------------------------------------------
+
+        if ("Cancelled".equalsIgnoreCase(
+                selectedFilter
+        )) {
+
+            return status.equals(
+                    "CANCELLED"
+            )
+                    || status.equals(
+                    "REJECTED"
+            );
+        }
+
+        return true;
+    }
+
+    // ============================================================
+    // SEARCH
+    // ============================================================
+
+    private boolean matchesSearch(
+            Appointment appointment,
+            String search) {
+
+        if (search == null
+                || search.isEmpty()) {
+
+            return true;
+        }
+
+        String patient =
+                safe(
+                        appointment.getPatientName(),
+                        ""
+                );
+
+        String patientUid =
+                safe(
+                        appointment.getPatientUid(),
+                        ""
+                );
+
+        String appointmentId =
+                safe(
+                        appointment.getAppointmentId(),
+                        ""
+                );
+
+        String reason =
+                safe(
+                        appointment.getReason(),
+                        ""
+                );
+
+        String doctor =
+                safe(
+                        appointment.getDoctorName(),
+                        ""
+                );
+
+        String bookingType =
+                safe(
+                        appointment.getBookingType(),
+                        ""
+                );
+
+        String combined =
+                (
+                        patient
+                                + " "
+                                + patientUid
+                                + " "
+                                + appointmentId
+                                + " "
+                                + reason
+                                + " "
+                                + doctor
+                                + " "
+                                + bookingType
+                )
+                        .toLowerCase(
+                                Locale.ROOT
+                        );
+
+        return combined.contains(
+                search
+        );
+    }
+
+    // ============================================================
+    // DATE MATCH
+    // ============================================================
+
+    private boolean matchesDate(
+            Appointment appointment,
+            LocalDate selectedDate) {
+
+        if (selectedDate == null) {
+
+            return true;
+        }
+
+        LocalDate appointmentDate =
+                parseDate(
+                        appointment
+                                .getAppointmentDate()
+                );
+
+        return appointmentDate != null
+                && appointmentDate.equals(
+                selectedDate
+        );
+    }
+
+    // ============================================================
+    // EMPTY MESSAGE
+    // ============================================================
+
+    private String getEmptyMessage() {
+
+        if (!safe(
+                searchField == null
+                        ? null
+                        : searchField.getText(),
+                ""
+        ).trim().isEmpty()) {
+
+            return "No appointment matches your search.";
+        }
+
+        if (datePicker != null
+                && datePicker.getValue() != null) {
+
+            return "No appointment exists on the selected date.";
+        }
+
+        if (!"All".equalsIgnoreCase(
+                selectedFilter
+        )) {
+
+            return "No appointments exist in the "
+                    + selectedFilter
+                    + " category.";
+        }
+
+        return "No appointments are currently assigned to this doctor.";
+    }
+
+    // ============================================================
+    // CREATE APPOINTMENT CARD
+    // ============================================================
+
+    private VBox createAppointmentCard(
+            Appointment appointment) {
+
+        VBox card =
+                new VBox(14);
+
+        card.setMinWidth(
+                320
+        );
+
+        card.setPrefWidth(
+                340
+        );
+
+        card.setMaxWidth(
+                360
+        );
+
+        card.setPadding(
+                new Insets(
+                        18
+                )
+        );
+
+        card.setStyle(
+                "-fx-background-color: white;"
+                        + "-fx-background-radius: 10px;"
+                        + "-fx-border-color: #E2E8F0;"
+                        + "-fx-border-radius: 10px;"
+        );
+
+        // --------------------------------------------------------
+        // TOP ROW
+        // --------------------------------------------------------
+
+        BorderPane topRow =
+                new BorderPane();
+
+        Label idLabel =
+                new Label(
+                        shortAppointmentId(
+                                appointment
+                                        .getAppointmentId()
+                        )
+                );
+
+        idLabel.setStyle(
+                "-fx-background-color: #F1F5F9;"
+                        + "-fx-text-fill: #64748B;"
+                        + "-fx-background-radius: 5px;"
+                        + "-fx-padding: 5px 7px;"
+                        + "-fx-font-size: 10px;"
+        );
+
+        String status =
+                normalizeStatus(
+                        appointment.getStatus()
+                );
+
+        Label statusLabel =
+                new Label(
+                        status
+                );
+
+        statusLabel.setStyle(
+                getStatusStyle(
+                        status
+                )
+        );
+
+        topRow.setLeft(
+                idLabel
+        );
+
+        topRow.setRight(
+                statusLabel
+        );
+
+        // --------------------------------------------------------
+        // PATIENT
+        // --------------------------------------------------------
+
+        HBox patientRow =
+                new HBox(12);
+
+        patientRow.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        String patientName =
+                safe(
+                        appointment.getPatientName(),
+                        "Patient"
+                );
+
+        StackPane avatar =
+                createInitialsAvatar(
+                        getInitials(
+                                patientName
+                        )
+                );
+
+        VBox patientInfo =
+                new VBox(3);
+
+        Label patientLabel =
+                new Label(
+                        patientName
+                );
+
+        patientLabel.setStyle(
+                "-fx-text-fill: #1E293B;"
+                        + "-fx-font-size: 15px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        String bookingType =
+                safe(
+                        appointment.getBookingType(),
+                        "DOCTOR"
+                );
+
+        String appointmentType =
+                bookingType.equalsIgnoreCase(
+                        "HOSPITAL"
+                )
+                        ? "Hospital Appointment"
+                        : "Doctor Consultation";
+
+        Label typeLabel =
+                new Label(
+                        appointmentType
+                );
+
+        typeLabel.setStyle(
+                "-fx-text-fill: #64748B;"
+                        + "-fx-font-size: 12px;"
+        );
+
+        patientInfo
+                .getChildren()
                 .addAll(
-                        completeBtn,
-                        rescheduleBtn,
-                        detailsBtn);
+                        patientLabel,
+                        typeLabel
+                );
 
-        card.getChildren()
+        patientRow
+                .getChildren()
+                .addAll(
+                        avatar,
+                        patientInfo
+                );
+
+        // --------------------------------------------------------
+        // DATE TIME
+        // --------------------------------------------------------
+
+        HBox dateTimeRow =
+                new HBox(8);
+
+        dateTimeRow.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        ImageView clock =
+                createImageView(
+                        "/images/icons/ic_schedule.png",
+                        14,
+                        14
+                );
+
+        Label dateTime =
+                new Label(
+                        safe(
+                                appointment
+                                        .getAppointmentDate(),
+                                "Date unavailable"
+                        )
+                                + " | "
+                                + safe(
+                                appointment
+                                        .getAppointmentTime(),
+                                "Time unavailable"
+                        )
+                );
+
+        dateTime.setStyle(
+                "-fx-text-fill: #0B57D0;"
+                        + "-fx-font-size: 12px;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        if (clock != null) {
+
+            dateTimeRow
+                    .getChildren()
+                    .add(
+                            clock
+                    );
+        }
+
+        dateTimeRow
+                .getChildren()
+                .add(
+                        dateTime
+                );
+
+        // --------------------------------------------------------
+        // REASON
+        // --------------------------------------------------------
+
+        HBox reasonRow =
+                new HBox(8);
+
+        reasonRow.setAlignment(
+                Pos.TOP_LEFT
+        );
+
+        Label bullet =
+                new Label(
+                        "○"
+                );
+
+        bullet.setStyle(
+                "-fx-text-fill: #2563EB;"
+                        + "-fx-font-size: 14px;"
+        );
+
+        Label reason =
+                new Label(
+                        safe(
+                                appointment.getReason(),
+                                "No reason provided"
+                        )
+                );
+
+        reason.setWrapText(
+                true
+        );
+
+        reason.setStyle(
+                "-fx-text-fill: #64748B;"
+                        + "-fx-font-size: 12px;"
+        );
+
+        reasonRow
+                .getChildren()
+                .addAll(
+                        bullet,
+                        reason
+                );
+
+        // --------------------------------------------------------
+        // ACTION BUTTONS
+        // --------------------------------------------------------
+
+        HBox actions =
+                new HBox(7);
+
+        actions.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        Button viewButton =
+                createActionButton(
+                        "View Details",
+                        "#0B57D0"
+                );
+
+        Button approveButton =
+                createActionButton(
+                        "Approve",
+                        "#10B981"
+                );
+
+        Button rejectButton =
+                createActionButton(
+                        "Reject",
+                        "#EF4444"
+                );
+
+        Button completeButton =
+                createActionButton(
+                        "Complete",
+                        "#10B981"
+                );
+
+        Button cancelButton =
+                createActionButton(
+                        "Cancel",
+                        "#EF4444"
+                );
+
+        // --------------------------------------------------------
+        // VIEW
+        // --------------------------------------------------------
+
+        viewButton.setOnAction(
+                e ->
+                        showAppointmentDetails(
+                                appointment
+                        )
+        );
+
+        // --------------------------------------------------------
+        // APPROVE
+        // --------------------------------------------------------
+
+        approveButton.setOnAction(
+                e ->
+                        handleApprove(
+                                appointment
+                        )
+        );
+
+        // --------------------------------------------------------
+        // REJECT
+        // --------------------------------------------------------
+
+        rejectButton.setOnAction(
+                e ->
+                        handleReject(
+                                appointment
+                        )
+        );
+
+        // --------------------------------------------------------
+        // COMPLETE
+        // --------------------------------------------------------
+
+        completeButton.setOnAction(
+                e ->
+                        handleComplete(
+                                appointment
+                        )
+        );
+
+        // --------------------------------------------------------
+        // CANCEL
+        // --------------------------------------------------------
+
+        cancelButton.setOnAction(
+                e ->
+                        handleCancel(
+                                appointment
+                        )
+        );
+
+        // --------------------------------------------------------
+        // STATUS-BASED BUTTONS
+        // --------------------------------------------------------
+
+        configureActions(
+                appointment,
+                actions,
+                approveButton,
+                rejectButton,
+                completeButton,
+                cancelButton,
+                viewButton
+        );
+
+        // --------------------------------------------------------
+        // ADD ALL
+        // --------------------------------------------------------
+
+        card
+                .getChildren()
                 .addAll(
                         topRow,
-                        profileRow,
-                        timeRow,
-                        notesRow,
-                        actionRow);
+                        patientRow,
+                        dateTimeRow,
+                        reasonRow,
+                        actions
+                );
 
         return card;
     }
 
-    private HBox createTopHeader() {
+    // ============================================================
+    // CONFIGURE ACTIONS
+    // ============================================================
 
-        HBox topBar = new HBox();
+    private void configureActions(
+            Appointment appointment,
+            HBox actions,
+            Button approveButton,
+            Button rejectButton,
+            Button completeButton,
+            Button cancelButton,
+            Button viewButton) {
 
-        topBar.setAlignment(
-                Pos.CENTER_RIGHT);
+        actions
+                .getChildren()
+                .clear();
 
-        HBox searchField = new HBox(8);
+        String status =
+                normalizeStatus(
+                        appointment.getStatus()
+                );
 
-        searchField.getStyleClass()
+        // --------------------------------------------------------
+        // PENDING / CONFIRMED
+        // --------------------------------------------------------
+
+        if (status.equals(
+                "PENDING"
+        )
+                || status.equals(
+                "CONFIRMED"
+        )) {
+
+            actions
+                    .getChildren()
+                    .addAll(
+                            approveButton,
+                            rejectButton,
+                            viewButton
+                    );
+
+            return;
+        }
+
+        // --------------------------------------------------------
+        // ACCEPTED
+        // --------------------------------------------------------
+
+        if (status.equals(
+                "ACCEPTED"
+        )) {
+
+            actions
+                    .getChildren()
+                    .addAll(
+                            completeButton,
+                            cancelButton,
+                            viewButton
+                    );
+
+            return;
+        }
+
+        // --------------------------------------------------------
+        // COMPLETED / REJECTED / CANCELLED
+        // --------------------------------------------------------
+
+        actions
+                .getChildren()
                 .add(
-                        "search-input-box");
-
-        searchField.setAlignment(
-                Pos.CENTER_LEFT);
-
-        ImageView searchIcon = createImageView(
-                "/images/icons/ic_search.png",
-                16,
-                16);
-
-        TextField searchInput = new TextField();
-
-        searchInput.setPromptText(
-                "Search patients or IDs...");
-
-        searchInput.getStyleClass()
-                .add(
-                        "search-text-field");
-
-        if (searchIcon != null) {
-
-            searchField.getChildren()
-                    .add(searchIcon);
-        }
-
-        searchField.getChildren()
-                .add(searchInput);
-
-        Region spacer = new Region();
-
-        HBox.setHgrow(
-                spacer,
-                Priority.ALWAYS);
-
-        HBox rightIcons = new HBox(18);
-
-        rightIcons.setAlignment(
-                Pos.CENTER_RIGHT);
-
-        StackPane notificationBox = new StackPane();
-
-        ImageView bellIcon = createImageView(
-                "/images/icons/ic_bell.png",
-                18,
-                18);
-
-        Circle badge = new Circle(
-                4,
-                Color.RED);
-
-        StackPane.setAlignment(
-                badge,
-                Pos.TOP_RIGHT);
-
-        if (bellIcon != null) {
-
-            notificationBox.getChildren()
-                    .add(bellIcon);
-        }
-
-        notificationBox.getChildren()
-                .add(badge);
-
-        notificationBox.getStyleClass()
-                .add(
-                        "clickable-icon");
-
-        ImageView userAvatar = createImageView(
-                "/images/doctor/portrait-3d-male-doctor.png",
-                32,
-                32);
-
-        if (userAvatar != null) {
-
-            Circle clip = new Circle(
-                    16,
-                    16,
-                    16);
-
-            userAvatar.setClip(
-                    clip);
-
-            userAvatar.getStyleClass()
-                    .add(
-                            "clickable-icon");
-
-            userAvatar.setOnMouseClicked(
-                    e -> Navigation.goTo(
-                            stage,
-                            () -> new DoctorProfileView(
-                                    stage).getScene()));
-        }
-
-        rightIcons.getChildren()
-                .add(notificationBox);
-
-        if (userAvatar != null) {
-
-            rightIcons.getChildren()
-                    .add(userAvatar);
-        }
-
-        topBar.getChildren()
-                .addAll(
-                        searchField,
-                        spacer,
-                        rightIcons);
-
-        return topBar;
+                        viewButton
+                );
     }
 
-    private BorderPane createTitleSection() {
+    // ============================================================
+    // APPROVE APPOINTMENT
+    // ============================================================
 
-        BorderPane section = new BorderPane();
+    private void handleApprove(
+            Appointment appointment) {
 
-        VBox titleBox = new VBox(2);
+        if (appointment == null) {
+            return;
+        }
 
-        Label mainTitle = new Label(
-                "Appointments");
+        String currentStatus =
+                normalizeStatus(
+                        appointment.getStatus()
+                );
 
-        mainTitle.getStyleClass()
-                .add(
-                        "page-title");
+        if (!currentStatus.equals(
+                "PENDING"
+        )
+                && !currentStatus.equals(
+                "CONFIRMED"
+        )) {
+
+            showInformationAlert(
+                    "Cannot Approve",
+                    "Only pending or confirmed appointments can be approved."
+            );
+
+            return;
+        }
+
+        String patientName =
+                safe(
+                        appointment.getPatientName(),
+                        "this patient"
+                );
+
+        Alert confirmation =
+                new Alert(
+                        Alert.AlertType.CONFIRMATION
+                );
+
+        confirmation.setTitle(
+                "Approve Appointment"
+        );
+
+        confirmation.setHeaderText(
+                "Approve appointment for "
+                        + patientName
+                        + "?"
+        );
+
+        confirmation.setContentText(
+                "The appointment will move from "
+                        + currentStatus
+                        + " to ACCEPTED."
+        );
+
+        ButtonType result =
+                confirmation
+                        .showAndWait()
+                        .orElse(
+                                ButtonType.CANCEL
+                        );
+
+        if (result != ButtonType.OK) {
+            return;
+        }
+
+        updateStatus(
+                appointment,
+                "ACCEPTED",
+                "Appointment Approved",
+                "The appointment has been approved successfully."
+        );
+    }
+
+    // ============================================================
+    // REJECT APPOINTMENT
+    // ============================================================
+
+    private void handleReject(
+            Appointment appointment) {
+
+        if (appointment == null) {
+            return;
+        }
+
+        String currentStatus =
+                normalizeStatus(
+                        appointment.getStatus()
+                );
+
+        if (!currentStatus.equals(
+                "PENDING"
+        )
+                && !currentStatus.equals(
+                "CONFIRMED"
+        )) {
+
+            showInformationAlert(
+                    "Cannot Reject",
+                    "Only pending or confirmed appointments can be rejected."
+            );
+
+            return;
+        }
+
+        String patientName =
+                safe(
+                        appointment.getPatientName(),
+                        "this patient"
+                );
+
+        Alert confirmation =
+                new Alert(
+                        Alert.AlertType.CONFIRMATION
+                );
+
+        confirmation.setTitle(
+                "Reject Appointment"
+        );
+
+        confirmation.setHeaderText(
+                "Reject appointment for "
+                        + patientName
+                        + "?"
+        );
+
+        confirmation.setContentText(
+                "The appointment will be marked as REJECTED."
+        );
+
+        ButtonType result =
+                confirmation
+                        .showAndWait()
+                        .orElse(
+                                ButtonType.CANCEL
+                        );
+
+        if (result != ButtonType.OK) {
+            return;
+        }
+
+        updateStatus(
+                appointment,
+                "REJECTED",
+                "Appointment Rejected",
+                "The appointment has been rejected."
+        );
+    }
+
+    // ============================================================
+    // COMPLETE APPOINTMENT
+    // ============================================================
+
+    private void handleComplete(
+            Appointment appointment) {
+
+        if (appointment == null) {
+            return;
+        }
+
+        String currentStatus =
+                normalizeStatus(
+                        appointment.getStatus()
+                );
+
+        if (!currentStatus.equals(
+                "ACCEPTED"
+        )) {
+
+            showInformationAlert(
+                    "Cannot Complete",
+                    "Only accepted appointments can be completed."
+            );
+
+            return;
+        }
+
+        String patientName =
+                safe(
+                        appointment.getPatientName(),
+                        "this patient"
+                );
+
+        Alert confirmation =
+                new Alert(
+                        Alert.AlertType.CONFIRMATION
+                );
+
+        confirmation.setTitle(
+                "Complete Appointment"
+        );
+
+        confirmation.setHeaderText(
+                "Complete appointment for "
+                        + patientName
+                        + "?"
+        );
+
+        confirmation.setContentText(
+                "The appointment will be marked as COMPLETED."
+        );
+
+        ButtonType result =
+                confirmation
+                        .showAndWait()
+                        .orElse(
+                                ButtonType.CANCEL
+                        );
+
+        if (result != ButtonType.OK) {
+            return;
+        }
+
+        updateStatus(
+                appointment,
+                "COMPLETED",
+                "Appointment Completed",
+                "The appointment has been completed successfully."
+        );
+    }
+
+    // ============================================================
+    // CANCEL APPOINTMENT
+    // ============================================================
+
+    private void handleCancel(
+            Appointment appointment) {
+
+        if (appointment == null) {
+            return;
+        }
+
+        String currentStatus =
+                normalizeStatus(
+                        appointment.getStatus()
+                );
+
+        if (!currentStatus.equals(
+                "ACCEPTED"
+        )) {
+
+            showInformationAlert(
+                    "Cannot Cancel",
+                    "Only accepted appointments can be cancelled."
+            );
+
+            return;
+        }
+
+        String patientName =
+                safe(
+                        appointment.getPatientName(),
+                        "this patient"
+                );
+
+        Alert confirmation =
+                new Alert(
+                        Alert.AlertType.CONFIRMATION
+                );
+
+        confirmation.setTitle(
+                "Cancel Appointment"
+        );
+
+        confirmation.setHeaderText(
+                "Cancel appointment for "
+                        + patientName
+                        + "?"
+        );
+
+        confirmation.setContentText(
+                "The appointment will be marked as CANCELLED."
+        );
+
+        ButtonType result =
+                confirmation
+                        .showAndWait()
+                        .orElse(
+                                ButtonType.CANCEL
+                        );
+
+        if (result != ButtonType.OK) {
+            return;
+        }
 
         /*
-         * Keep original title.
+         * Use the existing controller cancel method.
          */
-        Label subTitle = new Label(
-                "24 Total Appointments");
+        try {
 
-        subTitle.getStyleClass()
-                .add(
-                        "page-subtitle");
+            appointmentController
+                    .cancelAppointment(
+                            appointment
+                                    .getAppointmentId()
+                    );
 
-        titleBox.getChildren()
-                .addAll(
-                        mainTitle,
-                        subTitle);
+            loadAppointmentsFromFirebase();
 
-        Button newApptBtn = new Button(
-                "+ New Appointment");
+            renderAppointments();
 
-        newApptBtn.getStyleClass()
-                .add(
-                        "btn-primary-action");
+            showInformationAlert(
+                    "Appointment Cancelled",
+                    "The appointment has been cancelled successfully."
+            );
 
-        newApptBtn.setOnAction(
-                e -> Navigation.goTo(
-                        stage,
-                        () -> new NewAppointmentView(
-                                stage).getScene()));
+        } catch (Exception e) {
 
-        section.setLeft(
-                titleBox);
+            e.printStackTrace();
 
-        section.setRight(
-                newApptBtn);
-
-        return section;
+            showErrorAlert(
+                    "Cancel Failed",
+                    getRootErrorMessage(e)
+            );
+        }
     }
+
+    // ============================================================
+    // GENERIC STATUS UPDATE
+    // ============================================================
+
+    private void updateStatus(
+            Appointment appointment,
+            String newStatus,
+            String successTitle,
+            String successMessage) {
+
+        try {
+
+            String appointmentId =
+                    appointment.getAppointmentId();
+
+            if (appointmentId == null
+                    || appointmentId.trim().isEmpty()) {
+
+                throw new IllegalArgumentException(
+                        "Appointment ID is missing."
+                );
+            }
+
+            /*
+             * REAL FIREBASE UPDATE
+             *
+             * View
+             * ↓
+             * Controller
+             * ↓
+             * DAO
+             * ↓
+             * Firestore
+             */
+            appointmentController
+                    .updateAppointmentStatus(
+                            appointmentId,
+                            newStatus
+                    );
+
+            /*
+             * Reload from Firebase.
+             *
+             * This guarantees that the UI reflects
+             * the actual database state.
+             */
+            loadAppointmentsFromFirebase();
+
+            renderAppointments();
+
+            showInformationAlert(
+                    successTitle,
+                    successMessage
+            );
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            showErrorAlert(
+                    "Status Update Failed",
+                    getRootErrorMessage(e)
+            );
+        }
+    }
+
+    // ============================================================
+    // VIEW DETAILS
+    // ============================================================
+
+    private void showAppointmentDetails(
+            Appointment appointment) {
+
+        if (appointment == null) {
+            return;
+        }
+
+        String details =
+                "Appointment ID: "
+                        + safe(
+                        appointment.getAppointmentId(),
+                        "Not available"
+                )
+                        + "\n\n"
+                        + "Patient: "
+                        + safe(
+                        appointment.getPatientName(),
+                        "Not available"
+                )
+                        + "\n"
+                        + "Patient UID: "
+                        + safe(
+                        appointment.getPatientUid(),
+                        "Not available"
+                )
+                        + "\n\n"
+                        + "Doctor: "
+                        + safe(
+                        appointment.getDoctorName(),
+                        "Not available"
+                )
+                        + "\n"
+                        + "Booking Type: "
+                        + safe(
+                        appointment.getBookingType(),
+                        "Not available"
+                )
+                        + "\n\n"
+                        + "Date: "
+                        + safe(
+                        appointment.getAppointmentDate(),
+                        "Not available"
+                )
+                        + "\n"
+                        + "Time: "
+                        + safe(
+                        appointment.getAppointmentTime(),
+                        "Not available"
+                )
+                        + "\n\n"
+                        + "Reason: "
+                        + safe(
+                        appointment.getReason(),
+                        "Not provided"
+                )
+                        + "\n\n"
+                        + "Status: "
+                        + normalizeStatus(
+                        appointment.getStatus()
+                );
+
+        showInformationAlert(
+                "Appointment Details",
+                details
+        );
+    }
+
+    // ============================================================
+    // STATUS NORMALIZATION
+    // ============================================================
+
+    private String normalizeStatus(
+            String status) {
+
+        if (status == null
+                || status.trim().isEmpty()) {
+
+            return "PENDING";
+        }
+
+        String value =
+                status.trim()
+                        .toUpperCase(
+                                Locale.ROOT
+                        );
+
+        switch (value) {
+
+            case "PENDING":
+                return "PENDING";
+
+            case "CONFIRMED":
+                return "CONFIRMED";
+
+            case "ACCEPTED":
+                return "ACCEPTED";
+
+            case "REJECTED":
+                return "REJECTED";
+
+            case "COMPLETED":
+                return "COMPLETED";
+
+            case "CANCELLED":
+            case "CANCELED":
+                return "CANCELLED";
+
+            default:
+                return value;
+        }
+    }
+
+    // ============================================================
+    // STATUS STYLE
+    // ============================================================
+
+    private String getStatusStyle(
+            String status) {
+
+        switch (normalizeStatus(status)) {
+
+            case "ACCEPTED":
+            case "CONFIRMED":
+
+                return
+                        "-fx-background-color: #ECFDF5;"
+                                + "-fx-text-fill: #059669;"
+                                + "-fx-background-radius: 20px;"
+                                + "-fx-padding: 5px 9px;"
+                                + "-fx-font-size: 10px;"
+                                + "-fx-font-weight: bold;";
+
+            case "COMPLETED":
+
+                return
+                        "-fx-background-color: #DCFCE7;"
+                                + "-fx-text-fill: #15803D;"
+                                + "-fx-background-radius: 20px;"
+                                + "-fx-padding: 5px 9px;"
+                                + "-fx-font-size: 10px;"
+                                + "-fx-font-weight: bold;";
+
+            case "REJECTED":
+            case "CANCELLED":
+
+                return
+                        "-fx-background-color: #FEF2F2;"
+                                + "-fx-text-fill: #DC2626;"
+                                + "-fx-background-radius: 20px;"
+                                + "-fx-padding: 5px 9px;"
+                                + "-fx-font-size: 10px;"
+                                + "-fx-font-weight: bold;";
+
+            case "PENDING":
+            default:
+
+                return
+                        "-fx-background-color: #FFF7ED;"
+                                + "-fx-text-fill: #C2410C;"
+                                + "-fx-background-radius: 20px;"
+                                + "-fx-padding: 5px 9px;"
+                                + "-fx-font-size: 10px;"
+                                + "-fx-font-weight: bold;";
+        }
+    }
+
+    // ============================================================
+    // ACTION BUTTON
+    // ============================================================
+
+    private Button createActionButton(
+            String text,
+            String color) {
+
+        Button button =
+                new Button(
+                        text
+                );
+
+        button.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        HBox.setHgrow(
+                button,
+                Priority.ALWAYS
+        );
+
+        button.setStyle(
+                "-fx-background-color: "
+                        + color
+                        + ";"
+                        + "-fx-text-fill: white;"
+                        + "-fx-background-radius: 6px;"
+                        + "-fx-font-size: 11px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-padding: 8px 9px;"
+                        + "-fx-cursor: hand;"
+        );
+
+        return button;
+    }
+
+    // ============================================================
+    // INITIALS AVATAR
+    // ============================================================
 
     private StackPane createInitialsAvatar(
             String initials) {
 
-        StackPane initialsAvatar = new StackPane();
+        Circle circle =
+                new Circle(
+                        21,
+                        Color.web(
+                                "#DBEAFE"
+                        )
+                );
 
-        initialsAvatar.getStyleClass()
-                .add(
-                        "initials-avatar-large");
+        Label label =
+                new Label(
+                        initials
+                );
 
-        Label initialsText = new Label(
-                initials != null
-                        ? initials
-                        : "--");
+        label.setStyle(
+                "-fx-text-fill: #2563EB;"
+                        + "-fx-font-size: 12px;"
+                        + "-fx-font-weight: bold;"
+        );
 
-        initialsText.getStyleClass()
-                .add(
-                        "initials-text-large");
+        StackPane avatar =
+                new StackPane(
+                        circle,
+                        label
+                );
 
-        initialsAvatar.getChildren()
-                .add(initialsText);
+        avatar.setMinSize(
+                42,
+                42
+        );
 
-        return initialsAvatar;
+        avatar.setMaxSize(
+                42,
+                42
+        );
+
+        return avatar;
     }
 
-    private void showInformationAlert(
-            String title,
-            String message) {
+    // ============================================================
+    // INITIALS
+    // ============================================================
 
-        Alert alert = new Alert(
-                Alert.AlertType.INFORMATION);
+    private String getInitials(
+            String name) {
 
-        alert.setTitle(
-                title);
+        if (name == null
+                || name.trim().isEmpty()) {
 
-        alert.setHeaderText(
-                null);
+            return "PT";
+        }
 
-        alert.setContentText(
-                message);
+        String[] parts =
+                name.trim()
+                        .split(
+                                "\\s+"
+                        );
 
-        alert.showAndWait();
+        if (parts.length == 1) {
+
+            return parts[0]
+                    .substring(
+                            0,
+                            1
+                    )
+                    .toUpperCase(
+                            Locale.ROOT
+                    );
+        }
+
+        return (
+                ""
+                        + parts[0]
+                        .charAt(0)
+                        + parts[parts.length - 1]
+                        .charAt(0)
+        )
+                .toUpperCase(
+                        Locale.ROOT
+                );
     }
 
-    /** Helper method for safely loading image resources */
-    private ImageView createImageView(
-            String resourcePath,
-            double width,
-            double height) {
+    // ============================================================
+    // SHORT APPOINTMENT ID
+    // ============================================================
 
-        if (resourcePath == null) {
+    private String shortAppointmentId(
+            String id) {
+
+        if (id == null
+                || id.trim().isEmpty()) {
+
+            return "Appointment";
+        }
+
+        String value =
+                id.trim();
+
+        if (value.length() <= 28) {
+
+            return value;
+        }
+
+        return value.substring(
+                0,
+                24
+        ) + "...";
+    }
+
+    // ============================================================
+    // PARSE DATE
+    // ============================================================
+
+    private LocalDate parseDate(
+            String value) {
+
+        if (value == null
+                || value.trim().isEmpty()) {
+
             return null;
         }
 
         try {
 
-            InputStream is = getClass()
-                    .getResourceAsStream(
-                            resourcePath);
+            return LocalDate.parse(
+                    value.trim(),
+                    DATE_FORMAT
+            );
 
-            if (is != null) {
+        } catch (DateTimeParseException e) {
 
-                ImageView imageView = new ImageView(
-                        new javafx.scene.image.Image(
-                                is));
+            return null;
+        }
+    }
 
-                imageView.setFitWidth(
-                        width);
+    // ============================================================
+    // SAFE STRING
+    // ============================================================
 
-                imageView.setFitHeight(
-                        height);
+    private String safe(
+            String value,
+            String fallback) {
 
-                imageView.setPreserveRatio(
-                        true);
+        if (value == null
+                || value.trim().isEmpty()) {
 
-                return imageView;
-            }
-
-        } catch (Exception ignored) {
+            return fallback;
         }
 
-        return null;
+        return value.trim();
+    }
+
+    // ============================================================
+    // IMAGE
+    // ============================================================
+
+    private ImageView createImageView(
+            String path,
+            double width,
+            double height) {
+
+        try {
+
+            ImageView image =
+                    new ImageView(
+                            ResourceImage.load(
+                                    path
+                            )
+                    );
+
+            image.setFitWidth(
+                    width
+            );
+
+            image.setFitHeight(
+                    height
+            );
+
+            image.setPreserveRatio(
+                    true
+            );
+
+            return image;
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "Unable to load image: "
+                            + path
+            );
+
+            return null;
+        }
+    }
+
+    // ============================================================
+    // ERROR MESSAGE
+    // ============================================================
+
+    private String getRootErrorMessage(
+            Throwable throwable) {
+
+        Throwable current =
+                throwable;
+
+        while (current.getCause() != null) {
+
+            current =
+                    current.getCause();
+        }
+
+        String message =
+                current.getMessage();
+
+        if (message == null
+                || message.trim().isEmpty()) {
+
+            return "An unexpected error occurred.";
+        }
+
+        return message;
+    }
+
+    // ============================================================
+    // INFORMATION ALERT
+    // ============================================================
+
+    private void showInformationAlert(
+            String title,
+            String message) {
+
+        Alert alert =
+                new Alert(
+                        Alert.AlertType.INFORMATION
+                );
+
+        alert.setTitle(
+                title
+        );
+
+        alert.setHeaderText(
+                null
+        );
+
+        alert.setContentText(
+                message
+        );
+
+        alert.showAndWait();
+    }
+
+    // ============================================================
+    // ERROR ALERT
+    // ============================================================
+
+    private void showErrorAlert(
+            String title,
+            String message) {
+
+        Alert alert =
+                new Alert(
+                        Alert.AlertType.ERROR
+                );
+
+        alert.setTitle(
+                title
+        );
+
+        alert.setHeaderText(
+                null
+        );
+
+        alert.setContentText(
+                message
+        );
+
+        alert.showAndWait();
     }
 }

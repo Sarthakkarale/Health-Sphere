@@ -2,7 +2,6 @@ package com.healthsphere.controller.doctor;
 
 import com.healthsphere.dao.doctor.DoctorDAO;
 import com.healthsphere.model.DoctorProfile;
-import com.healthsphere.util.SessionManager;
 
 public class DoctorController {
 
@@ -12,60 +11,48 @@ public class DoctorController {
         this.doctorDAO = new DoctorDAO();
     }
 
-    /**
-     * Gets the currently logged-in doctor's profile.
-     */
-    public DoctorProfile getCurrentDoctorProfile() {
+    // ============================================================
+    // GET DOCTOR PROFILE
+    // ============================================================
 
-        String uid = getCurrentDoctorUid();
+    public DoctorProfile getDoctorProfile(String doctorUid) {
 
-        return doctorDAO.getDoctorProfile(uid);
+        if (doctorUid == null || doctorUid.isBlank()) {
+
+            throw new IllegalArgumentException(
+                    "Doctor UID cannot be null or empty."
+            );
+        }
+
+        return doctorDAO.getDoctorProfile(
+                doctorUid
+        );
     }
 
-    /**
-     * Updates the currently logged-in doctor's profile.
-     */
-    public void updateCurrentDoctorProfile(
+    // ============================================================
+    // UPDATE DOCTOR PROFILE
+    // ============================================================
+
+    public void updateDoctorProfile(
             DoctorProfile doctorProfile) {
 
         if (doctorProfile == null) {
+
             throw new IllegalArgumentException(
                     "Doctor profile cannot be null."
             );
         }
 
-        String uid = getCurrentDoctorUid();
+        if (doctorProfile.getUid() == null
+                || doctorProfile.getUid().isBlank()) {
 
-        // Never trust a UID supplied by the UI.
-        doctorProfile.setUid(uid);
+            throw new IllegalArgumentException(
+                    "Doctor UID cannot be null or empty."
+            );
+        }
 
         doctorDAO.updateDoctorProfile(
                 doctorProfile
         );
-    }
-
-    /**
-     * Gets the UID of the currently authenticated user.
-     */
-    private String getCurrentDoctorUid() {
-
-        if (!SessionManager.isLoggedIn()) {
-            throw new IllegalStateException(
-                    "No active user session."
-            );
-        }
-
-        String uid =
-                SessionManager.getInstance()
-                        .getAuthenticationResponse()
-                        .getUid();
-
-        if (uid == null || uid.isBlank()) {
-            throw new IllegalStateException(
-                    "Current user UID is unavailable."
-            );
-        }
-
-        return uid;
     }
 }

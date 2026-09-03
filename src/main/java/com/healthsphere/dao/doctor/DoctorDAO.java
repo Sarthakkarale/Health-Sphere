@@ -14,6 +14,10 @@ public class DoctorDAO {
         this.db = FirebaseConfig.getFirestore();
     }
 
+    // ============================================================
+    // GET DOCTOR PROFILE
+    // ============================================================
+
     public DoctorProfile getDoctorProfile(String uid) {
 
         if (uid == null || uid.isBlank()) {
@@ -31,12 +35,23 @@ public class DoctorDAO {
                             .get();
 
             if (!document.exists()) {
+
                 throw new DatabaseException(
                         "Doctor profile not found."
                 );
             }
 
-            return document.toObject(DoctorProfile.class);
+            DoctorProfile profile =
+                    document.toObject(DoctorProfile.class);
+
+            if (profile == null) {
+
+                throw new DatabaseException(
+                        "Unable to convert doctor profile."
+                );
+            }
+
+            return profile;
 
         } catch (DatabaseException e) {
 
@@ -51,17 +66,23 @@ public class DoctorDAO {
         }
     }
 
+    // ============================================================
+    // UPDATE DOCTOR PROFILE
+    // ============================================================
+
     public void updateDoctorProfile(
             DoctorProfile doctorProfile) {
 
         if (doctorProfile == null) {
+
             throw new IllegalArgumentException(
                     "Doctor profile cannot be null."
             );
         }
 
-        if (doctorProfile.getUid() == null ||
-                doctorProfile.getUid().isBlank()) {
+        if (doctorProfile.getUid() == null
+                || doctorProfile.getUid().isBlank()) {
+
             throw new IllegalArgumentException(
                     "Doctor UID cannot be null or empty."
             );
