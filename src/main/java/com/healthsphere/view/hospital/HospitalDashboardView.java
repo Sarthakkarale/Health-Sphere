@@ -14,17 +14,21 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
@@ -920,6 +924,7 @@ public class HospitalDashboardView {
 
         content.getChildren().addAll(
                 createHeader(),
+                createHospitalImageBanner(),
                 createKpiCards(),
                 createMiddleSection(),
                 createBottomSection(stage)
@@ -1037,6 +1042,279 @@ public class HospitalDashboardView {
         );
 
         return header;
+    }
+
+    // =========================================================
+    // HOSPITAL IMAGE BANNER
+    // =========================================================
+
+    /**
+     * Displays the hospital image supplied for the dashboard.
+     *
+     * The image contains no dashboard text. Hospital information
+     * remains separate from the image so the original photograph
+     * is not modified.
+     *
+     * Image location:
+     *
+     * src/main/resources/images/hospital_dashboard.jpg
+     */
+    private GridPane createHospitalImageBanner() {
+
+        /*
+         * STATIC THREE-IMAGE ROW
+         *
+         * Only three photographs are displayed here.
+         * No animation, slideshow, timer, overlay text or transition.
+         * The row has a small fixed height so it does NOT cover the
+         * dashboard content below it.
+         */
+        GridPane imageGrid = new GridPane();
+
+        imageGrid.setHgap(12);
+        imageGrid.setVgap(0);
+        imageGrid.setAlignment(Pos.CENTER);
+
+        imageGrid.setPrefHeight(190);
+        imageGrid.setMinHeight(190);
+        imageGrid.setMaxHeight(190);
+
+        imageGrid.setMaxWidth(Double.MAX_VALUE);
+
+        ColumnConstraints c1 = new ColumnConstraints();
+        ColumnConstraints c2 = new ColumnConstraints();
+        ColumnConstraints c3 = new ColumnConstraints();
+
+        c1.setPercentWidth(33.3333);
+        c2.setPercentWidth(33.3333);
+        c3.setPercentWidth(33.3334);
+
+        c1.setHgrow(Priority.ALWAYS);
+        c2.setHgrow(Priority.ALWAYS);
+        c3.setHgrow(Priority.ALWAYS);
+
+        imageGrid.getColumnConstraints().addAll(c1, c2, c3);
+
+        StackPane image1 = createDashboardImage(
+                "/images/hospital_dashboard.jpg"
+        );
+
+        StackPane image2 = createDashboardImage(
+                "/images/hospital_surgery.jpg"
+        );
+
+        StackPane image3 = createDashboardImage(
+                "/images/hospital_care.jpg"
+        );
+
+        imageGrid.add(image1, 0, 0);
+        imageGrid.add(image2, 1, 0);
+        imageGrid.add(image3, 2, 0);
+
+        GridPane.setHgrow(image1, Priority.ALWAYS);
+        GridPane.setHgrow(image2, Priority.ALWAYS);
+        GridPane.setHgrow(image3, Priority.ALWAYS);
+
+        GridPane.setFillWidth(image1, true);
+        GridPane.setFillWidth(image2, true);
+        GridPane.setFillWidth(image3, true);
+
+        return imageGrid;
+    }
+
+    // =========================================================
+    // STATIC DASHBOARD IMAGE
+    // =========================================================
+
+    private StackPane createDashboardImage(String resourcePath) {
+
+        StackPane frame = new StackPane();
+
+        frame.setPrefHeight(190);
+        frame.setMinHeight(190);
+        frame.setMaxHeight(190);
+        frame.setMinWidth(0);
+        frame.setMaxWidth(Double.MAX_VALUE);
+
+        frame.setStyle(
+                "-fx-background-color: " + CARD_BG + ";" +
+                "-fx-background-radius: 14;" +
+                "-fx-border-color: " + BORDER + ";" +
+                "-fx-border-radius: 14;"
+        );
+
+        java.io.InputStream stream =
+                getClass().getResourceAsStream(resourcePath);
+
+        if (stream == null) {
+
+            Label missing = new Label(
+                    "Image not found"
+            );
+
+            missing.setStyle(
+                    "-fx-font-size: 12px;" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-text-fill: " + SECONDARY_TEXT + ";"
+            );
+
+            frame.getChildren().add(missing);
+            return frame;
+        }
+
+        Image image = new Image(stream);
+
+        if (image.isError()) {
+
+            Label error = new Label(
+                    "Unable to load image"
+            );
+
+            error.setStyle(
+                    "-fx-font-size: 12px;" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-text-fill: " + ERROR_RED + ";"
+            );
+
+            frame.getChildren().add(error);
+            return frame;
+        }
+
+        ImageView imageView = new ImageView(image);
+
+        imageView.setSmooth(true);
+        imageView.setCache(true);
+        imageView.setPreserveRatio(true);
+
+        /*
+         * The image must COVER the complete card.
+         *
+         * We use the ImageView viewport to crop the source image
+         * and then fit the cropped image to the complete card.
+         * This prevents white/empty space while also preventing
+         * the photograph from being stretched.
+         */
+        imageView.fitWidthProperty().bind(
+                frame.widthProperty()
+        );
+
+        imageView.fitHeightProperty().bind(
+                frame.heightProperty()
+        );
+
+        Rectangle clip = new Rectangle();
+
+        clip.setArcWidth(28);
+        clip.setArcHeight(28);
+
+        clip.widthProperty().bind(
+                frame.widthProperty()
+        );
+
+        clip.heightProperty().bind(
+                frame.heightProperty()
+        );
+
+        imageView.setClip(clip);
+
+        StackPane.setAlignment(
+                imageView,
+                Pos.CENTER
+        );
+
+        frame.getChildren().add(imageView);
+
+        /*
+         * Recalculate the source viewport whenever the card or
+         * source image dimensions become available/change.
+         */
+        Runnable updateCrop = () -> {
+
+            double frameWidth = frame.getWidth();
+            double frameHeight = frame.getHeight();
+
+            double imageWidth = image.getWidth();
+            double imageHeight = image.getHeight();
+
+            if (
+                    frameWidth <= 0 ||
+                    frameHeight <= 0 ||
+                    imageWidth <= 0 ||
+                    imageHeight <= 0
+            ) {
+                return;
+            }
+
+            double frameRatio =
+                    frameWidth / frameHeight;
+
+            double imageRatio =
+                    imageWidth / imageHeight;
+
+            double viewportWidth = imageWidth;
+            double viewportHeight = imageHeight;
+            double viewportX = 0;
+            double viewportY = 0;
+
+            /*
+             * Landscape source: crop the left/right edges.
+             */
+            if (imageRatio > frameRatio) {
+
+                viewportWidth =
+                        imageHeight * frameRatio;
+
+                viewportX =
+                        (imageWidth - viewportWidth) / 2.0;
+            }
+
+            /*
+             * Portrait source: crop the top/bottom edges.
+             */
+            else if (imageRatio < frameRatio) {
+
+                viewportHeight =
+                        imageWidth / frameRatio;
+
+                viewportY =
+                        (imageHeight - viewportHeight) / 2.0;
+            }
+
+            imageView.setViewport(
+                    new javafx.geometry.Rectangle2D(
+                            viewportX,
+                            viewportY,
+                            viewportWidth,
+                            viewportHeight
+                    )
+            );
+        };
+
+        frame.widthProperty().addListener(
+                (observable, oldValue, newValue) ->
+                        updateCrop.run()
+        );
+
+        frame.heightProperty().addListener(
+                (observable, oldValue, newValue) ->
+                        updateCrop.run()
+        );
+
+        image.widthProperty().addListener(
+                (observable, oldValue, newValue) ->
+                        updateCrop.run()
+        );
+
+        image.heightProperty().addListener(
+                (observable, oldValue, newValue) ->
+                        updateCrop.run()
+        );
+
+        javafx.application.Platform.runLater(
+                updateCrop
+        );
+
+        return frame;
     }
 
     // =========================================================
