@@ -13,12 +13,16 @@ public class Main extends Application {
 
         try {
             System.out.println("Initializing Firebase...");
+
             FirebaseConfig.initialize();
+
             System.out.println("Firebase initialized successfully!");
 
         } catch (Exception e) {
+
             System.out.println("Firebase initialization failed!");
             e.printStackTrace();
+
             return;
         }
 

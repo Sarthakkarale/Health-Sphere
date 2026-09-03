@@ -1,6 +1,7 @@
 package com.healthsphere.view.authentication;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -23,707 +24,703 @@ import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 
 /**
- * Main Entry View Class for Health-Sphere UI.
- * Extends Application and holds the central shared static Stage for navigation.
+ * Main application window.
+ *
+ * IMPORTANT:
+ * This class owns the ONE shared Stage used by the entire application.
+ *
+ * Other views such as LoginView, Dashboard, Appointments etc.
+ * must ONLY replace the Scene.
  */
 public class View extends Application {
 
-    // Single static Stage shared across all views in the application
-    public static Stage stage;
+        /*
+         * =========================================================
+         * ONE SHARED STAGE
+         * =========================================================
+         */
+        public static Stage stage;
 
-    @Override
-    public void start(Stage primaryStage) {
-        View.stage = primaryStage;
-        View.stage.setTitle("Health-Sphere | AI Powered Healthcare Management System");
+        /*
+         * =========================================================
+         * START APPLICATION
+         * =========================================================
+         */
+        @Override
+        public void start(Stage primaryStage) {
 
-        View.stage.setScene(getScene());
-        View.stage.centerOnScreen();
-        View.stage.setMaximized(true);
-        View.stage.show();
-    }
+                stage = primaryStage;
 
-    public Scene getScene() {
-        BorderPane root = new BorderPane();
-        root.getStyleClass().add("root");
+                stage.setTitle(
+                                "Health-Sphere | AI Powered Healthcare Management System");
 
-        // Assemble Layout Sections
-        root.setTop(createHeader());
-        root.setCenter(createMainContent());
-        root.setBottom(createFooter());
+                /*
+                 * Prevent the application from becoming a tiny window.
+                 */
+                stage.setMinWidth(1100);
+                stage.setMinHeight(700);
 
-        Scene scene = new Scene(
-                root,
-                stage.getWidth(),
-                stage.getHeight()
-        );
+                /*
+                 * =====================================================
+                 * INITIAL SCENE
+                 * =====================================================
+                 */
+                Scene initialScene = getScene();
 
-        // Attach Stylesheet safely
-        String cssPath = getClass().getResource("/css/view.css") != null
-                ? getClass().getResource("/css/view.css").toExternalForm()
-                : null;
+                stage.setScene(initialScene);
 
-        if (cssPath != null) {
-            scene.getStylesheets().add(cssPath);
+                /*
+                 * =====================================================
+                 * SHOW WINDOW
+                 * =====================================================
+                 */
+                stage.show();
+
+                /*
+                 * =====================================================
+                 * MAXIMIZE AFTER SHOW
+                 * =====================================================
+                 *
+                 * On Windows, maximizing BEFORE the Stage is actually
+                 * displayed can sometimes be ignored/reset.
+                 *
+                 * Therefore:
+                 *
+                 * 1. show()
+                 * 2. maximize()
+                 * 3. force layout
+                 */
+                maximizeWindow();
+
+                /*
+                 * =====================================================
+                 * FINAL LAYOUT PASS
+                 * =====================================================
+                 */
+                Platform.runLater(() -> {
+
+                        maximizeWindow();
+
+                        if (stage.getScene() != null) {
+
+                                stage.getScene()
+                                                .getRoot()
+                                                .applyCss();
+
+                                stage.getScene()
+                                                .getRoot()
+                                                .layout();
+                        }
+                });
         }
 
-        return scene;
-    }
+        /*
+         * =========================================================
+         * MAXIMIZE WINDOW
+         * =========================================================
+         */
+        private void maximizeWindow() {
 
-    // ==========================================
-    // 1. HEADER SECTION
-    // ==========================================
-    private HBox createHeader() {
+                if (stage == null) {
+                        return;
+                }
 
-        HBox header = new HBox();
+                /*
+                 * First make sure the Stage is visible.
+                 */
+                if (!stage.isShowing()) {
+                        stage.show();
+                }
 
-        header.getStyleClass().add("header-bar");
+                /*
+                 * Tell JavaFX/Windows to maximize.
+                 */
+                stage.setMaximized(true);
 
-        header.setAlignment(Pos.CENTER_LEFT);
+                /*
+                 * If Windows does not immediately apply the state,
+                 * apply it again on the next JavaFX pulse.
+                 */
+                Platform.runLater(() -> {
 
-        // App Branding Text
-        Text brandText = new Text("Health Sphere");
+                        if (stage != null && stage.isShowing()) {
+                                stage.setMaximized(true);
+                        }
+                });
+        }
 
-        brandText.getStyleClass().add("brand-title");
+        // =========================================================
+        // INITIAL SCENE
+        // =========================================================
 
-        // Spacer pushes controls to the right
-        Region spacer = new Region();
+        public Scene getScene() {
 
-        HBox.setHgrow(
-                spacer,
-                Priority.ALWAYS
-        );
+                BorderPane root = new BorderPane();
 
-        // Utility Buttons
-        HBox utilityBox = new HBox(12);
+                /*
+                 * Allow the root to completely fill the Scene.
+                 */
+                root.setMinWidth(0);
+                root.setMinHeight(0);
 
-        utilityBox.setAlignment(
-                Pos.CENTER_RIGHT
-        );
+                root.setMaxWidth(
+                                Double.MAX_VALUE);
 
-        Button bellBtn = createIconButton(
-                "/images/icons/icon_bell.png",
-                "🔔"
-        );
+                root.setMaxHeight(
+                                Double.MAX_VALUE);
 
-        Button helpBtn = createIconButton(
-                "/images/icons/icon_help.png",
-                "❓"
-        );
+                root.getStyleClass().add(
+                                "root");
 
-        Button newSessionBtn =
-                new Button("New Session");
+                // Assemble Layout Sections
+                root.setTop(createHeader());
+                root.setCenter(createMainContent());
+                root.setBottom(createFooter());
 
-        newSessionBtn.getStyleClass().add(
-                "btn-primary"
-        );
+                Scene scene = new Scene(
+                                root,
+                                stage.getWidth(),
+                                stage.getHeight());
 
-        // User Avatar Circle
-        StackPane avatar = new StackPane();
+                // Attach Stylesheet safely
+                String cssPath = getClass().getResource("/css/view.css") != null
+                                ? getClass().getResource("/css/view.css").toExternalForm()
+                                : null;
 
-        avatar.getStyleClass().add(
-                "avatar-circle"
-        );
+                if (cssPath != null) {
+                        scene.getStylesheets().add(cssPath);
+                }
 
-        Text avatarText = new Text("img");
+                return scene;
+        }
 
-        avatarText.setStyle(
-                "-fx-font-size: 10px; -fx-fill: #475569;"
-        );
+        // =========================================================
+        // HEADER
+        // =========================================================
 
-        avatar.getChildren().add(
-                avatarText
-        );
+        private HBox createHeader() {
 
-        utilityBox.getChildren().addAll(
-                bellBtn,
-                helpBtn,
-                newSessionBtn,
-                avatar
-        );
+                HBox header = new HBox();
 
-        header.getChildren().addAll(
-                brandText,
-                spacer,
-                utilityBox
-        );
+                header.getStyleClass().add("header-bar");
 
-        return header;
-    }
+                header.setAlignment(Pos.CENTER_LEFT);
 
-    // ==========================================
-    // 2. MAIN CONTENT SECTION
-    // ==========================================
-    private HBox createMainContent() {
+                // App Branding Text
+                Text brandText = new Text("Health Sphere");
 
-        HBox mainContainer =
-                new HBox(40);
+                brandText.getStyleClass().add("brand-title");
 
-        mainContainer.setPadding(
-                new Insets(
-                        40,
-                        60,
-                        40,
-                        60
-                )
-        );
+                // Spacer pushes controls to the right
+                Region spacer = new Region();
 
-        mainContainer.setAlignment(
-                Pos.CENTER
-        );
+                HBox.setHgrow(
+                                spacer,
+                                Priority.ALWAYS);
 
-        // --- LEFT COLUMN: CTA Content ---
-        VBox leftContent =
-                new VBox(24);
+                // Utility Buttons
+                HBox utilityBox = new HBox(12);
 
-        leftContent.setAlignment(
-                Pos.CENTER_LEFT
-        );
+                utilityBox.setAlignment(
+                                Pos.CENTER_RIGHT);
 
-        HBox.setHgrow(
-                leftContent,
-                Priority.ALWAYS
-        );
+                Button bellBtn = createIconButton(
+                                "/images/icons/icon_bell.png",
+                                "🔔");
 
-        leftContent.setMaxWidth(520);
+                Button helpBtn = createIconButton(
+                                "/images/icons/icon_help.png",
+                                "❓");
 
-        ImageView logoView =
-                createSafeImageView(
-                        "/images/icons/brand_logo.png",
-                        110,
-                        110
-                );
+                Button newSessionBtn = new Button("New Session");
 
-        // Headline Text
-        Text titleLine1 =
-                new Text(
-                        "The Future of\n"
-                );
+                newSessionBtn.getStyleClass().add(
+                                "btn-primary");
 
-        titleLine1.getStyleClass().add(
-                "hero-title-dark"
-        );
+                // User Avatar Circle
+                StackPane avatar = new StackPane();
 
-        Text titleLine2 =
-                new Text(
-                        "Connected Healthcare."
-                );
+                avatar.getStyleClass().add(
+                                "avatar-circle");
 
-        titleLine2.getStyleClass().add(
-                "hero-title-blue"
-        );
+                Text avatarText = new Text("img");
 
-        TextFlow headline =
-                new TextFlow(
-                        titleLine1,
-                        titleLine2
-                );
+                avatarText.setStyle(
+                                "-fx-font-size: 10px; -fx-fill: #475569;");
 
-        // Subtitle Description
-        Label description =
-                new Label(
-                        "Precision care at scale. Intelligently connecting hospital operations and patient outcomes."
-                );
+                avatar.getChildren().add(
+                                avatarText);
 
-        description.getStyleClass().add(
-                "hero-description"
-        );
+                utilityBox.getChildren().addAll(
+                                bellBtn,
+                                helpBtn,
+                                newSessionBtn,
+                                avatar);
 
-        description.setWrapText(true);
+                header.getChildren().addAll(
+                                brandText,
+                                spacer,
+                                utilityBox);
 
-        // Action Buttons Row (Sign Up & Register)
-        HBox buttonRow =
-                new HBox(16);
+                return header;
+        }
 
-        buttonRow.setAlignment(
-                Pos.CENTER_LEFT
-        );
+        // =========================================================
+        // MAIN CONTENT
+        // =========================================================
 
-        buttonRow.setPadding(
-                new Insets(
-                        8,
-                        0,
-                        0,
-                        0
-                )
-        );
+        private HBox createMainContent() {
 
-        Button signUpBtn =
-                new Button("Log In");
+                HBox mainContainer = new HBox(40);
 
-        signUpBtn.getStyleClass().add(
-                "btn-primary"
-        );
-        signUpBtn.setOnAction(e -> {
+                mainContainer.setPadding(
+                                new Insets(
+                                                40,
+                                                60,
+                                                40,
+                                                60));
 
-            // Direct stage scene switching using shared static stage
-            View.stage.setScene(
-                    new LoginView(
-                            View.stage
-                    ).getScene()
-            );
-        });
+                mainContainer.setAlignment(
+                                Pos.CENTER);
 
-        Button registerBtn =
-                new Button("Register");
+                // --- LEFT COLUMN: CTA Content ---
+                VBox leftContent = new VBox(24);
 
-        registerBtn.getStyleClass().add(
-                "btn-teal"
-        );
+                leftContent.setAlignment(
+                                Pos.CENTER_LEFT);
 
-        registerBtn.setOnAction(e -> {
+                HBox.setHgrow(
+                                leftContent,
+                                Priority.ALWAYS);
 
-            // Direct stage scene switching using shared static stage
-            View.stage.setScene(
-                    new RegisterView(
-                            View.stage
-                    ).getScene()
-            );
-        });
+                leftContent.setMaxWidth(520);
 
-        buttonRow.getChildren().addAll(
-                signUpBtn,
-                registerBtn
-        );
+                ImageView logoView = createSafeImageView(
+                                "/images/icons/brand_logo.png",
+                                110,
+                                110);
 
-        leftContent.getChildren().addAll(
-                logoView,
-                headline,
-                description,
-                buttonRow
-        );
+                // Headline Text
+                Text titleLine1 = new Text(
+                                "The Future of\n");
 
-        // --- RIGHT COLUMN: Visual Banner & Overlay ---
-        StackPane rightVisual =
-                new StackPane();
+                titleLine1.getStyleClass().add(
+                                "hero-title-dark");
 
-        HBox.setHgrow(
-                rightVisual,
-                Priority.ALWAYS
-        );
+                Text titleLine2 = new Text(
+                                "Connected Healthcare.");
 
-        rightVisual.setAlignment(
-                Pos.BOTTOM_LEFT
-        );
+                titleLine2.getStyleClass().add(
+                                "hero-title-blue");
+
+                TextFlow headline = new TextFlow(
+                                titleLine1,
+                                titleLine2);
+
+                // Subtitle Description
+                Label description = new Label(
+                                "Precision care at scale. Intelligently connecting hospital operations and patient outcomes.");
+
+                description.getStyleClass().add(
+                                "hero-description");
+
+                description.setWrapText(true);
+
+                // Action Buttons Row (Sign Up & Register)
+                HBox buttonRow = new HBox(16);
+
+                buttonRow.setAlignment(
+                                Pos.CENTER_LEFT);
+
+                buttonRow.setPadding(
+                                new Insets(
+                                                8,
+                                                0,
+                                                0,
+                                                0));
+
+                Button signUpBtn = new Button("Log In");
+
+                signUpBtn.getStyleClass().add(
+                                "btn-primary");
+                signUpBtn.setOnAction(e -> {
+
+                        // Direct stage scene switching using shared static stage
+                        View.stage.setScene(
+                                        new LoginView(
+                                                        View.stage).getScene());
+                });
+
+                Button registerBtn = new Button("Register");
+
+                registerBtn.getStyleClass().add(
+                                "btn-teal");
+
+                registerBtn.setOnAction(e -> {
+
+                        // Direct stage scene switching using shared static stage
+                        View.stage.setScene(
+                                        new RegisterView(
+                                                        View.stage).getScene());
+                });
+
+                buttonRow.getChildren().addAll(
+                                signUpBtn,
+                                registerBtn);
+
+                leftContent.getChildren().addAll(
+                                logoView,
+                                headline,
+                                description,
+                                buttonRow);
+
+                // --- RIGHT COLUMN: Visual Banner & Overlay ---
+                StackPane rightVisual = new StackPane();
+
+                HBox.setHgrow(
+                                rightVisual,
+                                Priority.ALWAYS);
+
+                rightVisual.setAlignment(
+                                Pos.BOTTOM_LEFT);
+
+                // ==========================================
+                // HERO VIDEO
+                // ==========================================
+
+                MediaView heroVideoView = createHeroVideoView();
+
+                // Clip rounded corners on video
+                Rectangle videoClip = new Rectangle(
+                                560,
+                                360);
+
+                videoClip.setArcWidth(24);
+                videoClip.setArcHeight(24);
+
+                heroVideoView.setClip(
+                                videoClip);
+
+                // Overlay Banner Text
+                VBox imageOverlayText = new VBox(6);
+
+                imageOverlayText.setAlignment(
+                                Pos.BOTTOM_LEFT);
+
+                imageOverlayText.setPadding(
+                                new Insets(24));
+
+                Text imgTitle = new Text(
+                                "Precision care at scale.");
+
+                imgTitle.setStyle(
+                                "-fx-font-size: 22px;" +
+                                                " -fx-font-weight: bold;" +
+                                                " -fx-fill: #142901;");
+
+                Text imgSub = new Text(
+                                "Intelligently connecting hospital operations and patient outcomes.");
+
+                imgSub.setStyle(
+                                "-fx-font-size: 13px;" +
+                                                " -fx-fill: #000000;");
+
+                imageOverlayText.getChildren().addAll(
+                                imgTitle,
+                                imgSub);
+
+                StackPane imageWrapper = new StackPane();
+
+                imageWrapper.getChildren().addAll(
+                                heroVideoView,
+                                imageOverlayText);
+
+                // Floating "LIVE INSIGHT" Card
+                VBox floatingCard = new VBox(6);
+
+                floatingCard.getStyleClass().add(
+                                "floating-card");
+
+                floatingCard.setMaxSize(
+                                160,
+                                60);
+
+                floatingCard.setTranslateX(-20);
+                floatingCard.setTranslateY(20);
+
+                HBox cardHeader = new HBox(6);
+
+                cardHeader.setAlignment(
+                                Pos.CENTER_LEFT);
+
+                ImageView sparkleIcon = createSafeImageView(
+                                "/images/icons/icon_sparkle.png",
+                                14,
+                                14);
+
+                Text cardTitle = new Text(
+                                "LIVE INSIGHT");
+
+                cardTitle.getStyleClass().add(
+                                "floating-card-title");
+
+                cardHeader.getChildren().addAll(
+                                sparkleIcon,
+                                cardTitle);
+
+                floatingCard.getChildren().add(
+                                cardHeader);
+
+                rightVisual.getChildren().addAll(
+                                imageWrapper,
+                                floatingCard);
+
+                mainContainer.getChildren().addAll(
+                                leftContent,
+                                rightVisual);
+
+                return mainContainer;
+        }
+
+        // =========================================================
+        // FOOTER
+        // =========================================================
+
+        private HBox createFooter() {
+
+                HBox footer = new HBox(12);
+
+                footer.getStyleClass().add(
+                                "footer-bar");
+
+                footer.setAlignment(
+                                Pos.CENTER_LEFT);
+
+                Text footerBrand = new Text(
+                                "health sphere");
+
+                footerBrand.getStyleClass().add(
+                                "footer-brand");
+
+                Label copyLabel = new Label(
+                                "© 2026 MediNexus AI. All rights reserved. Clinical precision at scale.");
+
+                copyLabel.getStyleClass().add(
+                                "footer-text");
+
+                Region spacer = new Region();
+
+                HBox.setHgrow(
+                                spacer,
+                                Priority.ALWAYS);
+
+                HBox footerLinks = new HBox(16);
+
+                footerLinks.setAlignment(
+                                Pos.CENTER_RIGHT);
+
+                Label versionLabel = new Label(
+                                "Version 2.4.1-stable");
+
+                versionLabel.getStyleClass().add(
+                                "footer-text");
+
+                Button tosBtn = new Button(
+                                "Terms of Service");
+
+                tosBtn.getStyleClass().add(
+                                "footer-link");
+
+                Button privacyBtn = new Button(
+                                "Privacy Policy");
+
+                privacyBtn.getStyleClass().add(
+                                "footer-link");
+
+                Button statusBtn = new Button(
+                                "System Status");
+
+                statusBtn.getStyleClass().add(
+                                "footer-link");
+
+                footerLinks.getChildren().addAll(
+                                versionLabel,
+                                tosBtn,
+                                privacyBtn,
+                                statusBtn);
+
+                footer.getChildren().addAll(
+                                footerBrand,
+                                copyLabel,
+                                spacer,
+                                footerLinks);
+
+                return footer;
+        }
 
         // ==========================================
-        // HERO VIDEO
+        // HERO VIDEO HELPER
         // ==========================================
+        private MediaView createHeroVideoView() {
 
-        MediaView heroVideoView =
-                createHeroVideoView();
+                MediaView mediaView = new MediaView();
 
-        // Clip rounded corners on video
-        Rectangle videoClip =
-                new Rectangle(
-                        560,
-                        360
-                );
+                try {
 
-        videoClip.setArcWidth(24);
-        videoClip.setArcHeight(24);
+                        var resource = getClass().getResource(
+                                        "/videos/healthsphere-splash.mp4");
 
-        heroVideoView.setClip(
-                videoClip
-        );
+                        if (resource == null) {
 
-        // Overlay Banner Text
-        VBox imageOverlayText =
-                new VBox(6);
+                                System.out.println(
+                                                "❌ VIDEO NOT FOUND!");
 
-        imageOverlayText.setAlignment(
-                Pos.BOTTOM_LEFT
-        );
+                                System.out.println(
+                                                "Expected path: /videos/healthsphere-splash.mp4");
 
-        imageOverlayText.setPadding(
-                new Insets(24)
-        );
+                                return mediaView;
+                        }
 
-        Text imgTitle =
-                new Text(
-                        "Precision care at scale."
-                );
+                        String videoPath = resource.toExternalForm();
 
-        imgTitle.setStyle(
-                "-fx-font-size: 22px;" +
-                " -fx-font-weight: bold;" +
-                " -fx-fill: #142901;"
-        );
+                        System.out.println(
+                                        "✅ VIDEO FOUND:");
 
-        Text imgSub =
-                new Text(
-                        "Intelligently connecting hospital operations and patient outcomes."
-                );
+                        System.out.println(videoPath);
 
-        imgSub.setStyle(
-                "-fx-font-size: 13px;" +
-                " -fx-fill: #000000;"
-        );
+                        Media media = new Media(videoPath);
 
-        imageOverlayText.getChildren().addAll(
-                imgTitle,
-                imgSub
-        );
+                        media.setOnError(() -> {
 
-        StackPane imageWrapper =
-                new StackPane();
+                                System.out.println(
+                                                "❌ MEDIA ERROR:");
 
-        imageWrapper.getChildren().addAll(
-                heroVideoView,
-                imageOverlayText
-        );
+                                if (media.getError() != null) {
+                                        media.getError().printStackTrace();
+                                }
+                        });
 
-        // Floating "LIVE INSIGHT" Card
-        VBox floatingCard =
-                new VBox(6);
+                        MediaPlayer mediaPlayer = new MediaPlayer(media);
 
-        floatingCard.getStyleClass().add(
-                "floating-card"
-        );
+                        mediaPlayer.setOnReady(() -> {
 
-        floatingCard.setMaxSize(
-                160,
-                60
-        );
+                                System.out.println(
+                                                "✅ VIDEO READY");
 
-        floatingCard.setTranslateX(-20);
-        floatingCard.setTranslateY(20);
+                                System.out.println(
+                                                "Video duration: "
+                                                                + media.getDuration());
 
-        HBox cardHeader =
-                new HBox(6);
+                                mediaPlayer.play();
+                        });
 
-        cardHeader.setAlignment(
-                Pos.CENTER_LEFT
-        );
+                        mediaPlayer.setOnError(() -> {
 
-        ImageView sparkleIcon =
-                createSafeImageView(
-                        "/images/icons/icon_sparkle.png",
-                        14,
-                        14
-                );
+                                System.out.println(
+                                                "❌ MEDIAPLAYER ERROR:");
 
-        Text cardTitle =
-                new Text(
-                        "LIVE INSIGHT"
-                );
+                                if (mediaPlayer.getError() != null) {
+                                        mediaPlayer.getError().printStackTrace();
+                                }
+                        });
 
-        cardTitle.getStyleClass().add(
-                "floating-card-title"
-        );
+                        mediaPlayer.setOnEndOfMedia(() -> {
 
-        cardHeader.getChildren().addAll(
-                sparkleIcon,
-                cardTitle
-        );
+                                System.out.println(
+                                                "🔄 Video restarting...");
 
-        floatingCard.getChildren().add(
-                cardHeader
-        );
+                                mediaPlayer.seek(
+                                                javafx.util.Duration.ZERO);
 
-        rightVisual.getChildren().addAll(
-                imageWrapper,
-                floatingCard
-        );
+                                mediaPlayer.play();
+                        });
 
-        mainContainer.getChildren().addAll(
-                leftContent,
-                rightVisual
-        );
+                        mediaPlayer.setMute(true);
 
-        return mainContainer;
-    }
+                        mediaView.setMediaPlayer(
+                                        mediaPlayer);
 
-    // ==========================================
-    // 3. FOOTER SECTION
-    // ==========================================
-    private HBox createFooter() {
+                        mediaView.setFitWidth(560);
 
-        HBox footer =
-                new HBox(12);
+                        mediaView.setFitHeight(360);
 
-        footer.getStyleClass().add(
-                "footer-bar"
-        );
+                        mediaView.setPreserveRatio(false);
 
-        footer.setAlignment(
-                Pos.CENTER_LEFT
-        );
+                        return mediaView;
 
-        Text footerBrand =
-                new Text(
-                        "health sphere"
-                );
+                } catch (Exception e) {
 
-        footerBrand.getStyleClass().add(
-                "footer-brand"
-        );
+                        System.out.println(
+                                        "❌ EXCEPTION WHILE LOADING VIDEO:");
 
-        Label copyLabel =
-                new Label(
-                        "© 2026 MediNexus AI. All rights reserved. Clinical precision at scale."
-                );
+                        e.printStackTrace();
 
-        copyLabel.getStyleClass().add(
-                "footer-text"
-        );
-
-        Region spacer =
-                new Region();
-
-        HBox.setHgrow(
-                spacer,
-                Priority.ALWAYS
-        );
-
-        HBox footerLinks =
-                new HBox(16);
-
-        footerLinks.setAlignment(
-                Pos.CENTER_RIGHT
-        );
-
-        Label versionLabel =
-                new Label(
-                        "Version 2.4.1-stable"
-                );
-
-        versionLabel.getStyleClass().add(
-                "footer-text"
-        );
-
-        Button tosBtn =
-                new Button(
-                        "Terms of Service"
-                );
-
-        tosBtn.getStyleClass().add(
-                "footer-link"
-        );
-
-        Button privacyBtn =
-                new Button(
-                        "Privacy Policy"
-                );
-
-        privacyBtn.getStyleClass().add(
-                "footer-link"
-        );
-
-        Button statusBtn =
-                new Button(
-                        "System Status"
-                );
-
-        statusBtn.getStyleClass().add(
-                "footer-link"
-        );
-
-        footerLinks.getChildren().addAll(
-                versionLabel,
-                tosBtn,
-                privacyBtn,
-                statusBtn
-        );
-
-        footer.getChildren().addAll(
-                footerBrand,
-                copyLabel,
-                spacer,
-                footerLinks
-        );
-
-        return footer;
-    }
-
-    // ==========================================
-    // HERO VIDEO HELPER
-    // ==========================================
-    private MediaView createHeroVideoView() {
-
-    MediaView mediaView = new MediaView();
-
-    try {
-
-        var resource = getClass().getResource(
-                "/videos/healthsphere-splash.mp4"
-        );
-
-        if (resource == null) {
-
-            System.out.println(
-                    "❌ VIDEO NOT FOUND!"
-            );
-
-            System.out.println(
-                    "Expected path: /videos/healthsphere-splash.mp4"
-            );
-
-            return mediaView;
+                        return mediaView;
+                }
         }
 
-        String videoPath = resource.toExternalForm();
+        // ==========================================
+        // HELPER UTILITIES
+        // ==========================================
+        private ImageView createSafeImageView(
+                        String path,
+                        double width,
+                        double height) {
 
-        System.out.println(
-                "✅ VIDEO FOUND:"
-        );
+                ImageView imgView = new ImageView();
 
-        System.out.println(videoPath);
+                imgView.setFitWidth(
+                                width);
 
-        Media media = new Media(videoPath);
+                imgView.setFitHeight(
+                                height);
 
-        media.setOnError(() -> {
+                imgView.setPreserveRatio(
+                                true);
 
-            System.out.println(
-                    "❌ MEDIA ERROR:"
-            );
+                try {
 
-            if (media.getError() != null) {
-                media.getError().printStackTrace();
-            }
-        });
+                        if (getClass().getResource(path) != null) {
 
-        MediaPlayer mediaPlayer =
-                new MediaPlayer(media);
+                                imgView.setImage(
+                                                new Image(
+                                                                getClass()
+                                                                                .getResourceAsStream(path)));
+                        }
 
-        mediaPlayer.setOnReady(() -> {
+                } catch (Exception ignored) {
 
-            System.out.println(
-                    "✅ VIDEO READY"
-            );
+                        // Gracefully handles missing assets during UI development
+                }
 
-            System.out.println(
-                    "Video duration: "
-                    + media.getDuration()
-            );
-
-            mediaPlayer.play();
-        });
-
-        mediaPlayer.setOnError(() -> {
-
-            System.out.println(
-                    "❌ MEDIAPLAYER ERROR:"
-            );
-
-            if (mediaPlayer.getError() != null) {
-                mediaPlayer.getError().printStackTrace();
-            }
-        });
-
-        mediaPlayer.setOnEndOfMedia(() -> {
-
-            System.out.println(
-                    "🔄 Video restarting..."
-            );
-
-            mediaPlayer.seek(
-                    javafx.util.Duration.ZERO
-            );
-
-            mediaPlayer.play();
-        });
-
-        mediaPlayer.setMute(true);
-
-        mediaView.setMediaPlayer(
-                mediaPlayer
-        );
-
-        mediaView.setFitWidth(560);
-
-        mediaView.setFitHeight(360);
-
-        mediaView.setPreserveRatio(false);
-
-        return mediaView;
-
-    } catch (Exception e) {
-
-        System.out.println(
-                "❌ EXCEPTION WHILE LOADING VIDEO:"
-        );
-
-        e.printStackTrace();
-
-        return mediaView;
-    }
-}
-    // ==========================================
-    // HELPER UTILITIES
-    // ==========================================
-    private ImageView createSafeImageView(
-            String path,
-            double width,
-            double height
-    ) {
-
-        ImageView imgView =
-                new ImageView();
-
-        imgView.setFitWidth(
-                width
-        );
-
-        imgView.setFitHeight(
-                height
-        );
-
-        imgView.setPreserveRatio(
-                true
-        );
-
-        try {
-
-            if (getClass().getResource(path) != null) {
-
-                imgView.setImage(
-                        new Image(
-                                getClass()
-                                        .getResourceAsStream(path)
-                        )
-                );
-            }
-
-        } catch (Exception ignored) {
-
-            // Gracefully handles missing assets during UI development
+                return imgView;
         }
 
-        return imgView;
-    }
+        private Button createIconButton(
+                        String imagePath,
+                        String fallbackText) {
 
-    private Button createIconButton(
-            String imagePath,
-            String fallbackText
-    ) {
+                Button btn = new Button();
 
-        Button btn =
-                new Button();
+                btn.getStyleClass().add(
+                                "icon-btn");
 
-        btn.getStyleClass().add(
-                "icon-btn"
-        );
+                ImageView icon = createSafeImageView(
+                                imagePath,
+                                18,
+                                18);
 
-        ImageView icon =
-                createSafeImageView(
-                        imagePath,
-                        18,
-                        18
-                );
+                if (icon.getImage() != null) {
 
-        if (icon.getImage() != null) {
+                        btn.setGraphic(
+                                        icon);
 
-            btn.setGraphic(
-                    icon
-            );
+                } else {
 
-        } else {
+                        btn.setText(
+                                        fallbackText);
+                }
 
-            btn.setText(
-                    fallbackText
-            );
+                return btn;
         }
-
-        return btn;
-    }
 }
