@@ -154,6 +154,14 @@ public class HospitalDashboardView {
 
     private Label bedOccupancyLabel;
 
+    private Label bedCapacityDetailsLabel;
+
+    private StackPane bedProgressContainer;
+
+    private Region bedOccupancyProgress;
+
+    private double currentOccupancyPercentage = 0.0;
+
     private VBox departmentRowsContainer;
 
     private VBox recentActivityList;
@@ -1063,8 +1071,8 @@ public class HospitalDashboardView {
         VBox bedsCard =
                 createKpiCard(
                         "Available Beds",
-                        "—",
-                        "Bed backend pending",
+                        "0",
+                        "From hospital bed roster",
                         "▥",
                         SUCCESS_GREEN,
                         SUCCESS_LIGHT
@@ -1073,8 +1081,8 @@ public class HospitalDashboardView {
         VBox emergencyCard =
                 createKpiCard(
                         "Emergency Cases",
-                        "—",
-                        "Emergency backend pending",
+                        "0",
+                        "Current hospital emergency cases",
                         "!",
                         ERROR_RED,
                         ERROR_LIGHT
@@ -1539,7 +1547,7 @@ public class HospitalDashboardView {
         );
 
         bedOccupancyLabel =
-                new Label("—");
+                new Label("0.0%");
 
         bedOccupancyLabel.setStyle(
                 "-fx-font-size: 28px;" +
@@ -1574,10 +1582,10 @@ public class HospitalDashboardView {
         // PROGRESS BAR
         // -----------------------------------------------------
 
-        StackPane progressContainer =
+        bedProgressContainer =
                 new StackPane();
 
-        progressContainer.setPrefHeight(
+        bedProgressContainer.setPrefHeight(
                 12
         );
 
@@ -1597,18 +1605,18 @@ public class HospitalDashboardView {
                 "-fx-background-radius: 10;"
         );
 
-        Region progress =
+        bedOccupancyProgress =
                 new Region();
 
-        progress.setPrefWidth(
+        bedOccupancyProgress.setPrefWidth(
                 0
         );
 
-        progress.setPrefHeight(
+        bedOccupancyProgress.setPrefHeight(
                 10
         );
 
-        progress.setStyle(
+        bedOccupancyProgress.setStyle(
                 "-fx-background-color: "
                         + PRIMARY_BLUE
                         + ";" +
@@ -1616,46 +1624,55 @@ public class HospitalDashboardView {
         );
 
         StackPane.setAlignment(
-                progress,
+                bedOccupancyProgress,
                 Pos.CENTER_LEFT
         );
 
-        progressContainer
+        bedProgressContainer
                 .getChildren()
                 .addAll(
                         background,
-                        progress
+                        bedOccupancyProgress
+                );
+
+        bedProgressContainer
+                .widthProperty()
+                .addListener(
+                        (observable, oldWidth, newWidth) ->
+                                updateBedOccupancyProgress()
                 );
 
         card.getChildren().add(
-                progressContainer
+                bedProgressContainer
         );
 
         // -----------------------------------------------------
-        // CURRENT STATE
+        // CURRENT CAPACITY
         // -----------------------------------------------------
 
         VBox information =
-                new VBox(10);
+                new VBox(6);
 
-        Label backendMessage =
+        bedCapacityDetailsLabel =
                 new Label(
-                        "Bed management backend is not connected yet."
+                        "Total: 0  •  Occupied: 0  •  "
+                                + "Available: 0  •  Reserved: 0"
                 );
 
-        backendMessage.setWrapText(
+        bedCapacityDetailsLabel.setWrapText(
                 true
         );
 
-        backendMessage.setStyle(
+        bedCapacityDetailsLabel.setStyle(
                 "-fx-font-size: 12px;" +
+                "-fx-font-weight: 600;" +
                 "-fx-text-fill: "
                         + SECONDARY_TEXT
                         + ";"
         );
 
         information.getChildren().add(
-                backendMessage
+                bedCapacityDetailsLabel
         );
 
         card.getChildren().add(
@@ -2652,29 +2669,29 @@ public class HospitalDashboardView {
                 );
             }
 
-            /*
-             * Bed backend has not been connected yet.
-             *
-             * Do not show fake numbers.
-             */
+            // =================================================
+            // BED + EMERGENCY
+            // =================================================
+
             if (
                     availableBedsValue != null
             ) {
 
                 availableBedsValue.setText(
-                        "—"
+                        String.valueOf(
+                                summary.getAvailableBeds()
+                        )
                 );
             }
 
-            /*
-             * Emergency backend has not been connected yet.
-             */
             if (
                     emergencyCasesValue != null
             ) {
 
                 emergencyCasesValue.setText(
-                        "—"
+                        String.valueOf(
+                                summary.getEmergencyCases()
+                        )
                 );
             }
 
@@ -2743,17 +2760,43 @@ public class HospitalDashboardView {
             }
 
             // =================================================
-            // BED
+            // BED OCCUPANCY
             // =================================================
+
+            currentOccupancyPercentage =
+                    clampPercentage(
+                            summary.getOccupancyPercentage()
+                    );
 
             if (
                     bedOccupancyLabel != null
             ) {
 
                 bedOccupancyLabel.setText(
-                        "—"
+                        String.format(
+                                "%.1f%%",
+                                currentOccupancyPercentage
+                        )
                 );
             }
+
+            if (
+                    bedCapacityDetailsLabel != null
+            ) {
+
+                bedCapacityDetailsLabel.setText(
+                        "Total: "
+                                + summary.getTotalBeds()
+                                + "  •  Occupied: "
+                                + summary.getOccupiedBeds()
+                                + "  •  Available: "
+                                + summary.getAvailableBeds()
+                                + "  •  Reserved: "
+                                + summary.getReservedBeds()
+                );
+            }
+
+            updateBedOccupancyProgress();
 
             // =================================================
             // DEPARTMENTS
@@ -2775,6 +2818,68 @@ public class HospitalDashboardView {
                     getRootMessage(e)
             );
         }
+    }
+
+    // =========================================================
+    // BED OCCUPANCY PROGRESS
+    //
+    // The values displayed by this dashboard come from
+    // HospitalDashboardController -> HospitalDashboardDAO.
+    // No demo/statistical values are used here.
+    // =========================================================
+    // =========================================================
+
+    private void updateBedOccupancyProgress() {
+
+        if (
+                bedProgressContainer == null
+                ||
+                bedOccupancyProgress == null
+        ) {
+
+            return;
+        }
+
+        double percentage =
+                clampPercentage(
+                        currentOccupancyPercentage
+                );
+
+        double width =
+                bedProgressContainer.getWidth();
+
+        if (
+                width <= 0
+        ) {
+
+            return;
+        }
+
+        bedOccupancyProgress.setPrefWidth(
+                width * percentage / 100.0
+        );
+    }
+
+    private double clampPercentage(
+            double percentage
+    ) {
+
+        if (
+                Double.isNaN(percentage)
+                ||
+                Double.isInfinite(percentage)
+        ) {
+
+            return 0.0;
+        }
+
+        return Math.max(
+                0.0,
+                Math.min(
+                        100.0,
+                        percentage
+                )
+        );
     }
 
     // =========================================================
