@@ -1,92 +1,58 @@
 package com.healthsphere.dao.hospital;
 
-import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
-import com.google.cloud.firestore.WriteResult;
-
 import com.healthsphere.config.FirebaseConfig;
+import com.healthsphere.exceptions.DatabaseException;
 import com.healthsphere.model.HospitalBed;
 import com.healthsphere.model.HospitalBed.BedStatus;
 import com.healthsphere.util.SessionManager;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 
-/**
- * DAO responsible for Hospital Bed operations.
- *
- * Firestore collection:
- *
- *      hospitalBeds
- *
- * Architecture:
- *
- * View
- *   ↓
- * Controller
- *   ↓
- * BedDAO
- *   ↓
- * Firestore
- */
 public class BedDAO {
 
-    // =========================================================
-    // COLLECTION
-    // =========================================================
-
-    private static final String COLLECTION_NAME =
+    private static final String COLLECTION =
             "hospitalBeds";
 
-    // =========================================================
-    // FIRESTORE
-    // =========================================================
-
-    private final Firestore firestore;
-
-    // =========================================================
-    // CONSTRUCTOR
-    // =========================================================
+    private final Firestore db;
 
     public BedDAO() {
-
-        this.firestore =
-                FirebaseConfig.getFirestore();
+        db = FirebaseConfig.getFirestore();
     }
 
     // =========================================================
-    // CURRENT HOSPITAL ID
+    // HOSPITAL ID
     // =========================================================
 
-    private String getCurrentHospitalId() {
+    private String getHospitalId() {
 
         if (!SessionManager.isLoggedIn()) {
-
-            throw new IllegalStateException(
-                    "No active user session. Please login again."
+            throw new DatabaseException(
+                    "No authenticated hospital session found."
             );
         }
 
         if (SessionManager.getCurrentUser() == null) {
-
-            throw new IllegalStateException(
-                    "Current user session is null."
+            throw new DatabaseException(
+                    "Current user session is unavailable."
             );
         }
 
         String hospitalId =
-                SessionManager
-                        .getCurrentUser()
-                        .getUid();
+                SessionManager.getCurrentUser().getUid();
 
-        if (hospitalId == null
-                || hospitalId.trim().isEmpty()) {
-
-            throw new IllegalStateException(
-                    "Hospital UID is missing from the current session."
+        if (
+                hospitalId == null ||
+                hospitalId.trim().isEmpty()
+        ) {
+            throw new DatabaseException(
+                    "Hospital ID is unavailable."
             );
         }
 
@@ -97,324 +63,193 @@ public class BedDAO {
     // CREATE BED
     // =========================================================
 
-    public String createBed(
-            HospitalBed bed) {
+    public void createBed(HospitalBed bed) {
 
         validateBed(bed);
 
-        String hospitalId =
-                getCurrentHospitalId();
-
-        // -----------------------------------------------------
-        // Set hospital
-        // -----------------------------------------------------
-
-        bed.setHospitalId(
-                hospitalId
-        );
-
-        // -----------------------------------------------------
-        // Generate bed ID
-        // -----------------------------------------------------
-
-        if (bed.getBedId() == null
-                || bed.getBedId().trim().isEmpty()) {
-
-            bed.setBedId(
-                    "BED-"
-                            + UUID.randomUUID()
-                            .toString()
-                            .substring(0, 8)
-                            .toUpperCase()
-            );
-        }
-
-        // -----------------------------------------------------
-        // Default active
-        // -----------------------------------------------------
-
-        bed.setActive(true);
-
-        // -----------------------------------------------------
-        // Validate ward ownership
-        // -----------------------------------------------------
-
-        if (!wardBelongsToHospital(
-                bed.getWardId()
-        )) {
-
-            throw new IllegalArgumentException(
-                    "Selected ward does not belong to the current hospital."
-            );
-        }
-
-        // -----------------------------------------------------
-        // Duplicate bed number
-        // -----------------------------------------------------
-
-        if (bedNumberExists(
-                bed.getBedNumber(),
-                null
-        )) {
-
-            throw new IllegalArgumentException(
-                    "A bed with this bed number already exists."
-            );
-        }
-
-        // -----------------------------------------------------
-        // Occupied bed must have patient
-        // -----------------------------------------------------
-
-        if (bed.getStatus() == BedStatus.OCCUPIED) {
-
-            if (bed.getPatientId() == null
-                    || bed.getPatientId()
-                            .trim()
-                            .isEmpty()) {
-
-                throw new IllegalArgumentException(
-                        "An occupied bed must have a patient ID."
-                );
-            }
-
-        } else {
-
-            /*
-             * Available, reserved and maintenance beds
-             * do not require a patient ID during creation.
-             */
-            if (bed.getStatus() != BedStatus.OCCUPIED) {
-
-                bed.setPatientId(null);
-            }
-        }
-
-        // -----------------------------------------------------
-        // Save
-        // -----------------------------------------------------
-
         try {
 
-            if (firestore == null) {
+            String hospitalId =
+                    getHospitalId();
 
-                throw new IllegalStateException(
-                        "Firestore instance is null. "
-                                + "Check FirebaseConfig."
+            bed.setHospitalId(hospitalId);
+
+            String bedId =
+                    bed.getBedId();
+
+            if (
+                    bedId == null ||
+                    bedId.trim().isEmpty()
+            ) {
+
+                throw new DatabaseException(
+                        "Bed ID is required."
                 );
             }
 
-            ApiFuture<WriteResult> future =
-                    firestore
-                            .collection(COLLECTION_NAME)
-                            .document(bed.getBedId())
-                            .set(bed);
+            if (bedExists(bedId)) {
 
-            future.get();
+                throw new DatabaseException(
+                        "Bed already exists."
+                );
+            }
 
-            return bed.getBedId();
+            Map<String, Object> data =
+                    toMap(bed);
+
+            db.collection(COLLECTION)
+                    .document(bedId.trim())
+                    .set(data)
+                    .get();
+
+        } catch (DatabaseException e) {
+
+            throw e;
 
         } catch (Exception e) {
 
-            throw new RuntimeException(
-                    "Failed to create bed: "
-                            + getRootCauseMessage(e),
+            throw new DatabaseException(
+                    "Unable to create bed.",
                     e
             );
         }
     }
 
     // =========================================================
-    // GET ALL ACTIVE BEDS
+    // GET ALL BEDS
     // =========================================================
 
     public List<HospitalBed> getAllBeds() {
 
         try {
 
-            if (firestore == null) {
-
-                throw new IllegalStateException(
-                        "Firestore instance is null. "
-                                + "Check FirebaseConfig."
-                );
-            }
-
             String hospitalId =
-                    getCurrentHospitalId();
+                    getHospitalId();
 
-            /*
-             * Only filter by hospitalId.
-             *
-             * We intentionally do not use:
-             *
-             * whereEqualTo("hospitalId", hospitalId)
-             * .whereEqualTo("active", true)
-             *
-             * This avoids unnecessary Firestore query/index
-             * requirements.
-             */
-            ApiFuture<QuerySnapshot> future =
-                    firestore
-                            .collection(COLLECTION_NAME)
+            QuerySnapshot snapshot =
+                    db.collection(COLLECTION)
                             .whereEqualTo(
                                     "hospitalId",
                                     hospitalId
                             )
+                            .get()
                             .get();
-
-            QuerySnapshot snapshot =
-                    future.get();
 
             List<HospitalBed> beds =
                     new ArrayList<>();
 
-            for (DocumentSnapshot document :
-                    snapshot.getDocuments()) {
+            for (
+                    QueryDocumentSnapshot document :
+                    snapshot.getDocuments()
+            ) {
 
-                try {
-
-                    // -------------------------------------------------
-                    // Active check
-                    // -------------------------------------------------
-
-                    Boolean active =
-                            document.getBoolean(
-                                    "active"
-                            );
-
-                    /*
-                     * If active is missing, treat old documents
-                     * as active.
-                     */
-                    if (active != null
-                            && !active) {
-
-                        continue;
-                    }
-
-                    // -------------------------------------------------
-                    // Convert Firestore document
-                    // -------------------------------------------------
-
-                    HospitalBed bed =
-                            document.toObject(
-                                    HospitalBed.class
-                            );
-
-                    if (bed == null) {
-                        continue;
-                    }
-
-                    // -------------------------------------------------
-                    // Bed ID fallback
-                    // -------------------------------------------------
-
-                    if (bed.getBedId() == null
-                            || bed.getBedId()
-                                    .trim()
-                                    .isEmpty()) {
-
-                        bed.setBedId(
-                                document.getId()
+                HospitalBed bed =
+                        document.toObject(
+                                HospitalBed.class
                         );
-                    }
 
-                    // -------------------------------------------------
-                    // Hospital ID fallback
-                    // -------------------------------------------------
-
-                    if (bed.getHospitalId() == null
-                            || bed.getHospitalId()
-                                    .trim()
-                                    .isEmpty()) {
-
-                        bed.setHospitalId(
-                                hospitalId
-                        );
-                    }
-
+                if (bed != null) {
                     beds.add(bed);
-
-                } catch (Exception documentException) {
-
-                    /*
-                     * This is very important.
-                     *
-                     * If Firestore cannot convert one document
-                     * into HospitalBed, we now know exactly
-                     * which document caused the problem.
-                     */
-                    throw new RuntimeException(
-                            "Failed to read bed document '"
-                                    + document.getId()
-                                    + "': "
-                                    + getRootCauseMessage(
-                                            documentException
-                                    ),
-                            documentException
-                    );
                 }
             }
-
-            // -------------------------------------------------
-            // Sort by bed number
-            // -------------------------------------------------
-
-            beds.sort(
-                    (first, second) ->
-                            safeString(
-                                    first.getBedNumber()
-                            ).compareToIgnoreCase(
-                                    safeString(
-                                            second.getBedNumber()
-                                    )
-                            )
-            );
 
             return beds;
 
         } catch (Exception e) {
 
-            throw new RuntimeException(
-                    "Failed to retrieve beds: "
-                            + getRootCauseMessage(e),
+            throw new DatabaseException(
+                    "Unable to retrieve hospital beds.",
                     e
             );
         }
     }
 
     // =========================================================
-    // GET BED BY ID
+    // ACTIVE BEDS
     // =========================================================
 
-    public HospitalBed getBedById(
-            String bedId) {
-
-        if (bedId == null
-                || bedId.trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Bed ID is required."
-            );
-        }
-
-        String hospitalId =
-                getCurrentHospitalId();
+    public List<HospitalBed> getActiveBeds() {
 
         try {
 
-            DocumentSnapshot document =
-                    firestore
-                            .collection(COLLECTION_NAME)
-                            .document(
-                                    bedId.trim()
+            String hospitalId =
+                    getHospitalId();
+
+            QuerySnapshot snapshot =
+                    db.collection(COLLECTION)
+                            .whereEqualTo(
+                                    "hospitalId",
+                                    hospitalId
+                            )
+                            .whereEqualTo(
+                                    "active",
+                                    true
                             )
                             .get()
                             .get();
 
+            List<HospitalBed> beds =
+                    new ArrayList<>();
+
+            for (
+                    QueryDocumentSnapshot document :
+                    snapshot.getDocuments()
+            ) {
+
+                HospitalBed bed =
+                        document.toObject(
+                                HospitalBed.class
+                        );
+
+                if (bed != null) {
+                    beds.add(bed);
+                }
+            }
+
+            return beds;
+
+        } catch (Exception e) {
+
+            throw new DatabaseException(
+                    "Unable to retrieve active beds.",
+                    e
+            );
+        }
+    }
+
+    // =========================================================
+    // GET BED
+    // =========================================================
+
+    public HospitalBed getBedById(
+            String bedId
+    ) {
+
+        if (
+                bedId == null ||
+                bedId.trim().isEmpty()
+        ) {
+            throw new DatabaseException(
+                    "Bed ID is required."
+            );
+        }
+
+        try {
+
+            String hospitalId =
+                    getHospitalId();
+
+            DocumentSnapshot document =
+                    db.collection(COLLECTION)
+                            .document(bedId.trim())
+                            .get()
+                            .get();
+
             if (!document.exists()) {
-                return null;
+
+                throw new DatabaseException(
+                        "Bed not found."
+                );
             }
 
             HospitalBed bed =
@@ -423,47 +258,33 @@ public class BedDAO {
                     );
 
             if (bed == null) {
-                return null;
+
+                throw new DatabaseException(
+                        "Unable to read bed."
+                );
             }
 
-            // -------------------------------------------------
-            // Ownership check
-            // -------------------------------------------------
+            if (
+                    !hospitalId.equals(
+                            bed.getHospitalId()
+                    )
+            ) {
 
-            if (!hospitalId.equals(
-                    bed.getHospitalId()
-            )) {
-
-                return null;
-            }
-
-            // -------------------------------------------------
-            // Active check
-            // -------------------------------------------------
-
-            if (!bed.isActive()) {
-                return null;
-            }
-
-            // -------------------------------------------------
-            // ID fallback
-            // -------------------------------------------------
-
-            if (bed.getBedId() == null
-                    || bed.getBedId().trim().isEmpty()) {
-
-                bed.setBedId(
-                        document.getId()
+                throw new DatabaseException(
+                        "You are not authorized to access this bed."
                 );
             }
 
             return bed;
 
+        } catch (DatabaseException e) {
+
+            throw e;
+
         } catch (Exception e) {
 
-            throw new RuntimeException(
-                    "Failed to retrieve bed: "
-                            + getRootCauseMessage(e),
+            throw new DatabaseException(
+                    "Unable to retrieve bed.",
                     e
             );
         }
@@ -474,107 +295,61 @@ public class BedDAO {
     // =========================================================
 
     public List<HospitalBed> getBedsByWard(
-            String wardId) {
+            String wardId
+    ) {
 
-        if (wardId == null
-                || wardId.trim().isEmpty()) {
+        if (
+                wardId == null ||
+                wardId.trim().isEmpty()
+        ) {
 
-            throw new IllegalArgumentException(
+            throw new DatabaseException(
                     "Ward ID is required."
             );
         }
 
-        String hospitalId =
-                getCurrentHospitalId();
-
         try {
 
-            /*
-             * We filter only by hospitalId.
-             *
-             * wardId and active are handled in Java.
-             */
-            ApiFuture<QuerySnapshot> future =
-                    firestore
-                            .collection(COLLECTION_NAME)
+            String hospitalId =
+                    getHospitalId();
+
+            QuerySnapshot snapshot =
+                    db.collection(COLLECTION)
                             .whereEqualTo(
                                     "hospitalId",
                                     hospitalId
                             )
+                            .whereEqualTo(
+                                    "wardId",
+                                    wardId.trim()
+                            )
+                            .get()
                             .get();
-
-            QuerySnapshot snapshot =
-                    future.get();
 
             List<HospitalBed> beds =
                     new ArrayList<>();
 
-            for (DocumentSnapshot document :
-                    snapshot.getDocuments()) {
-
-                Boolean active =
-                        document.getBoolean(
-                                "active"
-                        );
-
-                if (active != null
-                        && !active) {
-
-                    continue;
-                }
-
-                String documentWardId =
-                        document.getString(
-                                "wardId"
-                        );
-
-                if (!wardId.equals(
-                        documentWardId
-                )) {
-
-                    continue;
-                }
+            for (
+                    QueryDocumentSnapshot document :
+                    snapshot.getDocuments()
+            ) {
 
                 HospitalBed bed =
                         document.toObject(
                                 HospitalBed.class
                         );
 
-                if (bed == null) {
-                    continue;
+                if (bed != null) {
+                    beds.add(bed);
                 }
-
-                if (bed.getBedId() == null
-                        || bed.getBedId()
-                                .trim()
-                                .isEmpty()) {
-
-                    bed.setBedId(
-                            document.getId()
-                    );
-                }
-
-                beds.add(bed);
             }
-
-            beds.sort(
-                    (first, second) ->
-                            safeString(
-                                    first.getBedNumber()
-                            ).compareToIgnoreCase(
-                                    safeString(
-                                            second.getBedNumber()
-                                    )
-                            )
-            );
 
             return beds;
 
         } catch (Exception e) {
 
-            throw new RuntimeException(
-                    "Failed to retrieve beds for ward: "
-                            + getRootCauseMessage(e),
+            throw new DatabaseException(
+                    "Unable to retrieve ward beds.",
                     e
             );
         }
@@ -585,283 +360,135 @@ public class BedDAO {
     // =========================================================
 
     public void updateBed(
-            HospitalBed bed) {
+            HospitalBed bed
+    ) {
 
         validateBed(bed);
 
-        if (bed.getBedId() == null
-                || bed.getBedId()
-                        .trim()
-                        .isEmpty()) {
+        if (
+                bed.getBedId() == null ||
+                bed.getBedId().trim().isEmpty()
+        ) {
 
-            throw new IllegalArgumentException(
-                    "Bed ID is required for update."
+            throw new DatabaseException(
+                    "Bed ID is required."
             );
         }
 
-        String hospitalId =
-                getCurrentHospitalId();
-
         try {
 
-            DocumentSnapshot existingDocument =
-                    firestore
-                            .collection(COLLECTION_NAME)
-                            .document(
-                                    bed.getBedId()
-                            )
-                            .get()
-                            .get();
-
-            if (!existingDocument.exists()) {
-
-                throw new IllegalArgumentException(
-                        "Bed does not exist."
-                );
-            }
-
-            HospitalBed existingBed =
-                    existingDocument.toObject(
-                            HospitalBed.class
+            HospitalBed existing =
+                    getBedById(
+                            bed.getBedId()
                     );
-
-            if (existingBed == null) {
-
-                throw new IllegalArgumentException(
-                        "Unable to read existing bed."
-                );
-            }
-
-            // -------------------------------------------------
-            // Ownership
-            // -------------------------------------------------
-
-            if (!hospitalId.equals(
-                    existingBed.getHospitalId()
-            )) {
-
-                throw new SecurityException(
-                        "You are not authorized to modify this bed."
-                );
-            }
-
-            // -------------------------------------------------
-            // Ward ownership
-            // -------------------------------------------------
-
-            if (!wardBelongsToHospital(
-                    bed.getWardId()
-            )) {
-
-                throw new IllegalArgumentException(
-                        "Selected ward does not belong to this hospital."
-                );
-            }
-
-            // -------------------------------------------------
-            // Duplicate bed number
-            // -------------------------------------------------
-
-            if (bedNumberExists(
-                    bed.getBedNumber(),
-                    bed.getBedId()
-            )) {
-
-                throw new IllegalArgumentException(
-                        "A bed with this bed number already exists."
-                );
-            }
-
-            // -------------------------------------------------
-            // Preserve hospital
-            // -------------------------------------------------
 
             bed.setHospitalId(
-                    hospitalId
+                    existing.getHospitalId()
             );
 
-            // -------------------------------------------------
-            // Preserve active state
-            // -------------------------------------------------
+            db.collection(COLLECTION)
+                    .document(
+                            bed.getBedId()
+                    )
+                    .set(
+                            toMap(bed)
+                    )
+                    .get();
 
-            bed.setActive(
-                    existingBed.isActive()
-            );
-
-            // -------------------------------------------------
-            // Occupied validation
-            // -------------------------------------------------
-
-            if (bed.getStatus()
-                    == BedStatus.OCCUPIED) {
-
-                if (bed.getPatientId() == null
-                        || bed.getPatientId()
-                                .trim()
-                                .isEmpty()) {
-
-                    throw new IllegalArgumentException(
-                            "An occupied bed must have a patient ID."
-                    );
-                }
-
-            } else {
-
-                bed.setPatientId(null);
-            }
-
-            // -------------------------------------------------
-            // Save
-            // -------------------------------------------------
-
-            ApiFuture<WriteResult> future =
-                    firestore
-                            .collection(COLLECTION_NAME)
-                            .document(
-                                    bed.getBedId()
-                            )
-                            .set(bed);
-
-            future.get();
-
-        } catch (SecurityException e) {
-
-            throw e;
-
-        } catch (IllegalArgumentException e) {
+        } catch (DatabaseException e) {
 
             throw e;
 
         } catch (Exception e) {
 
-            throw new RuntimeException(
-                    "Failed to update bed: "
-                            + getRootCauseMessage(e),
+            throw new DatabaseException(
+                    "Unable to update bed.",
                     e
             );
         }
     }
 
     // =========================================================
-    // UPDATE BED STATUS
+    // UPDATE STATUS
     // =========================================================
 
     public void updateBedStatus(
             String bedId,
-            BedStatus status) {
-
-        if (bedId == null
-                || bedId.trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Bed ID is required."
-            );
-        }
+            BedStatus status
+    ) {
 
         if (status == null) {
 
-            throw new IllegalArgumentException(
+            throw new DatabaseException(
                     "Bed status is required."
             );
         }
 
-        /*
-         * Occupied beds require a patient ID.
-         * Therefore use occupyBed() instead.
-         */
-        if (status == BedStatus.OCCUPIED) {
-
-            throw new IllegalArgumentException(
-                    "Use occupyBed() when setting a bed to OCCUPIED."
-            );
-        }
-
-        String hospitalId =
-                getCurrentHospitalId();
-
         try {
 
-            DocumentSnapshot document =
-                    firestore
-                            .collection(COLLECTION_NAME)
-                            .document(
-                                    bedId.trim()
-                            )
-                            .get()
-                            .get();
+            getBedById(bedId);
 
-            if (!document.exists()) {
+            Map<String, Object> updates =
+                    new HashMap<>();
 
-                throw new IllegalArgumentException(
-                        "Bed does not exist."
+            updates.put(
+                    "status",
+                    status.name()
+            );
+
+            if (
+                    status == BedStatus.AVAILABLE
+                    ||
+                    status == BedStatus.MAINTENANCE
+            ) {
+
+                updates.put(
+                        "patientId",
+                        null
                 );
             }
 
-            HospitalBed bed =
-                    document.toObject(
-                            HospitalBed.class
-                    );
+            if (
+                    status == BedStatus.MAINTENANCE
+            ) {
 
-            if (bed == null) {
-
-                throw new IllegalArgumentException(
-                        "Unable to read bed."
+                updates.put(
+                        "active",
+                        false
                 );
             }
 
-            if (!hospitalId.equals(
-                    bed.getHospitalId()
-            )) {
+            db.collection(COLLECTION)
+                    .document(bedId)
+                    .update(updates)
+                    .get();
 
-                throw new SecurityException(
-                        "You are not authorized to modify this bed."
-                );
-            }
-
-            // -------------------------------------------------
-            // Patient handling
-            // -------------------------------------------------
-
-            if (status != BedStatus.OCCUPIED) {
-
-                bed.setPatientId(null);
-            }
-
-            // -------------------------------------------------
-            // Update
-            // -------------------------------------------------
-
-            ApiFuture<WriteResult> future =
-                    firestore
-                            .collection(COLLECTION_NAME)
-                            .document(
-                                    bedId.trim()
-                            )
-                            .update(
-                                    "status",
-                                    status,
-                                    "patientId",
-                                    bed.getPatientId()
-                            );
-
-            future.get();
-
-        } catch (SecurityException e) {
-
-            throw e;
-
-        } catch (IllegalArgumentException e) {
+        } catch (DatabaseException e) {
 
             throw e;
 
         } catch (Exception e) {
 
-            throw new RuntimeException(
-                    "Failed to update bed status: "
-                            + getRootCauseMessage(e),
+            throw new DatabaseException(
+                    "Unable to update bed status.",
                     e
             );
         }
+    }
+
+    // =========================================================
+    // STRING STATUS OVERLOAD
+    // =========================================================
+
+    public void updateBedStatus(
+            String bedId,
+            String status
+    ) {
+
+        updateBedStatus(
+                bedId,
+                parseStatus(status)
+        );
     }
 
     // =========================================================
@@ -870,65 +497,200 @@ public class BedDAO {
 
     public void occupyBed(
             String bedId,
-            String patientId) {
+            String patientId
+    ) {
 
-        if (bedId == null
-                || bedId.trim().isEmpty()) {
+        if (
+                patientId == null ||
+                patientId.trim().isEmpty()
+        ) {
 
-            throw new IllegalArgumentException(
-                    "Bed ID is required."
-            );
-        }
-
-        if (patientId == null
-                || patientId.trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Patient ID is required to occupy a bed."
-            );
-        }
-
-        HospitalBed bed =
-                getBedById(
-                        bedId.trim()
-                );
-
-        if (bed == null) {
-
-            throw new IllegalArgumentException(
-                    "Bed does not exist."
-            );
-        }
-
-        if (bed.isOccupied()) {
-
-            throw new IllegalStateException(
-                    "Bed is already occupied."
+            throw new DatabaseException(
+                    "Patient ID is required."
             );
         }
 
         try {
 
-            ApiFuture<WriteResult> future =
-                    firestore
-                            .collection(COLLECTION_NAME)
-                            .document(
-                                    bedId.trim()
-                            )
-                            .update(
-                                    "status",
-                                    BedStatus.OCCUPIED,
-                                    "patientId",
-                                    patientId.trim()
-                            );
+            HospitalBed bed =
+                    getBedById(bedId);
 
-            future.get();
+            if (!bed.isActive()) {
+
+                throw new DatabaseException(
+                        "Inactive bed cannot be occupied."
+                );
+            }
+
+            if (
+                    bed.getStatus()
+                            == BedStatus.OCCUPIED
+            ) {
+
+                throw new DatabaseException(
+                        "Bed is already occupied."
+                );
+            }
+
+            Map<String, Object> updates =
+                    new HashMap<>();
+
+            updates.put(
+                    "status",
+                    BedStatus.OCCUPIED.name()
+            );
+
+            updates.put(
+                    "patientId",
+                    patientId.trim()
+            );
+
+            updates.put(
+                    "active",
+                    true
+            );
+
+            db.collection(COLLECTION)
+                    .document(bedId)
+                    .update(updates)
+                    .get();
+
+        } catch (DatabaseException e) {
+
+            throw e;
 
         } catch (Exception e) {
 
-            throw new RuntimeException(
-                    "Failed to occupy bed: "
-                            + getRootCauseMessage(e),
+            throw new DatabaseException(
+                    "Unable to occupy bed.",
+                    e
+            );
+        }
+    }
+
+    // =========================================================
+    // RESERVE BED
+    // =========================================================
+
+    public void reserveBed(
+            String bedId,
+            String patientId
+    ) {
+
+        if (
+                patientId == null ||
+                patientId.trim().isEmpty()
+        ) {
+
+            throw new DatabaseException(
+                    "Patient ID is required."
+            );
+        }
+
+        try {
+
+            HospitalBed bed =
+                    getBedById(bedId);
+
+            if (!bed.isActive()) {
+
+                throw new DatabaseException(
+                        "Inactive bed cannot be reserved."
+                );
+            }
+
+            if (
+                    bed.getStatus()
+                            != BedStatus.AVAILABLE
+            ) {
+
+                throw new DatabaseException(
+                        "Only available beds can be reserved."
+                );
+            }
+
+            Map<String, Object> updates =
+                    new HashMap<>();
+
+            updates.put(
+                    "status",
+                    BedStatus.RESERVED.name()
+            );
+
+            updates.put(
+                    "patientId",
+                    patientId.trim()
+            );
+
+            db.collection(COLLECTION)
+                    .document(bedId)
+                    .update(updates)
+                    .get();
+
+        } catch (DatabaseException e) {
+
+            throw e;
+
+        } catch (Exception e) {
+
+            throw new DatabaseException(
+                    "Unable to reserve bed.",
+                    e
+            );
+        }
+    }
+
+    // =========================================================
+    // RESERVE WITHOUT PATIENT
+    // =========================================================
+
+    public void reserveBed(
+            String bedId
+    ) {
+
+        try {
+
+            HospitalBed bed =
+                    getBedById(bedId);
+
+            if (!bed.isActive()) {
+
+                throw new DatabaseException(
+                        "Inactive bed cannot be reserved."
+                );
+            }
+
+            if (
+                    bed.getStatus()
+                            != BedStatus.AVAILABLE
+            ) {
+
+                throw new DatabaseException(
+                        "Only available beds can be reserved."
+                );
+            }
+
+            Map<String, Object> updates =
+                    new HashMap<>();
+
+            updates.put(
+                    "status",
+                    BedStatus.RESERVED.name()
+            );
+
+            db.collection(COLLECTION)
+                    .document(bedId)
+                    .update(updates)
+                    .get();
+
+        } catch (DatabaseException e) {
+
+            throw e;
+
+        } catch (Exception e) {
+
+            throw new DatabaseException(
+                    "Unable to reserve bed.",
                     e
             );
         }
@@ -939,130 +701,205 @@ public class BedDAO {
     // =========================================================
 
     public void releaseBed(
-            String bedId) {
-
-        updateBedStatus(
-                bedId,
-                BedStatus.AVAILABLE
-        );
-    }
-
-    // =========================================================
-    // RESERVE BED
-    // =========================================================
-
-    public void reserveBed(
-            String bedId) {
-
-        updateBedStatus(
-                bedId,
-                BedStatus.RESERVED
-        );
-    }
-
-    // =========================================================
-    // PUT BED UNDER MAINTENANCE
-    // =========================================================
-
-    public void setMaintenance(
-            String bedId) {
-
-        updateBedStatus(
-                bedId,
-                BedStatus.MAINTENANCE
-        );
-    }
-
-    // =========================================================
-    // DEACTIVATE BED
-    // =========================================================
-
-    public void deactivateBed(
-            String bedId) {
-
-        if (bedId == null
-                || bedId.trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Bed ID is required."
-            );
-        }
-
-        String hospitalId =
-                getCurrentHospitalId();
+            String bedId
+    ) {
 
         try {
 
-            DocumentSnapshot document =
-                    firestore
-                            .collection(COLLECTION_NAME)
-                            .document(
-                                    bedId.trim()
-                            )
-                            .get()
-                            .get();
+            getBedById(bedId);
 
-            if (!document.exists()) {
+            Map<String, Object> updates =
+                    new HashMap<>();
 
-                throw new IllegalArgumentException(
-                        "Bed does not exist."
-                );
-            }
+            updates.put(
+                    "status",
+                    BedStatus.AVAILABLE.name()
+            );
 
-            String bedHospitalId =
-                    document.getString(
-                            "hospitalId"
-                    );
+            updates.put(
+                    "patientId",
+                    null
+            );
 
-            if (!hospitalId.equals(
-                    bedHospitalId
-            )) {
+            updates.put(
+                    "active",
+                    true
+            );
 
-                throw new SecurityException(
-                        "You are not authorized to deactivate this bed."
-                );
-            }
+            db.collection(COLLECTION)
+                    .document(bedId)
+                    .update(updates)
+                    .get();
 
-            ApiFuture<WriteResult> future =
-                    firestore
-                            .collection(COLLECTION_NAME)
-                            .document(
-                                    bedId.trim()
-                            )
-                            .update(
-                                    "active",
-                                    false
-                            );
-
-            future.get();
-
-        } catch (SecurityException e) {
-
-            throw e;
-
-        } catch (IllegalArgumentException e) {
+        } catch (DatabaseException e) {
 
             throw e;
 
         } catch (Exception e) {
 
-            throw new RuntimeException(
-                    "Failed to deactivate bed: "
-                            + getRootCauseMessage(e),
+            throw new DatabaseException(
+                    "Unable to release bed.",
                     e
             );
         }
     }
 
     // =========================================================
-    // CHECK BED EXISTS
+    // MAINTENANCE
+    // =========================================================
+
+    public void setMaintenance(
+            String bedId
+    ) {
+
+        try {
+
+            getBedById(bedId);
+
+            Map<String, Object> updates =
+                    new HashMap<>();
+
+            updates.put(
+                    "status",
+                    BedStatus.MAINTENANCE.name()
+            );
+
+            updates.put(
+                    "patientId",
+                    null
+            );
+
+            updates.put(
+                    "active",
+                    false
+            );
+
+            db.collection(COLLECTION)
+                    .document(bedId)
+                    .update(updates)
+                    .get();
+
+        } catch (DatabaseException e) {
+
+            throw e;
+
+        } catch (Exception e) {
+
+            throw new DatabaseException(
+                    "Unable to place bed under maintenance.",
+                    e
+            );
+        }
+    }
+
+    // =========================================================
+    // ACTIVATE
+    // =========================================================
+
+    public void activateBed(
+            String bedId
+    ) {
+
+        try {
+
+            getBedById(bedId);
+
+            Map<String, Object> updates =
+                    new HashMap<>();
+
+            updates.put(
+                    "active",
+                    true
+            );
+
+            updates.put(
+                    "status",
+                    BedStatus.AVAILABLE.name()
+            );
+
+            updates.put(
+                    "patientId",
+                    null
+            );
+
+            db.collection(COLLECTION)
+                    .document(bedId)
+                    .update(updates)
+                    .get();
+
+        } catch (DatabaseException e) {
+
+            throw e;
+
+        } catch (Exception e) {
+
+            throw new DatabaseException(
+                    "Unable to activate bed.",
+                    e
+            );
+        }
+    }
+
+    // =========================================================
+    // DEACTIVATE
+    // =========================================================
+
+    public void deactivateBed(
+            String bedId
+    ) {
+
+        try {
+
+            getBedById(bedId);
+
+            Map<String, Object> updates =
+                    new HashMap<>();
+
+            updates.put(
+                    "active",
+                    false
+            );
+
+            updates.put(
+                    "status",
+                    BedStatus.MAINTENANCE.name()
+            );
+
+            updates.put(
+                    "patientId",
+                    null
+            );
+
+            db.collection(COLLECTION)
+                    .document(bedId)
+                    .update(updates)
+                    .get();
+
+        } catch (DatabaseException e) {
+
+            throw e;
+
+        } catch (Exception e) {
+
+            throw new DatabaseException(
+                    "Unable to deactivate bed.",
+                    e
+            );
+        }
+    }
+
+    // =========================================================
+    // EXISTS
     // =========================================================
 
     public boolean bedExists(
-            String bedId) {
+            String bedId
+    ) {
 
-        if (bedId == null
-                || bedId.trim().isEmpty()) {
+        if (
+                bedId == null ||
+                bedId.trim().isEmpty()
+        ) {
 
             return false;
         }
@@ -1070,11 +907,10 @@ public class BedDAO {
         try {
 
             String hospitalId =
-                    getCurrentHospitalId();
+                    getHospitalId();
 
             DocumentSnapshot document =
-                    firestore
-                            .collection(COLLECTION_NAME)
+                    db.collection(COLLECTION)
                             .document(
                                     bedId.trim()
                             )
@@ -1085,279 +921,225 @@ public class BedDAO {
                 return false;
             }
 
-            String bedHospitalId =
+            String documentHospitalId =
                     document.getString(
                             "hospitalId"
                     );
 
-            if (!hospitalId.equals(
-                    bedHospitalId
-            )) {
-
-                return false;
-            }
-
-            Boolean active =
-                    document.getBoolean(
-                            "active"
-                    );
-
-            return active == null || active;
+            return hospitalId.equals(
+                    documentHospitalId
+            );
 
         } catch (Exception e) {
 
-            throw new RuntimeException(
-                    "Failed to check bed: "
-                            + getRootCauseMessage(e),
+            throw new DatabaseException(
+                    "Unable to check bed.",
                     e
             );
         }
     }
 
     // =========================================================
-    // CHECK DUPLICATE BED NUMBER
+    // DASHBOARD COUNTS
     // =========================================================
 
-    private boolean bedNumberExists(
-            String bedNumber,
-            String excludedBedId) {
+    public int getTotalBeds() {
 
-        if (bedNumber == null
-                || bedNumber.trim().isEmpty()) {
+        return getActiveBeds().size();
+    }
 
-            return false;
-        }
+    public int getAvailableBeds() {
 
-        String hospitalId =
-                getCurrentHospitalId();
+        int count = 0;
 
-        try {
+        for (
+                HospitalBed bed :
+                getActiveBeds()
+        ) {
 
-            ApiFuture<QuerySnapshot> future =
-                    firestore
-                            .collection(COLLECTION_NAME)
-                            .whereEqualTo(
-                                    "hospitalId",
-                                    hospitalId
-                            )
-                            .get();
+            if (
+                    bed.getStatus()
+                            == BedStatus.AVAILABLE
+            ) {
 
-            QuerySnapshot snapshot =
-                    future.get();
-
-            for (DocumentSnapshot document :
-                    snapshot.getDocuments()) {
-
-                Boolean active =
-                        document.getBoolean(
-                                "active"
-                        );
-
-                if (active != null
-                        && !active) {
-
-                    continue;
-                }
-
-                String documentId =
-                        document.getId();
-
-                if (excludedBedId != null
-                        && excludedBedId.trim()
-                                .equals(documentId)) {
-
-                    continue;
-                }
-
-                String existingBedNumber =
-                        document.getString(
-                                "bedNumber"
-                        );
-
-                if (existingBedNumber != null
-                        && existingBedNumber.trim()
-                                .equalsIgnoreCase(
-                                        bedNumber.trim()
-                                )) {
-
-                    return true;
-                }
+                count++;
             }
-
-            return false;
-
-        } catch (Exception e) {
-
-            throw new RuntimeException(
-                    "Failed to check duplicate bed number: "
-                            + getRootCauseMessage(e),
-                    e
-            );
         }
+
+        return count;
+    }
+
+    public int getOccupiedBeds() {
+
+        int count = 0;
+
+        for (
+                HospitalBed bed :
+                getActiveBeds()
+        ) {
+
+            if (
+                    bed.getStatus()
+                            == BedStatus.OCCUPIED
+            ) {
+
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    public int getReservedBeds() {
+
+        int count = 0;
+
+        for (
+                HospitalBed bed :
+                getActiveBeds()
+        ) {
+
+            if (
+                    bed.getStatus()
+                            == BedStatus.RESERVED
+            ) {
+
+                count++;
+            }
+        }
+
+        return count;
     }
 
     // =========================================================
-    // CHECK WARD OWNERSHIP
+    // MAP
     // =========================================================
 
-    private boolean wardBelongsToHospital(
-            String wardId) {
+    private Map<String, Object> toMap(
+            HospitalBed bed
+    ) {
 
-        if (wardId == null
-                || wardId.trim().isEmpty()) {
+        Map<String, Object> data =
+                new HashMap<>();
 
-            return false;
-        }
+        data.put(
+                "bedId",
+                bed.getBedId()
+        );
 
-        String hospitalId =
-                getCurrentHospitalId();
+        data.put(
+                "hospitalId",
+                bed.getHospitalId()
+        );
 
-        try {
+        data.put(
+                "wardId",
+                bed.getWardId()
+        );
 
-            DocumentSnapshot document =
-                    firestore
-                            .collection(
-                                    "hospitalWards"
-                            )
-                            .document(
-                                    wardId.trim()
-                            )
-                            .get()
-                            .get();
+        data.put(
+                "bedNumber",
+                bed.getBedNumber()
+        );
 
-            if (!document.exists()) {
-                return false;
-            }
+        data.put(
+                "bedType",
+                bed.getBedType()
+        );
 
-            String wardHospitalId =
-                    document.getString(
-                            "hospitalId"
-                    );
+        data.put(
+                "status",
+                bed.getStatus() == null
+                        ? null
+                        : bed.getStatus().name()
+        );
 
-            if (!hospitalId.equals(
-                    wardHospitalId
-            )) {
+        data.put(
+                "patientId",
+                bed.getPatientId()
+        );
 
-                return false;
-            }
+        data.put(
+                "active",
+                bed.isActive()
+        );
 
-            Boolean active =
-                    document.getBoolean(
-                            "active"
-                    );
-
-            return active == null || active;
-
-        } catch (Exception e) {
-
-            throw new RuntimeException(
-                    "Failed to verify ward ownership: "
-                            + getRootCauseMessage(e),
-                    e
-            );
-        }
+        return data;
     }
 
     // =========================================================
-    // VALIDATE BED
+    // VALIDATION
     // =========================================================
 
     private void validateBed(
-            HospitalBed bed) {
+            HospitalBed bed
+    ) {
 
         if (bed == null) {
 
-            throw new IllegalArgumentException(
-                    "Bed cannot be null."
+            throw new DatabaseException(
+                    "Bed information is required."
             );
         }
 
-        if (bed.getWardId() == null
-                || bed.getWardId()
+        if (
+                bed.getBedNumber() == null ||
+                bed.getBedNumber()
                         .trim()
-                        .isEmpty()) {
+                        .isEmpty()
+        ) {
 
-            throw new IllegalArgumentException(
-                    "Ward ID is required."
-            );
-        }
-
-        if (bed.getBedNumber() == null
-                || bed.getBedNumber()
-                        .trim()
-                        .isEmpty()) {
-
-            throw new IllegalArgumentException(
+            throw new DatabaseException(
                     "Bed number is required."
             );
         }
 
-        if (bed.getBedType() == null
-                || bed.getBedType()
+        if (
+                bed.getBedType() == null ||
+                bed.getBedType()
                         .trim()
-                        .isEmpty()) {
+                        .isEmpty()
+        ) {
 
-            throw new IllegalArgumentException(
+            throw new DatabaseException(
                     "Bed type is required."
             );
         }
 
         if (bed.getStatus() == null) {
 
-            throw new IllegalArgumentException(
+            throw new DatabaseException(
                     "Bed status is required."
             );
         }
     }
 
-    // =========================================================
-    // SAFE STRING
-    // =========================================================
+    private BedStatus parseStatus(
+            String status
+    ) {
 
-    private String safeString(
-            String value) {
+        if (
+                status == null ||
+                status.trim().isEmpty()
+        ) {
 
-        return value == null
-                ? ""
-                : value.trim();
-    }
-
-    // =========================================================
-    // ROOT CAUSE MESSAGE
-    // =========================================================
-
-    private String getRootCauseMessage(
-            Throwable throwable) {
-
-        Throwable current =
-                throwable;
-
-        Throwable deepest =
-                throwable;
-
-        while (current != null) {
-
-            deepest = current;
-
-            current =
-                    current.getCause();
+            throw new DatabaseException(
+                    "Bed status is required."
+            );
         }
 
-        String message =
-                deepest.getMessage();
+        try {
 
-        if (message == null
-                || message.trim().isEmpty()) {
+            return BedStatus.valueOf(
+                    status.trim().toUpperCase()
+            );
 
-            return deepest
-                    .getClass()
-                    .getSimpleName();
+        } catch (IllegalArgumentException e) {
+
+            throw new DatabaseException(
+                    "Invalid bed status: "
+                            + status
+            );
         }
-
-        return deepest
-                .getClass()
-                .getSimpleName()
-                + ": "
-                + message;
     }
 }

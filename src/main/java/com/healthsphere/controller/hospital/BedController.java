@@ -1,148 +1,188 @@
 package com.healthsphere.controller.hospital;
 
 import com.healthsphere.dao.hospital.BedDAO;
+import com.healthsphere.exceptions.DatabaseException;
 import com.healthsphere.model.HospitalBed;
 import com.healthsphere.model.HospitalBed.BedStatus;
 
 import java.util.List;
 
 /**
- * Controller responsible for hospital bed operations.
+ * Controller for Hospital Bed Management.
  *
- * Architecture:
+ * Responsibilities:
+ * - Validate UI input
+ * - Coordinate between View and BedDAO
+ * - Provide compatibility methods for existing JavaFX views
  *
- * View
- *   ↓
- * BedController
- *   ↓
- * BedDAO
- *   ↓
- * Firestore
+ * Database operations are handled only by BedDAO.
  */
 public class BedController {
 
-    // =========================================================
-    // DAO
-    // =========================================================
-
     private final BedDAO bedDAO;
 
-    // =========================================================
-    // CONSTRUCTOR
-    // =========================================================
-
     public BedController() {
-
         this.bedDAO = new BedDAO();
     }
 
     // =========================================================
-    // CREATE BED
+    // CREATE BED - MODEL VERSION
     // =========================================================
 
-    /**
-     * Creates a new hospital bed.
+    public void createBed(
+            HospitalBed bed
+    ) {
+
+        validateBed(bed);
+
+        bedDAO.createBed(bed);
+    }
+
+    // =========================================================
+    // CREATE BED - EXISTING UI COMPATIBILITY VERSION
+    // =========================================================
+    /*
+     * Existing AddBedView expects:
      *
-     * @param wardId ward to which the bed belongs
-     * @param bedNumber bed number / identifier
-     * @param bedType type of bed
-     * @param status initial bed status
-     * @return generated bed ID
+     * String result = bedController.createBed(...);
+     *
+     * Therefore this method MUST return String.
      */
     public String createBed(
-            String wardId,
             String bedNumber,
             String bedType,
-            String status) {
+            String wardId,
+            String status
+    ) {
 
-        validateCreateBedInput(
-                wardId,
-                bedNumber,
-                bedType
-        );
+        // -----------------------------------------------------
+        // VALIDATE BED NUMBER
+        // -----------------------------------------------------
 
-        BedStatus parsedStatus =
-                parseStatus(status);
+        if (
+                bedNumber == null ||
+                bedNumber.trim().isEmpty()
+        ) {
 
-        /*
-         * The Add Bed screen does not provide a patient
-         * selector, therefore a bed cannot initially be
-         * created as OCCUPIED.
-         */
-        if (parsedStatus == BedStatus.OCCUPIED) {
-
-            throw new IllegalArgumentException(
-                    "A new bed cannot be created as OCCUPIED. "
-                            + "Create the bed as AVAILABLE or RESERVED, "
-                            + "then assign a patient."
+            throw new DatabaseException(
+                    "Bed number is required."
             );
         }
 
+        // -----------------------------------------------------
+        // VALIDATE BED TYPE
+        // -----------------------------------------------------
+
+        if (
+                bedType == null ||
+                bedType.trim().isEmpty()
+        ) {
+
+            throw new DatabaseException(
+                    "Bed type is required."
+            );
+        }
+
+        // -----------------------------------------------------
+        // VALIDATE STATUS
+        // -----------------------------------------------------
+
+        BedStatus bedStatus =
+                parseStatus(status);
+
+        // -----------------------------------------------------
+        // GENERATE BED ID
+        // -----------------------------------------------------
+
+        String bedId =
+                generateBedId(
+                        bedNumber
+                );
+
+        // -----------------------------------------------------
+        // CREATE MODEL
+        // -----------------------------------------------------
+
         HospitalBed bed =
-                new HospitalBed();
+                new HospitalBed(
+                        bedId,
+                        null,
+                        wardId,
+                        bedNumber.trim(),
+                        bedType.trim(),
+                        bedStatus,
+                        null,
+                        true
+                );
 
-        bed.setWardId(
-                wardId.trim()
-        );
+        // -----------------------------------------------------
+        // SAVE THROUGH DAO
+        // -----------------------------------------------------
 
-        bed.setBedNumber(
-                bedNumber.trim()
-        );
+        createBed(bed);
 
-        bed.setBedType(
-                bedType.trim()
-        );
+        // -----------------------------------------------------
+        // RETURN BED ID
+        // -----------------------------------------------------
 
-        bed.setStatus(
-                parsedStatus
-        );
+        return bedId;
+    }
 
-        bed.setPatientId(
-                null
-        );
+    // =========================================================
+    // GENERATE BED ID
+    // =========================================================
 
-        bed.setActive(
-                true
-        );
+    private String generateBedId(
+            String bedNumber
+    ) {
 
-        return bedDAO.createBed(
-                bed
-        );
+        /*
+         * Firestore document ID.
+         *
+         * Timestamp guarantees that two consecutive
+         * additions don't normally receive the same ID.
+         */
+        return "BED_"
+                + System.currentTimeMillis()
+                + "_"
+                + Math.abs(
+                        bedNumber.hashCode()
+                );
     }
 
     // =========================================================
     // GET ALL BEDS
     // =========================================================
 
-    /**
-     * Returns all active beds belonging to the
-     * currently logged-in hospital.
-     */
     public List<HospitalBed> getAllBeds() {
 
         return bedDAO.getAllBeds();
     }
 
     // =========================================================
+    // GET ACTIVE BEDS
+    // =========================================================
+
+    public List<HospitalBed> getActiveBeds() {
+
+        return bedDAO.getActiveBeds();
+    }
+
+    // =========================================================
     // GET BED BY ID
     // =========================================================
 
-    /**
-     * Gets one bed by its ID.
-     */
     public HospitalBed getBedById(
-            String bedId) {
+            String bedId
+    ) {
 
-        if (bedId == null
-                || bedId.trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Bed ID is required."
-            );
-        }
+        validateId(
+                bedId,
+                "Bed ID"
+        );
 
         return bedDAO.getBedById(
-                bedId.trim()
+                bedId
         );
     }
 
@@ -150,23 +190,17 @@ public class BedController {
     // GET BEDS BY WARD
     // =========================================================
 
-    /**
-     * Returns all active beds belonging to
-     * a specific ward.
-     */
     public List<HospitalBed> getBedsByWard(
-            String wardId) {
+            String wardId
+    ) {
 
-        if (wardId == null
-                || wardId.trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Ward ID is required."
-            );
-        }
+        validateId(
+                wardId,
+                "Ward ID"
+        );
 
         return bedDAO.getBedsByWard(
-                wardId.trim()
+                wardId
         );
     }
 
@@ -174,110 +208,16 @@ public class BedController {
     // UPDATE BED
     // =========================================================
 
-    /**
-     * Updates bed information.
-     *
-     * Note:
-     * Status OCCUPIED requires a patient ID.
-     * For normal status changes use updateBedStatus(),
-     * occupyBed(), reserveBed(), etc.
-     */
     public void updateBed(
-            String bedId,
-            String wardId,
-            String bedNumber,
-            String bedType,
-            String status,
-            String patientId) {
+            HospitalBed bed
+    ) {
 
-        // -----------------------------------------------------
-        // Validate ID
-        // -----------------------------------------------------
+        validateBed(bed);
 
-        if (bedId == null
-                || bedId.trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Bed ID is required."
-            );
-        }
-
-        // -----------------------------------------------------
-        // Validate input
-        // -----------------------------------------------------
-
-        validateCreateBedInput(
-                wardId,
-                bedNumber,
-                bedType
+        validateId(
+                bed.getBedId(),
+                "Bed ID"
         );
-
-        BedStatus parsedStatus =
-                parseStatus(status);
-
-        // -----------------------------------------------------
-        // Occupied validation
-        // -----------------------------------------------------
-
-        if (parsedStatus == BedStatus.OCCUPIED) {
-
-            if (patientId == null
-                    || patientId.trim().isEmpty()) {
-
-                throw new IllegalArgumentException(
-                        "Patient ID is required for an occupied bed."
-                );
-            }
-        }
-
-        // -----------------------------------------------------
-        // Create model
-        // -----------------------------------------------------
-
-        HospitalBed bed =
-                bedDAO.getBedById(
-                        bedId.trim()
-                );
-
-        if (bed == null) {
-
-            throw new IllegalArgumentException(
-                    "Bed does not exist."
-            );
-        }
-
-        bed.setWardId(
-                wardId.trim()
-        );
-
-        bed.setBedNumber(
-                bedNumber.trim()
-        );
-
-        bed.setBedType(
-                bedType.trim()
-        );
-
-        bed.setStatus(
-                parsedStatus
-        );
-
-        if (parsedStatus == BedStatus.OCCUPIED) {
-
-            bed.setPatientId(
-                    patientId.trim()
-            );
-
-        } else {
-
-            bed.setPatientId(
-                    null
-            );
-        }
-
-        // -----------------------------------------------------
-        // Save
-        // -----------------------------------------------------
 
         bedDAO.updateBed(
                 bed
@@ -285,41 +225,51 @@ public class BedController {
     }
 
     // =========================================================
-    // UPDATE BED STATUS
+    // UPDATE STATUS - ENUM
     // =========================================================
 
-    /**
-     * Updates the status of a bed.
-     *
-     * OCCUPIED is not allowed through this method because
-     * an occupied bed must have a patient ID.
-     *
-     * Use occupyBed() instead.
-     */
     public void updateBedStatus(
             String bedId,
-            String status) {
+            BedStatus status
+    ) {
 
-        if (bedId == null
-                || bedId.trim().isEmpty()) {
+        validateId(
+                bedId,
+                "Bed ID"
+        );
 
-            throw new IllegalArgumentException(
-                    "Bed ID is required."
-            );
-        }
+        if (status == null) {
 
-        BedStatus parsedStatus =
-                parseStatus(status);
-
-        if (parsedStatus == BedStatus.OCCUPIED) {
-
-            throw new IllegalArgumentException(
-                    "Use occupyBed() when setting a bed to OCCUPIED."
+            throw new DatabaseException(
+                    "Bed status is required."
             );
         }
 
         bedDAO.updateBedStatus(
-                bedId.trim(),
+                bedId,
+                status
+        );
+    }
+
+    // =========================================================
+    // UPDATE STATUS - STRING
+    // =========================================================
+
+    public void updateBedStatus(
+            String bedId,
+            String status
+    ) {
+
+        validateId(
+                bedId,
+                "Bed ID"
+        );
+
+        BedStatus parsedStatus =
+                parseStatus(status);
+
+        bedDAO.updateBedStatus(
+                bedId,
                 parsedStatus
         );
     }
@@ -328,32 +278,71 @@ public class BedController {
     // OCCUPY BED
     // =========================================================
 
-    /**
-     * Occupies a bed and assigns it to a patient.
-     */
     public void occupyBed(
             String bedId,
-            String patientId) {
+            String patientId
+    ) {
 
-        if (bedId == null
-                || bedId.trim().isEmpty()) {
+        validateId(
+                bedId,
+                "Bed ID"
+        );
 
-            throw new IllegalArgumentException(
-                    "Bed ID is required."
-            );
-        }
-
-        if (patientId == null
-                || patientId.trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Patient ID is required."
-            );
-        }
+        validateId(
+                patientId,
+                "Patient ID"
+        );
 
         bedDAO.occupyBed(
-                bedId.trim(),
-                patientId.trim()
+                bedId,
+                patientId
+        );
+    }
+
+    // =========================================================
+    // RESERVE BED - WITH PATIENT
+    // =========================================================
+
+    public void reserveBed(
+            String bedId,
+            String patientId
+    ) {
+
+        validateId(
+                bedId,
+                "Bed ID"
+        );
+
+        validateId(
+                patientId,
+                "Patient ID"
+        );
+
+        bedDAO.reserveBed(
+                bedId,
+                patientId
+        );
+    }
+
+    // =========================================================
+    // RESERVE BED - EXISTING UI VERSION
+    // =========================================================
+    /*
+     * Existing BedManagementView uses:
+     *
+     * controller.reserveBed(bedId);
+     */
+    public void reserveBed(
+            String bedId
+    ) {
+
+        validateId(
+                bedId,
+                "Bed ID"
+        );
+
+        bedDAO.reserveBed(
+                bedId
         );
     }
 
@@ -361,45 +350,17 @@ public class BedController {
     // RELEASE BED
     // =========================================================
 
-    /**
-     * Releases an occupied bed and makes it available.
-     */
     public void releaseBed(
-            String bedId) {
+            String bedId
+    ) {
 
-        if (bedId == null
-                || bedId.trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Bed ID is required."
-            );
-        }
+        validateId(
+                bedId,
+                "Bed ID"
+        );
 
         bedDAO.releaseBed(
-                bedId.trim()
-        );
-    }
-
-    // =========================================================
-    // RESERVE BED
-    // =========================================================
-
-    /**
-     * Reserves a bed.
-     */
-    public void reserveBed(
-            String bedId) {
-
-        if (bedId == null
-                || bedId.trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Bed ID is required."
-            );
-        }
-
-        bedDAO.reserveBed(
-                bedId.trim()
+                bedId
         );
     }
 
@@ -407,22 +368,35 @@ public class BedController {
     // SET MAINTENANCE
     // =========================================================
 
-    /**
-     * Places a bed under maintenance.
-     */
     public void setMaintenance(
-            String bedId) {
+            String bedId
+    ) {
 
-        if (bedId == null
-                || bedId.trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Bed ID is required."
-            );
-        }
+        validateId(
+                bedId,
+                "Bed ID"
+        );
 
         bedDAO.setMaintenance(
-                bedId.trim()
+                bedId
+        );
+    }
+
+    // =========================================================
+    // ACTIVATE BED
+    // =========================================================
+
+    public void activateBed(
+            String bedId
+    ) {
+
+        validateId(
+                bedId,
+                "Bed ID"
+        );
+
+        bedDAO.activateBed(
+                bedId
         );
     }
 
@@ -430,22 +404,17 @@ public class BedController {
     // DEACTIVATE BED
     // =========================================================
 
-    /**
-     * Soft deletes/deactivates a bed.
-     */
     public void deactivateBed(
-            String bedId) {
+            String bedId
+    ) {
 
-        if (bedId == null
-                || bedId.trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Bed ID is required."
-            );
-        }
+        validateId(
+                bedId,
+                "Bed ID"
+        );
 
         bedDAO.deactivateBed(
-                bedId.trim()
+                bedId
         );
     }
 
@@ -454,122 +423,184 @@ public class BedController {
     // =========================================================
 
     public boolean bedExists(
-            String bedId) {
+            String bedId
+    ) {
 
-        if (bedId == null
-                || bedId.trim().isEmpty()) {
+        if (
+                bedId == null ||
+                bedId.trim().isEmpty()
+        ) {
 
             return false;
         }
 
         return bedDAO.bedExists(
-                bedId.trim()
+                bedId
         );
+    }
+
+    // =========================================================
+    // TOTAL BEDS
+    // =========================================================
+
+    public int getTotalBeds() {
+
+        return bedDAO.getTotalBeds();
+    }
+
+    // =========================================================
+    // AVAILABLE BEDS
+    // =========================================================
+
+    public int getAvailableBeds() {
+
+        return bedDAO.getAvailableBeds();
+    }
+
+    // =========================================================
+    // OCCUPIED BEDS
+    // =========================================================
+
+    public int getOccupiedBeds() {
+
+        return bedDAO.getOccupiedBeds();
+    }
+
+    // =========================================================
+    // RESERVED BEDS
+    // =========================================================
+
+    public int getReservedBeds() {
+
+        return bedDAO.getReservedBeds();
+    }
+
+    // =========================================================
+    // OCCUPANCY PERCENTAGE
+    // =========================================================
+
+    public double getOccupancyPercentage() {
+
+        int total =
+                getTotalBeds();
+
+        if (total <= 0) {
+
+            return 0.0;
+        }
+
+        int occupied =
+                getOccupiedBeds();
+
+        return (
+                (double) occupied
+                /
+                total
+        ) * 100.0;
+    }
+
+    // =========================================================
+    // VALIDATE BED
+    // =========================================================
+
+    private void validateBed(
+            HospitalBed bed
+    ) {
+
+        if (bed == null) {
+
+            throw new DatabaseException(
+                    "Bed information is required."
+            );
+        }
+
+        if (
+                bed.getBedNumber() == null ||
+                bed.getBedNumber()
+                        .trim()
+                        .isEmpty()
+        ) {
+
+            throw new DatabaseException(
+                    "Bed number is required."
+            );
+        }
+
+        if (
+                bed.getBedType() == null ||
+                bed.getBedType()
+                        .trim()
+                        .isEmpty()
+        ) {
+
+            throw new DatabaseException(
+                    "Bed type is required."
+            );
+        }
+
+        if (bed.getStatus() == null) {
+
+            throw new DatabaseException(
+                    "Bed status is required."
+            );
+        }
+    }
+
+    // =========================================================
+    // VALIDATE ID
+    // =========================================================
+
+    private void validateId(
+            String id,
+            String fieldName
+    ) {
+
+        if (
+                id == null ||
+                id.trim().isEmpty()
+        ) {
+
+            throw new DatabaseException(
+                    fieldName
+                            + " is required."
+            );
+        }
     }
 
     // =========================================================
     // PARSE STATUS
     // =========================================================
 
-    /**
-     * Converts UI status text into BedStatus enum.
-     *
-     * Supports:
-     *
-     * Available
-     * Occupied
-     * Reserved
-     * Maintenance
-     *
-     * Also accepts enum-style values such as:
-     *
-     * AVAILABLE
-     * OCCUPIED
-     * RESERVED
-     * MAINTENANCE
-     */
-    public BedStatus parseStatus(
-            String status) {
+    private BedStatus parseStatus(
+            String status
+    ) {
 
-        if (status == null
-                || status.trim().isEmpty()) {
+        /*
+         * If AddBedView does not provide a status,
+         * new beds are AVAILABLE by default.
+         */
+        if (
+                status == null ||
+                status.trim().isEmpty()
+        ) {
 
-            throw new IllegalArgumentException(
-                    "Bed status is required."
+            return BedStatus.AVAILABLE;
+        }
+
+        try {
+
+            return BedStatus.valueOf(
+                    status.trim()
+                            .toUpperCase()
             );
-        }
 
-        String normalized =
-                status.trim()
-                        .toUpperCase()
-                        .replace(
-                                " ",
-                                "_"
-                        )
-                        .replace(
-                                "-",
-                                "_"
-                        );
+        } catch (
+                IllegalArgumentException e
+        ) {
 
-        switch (normalized) {
-
-            case "AVAILABLE":
-
-                return BedStatus.AVAILABLE;
-
-            case "OCCUPIED":
-
-                return BedStatus.OCCUPIED;
-
-            case "RESERVED":
-
-                return BedStatus.RESERVED;
-
-            case "MAINTENANCE":
-
-                return BedStatus.MAINTENANCE;
-
-            default:
-
-                throw new IllegalArgumentException(
-                        "Invalid bed status: "
-                                + status
-                                + ". Valid statuses are "
-                                + "Available, Occupied, Reserved and Maintenance."
-                );
-        }
-    }
-
-    // =========================================================
-    // VALIDATE CREATE BED INPUT
-    // =========================================================
-
-    private void validateCreateBedInput(
-            String wardId,
-            String bedNumber,
-            String bedType) {
-
-        if (wardId == null
-                || wardId.trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Ward ID is required."
-            );
-        }
-
-        if (bedNumber == null
-                || bedNumber.trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Bed number is required."
-            );
-        }
-
-        if (bedType == null
-                || bedType.trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Bed type is required."
+            throw new DatabaseException(
+                    "Invalid bed status: "
+                            + status
             );
         }
     }
