@@ -21,23 +21,42 @@ public class AdminMainShell {
     private List<Button> allNavButtons;
 
     public AdminMainShell(Stage stage) {
+
         this.primaryStage = stage;
         this.rootLayout = new BorderPane();
 
-        // 1. Build and attach the persistent sidebar on the left
+        // =========================================================
+        // PERSISTENT SIDEBAR
+        // =========================================================
+
         VBox sidebar = createSidebar();
+
         rootLayout.setLeft(sidebar);
 
-        // 2. Load the initial Command Dashboard view in the center
-        AdminDashboardView dashboardView = new AdminDashboardView(stage);
-        rootLayout.setCenter(dashboardView.getView());
+        // =========================================================
+        // INITIAL DASHBOARD
+        // =========================================================
+
+        AdminDashboardView dashboardView =
+                new AdminDashboardView(primaryStage);
+
+        rootLayout.setCenter(
+                dashboardView.getView()
+        );
     }
 
     // =========================================================
-    // GET SCENE - COMMON NAVIGATION METHOD
+    // GET SCENE
     // =========================================================
+
     public Scene getScene(Stage st) {
-        Scene scene = new Scene(rootLayout,st.getWidth() , st.getHeight());
+
+        Scene scene =
+                new Scene(
+                        rootLayout,
+                        st.getWidth(),
+                        st.getHeight()
+                );
 
         primaryStage.setTitle(
                 "HealthSphere AI — Enterprise Command Center"
@@ -46,22 +65,35 @@ public class AdminMainShell {
         return scene;
     }
 
-    // Optional method if you still want to directly show the shell
+    // =========================================================
+    // SHOW APPLICATION
+    // =========================================================
+
     public void show() {
-        primaryStage.setScene(getScene(primaryStage));
+
+        primaryStage.setScene(
+                getScene(primaryStage)
+        );
+
         primaryStage.setMaximized(true);
+
         primaryStage.show();
     }
 
     // =========================================================
     // SIDEBAR
     // =========================================================
+
     private VBox createSidebar() {
 
-        VBox sidebar = new VBox(10);
+        VBox sidebar =
+                new VBox(10);
 
         sidebar.setPrefWidth(260);
-        sidebar.setPadding(new Insets(20));
+
+        sidebar.setPadding(
+                new Insets(20)
+        );
 
         sidebar.setStyle(
                 "-fx-background-color: #0F172A;"
@@ -71,9 +103,11 @@ public class AdminMainShell {
         // BRAND HEADER
         // =====================================================
 
-        VBox brandBox = new VBox(2);
+        VBox brandBox =
+                new VBox(2);
 
-        Label brandTitle = new Label("HealthSphere");
+        Label brandTitle =
+                new Label("HealthSphere");
 
         brandTitle.setFont(
                 Font.font(
@@ -83,11 +117,14 @@ public class AdminMainShell {
                 )
         );
 
-        brandTitle.setTextFill(Color.WHITE);
-
-        Label brandSub = new Label(
-                "COMMAND CENTER v4.2"
+        brandTitle.setTextFill(
+                Color.WHITE
         );
+
+        Label brandSub =
+                new Label(
+                        "COMMAND CENTER v4.2"
+                );
 
         brandSub.setFont(
                 Font.font(
@@ -107,7 +144,12 @@ public class AdminMainShell {
         );
 
         brandBox.setPadding(
-                new Insets(0, 0, 15, 0)
+                new Insets(
+                        0,
+                        0,
+                        15,
+                        0
+                )
         );
 
         // =====================================================
@@ -115,35 +157,50 @@ public class AdminMainShell {
         // =====================================================
 
         Button dashboardBtn =
-                createNavButton("📊  Command Dashboard");
+                createNavButton(
+                        "📊  Command Dashboard"
+                );
 
         Button userDirBtn =
-                createNavButton("👥  User Directory");
+                createNavButton(
+                        "👥  User Directory"
+                );
 
         Button hospitalBtn =
-                createNavButton("🏥  Hospital Verification");
+                createNavButton(
+                        "🏥  Hospital Verification"
+                );
 
         Button doctorBtn =
-                createNavButton("🩺  Doctor Credentialing");
+                createNavButton(
+                        "🩺  Doctor Credentialing"
+                );
 
         Button reportsBtn =
-                createNavButton("📋  Reports & Moderation");
+                createNavButton(
+                        "📋  Reports & Moderation"
+                );
 
         Button analyticsBtn =
-                createNavButton("⭐  AppReviews");
+                createNavButton(
+                        "⭐  AppReviews"
+                );
 
         Button settingsBtn =
-                createNavButton("⚙️  Neural Settings");
+                createNavButton(
+                        "⚙️  Neural Settings"
+                );
 
-        allNavButtons = List.of(
-                dashboardBtn,
-                userDirBtn,
-                hospitalBtn,
-                doctorBtn,
-                reportsBtn,
-                analyticsBtn,
-                settingsBtn
-        );
+        allNavButtons =
+                List.of(
+                        dashboardBtn,
+                        userDirBtn,
+                        hospitalBtn,
+                        doctorBtn,
+                        reportsBtn,
+                        analyticsBtn,
+                        settingsBtn
+                );
 
         // =====================================================
         // DASHBOARD
@@ -151,10 +208,14 @@ public class AdminMainShell {
 
         dashboardBtn.setOnAction(e -> {
 
-            setActiveButton(dashboardBtn);
+            setActiveButton(
+                    dashboardBtn
+            );
 
             AdminDashboardView dashboardView =
-                    new AdminDashboardView(primaryStage);
+                    new AdminDashboardView(
+                            primaryStage
+                    );
 
             rootLayout.setCenter(
                     dashboardView.getView()
@@ -167,7 +228,9 @@ public class AdminMainShell {
 
         userDirBtn.setOnAction(e -> {
 
-            setActiveButton(userDirBtn);
+            setActiveButton(
+                    userDirBtn
+            );
 
             UserManagementView userManagementView =
                     new UserManagementView();
@@ -183,7 +246,9 @@ public class AdminMainShell {
 
         hospitalBtn.setOnAction(e -> {
 
-            setActiveButton(hospitalBtn);
+            setActiveButton(
+                    hospitalBtn
+            );
 
             HospitalManagementView hospitalManagementView =
                     new HospitalManagementView();
@@ -199,7 +264,9 @@ public class AdminMainShell {
 
         doctorBtn.setOnAction(e -> {
 
-            setActiveButton(doctorBtn);
+            setActiveButton(
+                    doctorBtn
+            );
 
             DoctorManagementView doctorManagementView =
                     new DoctorManagementView();
@@ -210,18 +277,26 @@ public class AdminMainShell {
         });
 
         // =====================================================
-        // REPORTS
+        // REPORTS & MODERATION
         // =====================================================
 
         reportsBtn.setOnAction(e -> {
 
-            setActiveButton(reportsBtn);
+            setActiveButton(
+                    reportsBtn
+            );
 
-            ReportsAnalyticsView reportsView =
-                    new ReportsAnalyticsView();
+            // -------------------------------------------------
+            // OPEN COMPLAINTS MANAGEMENT
+            // -------------------------------------------------
+
+            ComplaintsManagementView complaintsView =
+                    new ComplaintsManagementView(
+                            primaryStage
+                    );
 
             rootLayout.setCenter(
-                    reportsView
+                    complaintsView.getView()
             );
         });
 
@@ -231,10 +306,14 @@ public class AdminMainShell {
 
         analyticsBtn.setOnAction(e -> {
 
-            setActiveButton(analyticsBtn);
+            setActiveButton(
+                    analyticsBtn
+            );
 
             AppReviewDashboard analyticsView =
-                    new AppReviewDashboard(primaryStage);
+                    new AppReviewDashboard(
+                            primaryStage
+                    );
 
             rootLayout.setCenter(
                     analyticsView.getContent()
@@ -247,10 +326,14 @@ public class AdminMainShell {
 
         settingsBtn.setOnAction(e -> {
 
-            setActiveButton(settingsBtn);
+            setActiveButton(
+                    settingsBtn
+            );
 
             AdminSettingsView settingsView =
-                    new AdminSettingsView(primaryStage);
+                    new AdminSettingsView(
+                            primaryStage
+                    );
 
             rootLayout.setCenter(
                     settingsView.getView()
@@ -261,7 +344,8 @@ public class AdminMainShell {
         // SPACER
         // =====================================================
 
-        Region spacer = new Region();
+        Region spacer =
+                new Region();
 
         VBox.setVgrow(
                 spacer,
@@ -276,7 +360,7 @@ public class AdminMainShell {
                 createUserProfileFooter();
 
         // =====================================================
-        // ADD EVERYTHING TO SIDEBAR
+        // ADD SIDEBAR COMPONENTS
         // =====================================================
 
         sidebar.getChildren().addAll(
@@ -284,11 +368,17 @@ public class AdminMainShell {
                 brandBox,
 
                 dashboardBtn,
+
                 userDirBtn,
+
                 hospitalBtn,
+
                 doctorBtn,
+
                 reportsBtn,
+
                 analyticsBtn,
+
                 settingsBtn,
 
                 spacer,
@@ -297,7 +387,9 @@ public class AdminMainShell {
         );
 
         // Dashboard active initially
-        setActiveButton(dashboardBtn);
+        setActiveButton(
+                dashboardBtn
+        );
 
         return sidebar;
     }
@@ -306,9 +398,11 @@ public class AdminMainShell {
     // CREATE NAVIGATION BUTTON
     // =========================================================
 
-    private Button createNavButton(String text) {
+    private Button createNavButton(
+            String text) {
 
-        Button btn = new Button(text);
+        Button btn =
+                new Button(text);
 
         btn.setMaxWidth(
                 Double.MAX_VALUE
@@ -319,7 +413,12 @@ public class AdminMainShell {
         );
 
         btn.setPadding(
-                new Insets(10, 14, 10, 14)
+                new Insets(
+                        10,
+                        14,
+                        10,
+                        14
+                )
         );
 
         btn.setFont(
@@ -331,9 +430,9 @@ public class AdminMainShell {
         );
 
         btn.setStyle(
-                "-fx-background-color: transparent; " +
-                "-fx-text-fill: #94A3B8; " +
-                "-fx-background-radius: 8px; " +
+                "-fx-background-color: transparent;" +
+                "-fx-text-fill: #94A3B8;" +
+                "-fx-background-radius: 8px;" +
                 "-fx-cursor: hand;"
         );
 
@@ -344,22 +443,23 @@ public class AdminMainShell {
     // ACTIVE NAVIGATION BUTTON
     // =========================================================
 
-    private void setActiveButton(Button selectedBtn) {
+    private void setActiveButton(
+            Button selectedBtn) {
 
         for (Button btn : allNavButtons) {
 
             btn.setStyle(
-                    "-fx-background-color: transparent; " +
-                    "-fx-text-fill: #94A3B8; " +
-                    "-fx-background-radius: 8px; " +
+                    "-fx-background-color: transparent;" +
+                    "-fx-text-fill: #94A3B8;" +
+                    "-fx-background-radius: 8px;" +
                     "-fx-cursor: hand;"
             );
         }
 
         selectedBtn.setStyle(
-                "-fx-background-color: #4F46E5; " +
-                "-fx-text-fill: #FFFFFF; " +
-                "-fx-background-radius: 8px; " +
+                "-fx-background-color: #4F46E5;" +
+                "-fx-text-fill: #FFFFFF;" +
+                "-fx-background-radius: 8px;" +
                 "-fx-cursor: hand;"
         );
     }
@@ -370,14 +470,15 @@ public class AdminMainShell {
 
     private VBox createUserProfileFooter() {
 
-        VBox footer = new VBox(4);
+        VBox footer =
+                new VBox(4);
 
         footer.setPadding(
                 new Insets(12)
         );
 
         footer.setStyle(
-                "-fx-background-color: #1E293B; " +
+                "-fx-background-color: #1E293B;" +
                 "-fx-background-radius: 8px;"
         );
 
@@ -386,7 +487,9 @@ public class AdminMainShell {
         // -----------------------------------------------------
 
         Label nameLbl =
-                new Label("Prajwal Patil");
+                new Label(
+                        "Prajwal Patil"
+                );
 
         nameLbl.setFont(
                 Font.font(
@@ -405,7 +508,9 @@ public class AdminMainShell {
         // -----------------------------------------------------
 
         Label roleLbl =
-                new Label("Super Administrator");
+                new Label(
+                        "Super Administrator"
+                );
 
         roleLbl.setFont(
                 Font.font(

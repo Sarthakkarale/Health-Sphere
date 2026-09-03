@@ -1,6 +1,7 @@
 package com.healthsphere.controller.admin;
 
 import com.healthsphere.dao.admin.ModerationDAO;
+import com.healthsphere.exceptions.DatabaseException;
 import com.healthsphere.model.ComplaintModel;
 
 import java.util.List;
@@ -26,14 +27,23 @@ public class ModerationController {
 
         try {
 
-            moderationDAO.createComplaint(complaint);
+            if (complaint == null) {
+                throw new DatabaseException(
+                        "Complaint data cannot be null.",
+                        null
+                );
+            }
+
+            moderationDAO.createComplaint(
+                    complaint
+            );
 
             return true;
 
         } catch (Exception e) {
 
             System.err.println(
-                    "Error creating complaint: "
+                    "Create complaint failed: "
                             + e.getMessage()
             );
 
@@ -50,14 +60,20 @@ public class ModerationController {
 
         try {
 
+            if (ticketId == null ||
+                    ticketId.trim().isEmpty()) {
+
+                return null;
+            }
+
             return moderationDAO.getComplaint(
-                    ticketId
+                    ticketId.trim()
             );
 
         } catch (Exception e) {
 
             System.err.println(
-                    "Error retrieving complaint: "
+                    "Get complaint failed: "
                             + e.getMessage()
             );
 
@@ -73,30 +89,41 @@ public class ModerationController {
 
         try {
 
-            return moderationDAO.getAllComplaints();
+            List<ComplaintModel> complaints =
+                    moderationDAO.getAllComplaints();
+
+            if (complaints == null) {
+                return List.of();
+            }
+
+            return complaints;
 
         } catch (Exception e) {
 
             System.err.println(
-                    "Error retrieving complaints: "
+                    "Get all complaints failed: "
                             + e.getMessage()
             );
 
-            throw new RuntimeException(
-                    "Unable to load complaints.",
-                    e
-            );
+            return List.of();
         }
     }
 
     // ============================================================
-    // UPDATE COMPLAINT
+    // UPDATE COMPLETE COMPLAINT
     // ============================================================
 
     public boolean updateComplaint(
             ComplaintModel complaint) {
 
         try {
+
+            if (complaint == null) {
+                throw new DatabaseException(
+                        "Complaint data cannot be null.",
+                        null
+                );
+            }
 
             moderationDAO.updateComplaint(
                     complaint
@@ -107,7 +134,7 @@ public class ModerationController {
         } catch (Exception e) {
 
             System.err.println(
-                    "Error updating complaint: "
+                    "Update complaint failed: "
                             + e.getMessage()
             );
 
@@ -125,9 +152,27 @@ public class ModerationController {
 
         try {
 
+            if (ticketId == null ||
+                    ticketId.trim().isEmpty()) {
+
+                throw new DatabaseException(
+                        "Ticket ID is required.",
+                        null
+                );
+            }
+
+            if (status == null ||
+                    status.trim().isEmpty()) {
+
+                throw new DatabaseException(
+                        "Complaint status is required.",
+                        null
+                );
+            }
+
             moderationDAO.updateComplaintStatus(
-                    ticketId,
-                    status
+                    ticketId.trim(),
+                    status.trim()
             );
 
             return true;
@@ -135,7 +180,7 @@ public class ModerationController {
         } catch (Exception e) {
 
             System.err.println(
-                    "Error updating complaint status: "
+                    "Update complaint status failed: "
                             + e.getMessage()
             );
 
@@ -153,9 +198,27 @@ public class ModerationController {
 
         try {
 
+            if (ticketId == null ||
+                    ticketId.trim().isEmpty()) {
+
+                throw new DatabaseException(
+                        "Ticket ID is required.",
+                        null
+                );
+            }
+
+            if (priority == null ||
+                    priority.trim().isEmpty()) {
+
+                throw new DatabaseException(
+                        "Complaint priority is required.",
+                        null
+                );
+            }
+
             moderationDAO.updateComplaintPriority(
-                    ticketId,
-                    priority
+                    ticketId.trim(),
+                    priority.trim()
             );
 
             return true;
@@ -163,7 +226,7 @@ public class ModerationController {
         } catch (Exception e) {
 
             System.err.println(
-                    "Error updating complaint priority: "
+                    "Update complaint priority failed: "
                             + e.getMessage()
             );
 
@@ -180,8 +243,17 @@ public class ModerationController {
 
         try {
 
+            if (ticketId == null ||
+                    ticketId.trim().isEmpty()) {
+
+                throw new DatabaseException(
+                        "Ticket ID is required.",
+                        null
+                );
+            }
+
             moderationDAO.deleteComplaint(
-                    ticketId
+                    ticketId.trim()
             );
 
             return true;
@@ -189,7 +261,7 @@ public class ModerationController {
         } catch (Exception e) {
 
             System.err.println(
-                    "Error deleting complaint: "
+                    "Delete complaint failed: "
                             + e.getMessage()
             );
 

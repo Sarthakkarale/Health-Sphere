@@ -14,10 +14,38 @@ public class ComplaintModel {
 
     // ============================================================
     // DEFAULT CONSTRUCTOR
-    // Required by Firebase Firestore toObject()
+    // Required for Firestore object mapping
     // ============================================================
 
     public ComplaintModel() {
+    }
+
+    // ============================================================
+    // EXISTING CONSTRUCTOR
+    // Keeps compatibility with ComplaintsManagementView
+    // ============================================================
+
+    public ComplaintModel(
+            String ticketId,
+            String category,
+            String issueTitle,
+            String description,
+            String complainant,
+            String priority,
+            String status,
+            String createdDate) {
+
+        this(
+                ticketId,
+                category,
+                issueTitle,
+                description,
+                complainant,
+                priority,
+                status,
+                createdDate,
+                null
+        );
     }
 
     // ============================================================
@@ -32,7 +60,8 @@ public class ComplaintModel {
             String complainant,
             String priority,
             String status,
-            String createdDate) {
+            String createdDate,
+            String resolvedDate) {
 
         this.ticketId = ticketId;
         this.category = category;
@@ -42,7 +71,7 @@ public class ComplaintModel {
         this.priority = priority;
         this.status = status;
         this.createdDate = createdDate;
-        this.resolvedDate = null;
+        this.resolvedDate = resolvedDate;
     }
 
     // ============================================================

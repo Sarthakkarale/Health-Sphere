@@ -1,7 +1,6 @@
 package com.healthsphere.view.admin;
 
-import com.healthsphere.controller.admin.ApplicationReviewController;
-import com.healthsphere.model.ApplicationReview;
+import com.healthsphere.controller.admin.ReviewController;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -17,28 +16,38 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+import com.google.cloud.Timestamp;
+
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 public class AppReviewDashboard {
 
     private final Stage stage;
 
-    private final ApplicationReviewController applicationReviewController;
+    private final ReviewController reviewController;
+
+    private final ObservableList<Review> reviewData =
+            FXCollections.observableArrayList();
+
+    private FilteredList<Review> filteredData;
+
+    private BarChart<Number, String> ratingChart;
 
     public AppReviewDashboard(Stage stage) {
 
         this.stage = stage;
 
-        this.applicationReviewController =
-                new ApplicationReviewController();
+        this.reviewController =
+                new ReviewController();
     }
+
+    // =========================================================
+    // SCENE
+    // =========================================================
 
     public Scene getScene() {
 
@@ -47,9 +56,9 @@ public class AppReviewDashboard {
         );
     }
 
-    // ============================================================
+    // =========================================================
     // REVIEW MODEL
-    // ============================================================
+    // =========================================================
 
     public static class Review {
 
@@ -68,12 +77,23 @@ public class AppReviewDashboard {
                 LocalDate date,
                 String appVersion) {
 
-            this.username = username;
-            this.userRole = userRole;
-            this.rating = rating;
-            this.comment = comment;
-            this.date = date;
-            this.appVersion = appVersion;
+            this.username =
+                    username;
+
+            this.userRole =
+                    userRole;
+
+            this.rating =
+                    rating;
+
+            this.comment =
+                    comment;
+
+            this.date =
+                    date;
+
+            this.appVersion =
+                    appVersion;
         }
 
         public String getUsername() {
@@ -101,72 +121,48 @@ public class AppReviewDashboard {
         }
     }
 
-    // ============================================================
-    // DATA
-    // ============================================================
-
-    private final ObservableList<Review> reviewData =
-            FXCollections.observableArrayList();
-
-    private FilteredList<Review> filteredData;
-
-    // ============================================================
+    // =========================================================
     // CONTENT
-    // ============================================================
+    // =========================================================
 
     public Parent getContent() {
 
-        // Load actual reviews from Firestore.
         loadReviewData();
 
         VBox rootLayout =
                 new VBox(20);
 
         rootLayout.setPadding(
-                new Insets(28)
+                new Insets(24)
         );
 
         rootLayout.setStyle(
                 "-fx-background-color: #F8FAFC;"
         );
 
-        // ========================================================
+        // =====================================================
         // HEADER
-        // ========================================================
+        // =====================================================
 
         Label headerTitle =
                 new Label(
                         "Patient & Doctor Platform Reviews"
                 );
 
-        headerTitle.setFont(
-                Font.font(
-                        "Segoe UI",
-                        FontWeight.BOLD,
-                        24
-                )
-        );
-
-        headerTitle.setTextFill(
-                Color.web("#0F172A")
+        headerTitle.setStyle(
+                "-fx-font-size: 24px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #0F172A;"
         );
 
         Label headerSub =
                 new Label(
-                        "Monitor ratings, feedback, and system experience "
-                                + "across medical practitioners and patients."
+                        "Monitor ratings, feedback, and system experience across medical practitioners and patients."
                 );
 
-        headerSub.setFont(
-                Font.font(
-                        "Segoe UI",
-                        FontWeight.NORMAL,
-                        13
-                )
-        );
-
-        headerSub.setTextFill(
-                Color.web("#64748B")
+        headerSub.setStyle(
+                "-fx-font-size: 13px;" +
+                "-fx-text-fill: #64748B;"
         );
 
         VBox headerBox =
@@ -176,9 +172,9 @@ public class AppReviewDashboard {
                         headerSub
                 );
 
-        // ========================================================
-        // TOP ANALYTICS
-        // ========================================================
+        // =====================================================
+        // ANALYTICS
+        // =====================================================
 
         HBox topAnalytics =
                 new HBox(
@@ -191,16 +187,16 @@ public class AppReviewDashboard {
                 Pos.CENTER_LEFT
         );
 
-        // ========================================================
+        // =====================================================
         // FILTER BAR
-        // ========================================================
+        // =====================================================
 
         HBox filterBar =
                 createFilterBar();
 
-        // ========================================================
-        // TABLE
-        // ========================================================
+        // =====================================================
+        // REVIEW TABLE
+        // =====================================================
 
         TableView<Review> reviewTable =
                 createReviewTable();
@@ -238,39 +234,176 @@ public class AppReviewDashboard {
         return scrollPane;
     }
 
-    // ============================================================
+    // =========================================================
+    // LOAD FIRESTORE REVIEWS
+    // =========================================================
+
+    private void loadReviewData() {
+
+        reviewData.clear();
+
+        try {
+
+            List<Map<String, Object>> reviews =
+                    reviewController
+                            .getAllReviews();
+
+            for (
+                    Map<String, Object> data :
+                    reviews
+            ) {
+
+                if (data == null) {
+                    continue;
+                }
+
+                String username =
+                        getString(
+                                data,
+                                "username"
+                        );
+
+                /*
+                 * Support userName/name as fallback
+                 * without changing the primary schema.
+                 */
+                if (username.isBlank()) {
+
+                    username =
+                            getString(
+                                    data,
+                                    "userName"
+                            );
+                }
+
+                if (username.isBlank()) {
+
+                    username =
+                            getString(
+                                    data,
+                                    "name"
+                            );
+                }
+
+                String userRole =
+                        getString(
+                                data,
+                                "userRole"
+                        );
+
+                if (userRole.isBlank()) {
+
+                    userRole =
+                            getString(
+                                    data,
+                                    "role"
+                            );
+                }
+
+                int rating =
+                        getInt(
+                                data,
+                                "rating"
+                        );
+
+                String comment =
+                        getString(
+                                data,
+                                "comment"
+                        );
+
+                /*
+                 * Some applications may store the
+                 * review text under "review".
+                 */
+                if (comment.isBlank()) {
+
+                    comment =
+                            getString(
+                                    data,
+                                    "review"
+                            );
+                }
+
+                LocalDate date =
+                        getReviewDate(
+                                data
+                        );
+
+                String appVersion =
+                        getString(
+                                data,
+                                "appVersion"
+                        );
+
+                reviewData.add(
+                        new Review(
+                                username,
+                                userRole,
+                                rating,
+                                comment,
+                                date,
+                                appVersion
+                        )
+                );
+            }
+
+        } catch (Exception e) {
+
+            System.err.println(
+                    "Unable to load review data: "
+                            + e.getMessage()
+            );
+
+            e.printStackTrace();
+        }
+
+        filteredData =
+                new FilteredList<>(
+                        reviewData,
+                        review -> true
+                );
+    }
+
+    // =========================================================
     // SUMMARY CARDS
-    // ============================================================
+    // =========================================================
 
     private HBox createSummaryCards() {
+
+        double averageRating =
+                calculateAverageRating();
+
+        int totalReviews =
+                reviewData.size();
+
+        int satisfaction =
+                calculateSatisfactionRate();
 
         VBox avgCard =
                 createCard(
                         "Average Rating",
-                        calculateAverageRating(),
-                        "#2563EB",
-                        "#EFF6FF",
-                        "★"
+                        String.format(
+                                "%.1f ★",
+                                averageRating
+                        ),
+                        "#2563EB"
                 );
 
         VBox totalCard =
                 createCard(
                         "Total Feedback",
                         String.valueOf(
-                                reviewData.size()
+                                totalReviews
                         ),
-                        "#059669",
-                        "#ECFDF5",
-                        "☷"
+                        "#059669"
                 );
 
         VBox posCard =
                 createCard(
                         "Satisfaction Rate",
-                        calculateSatisfactionRate(),
-                        "#7C3AED",
-                        "#F5F3FF",
-                        "✓"
+                        satisfaction + "%",
+                        "#7C3AED"
                 );
 
         HBox cards =
@@ -288,16 +421,14 @@ public class AppReviewDashboard {
         return cards;
     }
 
-    // ============================================================
-    // KPI CARD
-    // ============================================================
+    // =========================================================
+    // SUMMARY CARD
+    // =========================================================
 
     private VBox createCard(
             String title,
             String value,
-            String accentColor,
-            String backgroundColor,
-            String iconText) {
+            String accentColor) {
 
         VBox card =
                 new VBox(8);
@@ -307,161 +438,55 @@ public class AppReviewDashboard {
         );
 
         card.setPrefSize(
-                185,
-                112
-        );
-
-        card.setMinSize(
-                175,
-                105
+                180,
+                100
         );
 
         card.setStyle(
-                "-fx-background-color: "
-                        + backgroundColor
-                        + ";" +
-                "-fx-background-radius: 15px;" +
-                "-fx-border-color: "
-                        + accentColor
-                        + ";" +
-                "-fx-border-width: 1px;" +
-                "-fx-border-radius: 15px;" +
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 12;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 12;" +
                 "-fx-effect: dropshadow(" +
                 "three-pass-box, " +
-                "rgba(15,23,42,0.08), " +
-                "10, 0, 0, 3);"
-        );
-
-        // ========================================================
-        // TOP ROW
-        // ========================================================
-
-        HBox topRow =
-                new HBox();
-
-        topRow.setAlignment(
-                Pos.CENTER_LEFT
+                "rgba(0,0,0,0.03), " +
+                "8, 0, 0, 2);"
         );
 
         Label titleLabel =
-                new Label(
-                        title
-                );
+                new Label(title);
 
-        titleLabel.setFont(
-                Font.font(
-                        "Segoe UI",
-                        FontWeight.SEMI_BOLD,
-                        12
-                )
+        titleLabel.setStyle(
+                "-fx-font-size: 13px;" +
+                "-fx-text-fill: #64748B;" +
+                "-fx-font-weight: 500;"
         );
-
-        titleLabel.setTextFill(
-                Color.web("#475569")
-        );
-
-        Region spacer =
-                new Region();
-
-        HBox.setHgrow(
-                spacer,
-                Priority.ALWAYS
-        );
-
-        Label icon =
-                new Label(
-                        iconText
-                );
-
-        icon.setAlignment(
-                Pos.CENTER
-        );
-
-        icon.setMinSize(
-                28,
-                28
-        );
-
-        icon.setPrefSize(
-                28,
-                28
-        );
-
-        icon.setStyle(
-                "-fx-background-color: "
-                        + accentColor
-                        + ";" +
-                "-fx-background-radius: 50%;" +
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 14px;" +
-                "-fx-font-weight: bold;"
-        );
-
-        topRow.getChildren().addAll(
-                titleLabel,
-                spacer,
-                icon
-        );
-
-        // ========================================================
-        // VALUE
-        // ========================================================
 
         Label valueLabel =
-                new Label(
-                        value
-                );
+                new Label(value);
 
-        valueLabel.setFont(
-                Font.font(
-                        "Segoe UI",
-                        FontWeight.BOLD,
-                        27
-                )
-        );
-
-        valueLabel.setTextFill(
-                Color.web(
-                        accentColor
-                )
-        );
-
-        // ========================================================
-        // ACCENT LINE
-        // ========================================================
-
-        Region accentLine =
-                new Region();
-
-        accentLine.setPrefHeight(
-                3
-        );
-
-        accentLine.setMaxWidth(
-                48
-        );
-
-        accentLine.setStyle(
-                "-fx-background-color: "
+        valueLabel.setStyle(
+                "-fx-font-size: 26px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: "
                         + accentColor
-                        + ";" +
-                "-fx-background-radius: 10px;"
+                        + ";"
         );
 
         card.getChildren().addAll(
-                topRow,
-                valueLabel,
-                accentLine
+                titleLabel,
+                valueLabel
         );
 
         return card;
     }
 
-    // ============================================================
+    // =========================================================
     // RATING CHART
-    // ============================================================
+    // =========================================================
 
-    private BarChart<Number, String> createRatingChart() {
+    private BarChart<Number, String>
+    createRatingChart() {
 
         NumberAxis xAxis =
                 new NumberAxis();
@@ -477,114 +502,97 @@ public class AppReviewDashboard {
                 "Stars"
         );
 
-        BarChart<Number, String> chart =
+        ratingChart =
                 new BarChart<>(
                         xAxis,
                         yAxis
                 );
 
-        chart.setLegendVisible(
+        ratingChart.setLegendVisible(
                 false
         );
 
-        chart.setPrefSize(
+        ratingChart.setPrefSize(
                 400,
-                165
-        );
-
-        chart.setMinSize(
-                380,
                 150
         );
 
-        chart.setTitle(
+        ratingChart.setTitle(
                 "Rating Breakdown"
         );
 
-        chart.setAnimated(
-                false
-        );
-
-        chart.setStyle(
+        ratingChart.setStyle(
                 "-fx-background-color: #FFFFFF;" +
-                "-fx-background-radius: 14px;" +
+                "-fx-background-radius: 12;" +
                 "-fx-border-color: #E2E8F0;" +
-                "-fx-border-radius: 14px;" +
-                "-fx-padding: 10px;" +
-                "-fx-effect: dropshadow(" +
-                "three-pass-box, " +
-                "rgba(15,23,42,0.05), " +
-                "8, 0, 0, 2);"
+                "-fx-border-radius: 12;" +
+                "-fx-padding: 10;"
         );
 
-        int[] ratingCounts =
-                new int[5];
-
-        for (Review review :
-                reviewData) {
-
-            int rating =
-                    review.getRating();
-
-            if (
-                    rating >= 1 &&
-                    rating <= 5
-            ) {
-
-                ratingCounts[
-                        rating - 1
-                ]++;
-            }
-        }
-
-        XYChart.Series<Number, String> series =
+        XYChart.Series<Number, String>
+                series =
                 new XYChart.Series<>();
+
+        int fiveStars =
+                countRating(5);
+
+        int fourStars =
+                countRating(4);
+
+        int threeStars =
+                countRating(3);
+
+        int twoStars =
+                countRating(2);
+
+        int oneStar =
+                countRating(1);
 
         series.getData().add(
                 new XYChart.Data<>(
-                        ratingCounts[4],
+                        fiveStars,
                         "5 ★"
                 )
         );
 
         series.getData().add(
                 new XYChart.Data<>(
-                        ratingCounts[3],
+                        fourStars,
                         "4 ★"
                 )
         );
 
         series.getData().add(
                 new XYChart.Data<>(
-                        ratingCounts[2],
+                        threeStars,
                         "3 ★"
                 )
         );
 
         series.getData().add(
                 new XYChart.Data<>(
-                        ratingCounts[1],
+                        twoStars,
                         "2 ★"
                 )
         );
 
         series.getData().add(
                 new XYChart.Data<>(
-                        ratingCounts[0],
+                        oneStar,
                         "1 ★"
                 )
         );
 
-        chart.getData().add(
+        ratingChart.getData().add(
                 series
         );
 
-        return chart;
+        return ratingChart;
     }
 
-    // ============================================================
+    // =========================================================
     // FILTER BAR
-    // ============================================================
+    // =========================================================
 
     private HBox createFilterBar() {
 
@@ -592,7 +600,7 @@ public class AppReviewDashboard {
                 new TextField();
 
         searchField.setPromptText(
-                "🔍  Search by keyword, name, or role..."
+                "Search by keyword, name, or role..."
         );
 
         searchField.setPrefWidth(
@@ -600,12 +608,10 @@ public class AppReviewDashboard {
         );
 
         searchField.setStyle(
-                "-fx-background-color: #FFFFFF;" +
-                "-fx-background-radius: 9px;" +
-                "-fx-border-radius: 9px;" +
+                "-fx-background-radius: 8;" +
+                "-fx-border-radius: 8;" +
                 "-fx-border-color: #CBD5E1;" +
-                "-fx-padding: 9px 12px;" +
-                "-fx-font-size: 12px;"
+                "-fx-padding: 8 12;"
         );
 
         ComboBox<String> roleFilter =
@@ -622,9 +628,8 @@ public class AppReviewDashboard {
         );
 
         roleFilter.setStyle(
-                "-fx-background-color: #FFFFFF;" +
-                "-fx-background-radius: 9px;" +
-                "-fx-border-radius: 9px;" +
+                "-fx-background-radius: 8;" +
+                "-fx-border-radius: 8;" +
                 "-fx-border-color: #CBD5E1;"
         );
 
@@ -645,19 +650,19 @@ public class AppReviewDashboard {
         );
 
         ratingFilter.setStyle(
-                "-fx-background-color: #FFFFFF;" +
-                "-fx-background-radius: 9px;" +
-                "-fx-border-radius: 9px;" +
+                "-fx-background-radius: 8;" +
+                "-fx-border-radius: 8;" +
                 "-fx-border-color: #CBD5E1;"
         );
 
         filteredData =
                 new FilteredList<>(
                         reviewData,
-                        p -> true
+                        review -> true
                 );
 
-        searchField.textProperty()
+        searchField
+                .textProperty()
                 .addListener(
                         (obs, oldVal, newVal) ->
                                 applyFilter(
@@ -667,7 +672,8 @@ public class AppReviewDashboard {
                                 )
                 );
 
-        roleFilter.valueProperty()
+        roleFilter
+                .valueProperty()
                 .addListener(
                         (obs, oldVal, newVal) ->
                                 applyFilter(
@@ -677,7 +683,8 @@ public class AppReviewDashboard {
                                 )
                 );
 
-        ratingFilter.valueProperty()
+        ratingFilter
+                .valueProperty()
                 .addListener(
                         (obs, oldVal, newVal) ->
                                 applyFilter(
@@ -695,27 +702,16 @@ public class AppReviewDashboard {
                         ratingFilter
                 );
 
-        filterBar.setPadding(
-                new Insets(12)
-        );
-
         filterBar.setAlignment(
                 Pos.CENTER_LEFT
-        );
-
-        filterBar.setStyle(
-                "-fx-background-color: #FFFFFF;" +
-                "-fx-background-radius: 12px;" +
-                "-fx-border-color: #E2E8F0;" +
-                "-fx-border-radius: 12px;"
         );
 
         return filterBar;
     }
 
-    // ============================================================
-    // APPLY FILTER
-    // ============================================================
+    // =========================================================
+    // FILTER
+    // =========================================================
 
     private void applyFilter(
             String searchText,
@@ -726,49 +722,41 @@ public class AppReviewDashboard {
             return;
         }
 
+        String query =
+                searchText == null
+                        ? ""
+                        : searchText
+                                .toLowerCase()
+                                .trim();
+
         filteredData.setPredicate(
                 review -> {
 
-                    String comment =
-                            review.getComment() == null
-                                    ? ""
-                                    : review.getComment();
-
-                    String username =
-                            review.getUsername() == null
-                                    ? ""
-                                    : review.getUsername();
-
-                    String role =
-                            review.getUserRole() == null
-                                    ? ""
-                                    : review.getUserRole();
-
                     boolean matchesSearch =
-                            searchText == null ||
-                            searchText.isEmpty() ||
-                            comment
+                            query.isEmpty()
+                                    ||
+                            safe(review.getComment())
                                     .toLowerCase()
-                                    .contains(
-                                            searchText.toLowerCase()
-                                    ) ||
-                            username
+                                    .contains(query)
+                                    ||
+                            safe(review.getUsername())
                                     .toLowerCase()
-                                    .contains(
-                                            searchText.toLowerCase()
-                                    ) ||
-                            role
+                                    .contains(query)
+                                    ||
+                            safe(review.getUserRole())
                                     .toLowerCase()
-                                    .contains(
-                                            searchText.toLowerCase()
-                                    );
+                                    .contains(query);
 
                     boolean matchesRole =
-                            selectedRole == null ||
+                            selectedRole == null
+                                    ||
                             selectedRole.equals(
                                     "All Roles"
-                            ) ||
-                            role.equalsIgnoreCase(
+                            )
+                                    ||
+                            safe(
+                                    review.getUserRole()
+                            ).equalsIgnoreCase(
                                     selectedRole
                             );
 
@@ -776,35 +764,45 @@ public class AppReviewDashboard {
                             true;
 
                     if (
-                            selectedRating != null &&
+                            selectedRating != null
+                                    &&
                             !selectedRating.equals(
                                     "All Ratings"
                             )
                     ) {
 
-                        int targetStars =
-                                Integer.parseInt(
-                                        selectedRating
-                                                .split(" ")[0]
-                                );
+                        try {
 
-                        matchesRating =
-                                review.getRating() ==
-                                        targetStars;
+                            int targetStars =
+                                    Integer.parseInt(
+                                            selectedRating
+                                                    .split(" ")[0]
+                                    );
+
+                            matchesRating =
+                                    review.getRating()
+                                            == targetStars;
+
+                        } catch (Exception ignored) {
+
+                            matchesRating =
+                                    true;
+                        }
                     }
 
-                    return matchesSearch &&
-                            matchesRole &&
-                            matchesRating;
+                    return matchesSearch
+                            && matchesRole
+                            && matchesRating;
                 }
         );
     }
 
-    // ============================================================
+    // =========================================================
     // REVIEW TABLE
-    // ============================================================
+    // =========================================================
 
-    private TableView<Review> createReviewTable() {
+    private TableView<Review>
+    createReviewTable() {
 
         TableView<Review> table =
                 new TableView<>();
@@ -819,16 +817,21 @@ public class AppReviewDashboard {
 
         table.setStyle(
                 "-fx-background-color: #FFFFFF;" +
-                "-fx-background-radius: 12px;" +
+                "-fx-background-radius: 12;" +
                 "-fx-border-color: #E2E8F0;" +
-                "-fx-border-radius: 12px;"
+                "-fx-border-radius: 12;"
         );
 
-        // ========================================================
-        // USER
-        // ========================================================
+        table.setPrefHeight(
+                500
+        );
 
-        TableColumn<Review, String> userCol =
+        // =====================================================
+        // USER
+        // =====================================================
+
+        TableColumn<Review, String>
+                userCol =
                 new TableColumn<>(
                         "User Name"
                 );
@@ -843,11 +846,12 @@ public class AppReviewDashboard {
                 130
         );
 
-        // ========================================================
+        // =====================================================
         // ROLE
-        // ========================================================
+        // =====================================================
 
-        TableColumn<Review, String> roleCol =
+        TableColumn<Review, String>
+                roleCol =
                 new TableColumn<>(
                         "Role"
                 );
@@ -877,47 +881,47 @@ public class AppReviewDashboard {
                                 );
 
                                 if (
-                                        empty ||
+                                        empty
+                                                ||
                                         role == null
                                 ) {
 
                                     setText(null);
                                     setStyle("");
 
-                                } else {
+                                    return;
+                                }
 
-                                    setText(
-                                            role
+                                setText(role);
+
+                                if (
+                                        role.equalsIgnoreCase(
+                                                "Doctor"
+                                        )
+                                ) {
+
+                                    setStyle(
+                                            "-fx-text-fill: #0284C7;" +
+                                            "-fx-font-weight: bold;"
                                     );
 
-                                    if (
-                                            role.equalsIgnoreCase(
-                                                    "Doctor"
-                                            )
-                                    ) {
+                                } else {
 
-                                        setStyle(
-                                                "-fx-text-fill: #0284C7;" +
-                                                "-fx-font-weight: bold;"
-                                        );
-
-                                    } else {
-
-                                        setStyle(
-                                                "-fx-text-fill: #059669;" +
-                                                "-fx-font-weight: bold;"
-                                        );
-                                    }
+                                    setStyle(
+                                            "-fx-text-fill: #059669;" +
+                                            "-fx-font-weight: bold;"
+                                    );
                                 }
                             }
                         }
         );
 
-        // ========================================================
+        // =====================================================
         // RATING
-        // ========================================================
+        // =====================================================
 
-        TableColumn<Review, Integer> ratingCol =
+        TableColumn<Review, Integer>
+                ratingCol =
                 new TableColumn<>(
                         "Rating"
                 );
@@ -947,38 +951,51 @@ public class AppReviewDashboard {
                                 );
 
                                 if (
-                                        empty ||
+                                        empty
+                                                ||
                                         rating == null
                                 ) {
 
                                     setText(null);
 
-                                } else {
-
-                                    setText(
-                                            "★".repeat(
-                                                    rating
-                                            ) +
-                                            "☆".repeat(
-                                                    5 - rating
-                                            )
-                                    );
-
-                                    setStyle(
-                                            "-fx-text-fill: #F59E0B;" +
-                                            "-fx-font-weight: bold;" +
-                                            "-fx-font-size: 14px;"
-                                    );
+                                    return;
                                 }
+
+                                int safeRating =
+                                        Math.max(
+                                                0,
+                                                Math.min(
+                                                        5,
+                                                        rating
+                                                )
+                                        );
+
+                                setText(
+                                        "★".repeat(
+                                                safeRating
+                                        )
+                                                +
+                                        "☆".repeat(
+                                                5
+                                                        - safeRating
+                                        )
+                                );
+
+                                setStyle(
+                                        "-fx-text-fill: #F59E0B;" +
+                                        "-fx-font-weight: bold;" +
+                                        "-fx-font-size: 14px;"
+                                );
                             }
                         }
         );
 
-        // ========================================================
+        // =====================================================
         // COMMENT
-        // ========================================================
+        // =====================================================
 
-        TableColumn<Review, String> commentCol =
+        TableColumn<Review, String>
+                commentCol =
                 new TableColumn<>(
                         "Feedback / Experience"
                 );
@@ -993,11 +1010,12 @@ public class AppReviewDashboard {
                 340
         );
 
-        // ========================================================
+        // =====================================================
         // DATE
-        // ========================================================
+        // =====================================================
 
-        TableColumn<Review, LocalDate> dateCol =
+        TableColumn<Review, LocalDate>
+                dateCol =
                 new TableColumn<>(
                         "Date"
                 );
@@ -1012,11 +1030,12 @@ public class AppReviewDashboard {
                 100
         );
 
-        // ========================================================
+        // =====================================================
         // VERSION
-        // ========================================================
+        // =====================================================
 
-        TableColumn<Review, String> versionCol =
+        TableColumn<Review, String>
+                versionCol =
                 new TableColumn<>(
                         "Version"
                 );
@@ -1043,168 +1062,252 @@ public class AppReviewDashboard {
         return table;
     }
 
-    // ============================================================
-    // LOAD REVIEW DATA
-    // ============================================================
+    // =========================================================
+    // CALCULATE AVERAGE
+    // =========================================================
 
-    /**
-     * Load actual ApplicationReview records from Firestore.
-     */
-    private void loadReviewData() {
+    private double calculateAverageRating() {
 
-        reviewData.clear();
+        if (reviewData.isEmpty()) {
+            return 0.0;
+        }
+
+        int total =
+                reviewData
+                        .stream()
+                        .mapToInt(
+                                Review::getRating
+                        )
+                        .sum();
+
+        return (double) total
+                / reviewData.size();
+    }
+
+    // =========================================================
+    // SATISFACTION RATE
+    // =========================================================
+
+    private int calculateSatisfactionRate() {
+
+        if (reviewData.isEmpty()) {
+            return 0;
+        }
+
+        long satisfied =
+                reviewData
+                        .stream()
+                        .filter(
+                                review ->
+                                        review.getRating()
+                                                >= 4
+                        )
+                        .count();
+
+        return (int) Math.round(
+                (
+                        (double) satisfied
+                                / reviewData.size()
+                ) * 100
+        );
+    }
+
+    // =========================================================
+    // COUNT RATING
+    // =========================================================
+
+    private int countRating(
+            int targetRating) {
+
+        return (int)
+                reviewData
+                        .stream()
+                        .filter(
+                                review ->
+                                        review.getRating()
+                                                == targetRating
+                        )
+                        .count();
+    }
+
+    // =========================================================
+    // STRING HELPER
+    // =========================================================
+
+    private String getString(
+            Map<String, Object> data,
+            String key) {
+
+        if (data == null ||
+                !data.containsKey(key)) {
+
+            return "";
+        }
+
+        Object value =
+                data.get(key);
+
+        if (value == null) {
+            return "";
+        }
+
+        return String.valueOf(
+                value
+        );
+    }
+
+    // =========================================================
+    // INTEGER HELPER
+    // =========================================================
+
+    private int getInt(
+            Map<String, Object> data,
+            String key) {
+
+        if (data == null ||
+                !data.containsKey(key)) {
+
+            return 0;
+        }
+
+        Object value =
+                data.get(key);
+
+        if (value == null) {
+            return 0;
+        }
+
+        if (value instanceof Number) {
+
+            return ((Number) value)
+                    .intValue();
+        }
 
         try {
 
-            List<ApplicationReview> reviews =
-                    applicationReviewController
-                            .getAllReviews();
+            return Integer.parseInt(
+                    value.toString()
+                            .trim()
+            );
 
-            if (reviews == null) {
-                return;
-            }
+        } catch (Exception e) {
 
-            for (
-                    ApplicationReview review :
-                    reviews
-            ) {
+            return 0;
+        }
+    }
 
-                if (review == null) {
-                    continue;
+    // =========================================================
+    // DATE HELPER
+    // =========================================================
+
+    private LocalDate getReviewDate(
+            Map<String, Object> data) {
+
+        if (data == null) {
+            return LocalDate.now();
+        }
+
+        Object value =
+                data.get("date");
+
+        /*
+         * Firestore Timestamp
+         */
+        if (value instanceof Timestamp) {
+
+            Timestamp timestamp =
+                    (Timestamp) value;
+
+            return timestamp
+                    .toDate()
+                    .toInstant()
+                    .atZone(
+                            java.time.ZoneId
+                                    .systemDefault()
+                    )
+                    .toLocalDate();
+        }
+
+        /*
+         * java.util.Date
+         */
+        if (value instanceof java.util.Date) {
+
+            java.util.Date date =
+                    (java.util.Date) value;
+
+            return date
+                    .toInstant()
+                    .atZone(
+                            java.time.ZoneId
+                                    .systemDefault()
+                    )
+                    .toLocalDate();
+        }
+
+        /*
+         * String date
+         */
+        if (value != null) {
+
+            String dateString =
+                    value.toString()
+                            .trim();
+
+            if (!dateString.isEmpty()) {
+
+                try {
+
+                    return LocalDate.parse(
+                            dateString
+                    );
+
+                } catch (Exception ignored) {
                 }
 
-                String username =
-                        safe(
-                                review.getApplicantName()
-                        );
+                /*
+                 * Try timestamp-style strings.
+                 */
+                try {
 
-                String role =
-                        safe(
-                                review.getApplicantRole()
-                        );
+                    return java.time.LocalDateTime
+                            .parse(
+                                    dateString
+                            )
+                            .toLocalDate();
 
-                String comment =
-                        safe(
-                                review.getReviewText()
-                        );
-
-                LocalDate date =
-                        convertDate(
-                                review.getCreatedAt()
-                        );
-
-                // Current ApplicationReview model
-                // does not contain appVersion.
-                String appVersion =
-                        "N/A";
-
-                reviewData.add(
-                        new Review(
-                                username,
-                                role,
-                                review.getRating(),
-                                comment,
-                                date,
-                                appVersion
-                        )
-                );
-            }
-
-        } catch (RuntimeException e) {
-
-            e.printStackTrace();
-
-            showAlert(
-                    "Application Review Error",
-                    "Unable to load application reviews "
-                            + "from Firestore.\n\n"
-                            + e.getMessage()
-            );
-        }
-    }
-
-    // ============================================================
-    // DATE CONVERSION
-    // ============================================================
-
-    private LocalDate convertDate(
-            LocalDateTime dateTime) {
-
-        if (dateTime == null) {
-            return null;
-        }
-
-        return dateTime.toLocalDate();
-    }
-
-    // ============================================================
-    // AVERAGE RATING
-    // ============================================================
-
-    private String calculateAverageRating() {
-
-        if (reviewData.isEmpty()) {
-            return "0.0 ★";
-        }
-
-        double total = 0;
-
-        for (
-                Review review :
-                reviewData
-        ) {
-
-            total += review.getRating();
-        }
-
-        double average =
-                total /
-                reviewData.size();
-
-        return String.format(
-                "%.1f ★",
-                average
-        );
-    }
-
-    // ============================================================
-    // SATISFACTION RATE
-    // ============================================================
-
-    private String calculateSatisfactionRate() {
-
-        if (reviewData.isEmpty()) {
-            return "0%";
-        }
-
-        int positive = 0;
-
-        for (
-                Review review :
-                reviewData
-        ) {
-
-            if (
-                    review.getRating() >= 4
-            ) {
-
-                positive++;
+                } catch (Exception ignored) {
+                }
             }
         }
 
-        double rate =
-                (positive * 100.0) /
-                reviewData.size();
+        /*
+         * createdAt fallback
+         */
+        Object createdAt =
+                data.get("createdAt");
 
-        return String.format(
-                "%.0f%%",
-                rate
-        );
+        if (createdAt instanceof Timestamp) {
+
+            Timestamp timestamp =
+                    (Timestamp) createdAt;
+
+            return timestamp
+                    .toDate()
+                    .toInstant()
+                    .atZone(
+                            java.time.ZoneId
+                                    .systemDefault()
+                    )
+                    .toLocalDate();
+        }
+
+        return LocalDate.now();
     }
 
-    // ============================================================
+    // =========================================================
     // SAFE STRING
-    // ============================================================
+    // =========================================================
 
     private String safe(
             String value) {
@@ -1212,33 +1315,5 @@ public class AppReviewDashboard {
         return value == null
                 ? ""
                 : value;
-    }
-
-    // ============================================================
-    // ALERT
-    // ============================================================
-
-    private void showAlert(
-            String title,
-            String message) {
-
-        Alert alert =
-                new Alert(
-                        Alert.AlertType.ERROR
-                );
-
-        alert.setTitle(
-                title
-        );
-
-        alert.setHeaderText(
-                null
-        );
-
-        alert.setContentText(
-                message
-        );
-
-        alert.showAndWait();
     }
 }

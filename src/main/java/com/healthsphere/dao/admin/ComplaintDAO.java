@@ -2,121 +2,82 @@ package com.healthsphere.dao.admin;
 
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.QuerySnapshot;
 import com.healthsphere.config.FirebaseConfig;
-import com.healthsphere.model.ComplaintModel;
+import com.healthsphere.exceptions.DatabaseException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class ComplaintDAO {
 
-    private static final String COLLECTION_NAME = "complaints";
-
-    private final Firestore firestore;
+    private final Firestore db;
 
     public ComplaintDAO() {
-        this.firestore = FirebaseConfig.getFirestore();
+
+        this.db =
+                FirebaseConfig.getFirestore();
     }
 
-    /**
-     * Create a complaint.
-     */
-    public void createComplaint(ComplaintModel complaint) {
+    // ============================================================
+    // CREATE COMPLAINT
+    // ============================================================
 
-        if (complaint == null) {
-            throw new IllegalArgumentException(
-                    "Complaint cannot be null."
-            );
-        }
-
-        if (complaint.getTicketId() == null ||
-                complaint.getTicketId().trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Ticket ID is required."
-            );
-        }
+    public boolean createComplaint(
+            String ticketId,
+            Map<String, Object> complaintData) {
 
         try {
-            firestore
-                    .collection(COLLECTION_NAME)
-                    .document(complaint.getTicketId())
-                    .set(complaint)
+
+            db.collection("complaints")
+                    .document(ticketId)
+                    .set(complaintData)
                     .get();
 
+            return true;
+
         } catch (Exception e) {
-            throw new RuntimeException(
-                    "Failed to create complaint.",
+
+            throw new DatabaseException(
+                    "Unable to create complaint.",
                     e
             );
         }
     }
 
-    /**
-     * Get a complaint by ticket ID.
-     */
-    public ComplaintModel getComplaint(String ticketId) {
+    // ============================================================
+    // GET ALL COMPLAINTS
+    // ============================================================
 
-        if (ticketId == null ||
-                ticketId.trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Ticket ID is required."
-            );
-        }
+    public List<Map<String, Object>>
+    getAllComplaints() {
 
         try {
-            DocumentSnapshot document =
-                    firestore
-                            .collection(COLLECTION_NAME)
-                            .document(ticketId)
-                            .get()
-                            .get();
 
-            if (!document.exists()) {
-                return null;
-            }
-
-            return document.toObject(
-                    ComplaintModel.class
-            );
-
-        } catch (Exception e) {
-            throw new RuntimeException(
-                    "Failed to retrieve complaint.",
-                    e
-            );
-        }
-    }
-
-    /**
-     * Get all complaints.
-     */
-    public List<ComplaintModel> getAllComplaints() {
-
-        try {
-            QuerySnapshot snapshot =
-                    firestore
-                            .collection(COLLECTION_NAME)
-                            .get()
-                            .get();
-
-            List<ComplaintModel> complaints =
+            List<Map<String, Object>> complaints =
                     new ArrayList<>();
 
-            for (DocumentSnapshot document :
-                    snapshot.getDocuments()) {
+            for (
+                    DocumentSnapshot document :
+                    db.collection("complaints")
+                            .get()
+                            .get()
+                            .getDocuments()
+            ) {
 
                 if (document.exists()) {
 
-                    ComplaintModel complaint =
-                            document.toObject(
-                                    ComplaintModel.class
-                            );
+                    Map<String, Object> data =
+                            document.getData();
 
-                    if (complaint != null) {
-                        complaints.add(complaint);
+                    if (data != null) {
+
+                        data.put(
+                                "documentId",
+                                document.getId()
+                        );
+
+                        complaints.add(data);
                     }
                 }
             }
@@ -124,71 +85,38 @@ public class ComplaintDAO {
             return complaints;
 
         } catch (Exception e) {
-            throw new RuntimeException(
-                    "Failed to retrieve complaints.",
+
+            throw new DatabaseException(
+                    "Unable to retrieve complaints.",
                     e
             );
         }
     }
 
-    /**
-     * Update an existing complaint.
-     */
-    public void updateComplaint(
-            ComplaintModel complaint) {
+    // ============================================================
+    // UPDATE STATUS
+    // ============================================================
 
-        if (complaint == null) {
-            throw new IllegalArgumentException(
-                    "Complaint cannot be null."
-            );
-        }
-
-        if (complaint.getTicketId() == null ||
-                complaint.getTicketId().trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Ticket ID is required."
-            );
-        }
+    public boolean updateStatus(
+            String ticketId,
+            String status) {
 
         try {
-            firestore
-                    .collection(COLLECTION_NAME)
-                    .document(complaint.getTicketId())
-                    .set(complaint)
-                    .get();
 
-        } catch (Exception e) {
-            throw new RuntimeException(
-                    "Failed to update complaint.",
-                    e
-            );
-        }
-    }
-
-    /**
-     * Delete a complaint.
-     */
-    public void deleteComplaint(String ticketId) {
-
-        if (ticketId == null ||
-                ticketId.trim().isEmpty()) {
-
-            throw new IllegalArgumentException(
-                    "Ticket ID is required."
-            );
-        }
-
-        try {
-            firestore
-                    .collection(COLLECTION_NAME)
+            db.collection("complaints")
                     .document(ticketId)
-                    .delete()
+                    .update(
+                            "status",
+                            status
+                    )
                     .get();
 
+            return true;
+
         } catch (Exception e) {
-            throw new RuntimeException(
-                    "Failed to delete complaint.",
+
+            throw new DatabaseException(
+                    "Unable to update complaint status.",
                     e
             );
         }

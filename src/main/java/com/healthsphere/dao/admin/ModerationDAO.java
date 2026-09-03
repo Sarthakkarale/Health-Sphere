@@ -1,9 +1,13 @@
 package com.healthsphere.dao.admin;
 
+import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
+import com.google.cloud.firestore.SetOptions;
 import com.healthsphere.config.FirebaseConfig;
+import com.healthsphere.exceptions.DatabaseException;
 import com.healthsphere.model.ComplaintModel;
 
 import java.time.LocalDateTime;
@@ -15,15 +19,19 @@ import java.util.Map;
 
 public class ModerationDAO {
 
-    private static final String COLLECTION_NAME = "complaints";
+    private static final String COLLECTION = "complaints";
 
     private static final DateTimeFormatter DATE_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-    private final Firestore firestore;
+    private final Firestore db;
+
+    // ============================================================
+    // CONSTRUCTOR
+    // ============================================================
 
     public ModerationDAO() {
-        this.firestore = FirebaseConfig.getFirestore();
+        this.db = FirebaseConfig.getFirestore();
     }
 
     // ============================================================
@@ -34,18 +42,22 @@ public class ModerationDAO {
 
         validateComplaint(complaint);
 
+        String ticketId = complaint.getTicketId().trim();
+
         try {
 
-            firestore
-                    .collection(COLLECTION_NAME)
-                    .document(complaint.getTicketId())
-                    .set(complaint)
+            Map<String, Object> data =
+                    complaintToMap(complaint);
+
+            db.collection(COLLECTION)
+                    .document(ticketId)
+                    .set(data)
                     .get();
 
         } catch (Exception e) {
 
-            throw new RuntimeException(
-                    "Failed to create complaint.",
+            throw new DatabaseException(
+                    "Unable to create complaint.",
                     e
             );
         }
@@ -57,14 +69,15 @@ public class ModerationDAO {
 
     public ComplaintModel getComplaint(String ticketId) {
 
-        validateTicketId(ticketId);
+        if (isEmpty(ticketId)) {
+            return null;
+        }
 
         try {
 
             DocumentSnapshot document =
-                    firestore
-                            .collection(COLLECTION_NAME)
-                            .document(ticketId)
+                    db.collection(COLLECTION)
+                            .document(ticketId.trim())
                             .get()
                             .get();
 
@@ -72,14 +85,12 @@ public class ModerationDAO {
                 return null;
             }
 
-            return document.toObject(
-                    ComplaintModel.class
-            );
+            return documentToComplaint(document);
 
         } catch (Exception e) {
 
-            throw new RuntimeException(
-                    "Failed to retrieve complaint.",
+            throw new DatabaseException(
+                    "Unable to retrieve complaint.",
                     e
             );
         }
@@ -93,28 +104,36 @@ public class ModerationDAO {
 
         try {
 
-            QuerySnapshot snapshot =
-                    firestore
-                            .collection(COLLECTION_NAME)
-                            .get()
-                            .get();
-
             List<ComplaintModel> complaints =
                     new ArrayList<>();
 
-            for (DocumentSnapshot document : snapshot.getDocuments()) {
+            ApiFuture<QuerySnapshot> future =
+                    db.collection(COLLECTION)
+                            .get();
 
-                if (!document.exists()) {
-                    continue;
-                }
+            QuerySnapshot snapshot =
+                    future.get();
 
-                ComplaintModel complaint =
-                        document.toObject(
-                                ComplaintModel.class
-                        );
+            for (QueryDocumentSnapshot document :
+                    snapshot.getDocuments()) {
 
-                if (complaint != null) {
-                    complaints.add(complaint);
+                try {
+
+                    ComplaintModel complaint =
+                            documentToComplaint(document);
+
+                    if (complaint != null) {
+                        complaints.add(complaint);
+                    }
+
+                } catch (Exception e) {
+
+                    System.err.println(
+                            "Skipping invalid complaint document: "
+                                    + document.getId()
+                                    + " | "
+                                    + e.getMessage()
+                    );
                 }
             }
 
@@ -122,8 +141,8 @@ public class ModerationDAO {
 
         } catch (Exception e) {
 
-            throw new RuntimeException(
-                    "Failed to retrieve complaints.",
+            throw new DatabaseException(
+                    "Unable to retrieve complaints.",
                     e
             );
         }
@@ -133,41 +152,57 @@ public class ModerationDAO {
     // UPDATE COMPLETE COMPLAINT
     // ============================================================
 
-    public void updateComplaint(ComplaintModel complaint) {
+    public void updateComplaint(
+            ComplaintModel complaint) {
 
         validateComplaint(complaint);
 
+        String ticketId =
+                complaint.getTicketId().trim();
+
         try {
 
-            firestore
-                    .collection(COLLECTION_NAME)
-                    .document(complaint.getTicketId())
-                    .set(complaint)
+            Map<String, Object> data =
+                    complaintToMap(complaint);
+
+            db.collection(COLLECTION)
+                    .document(ticketId)
+                    .set(
+                            data,
+                            SetOptions.merge()
+                    )
                     .get();
 
         } catch (Exception e) {
 
-            throw new RuntimeException(
-                    "Failed to update complaint.",
+            throw new DatabaseException(
+                    "Unable to update complaint.",
                     e
             );
         }
     }
 
     // ============================================================
-    // UPDATE COMPLAINT STATUS
+    // UPDATE STATUS
     // ============================================================
 
     public void updateComplaintStatus(
             String ticketId,
             String status) {
 
-        validateTicketId(ticketId);
+        if (isEmpty(ticketId)) {
 
-        if (status == null || status.trim().isEmpty()) {
+            throw new DatabaseException(
+                    "Ticket ID is required.",
+                    null
+            );
+        }
 
-            throw new IllegalArgumentException(
-                    "Complaint status is required."
+        if (isEmpty(status)) {
+
+            throw new DatabaseException(
+                    "Complaint status is required.",
+                    null
             );
         }
 
@@ -184,13 +219,9 @@ public class ModerationDAO {
                     normalizedStatus
             );
 
-            /*
-             * When complaint becomes RESOLVED,
-             * store the actual resolution time.
-             *
-             * When complaint is reopened,
-             * clear the previous resolvedDate.
-             */
+            // ----------------------------------------------------
+            // RESOLVED DATE
+            // ----------------------------------------------------
 
             if ("RESOLVED".equals(normalizedStatus)) {
 
@@ -208,16 +239,15 @@ public class ModerationDAO {
                 );
             }
 
-            firestore
-                    .collection(COLLECTION_NAME)
-                    .document(ticketId)
+            db.collection(COLLECTION)
+                    .document(ticketId.trim())
                     .update(updates)
                     .get();
 
         } catch (Exception e) {
 
-            throw new RuntimeException(
-                    "Failed to update complaint status.",
+            throw new DatabaseException(
+                    "Unable to update complaint status.",
                     e
             );
         }
@@ -231,30 +261,41 @@ public class ModerationDAO {
             String ticketId,
             String priority) {
 
-        validateTicketId(ticketId);
+        if (isEmpty(ticketId)) {
 
-        if (priority == null || priority.trim().isEmpty()) {
+            throw new DatabaseException(
+                    "Ticket ID is required.",
+                    null
+            );
+        }
 
-            throw new IllegalArgumentException(
-                    "Complaint priority is required."
+        if (isEmpty(priority)) {
+
+            throw new DatabaseException(
+                    "Complaint priority is required.",
+                    null
             );
         }
 
         try {
 
-            firestore
-                    .collection(COLLECTION_NAME)
-                    .document(ticketId)
-                    .update(
-                            "priority",
-                            priority.trim().toUpperCase()
-                    )
+            Map<String, Object> updates =
+                    new HashMap<>();
+
+            updates.put(
+                    "priority",
+                    priority.trim().toUpperCase()
+            );
+
+            db.collection(COLLECTION)
+                    .document(ticketId.trim())
+                    .update(updates)
                     .get();
 
         } catch (Exception e) {
 
-            throw new RuntimeException(
-                    "Failed to update complaint priority.",
+            throw new DatabaseException(
+                    "Unable to update complaint priority.",
                     e
             );
         }
@@ -266,23 +307,159 @@ public class ModerationDAO {
 
     public void deleteComplaint(String ticketId) {
 
-        validateTicketId(ticketId);
+        if (isEmpty(ticketId)) {
+
+            throw new DatabaseException(
+                    "Ticket ID is required.",
+                    null
+            );
+        }
 
         try {
 
-            firestore
-                    .collection(COLLECTION_NAME)
-                    .document(ticketId)
+            db.collection(COLLECTION)
+                    .document(ticketId.trim())
                     .delete()
                     .get();
 
         } catch (Exception e) {
 
-            throw new RuntimeException(
-                    "Failed to delete complaint.",
+            throw new DatabaseException(
+                    "Unable to delete complaint.",
                     e
             );
         }
+    }
+
+    // ============================================================
+    // MODEL → FIRESTORE MAP
+    // ============================================================
+
+    private Map<String, Object> complaintToMap(
+            ComplaintModel complaint) {
+
+        Map<String, Object> data =
+                new HashMap<>();
+
+        data.put(
+                "ticketId",
+                safe(complaint.getTicketId()).trim()
+        );
+
+        data.put(
+                "category",
+                safe(complaint.getCategory())
+        );
+
+        data.put(
+                "issueTitle",
+                safe(complaint.getIssueTitle())
+        );
+
+        data.put(
+                "description",
+                safe(complaint.getDescription())
+        );
+
+        data.put(
+                "complainant",
+                safe(complaint.getComplainant())
+        );
+
+        data.put(
+                "priority",
+                safe(complaint.getPriority())
+                        .trim()
+                        .toUpperCase()
+        );
+
+        data.put(
+                "status",
+                safe(complaint.getStatus())
+                        .trim()
+                        .toUpperCase()
+        );
+
+        data.put(
+                "createdDate",
+                safe(complaint.getCreatedDate())
+        );
+
+        data.put(
+                "resolvedDate",
+                complaint.getResolvedDate()
+        );
+
+        return data;
+    }
+
+    // ============================================================
+    // FIRESTORE DOCUMENT → MODEL
+    // ============================================================
+
+    private ComplaintModel documentToComplaint(
+            DocumentSnapshot document) {
+
+        if (document == null ||
+                !document.exists()) {
+
+            return null;
+        }
+
+        String ticketId =
+                getString(document, "ticketId");
+
+        // --------------------------------------------------------
+        // FALLBACK TO DOCUMENT ID
+        // --------------------------------------------------------
+
+        if (isEmpty(ticketId)) {
+
+            ticketId =
+                    document.getId();
+        }
+
+        String category =
+                getString(document, "category");
+
+        String issueTitle =
+                getString(document, "issueTitle");
+
+        String description =
+                getString(document, "description");
+
+        String complainant =
+                getString(document, "complainant");
+
+        String priority =
+                getString(document, "priority");
+
+        String status =
+                getString(document, "status");
+
+        String createdDate =
+                getString(document, "createdDate");
+
+        String resolvedDate =
+                getString(document, "resolvedDate");
+
+        ComplaintModel complaint =
+                new ComplaintModel(
+                        ticketId,
+                        category,
+                        issueTitle,
+                        description,
+                        complainant,
+                        priority,
+                        status,
+                        createdDate
+                );
+
+        complaint.setResolvedDate(
+                resolvedDate
+        );
+
+        return complaint;
     }
 
     // ============================================================
@@ -294,29 +471,57 @@ public class ModerationDAO {
 
         if (complaint == null) {
 
-            throw new IllegalArgumentException(
-                    "Complaint cannot be null."
+            throw new DatabaseException(
+                    "Complaint data cannot be null.",
+                    null
             );
         }
 
-        validateTicketId(
-                complaint.getTicketId()
-        );
+        if (isEmpty(complaint.getTicketId())) {
+
+            throw new DatabaseException(
+                    "Ticket ID is required.",
+                    null
+            );
+        }
     }
 
     // ============================================================
-    // VALIDATE TICKET ID
+    // SAFE FIRESTORE STRING
     // ============================================================
 
-    private void validateTicketId(
-            String ticketId) {
+    private String getString(
+            DocumentSnapshot document,
+            String field) {
 
-        if (ticketId == null ||
-                ticketId.trim().isEmpty()) {
+        Object value =
+                document.get(field);
 
-            throw new IllegalArgumentException(
-                    "Complaint ticket ID is required."
-            );
+        if (value == null) {
+            return "";
         }
+
+        return String.valueOf(value);
+    }
+
+    // ============================================================
+    // SAFE STRING
+    // ============================================================
+
+    private String safe(String value) {
+
+        return value == null
+                ? ""
+                : value;
+    }
+
+    // ============================================================
+    // EMPTY CHECK
+    // ============================================================
+
+    private boolean isEmpty(String value) {
+
+        return value == null ||
+                value.trim().isEmpty();
     }
 }

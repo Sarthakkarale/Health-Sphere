@@ -13,34 +13,72 @@ public class FirebaseConfig {
 
     private static Firestore firestore;
 
+    // ============================================================
+    // INITIALIZE FIREBASE
+    // ============================================================
+
     public static void initialize() throws IOException {
 
+        // --------------------------------------------------------
+        // Prevent duplicate Firebase initialization
+        // --------------------------------------------------------
+
         if (!FirebaseApp.getApps().isEmpty()) {
-            firestore = FirestoreClient.getFirestore();
+
+            firestore =
+                    FirestoreClient.getFirestore();
+
             return;
         }
 
-        FileInputStream serviceAccount =
-                new FileInputStream("firebase/serviceAccountKey.json");
+        // --------------------------------------------------------
+        // Load Firebase service account
+        // --------------------------------------------------------
 
-        FirebaseOptions options = FirebaseOptions.builder()
-                .setCredentials(
-                        GoogleCredentials.fromStream(serviceAccount)
-                )
-                .build();
+        try (
+                FileInputStream serviceAccount =
+                        new FileInputStream(
+                                "firebase/serviceAccountKey.json"
+                        )
+        ) {
 
-        FirebaseApp.initializeApp(options);
+            FirebaseOptions options =
+                    FirebaseOptions.builder()
+                            .setCredentials(
+                                    GoogleCredentials.fromStream(
+                                            serviceAccount
+                                    )
+                            )
+                            .build();
 
-        firestore = FirestoreClient.getFirestore();
+            FirebaseApp.initializeApp(
+                    options
+            );
+        }
 
-        serviceAccount.close();
+        // --------------------------------------------------------
+        // Initialize Firestore
+        // --------------------------------------------------------
+
+        firestore =
+                FirestoreClient.getFirestore();
+
+        System.out.println(
+                "Firebase Firestore initialized successfully."
+        );
     }
+
+    // ============================================================
+    // GET FIRESTORE
+    // ============================================================
 
     public static Firestore getFirestore() {
 
         if (firestore == null) {
+
             throw new IllegalStateException(
-                    "Firebase has not been initialized. Call FirebaseConfig.initialize() first."
+                    "Firebase has not been initialized. "
+                            + "Call FirebaseConfig.initialize() first."
             );
         }
 
