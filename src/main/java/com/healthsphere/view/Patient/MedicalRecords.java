@@ -39,6 +39,7 @@ public class MedicalRecords {
 
     private final PrescriptionController prescriptionController;
 
+
     // =========================================================
     // CONSTRUCTOR
     // =========================================================
@@ -54,6 +55,7 @@ public class MedicalRecords {
                 new PrescriptionController();
     }
 
+
     // =========================================================
     // MAIN SCENE
     // =========================================================
@@ -67,12 +69,14 @@ public class MedicalRecords {
                 new Insets(0)
         );
 
+
         // =====================================================
         // IMAGE GALLERY
         // =====================================================
 
         HBox gallery =
                 createImageGallery();
+
 
         // =====================================================
         // UPLOADED MEDICAL REPORTS
@@ -98,6 +102,7 @@ public class MedicalRecords {
                 reportsCard
         );
 
+
         // =====================================================
         // PRESCRIPTIONS
         // =====================================================
@@ -105,36 +110,17 @@ public class MedicalRecords {
         VBox prescriptions =
                 PatientUI.coloredCard(
                         "💊  Prescriptions",
-                        "#eff6ff"
+                        "#dcfce7"
                 );
-
-        loadPrescriptions(
-                prescriptions
-        );
-
-        // =====================================================
-        // LOWER CONTENT
-        // =====================================================
-
-        HBox lower =
-                new HBox();
-
-        lower.setAlignment(
-                Pos.TOP_LEFT
-        );
 
         prescriptions.setMaxWidth(
                 Double.MAX_VALUE
         );
 
-        HBox.setHgrow(
-                prescriptions,
-                Priority.ALWAYS
-        );
-
-        lower.getChildren().add(
+        loadPrescriptions(
                 prescriptions
         );
+
 
         // =====================================================
         // QUICK ACTIONS
@@ -153,6 +139,7 @@ public class MedicalRecords {
                 Pos.CENTER_LEFT
         );
 
+
         Button healthPassport =
                 PatientUI.button(
                         "Health Passport",
@@ -161,6 +148,7 @@ public class MedicalRecords {
                                         .getScene()
                         )
                 );
+
 
         Button appointments =
                 PatientUI.button(
@@ -171,6 +159,7 @@ public class MedicalRecords {
                         )
                 );
 
+
         Button aiAssistant =
                 PatientUI.button(
                         "AI Health Assistant",
@@ -179,6 +168,7 @@ public class MedicalRecords {
                                         .getScene()
                         )
                 );
+
 
         actions.getChildren().addAll(
                 healthPassport,
@@ -190,6 +180,7 @@ public class MedicalRecords {
                 actions
         );
 
+
         // =====================================================
         // ADD CONTENT
         // =====================================================
@@ -197,9 +188,10 @@ public class MedicalRecords {
         content.getChildren().addAll(
                 gallery,
                 reportsCard,
-                lower,
+                prescriptions,
                 quickActions
         );
+
 
         // =====================================================
         // PATIENT UI
@@ -213,6 +205,7 @@ public class MedicalRecords {
                 content
         );
     }
+
 
     // =========================================================
     // UPLOAD REPORT DIALOG
@@ -231,12 +224,14 @@ public class MedicalRecords {
                 "Select and upload your medical document"
         );
 
+
         VBox form =
                 new VBox(15);
 
         form.setPadding(
                 new Insets(15)
         );
+
 
         // -----------------------------------------------------
         // REPORT NAME
@@ -253,6 +248,7 @@ public class MedicalRecords {
         reportName.setPromptText(
                 "Example: Blood Test Report"
         );
+
 
         // -----------------------------------------------------
         // REPORT TYPE
@@ -285,6 +281,7 @@ public class MedicalRecords {
                 Double.MAX_VALUE
         );
 
+
         // -----------------------------------------------------
         // FILE SELECTION
         // -----------------------------------------------------
@@ -298,8 +295,10 @@ public class MedicalRecords {
                 "-fx-text-fill: #64748b;"
         );
 
+
         final File[] selectedFile =
                 new File[1];
+
 
         Button chooseFile =
                 PatientUI.secondaryButton(
@@ -338,11 +337,12 @@ public class MedicalRecords {
                                             )
                                     );
 
+
                             File file =
-                                    fileChooser
-                                            .showOpenDialog(
-                                                    stage
-                                            );
+                                    fileChooser.showOpenDialog(
+                                            stage
+                                    );
+
 
                             if (file != null) {
 
@@ -356,6 +356,7 @@ public class MedicalRecords {
                         }
                 );
 
+
         HBox fileRow =
                 new HBox(
                         12,
@@ -367,6 +368,7 @@ public class MedicalRecords {
                 Pos.CENTER_LEFT
         );
 
+
         form.getChildren().addAll(
                 nameLabel,
                 reportName,
@@ -375,10 +377,12 @@ public class MedicalRecords {
                 fileRow
         );
 
+
         dialog.getDialogPane()
                 .setContent(
                         form
                 );
+
 
         ButtonType uploadButtonType =
                 new ButtonType(
@@ -386,11 +390,13 @@ public class MedicalRecords {
                         ButtonBar.ButtonData.OK_DONE
                 );
 
+
         ButtonType cancelButtonType =
                 new ButtonType(
                         "Cancel",
                         ButtonBar.ButtonData.CANCEL_CLOSE
                 );
+
 
         dialog.getDialogPane()
                 .getButtonTypes()
@@ -398,6 +404,7 @@ public class MedicalRecords {
                         uploadButtonType,
                         cancelButtonType
                 );
+
 
         dialog.showAndWait()
                 .ifPresent(
@@ -418,6 +425,7 @@ public class MedicalRecords {
                                     return;
                                 }
 
+
                                 if (reportName.getText() == null
                                         || reportName.getText().isBlank()) {
 
@@ -427,6 +435,7 @@ public class MedicalRecords {
 
                                     return;
                                 }
+
 
                                 if (reportType.getValue() == null
                                         || reportType.getValue().isBlank()) {
@@ -438,6 +447,7 @@ public class MedicalRecords {
                                     return;
                                 }
 
+
                                 medicalReportController
                                         .uploadReport(
                                                 reportName.getText(),
@@ -445,9 +455,11 @@ public class MedicalRecords {
                                                 selectedFile[0]
                                         );
 
+
                                 showSuccess(
                                         "Medical report uploaded successfully."
                                 );
+
 
                                 refreshPage();
 
@@ -458,13 +470,14 @@ public class MedicalRecords {
                                 showError(
                                         "Unable to upload medical report.\n\n"
                                                 + safeMessage(
-                                                        e.getMessage()
-                                                )
+                                                e.getMessage()
+                                        )
                                 );
                             }
                         }
                 );
     }
+
 
     // =========================================================
     // LOAD MEDICAL REPORTS
@@ -478,6 +491,7 @@ public class MedicalRecords {
             List<MedicalReport> reports =
                     medicalReportController
                             .getCurrentPatientReports();
+
 
             if (reports.isEmpty()) {
 
@@ -497,6 +511,7 @@ public class MedicalRecords {
 
                 return;
             }
+
 
             for (MedicalReport report :
                     reports) {
@@ -528,6 +543,7 @@ public class MedicalRecords {
         }
     }
 
+
     // =========================================================
     // MEDICAL REPORT CARD
     // =========================================================
@@ -549,6 +565,7 @@ public class MedicalRecords {
                 "-fx-border-radius: 10;"
         );
 
+
         Label name =
                 new Label(
                         safe(
@@ -561,6 +578,7 @@ public class MedicalRecords {
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #0f172a;"
         );
+
 
         Label type =
                 new Label(
@@ -575,6 +593,7 @@ public class MedicalRecords {
                 "-fx-font-size: 13px;"
         );
 
+
         Label fileName =
                 new Label(
                         "File: "
@@ -587,6 +606,7 @@ public class MedicalRecords {
                 "-fx-text-fill: #64748b;" +
                 "-fx-font-size: 13px;"
         );
+
 
         Label date =
                 new Label(
@@ -602,6 +622,7 @@ public class MedicalRecords {
                 "-fx-font-size: 13px;"
         );
 
+
         Button view =
                 PatientUI.secondaryButton(
                         "View Report",
@@ -610,6 +631,7 @@ public class MedicalRecords {
                         )
                 );
 
+
         Button delete =
                 createDeleteButton(
                         () -> deleteReport(
@@ -617,12 +639,14 @@ public class MedicalRecords {
                         )
                 );
 
+
         HBox buttons =
                 new HBox(
                         10,
                         view,
                         delete
                 );
+
 
         box.getChildren().addAll(
                 name,
@@ -632,8 +656,10 @@ public class MedicalRecords {
                 buttons
         );
 
+
         return box;
     }
+
 
     // =========================================================
     // OPEN REPORT
@@ -647,6 +673,7 @@ public class MedicalRecords {
             String fileUrl =
                     report.getFileUrl();
 
+
             if (fileUrl == null
                     || fileUrl.isBlank()) {
 
@@ -657,6 +684,7 @@ public class MedicalRecords {
                 return;
             }
 
+
             if (!Desktop.isDesktopSupported()) {
 
                 showError(
@@ -665,6 +693,7 @@ public class MedicalRecords {
 
                 return;
             }
+
 
             Desktop.getDesktop()
                     .browse(
@@ -683,6 +712,7 @@ public class MedicalRecords {
         }
     }
 
+
     // =========================================================
     // DELETE REPORT
     // =========================================================
@@ -694,6 +724,7 @@ public class MedicalRecords {
                 new Alert(
                         Alert.AlertType.CONFIRMATION
                 );
+
 
         confirmation.setTitle(
                 "Delete Medical Report"
@@ -707,11 +738,13 @@ public class MedicalRecords {
                 "This will permanently delete the report file and its metadata."
         );
 
+
         ButtonType deleteButton =
                 new ButtonType(
                         "Delete",
                         ButtonBar.ButtonData.YES
                 );
+
 
         ButtonType cancelButton =
                 new ButtonType(
@@ -719,12 +752,14 @@ public class MedicalRecords {
                         ButtonBar.ButtonData.CANCEL_CLOSE
                 );
 
+
         confirmation
                 .getButtonTypes()
                 .setAll(
                         deleteButton,
                         cancelButton
                 );
+
 
         confirmation
                 .showAndWait()
@@ -742,9 +777,11 @@ public class MedicalRecords {
                                                 report.getReportId()
                                         );
 
+
                                 showSuccess(
                                         "Medical report deleted successfully."
                                 );
+
 
                                 refreshPage();
 
@@ -755,13 +792,14 @@ public class MedicalRecords {
                                 showError(
                                         "Unable to delete medical report.\n\n"
                                                 + safeMessage(
-                                                        e.getMessage()
-                                                )
+                                                e.getMessage()
+                                        )
                                 );
                             }
                         }
                 );
     }
+
 
     // =========================================================
     // LOAD PRESCRIPTIONS
@@ -775,6 +813,7 @@ public class MedicalRecords {
             List<Prescription> prescriptions =
                     prescriptionController
                             .getCurrentPatientPrescriptions();
+
 
             if (prescriptions.isEmpty()) {
 
@@ -794,6 +833,7 @@ public class MedicalRecords {
 
                 return;
             }
+
 
             for (Prescription prescription :
                     prescriptions) {
@@ -825,8 +865,10 @@ public class MedicalRecords {
         }
     }
 
+
     // =========================================================
-    // PRESCRIPTION CARD - RX DESIGN
+    // PRESCRIPTION CARD
+    // SIMPLE CARD + IMAGE ON RIGHT CENTER
     // =========================================================
 
     private VBox prescriptionCard(
@@ -846,65 +888,475 @@ public class MedicalRecords {
         outerCard.setStyle(
                 "-fx-background-color: white;" +
                 "-fx-background-radius: 16;" +
-                "-fx-border-color: #cbd5e1;" +
+                "-fx-border-color: #bbf7d0;" +
                 "-fx-border-radius: 16;"
         );
 
+
         // =====================================================
-        // RX PRESCRIPTION PAPER
+        // MAIN CONTENT
+        // =====================================================
+
+        HBox mainContent =
+                new HBox(25);
+
+        mainContent.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        mainContent.setPadding(
+                new Insets(
+                        18,
+                        20,
+                        15,
+                        20
+                )
+        );
+
+
+        // =====================================================
+        // LEFT SIDE
+        // =====================================================
+
+        VBox prescriptionContent =
+                new VBox(10);
+
+        prescriptionContent.setAlignment(
+                Pos.CENTER_LEFT
+        );
+
+        prescriptionContent.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        HBox.setHgrow(
+                prescriptionContent,
+                Priority.ALWAYS
+        );
+
+
+        // DOCTOR
+
+        Label doctor =
+                new Label(
+                        "👨‍⚕️ "
+                                + safe(
+                                prescription.getDoctorName()
+                        )
+                );
+
+        doctor.setStyle(
+                "-fx-font-size: 16px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #166534;"
+        );
+
+
+        // MEDICINE
+
+        Label medicine =
+                new Label(
+                        "💊 "
+                                + safe(
+                                prescription.getMedication()
+                        )
+                );
+
+        medicine.setStyle(
+                "-fx-font-size: 18px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #0f172a;"
+        );
+
+
+        // DETAILS
+
+        Label strength =
+                createPrescriptionText(
+                        "Strength: "
+                                + safe(
+                                prescription.getStrength()
+                        )
+                );
+
+
+        Label dosage =
+                createPrescriptionText(
+                        "Dosage: "
+                                + safe(
+                                prescription.getDosage()
+                        )
+                );
+
+
+        Label frequency =
+                createPrescriptionText(
+                        "Frequency: "
+                                + safe(
+                                prescription.getFrequency()
+                        )
+                );
+
+
+        Label duration =
+                createPrescriptionText(
+                        "Duration: "
+                                + safe(
+                                prescription.getDuration()
+                        )
+                );
+
+
+        Label timing =
+                createPrescriptionText(
+                        "Timing: "
+                                + safe(
+                                prescription.getTiming()
+                        )
+                );
+
+
+        Label prescribed =
+                new Label(
+                        "Prescribed: "
+                                + safe(
+                                prescription.getCreatedAt()
+                        )
+                );
+
+        prescribed.setStyle(
+                "-fx-text-fill: #15803d;" +
+                "-fx-font-size: 13px;" +
+                "-fx-font-weight: bold;"
+        );
+
+
+        prescriptionContent.getChildren().addAll(
+                doctor,
+                medicine,
+                strength,
+                dosage,
+                frequency,
+                duration,
+                timing,
+                prescribed
+        );
+
+
+        // =====================================================
+        // RIGHT SIDE IMAGE
+        // =====================================================
+
+        StackPane imageContainer =
+                new StackPane();
+
+        imageContainer.setAlignment(
+                Pos.CENTER
+        );
+
+        imageContainer.setPrefWidth(
+                260
+        );
+
+        imageContainer.setMinWidth(
+                260
+        );
+
+        imageContainer.setMaxWidth(
+                260
+        );
+
+        imageContainer.setPrefHeight(
+                220
+        );
+
+        imageContainer.setMinHeight(
+                220
+        );
+
+
+        imageContainer.setStyle(
+                "-fx-background-color: #f8fafc;" +
+                "-fx-background-radius: 14;" +
+                "-fx-border-color: #e2e8f0;" +
+                "-fx-border-radius: 14;"
+        );
+
+
+        var imageResource =
+                getClass().getResource(
+                        "/images/medicalrecords/medicalrecord5.jpg"
+                );
+
+
+        if (imageResource != null) {
+
+            Image image =
+                    new Image(
+                            imageResource.toExternalForm()
+                    );
+
+
+            ImageView imageView =
+                    new ImageView(
+                            image
+                    );
+
+
+            imageView.setFitWidth(
+                    240
+            );
+
+            imageView.setFitHeight(
+                    200
+            );
+
+            imageView.setPreserveRatio(
+                    true
+            );
+
+            imageView.setSmooth(
+                    true
+            );
+
+
+            imageContainer.getChildren().add(
+                    imageView
+            );
+
+        } else {
+
+            Label imageError =
+                    new Label(
+                            "Image unavailable"
+                    );
+
+            imageError.setStyle(
+                    "-fx-text-fill: #64748b;" +
+                    "-fx-font-size: 13px;"
+            );
+
+            imageContainer.getChildren().add(
+                    imageError
+            );
+        }
+
+
+        // =====================================================
+        // ADD LEFT + RIGHT
+        // =====================================================
+
+        mainContent.getChildren().addAll(
+                prescriptionContent,
+                imageContainer
+        );
+
+
+        // =====================================================
+        // BUTTONS
+        // =====================================================
+
+        Button viewButton =
+                PatientUI.secondaryButton(
+                        "View Prescription",
+                        () -> openPrescriptionScreen(
+                                prescription
+                        )
+                );
+
+
+        Button deleteButton =
+                createDeleteButton(
+                        () -> deletePrescription(
+                                prescription
+                        )
+                );
+
+
+        HBox buttons =
+                new HBox(10);
+
+        buttons.setAlignment(
+                Pos.CENTER_RIGHT
+        );
+
+        buttons.setPadding(
+                new Insets(
+                        0,
+                        10,
+                        10,
+                        10
+                )
+        );
+
+
+        buttons.getChildren().addAll(
+                viewButton,
+                deleteButton
+        );
+
+
+        // =====================================================
+        // FINAL CARD
+        // =====================================================
+
+        outerCard.getChildren().addAll(
+                mainContent,
+                buttons
+        );
+
+
+        return outerCard;
+    }
+
+
+    // =========================================================
+    // PRESCRIPTION TEXT
+    // =========================================================
+
+    private Label createPrescriptionText(
+            String text) {
+
+        Label label =
+                new Label(
+                        text
+                );
+
+        label.setStyle(
+                "-fx-text-fill: #64748b;" +
+                "-fx-font-size: 14px;"
+        );
+
+        return label;
+    }
+
+
+    // =========================================================
+    // OPEN PRESCRIPTION SCREEN
+    // =========================================================
+
+    private void openPrescriptionScreen(
+            Prescription prescription) {
+
+        stage.setScene(
+                createPrescriptionScene(
+                        prescription
+                )
+        );
+    }
+
+
+    // =========================================================
+    // PRESCRIPTION DETAIL SCREEN
+    // IMAGE CARD WITH PRESCRIPTION
+    // =========================================================
+
+    private Scene createPrescriptionScene(
+            Prescription prescription) {
+
+        VBox content =
+                new VBox(20);
+
+        content.setPadding(
+                new Insets(0)
+        );
+
+
+        // =====================================================
+        // BACK BUTTON
+        // =====================================================
+
+        Button backButton =
+                PatientUI.secondaryButton(
+                        "← Back to Medical Records",
+                        () -> stage.setScene(
+                                new MedicalRecords(stage)
+                                        .getScene()
+                        )
+                );
+
+
+        // =====================================================
+        // OUTER CARD
+        // =====================================================
+
+        VBox outerCard =
+                new VBox();
+
+        outerCard.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        outerCard.setStyle(
+                "-fx-background-color: white;" +
+                "-fx-background-radius: 18;" +
+                "-fx-border-color: #cbd5e1;" +
+                "-fx-border-radius: 18;"
+        );
+
+
+        // =====================================================
+        // PRESCRIPTION PAPER
         // =====================================================
 
         StackPane prescriptionPaper =
                 new StackPane();
 
         prescriptionPaper.setPrefHeight(
-                500
+                570
         );
 
         prescriptionPaper.setMinHeight(
-                500
+                570
         );
 
         prescriptionPaper.setMaxWidth(
                 Double.MAX_VALUE
         );
 
+
         // =====================================================
         // BACKGROUND IMAGE
         // =====================================================
 
-        var resource =
+        var templateResource =
                 getClass().getResource(
                         "/images/medicalrecords/prescription_template.jpg"
                 );
 
-        if (resource != null) {
+
+        if (templateResource != null) {
 
             Image backgroundImage =
                     new Image(
-                            resource.toExternalForm()
+                            templateResource.toExternalForm()
                     );
+
 
             ImageView background =
                     new ImageView(
                             backgroundImage
                     );
 
+
             background.setPreserveRatio(
                     false
             );
 
-            background.setFitWidth(
-                    900
-            );
-
             background.setFitHeight(
-                    500
+                    570
             );
 
             background.setOpacity(
                     0.98
             );
+
+
+            background.fitWidthProperty()
+                    .bind(
+                            prescriptionPaper.widthProperty()
+                    );
+
 
             prescriptionPaper.getChildren().add(
                     background
@@ -918,34 +1370,21 @@ public class MedicalRecords {
                     "-fx-border-width: 2;" +
                     "-fx-border-radius: 14;"
             );
-
-            Label missingImage =
-                    new Label(
-                            "Prescription template image not found"
-                    );
-
-            missingImage.setStyle(
-                    "-fx-text-fill: #64748b;" +
-                    "-fx-font-size: 14px;"
-            );
-
-            prescriptionPaper.getChildren().add(
-                    missingImage
-            );
         }
+
 
         // =====================================================
         // PRESCRIPTION CONTENT
         // =====================================================
 
         VBox prescriptionContent =
-                new VBox(14);
+                new VBox(16);
 
         prescriptionContent.setPadding(
                 new Insets(
-                        35,
                         45,
-                        30,
+                        60,
+                        40,
                         75
                 )
         );
@@ -958,6 +1397,7 @@ public class MedicalRecords {
                 Double.MAX_VALUE
         );
 
+
         // =====================================================
         // HEADER
         // =====================================================
@@ -969,8 +1409,10 @@ public class MedicalRecords {
                 Pos.CENTER_LEFT
         );
 
+
         VBox doctorSection =
-                new VBox(4);
+                new VBox(5);
+
 
         Label healthSphere =
                 new Label(
@@ -978,10 +1420,11 @@ public class MedicalRecords {
                 );
 
         healthSphere.setStyle(
-                "-fx-font-size: 20px;" +
+                "-fx-font-size: 22px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #1e3a8a;"
         );
+
 
         Label doctor =
                 new Label(
@@ -992,20 +1435,23 @@ public class MedicalRecords {
                 );
 
         doctor.setStyle(
-                "-fx-font-size: 16px;" +
+                "-fx-font-size: 17px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #334155;"
         );
+
 
         doctorSection.getChildren().addAll(
                 healthSphere,
                 doctor
         );
 
+
         HBox.setHgrow(
                 doctorSection,
                 Priority.ALWAYS
         );
+
 
         Label date =
                 new Label(
@@ -1020,10 +1466,12 @@ public class MedicalRecords {
                 "-fx-font-weight: bold;"
         );
 
+
         header.getChildren().addAll(
                 doctorSection,
                 date
         );
+
 
         // =====================================================
         // DIVIDER
@@ -1032,16 +1480,14 @@ public class MedicalRecords {
         Line divider =
                 new Line();
 
-        divider.setStartX(0);
-        divider.setEndX(780);
-
         divider.setStyle(
                 "-fx-stroke: #cbd5e1;" +
                 "-fx-stroke-width: 1;"
         );
 
+
         // =====================================================
-        // PRESCRIPTION TITLE
+        // TITLE
         // =====================================================
 
         Label prescriptionTitle =
@@ -1050,10 +1496,11 @@ public class MedicalRecords {
                 );
 
         prescriptionTitle.setStyle(
-                "-fx-font-size: 22px;" +
+                "-fx-font-size: 25px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #1e3a8a;"
         );
+
 
         // =====================================================
         // MEDICINE
@@ -1061,6 +1508,7 @@ public class MedicalRecords {
 
         VBox medicineSection =
                 new VBox(5);
+
 
         Label medicineTitle =
                 new Label(
@@ -1073,6 +1521,7 @@ public class MedicalRecords {
                 "-fx-font-weight: bold;"
         );
 
+
         Label medicine =
                 new Label(
                         safe(
@@ -1081,7 +1530,7 @@ public class MedicalRecords {
                 );
 
         medicine.setStyle(
-                "-fx-font-size: 21px;" +
+                "-fx-font-size: 23px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #0f172a;"
         );
@@ -1090,21 +1539,24 @@ public class MedicalRecords {
                 true
         );
 
+
         medicineSection.getChildren().addAll(
                 medicineTitle,
                 medicine
         );
 
+
         // =====================================================
-        // PRESCRIPTION DETAILS
+        // DETAILS
         // =====================================================
 
         HBox details =
-                new HBox(10);
+                new HBox(12);
 
         details.setAlignment(
                 Pos.CENTER_LEFT
         );
+
 
         VBox strength =
                 prescriptionDetail(
@@ -1112,11 +1564,13 @@ public class MedicalRecords {
                         prescription.getStrength()
                 );
 
+
         VBox dosage =
                 prescriptionDetail(
                         "DOSAGE",
                         prescription.getDosage()
                 );
+
 
         VBox frequency =
                 prescriptionDetail(
@@ -1124,17 +1578,20 @@ public class MedicalRecords {
                         prescription.getFrequency()
                 );
 
+
         VBox duration =
                 prescriptionDetail(
                         "DURATION",
                         prescription.getDuration()
                 );
 
+
         VBox timing =
                 prescriptionDetail(
                         "TIMING",
                         prescription.getTiming()
                 );
+
 
         details.getChildren().addAll(
                 strength,
@@ -1143,6 +1600,7 @@ public class MedicalRecords {
                 duration,
                 timing
         );
+
 
         // =====================================================
         // NOTE
@@ -1154,10 +1612,11 @@ public class MedicalRecords {
                 );
 
         note.setStyle(
-                "-fx-font-size: 12px;" +
+                "-fx-font-size: 13px;" +
                 "-fx-text-fill: #64748b;" +
                 "-fx-font-style: italic;"
         );
+
 
         // =====================================================
         // ADD CONTENT
@@ -1172,61 +1631,32 @@ public class MedicalRecords {
                 note
         );
 
+
         prescriptionPaper.getChildren().add(
                 prescriptionContent
         );
 
-        // =====================================================
-        // BUTTONS
-        // =====================================================
 
-        Button viewButton =
-                PatientUI.secondaryButton(
-                        "View Prescription",
-                        () -> showPrescription(
-                                prescription
-                        )
-                );
-
-        Button deleteButton =
-                createDeleteButton(
-                        () -> deletePrescription(
-                                prescription
-                        )
-                );
-
-        HBox buttons =
-                new HBox(10);
-
-        buttons.setAlignment(
-                Pos.CENTER_RIGHT
+        outerCard.getChildren().add(
+                prescriptionPaper
         );
 
-        buttons.setPadding(
-                new Insets(
-                        12,
-                        5,
-                        5,
-                        5
-                )
+
+        content.getChildren().addAll(
+                backButton,
+                outerCard
         );
 
-        buttons.getChildren().addAll(
-                viewButton,
-                deleteButton
+
+        return PatientUI.createScene(
+                stage,
+                "Medical Records",
+                "Prescription",
+                "View your complete prescription details.",
+                content
         );
-
-        // =====================================================
-        // FINAL CARD
-        // =====================================================
-
-        outerCard.getChildren().addAll(
-                prescriptionPaper,
-                buttons
-        );
-
-        return outerCard;
     }
+
 
     // =========================================================
     // PRESCRIPTION DETAIL BOX
@@ -1237,14 +1667,14 @@ public class MedicalRecords {
             String value) {
 
         VBox box =
-                new VBox(4);
+                new VBox(5);
 
         box.setPadding(
                 new Insets(
-                        9,
-                        12,
-                        9,
-                        12
+                        10,
+                        13,
+                        10,
+                        13
                 )
         );
 
@@ -1253,11 +1683,12 @@ public class MedicalRecords {
         );
 
         box.setStyle(
-                "-fx-background-color: #f8fafc;" +
+                "-fx-background-color: rgba(248,250,252,0.88);" +
                 "-fx-border-color: #e2e8f0;" +
                 "-fx-border-radius: 8;" +
                 "-fx-background-radius: 8;"
         );
+
 
         Label titleLabel =
                 new Label(
@@ -1270,13 +1701,14 @@ public class MedicalRecords {
                 "-fx-font-weight: bold;"
         );
 
+
         Label valueLabel =
                 new Label(
                         safe(value)
                 );
 
         valueLabel.setStyle(
-                "-fx-font-size: 12px;" +
+                "-fx-font-size: 13px;" +
                 "-fx-text-fill: #1e3a8a;" +
                 "-fx-font-weight: bold;"
         );
@@ -1285,81 +1717,16 @@ public class MedicalRecords {
                 true
         );
 
+
         box.getChildren().addAll(
                 titleLabel,
                 valueLabel
         );
 
+
         return box;
     }
 
-    // =========================================================
-    // VIEW PRESCRIPTION
-    // =========================================================
-
-    private void showPrescription(
-            Prescription prescription) {
-
-        Alert alert =
-                new Alert(
-                        Alert.AlertType.INFORMATION
-                );
-
-        alert.setTitle(
-                "HealthSphere Prescription"
-        );
-
-        alert.setHeaderText(
-                "💊 Prescription Details"
-        );
-
-        String details =
-                "Doctor: "
-                        + safe(
-                        prescription.getDoctorName()
-                )
-
-                        + "\n\nMedication: "
-                        + safe(
-                        prescription.getMedication()
-                )
-
-                        + "\nStrength: "
-                        + safe(
-                        prescription.getStrength()
-                )
-
-                        + "\nDosage: "
-                        + safe(
-                        prescription.getDosage()
-                )
-
-                        + "\nFrequency: "
-                        + safe(
-                        prescription.getFrequency()
-                )
-
-                        + "\nDuration: "
-                        + safe(
-                        prescription.getDuration()
-                )
-
-                        + "\nTiming: "
-                        + safe(
-                        prescription.getTiming()
-                )
-
-                        + "\n\nPrescribed: "
-                        + safe(
-                        prescription.getCreatedAt()
-                );
-
-        alert.setContentText(
-                details
-        );
-
-        alert.showAndWait();
-    }
 
     // =========================================================
     // DELETE PRESCRIPTION
@@ -1372,6 +1739,7 @@ public class MedicalRecords {
                 new Alert(
                         Alert.AlertType.CONFIRMATION
                 );
+
 
         confirmation.setTitle(
                 "Delete Prescription"
@@ -1389,11 +1757,13 @@ public class MedicalRecords {
                         + " will be permanently deleted."
         );
 
+
         ButtonType deleteButton =
                 new ButtonType(
                         "Delete",
                         ButtonBar.ButtonData.YES
                 );
+
 
         ButtonType cancelButton =
                 new ButtonType(
@@ -1401,12 +1771,14 @@ public class MedicalRecords {
                         ButtonBar.ButtonData.CANCEL_CLOSE
                 );
 
+
         confirmation
                 .getButtonTypes()
                 .setAll(
                         deleteButton,
                         cancelButton
                 );
+
 
         confirmation
                 .showAndWait()
@@ -1425,9 +1797,11 @@ public class MedicalRecords {
                                                         .getPrescriptionId()
                                         );
 
+
                                 showSuccess(
                                         "Prescription deleted successfully."
                                 );
+
 
                                 refreshPage();
 
@@ -1438,13 +1812,14 @@ public class MedicalRecords {
                                 showError(
                                         "Unable to delete prescription.\n\n"
                                                 + safeMessage(
-                                                        e.getMessage()
-                                                )
+                                                e.getMessage()
+                                        )
                                 );
                             }
                         }
                 );
     }
+
 
     // =========================================================
     // DELETE BUTTON
@@ -1471,12 +1846,15 @@ public class MedicalRecords {
                 "-fx-cursor: hand;"
         );
 
+
         button.setOnAction(
                 e -> action.run()
         );
 
+
         return button;
     }
+
 
     // =========================================================
     // IMAGE GALLERY
@@ -1490,6 +1868,7 @@ public class MedicalRecords {
         gallery.setAlignment(
                 Pos.CENTER_LEFT
         );
+
 
         gallery.getChildren().addAll(
 
@@ -1510,8 +1889,10 @@ public class MedicalRecords {
                 )
         );
 
+
         return gallery;
     }
+
 
     // =========================================================
     // IMAGE CARD
@@ -1546,10 +1927,12 @@ public class MedicalRecords {
                 "-fx-border-radius: 14;"
         );
 
+
         var resource =
                 getClass().getResource(
                         path
                 );
+
 
         if (resource == null) {
 
@@ -1567,23 +1950,28 @@ public class MedicalRecords {
                     error
             );
 
+
             System.err.println(
                     "Medical Records image not found: "
                             + path
             );
 
+
             return box;
         }
+
 
         Image image =
                 new Image(
                         resource.toExternalForm()
                 );
 
+
         ImageView imageView =
                 new ImageView(
                         image
                 );
+
 
         imageView.setFitWidth(
                 260
@@ -1597,12 +1985,15 @@ public class MedicalRecords {
                 false
         );
 
+
         box.getChildren().add(
                 imageView
         );
 
+
         return box;
     }
+
 
     // =========================================================
     // REFRESH PAGE
@@ -1617,6 +2008,7 @@ public class MedicalRecords {
         );
     }
 
+
     // =========================================================
     // SUCCESS ALERT
     // =========================================================
@@ -1628,6 +2020,7 @@ public class MedicalRecords {
                 new Alert(
                         Alert.AlertType.INFORMATION
                 );
+
 
         alert.setTitle(
                 "HealthSphere"
@@ -1644,6 +2037,7 @@ public class MedicalRecords {
         alert.showAndWait();
     }
 
+
     // =========================================================
     // ERROR ALERT
     // =========================================================
@@ -1655,6 +2049,7 @@ public class MedicalRecords {
                 new Alert(
                         Alert.AlertType.ERROR
                 );
+
 
         alert.setTitle(
                 "HealthSphere"
@@ -1671,6 +2066,7 @@ public class MedicalRecords {
         alert.showAndWait();
     }
 
+
     // =========================================================
     // SAFE STRING
     // =========================================================
@@ -1686,6 +2082,7 @@ public class MedicalRecords {
 
         return value;
     }
+
 
     // =========================================================
     // SAFE ERROR MESSAGE
