@@ -1,4 +1,3 @@
-
 package com.healthsphere.dao.hospital;
 
 import java.util.ArrayList;
@@ -23,279 +22,119 @@ public class HospitalDAO {
         this.db = FirebaseConfig.getFirestore();
     }
 
-    // =========================================================
-    // GET CURRENT HOSPITAL UID
-    // =========================================================
-
     private String getCurrentHospitalUid() {
-
         if (SessionManager.getCurrentUser() == null) {
-            throw new IllegalStateException(
-                    "No hospital user is currently logged in."
-            );
+            throw new IllegalStateException("No hospital user is currently logged in.");
         }
-
-        return SessionManager
-                .getCurrentUser()
-                .getUid();
+        return SessionManager.getCurrentUser().getUid();
     }
 
-    // =========================================================
-    // GET CURRENT HOSPITAL PROFILE
-    // =========================================================
-
     public HospitalProfile getHospitalProfile() {
-
         String uid = getCurrentHospitalUid();
-
         try {
-
-            DocumentSnapshot document =
-                    db.collection("hospitals")
-                            .document(uid)
-                            .get()
-                            .get();
-
+            DocumentSnapshot document = db.collection("hospitals").document(uid).get().get();
             if (!document.exists()) {
                 return null;
             }
-
-            return document.toObject(
-                    HospitalProfile.class
-            );
-
+            HospitalProfile hospital = document.toObject(HospitalProfile.class);
+            if (hospital != null && (hospital.getUid() == null || hospital.getUid().isBlank())) {
+                hospital.setUid(document.getId());
+            }
+            return hospital;
         } catch (InterruptedException e) {
-
             Thread.currentThread().interrupt();
-
-            throw new RuntimeException(
-                    "Interrupted while retrieving hospital profile.",
-                    e
-            );
-
+            throw new RuntimeException("Interrupted while retrieving hospital profile.", e);
         } catch (ExecutionException e) {
-
-            throw new RuntimeException(
-                    "Failed to retrieve hospital profile.",
-                    e
-            );
+            throw new RuntimeException("Failed to retrieve hospital profile.", e);
         }
     }
-
-    // =========================================================
-    // GET ALL HOSPITALS
-    //
-    // Used by Patient -> Book Appointment
-    //
-    // Firestore:
-    // hospitals/{uid}
-    // =========================================================
 
     public List<HospitalProfile> getAllHospitals() {
-
-        List<HospitalProfile> hospitals =
-                new ArrayList<>();
-
+        List<HospitalProfile> hospitals = new ArrayList<>();
         try {
-
-            ApiFuture<QuerySnapshot> future =
-                    db.collection("hospitals")
-                            .get();
-
-            QuerySnapshot snapshot =
-                    future.get();
-
-            for (DocumentSnapshot document :
-                    snapshot.getDocuments()) {
-
-                if (!document.exists()) {
-                    continue;
-                }
-
-                HospitalProfile hospital =
-                        document.toObject(
-                                HospitalProfile.class
-                        );
-
-                if (hospital != null) {
-                    hospitals.add(hospital);
+            ApiFuture<QuerySnapshot> future = db.collection("hospitals").get();
+            QuerySnapshot snapshot = future.get();
+            for (DocumentSnapshot document : snapshot.getDocuments()) {
+                if (document.exists()) {
+                    HospitalProfile hospital = document.toObject(HospitalProfile.class);
+                    if (hospital != null) {
+                        if (hospital.getUid() == null || hospital.getUid().isBlank()) {
+                            hospital.setUid(document.getId());
+                        }
+                        hospitals.add(hospital);
+                    }
                 }
             }
-
             return hospitals;
-
         } catch (InterruptedException e) {
-
             Thread.currentThread().interrupt();
-
-            throw new RuntimeException(
-                    "Interrupted while retrieving hospitals.",
-                    e
-            );
-
+            throw new RuntimeException("Interrupted while retrieving hospitals.", e);
         } catch (ExecutionException e) {
-
-            throw new RuntimeException(
-                    "Failed to retrieve hospitals.",
-                    e
-            );
+            throw new RuntimeException("Failed to retrieve hospitals.", e);
         }
     }
 
-    // =========================================================
-    // GET HOSPITAL BY UID
-    // =========================================================
-
-    public HospitalProfile getHospitalById(
-            String uid) {
-
+    public HospitalProfile getHospitalById(String uid) {
         if (uid == null || uid.isBlank()) {
             return null;
         }
-
         try {
-
-            DocumentSnapshot document =
-                    db.collection("hospitals")
-                            .document(uid)
-                            .get()
-                            .get();
-
+            DocumentSnapshot document = db.collection("hospitals").document(uid).get().get();
             if (!document.exists()) {
                 return null;
             }
-
-            return document.toObject(
-                    HospitalProfile.class
-            );
-
+            HospitalProfile hospital = document.toObject(HospitalProfile.class);
+            if (hospital != null && (hospital.getUid() == null || hospital.getUid().isBlank())) {
+                hospital.setUid(document.getId());
+            }
+            return hospital;
         } catch (Exception e) {
-
-            throw new RuntimeException(
-                    "Failed to retrieve hospital.",
-                    e
-            );
+            throw new RuntimeException("Failed to retrieve hospital.", e);
         }
     }
 
-    // =========================================================
-    // SAVE CURRENT HOSPITAL PROFILE
-    // =========================================================
-
-    public void saveHospitalProfile(
-            HospitalProfile hospitalProfile) {
-
+    public void saveHospitalProfile(HospitalProfile hospitalProfile) {
         if (hospitalProfile == null) {
-            throw new IllegalArgumentException(
-                    "Hospital profile cannot be null."
-            );
+            throw new IllegalArgumentException("Hospital profile cannot be null.");
         }
-
         String uid = getCurrentHospitalUid();
-
         try {
-
-            DocumentReference reference =
-                    db.collection("hospitals")
-                            .document(uid);
-
-            ApiFuture<WriteResult> future =
-                    reference.set(hospitalProfile);
-
+            DocumentReference reference = db.collection("hospitals").document(uid);
+            ApiFuture<WriteResult> future = reference.set(hospitalProfile);
             future.get();
-
         } catch (InterruptedException e) {
-
             Thread.currentThread().interrupt();
-
-            throw new RuntimeException(
-                    "Interrupted while saving hospital profile.",
-                    e
-            );
-
+            throw new RuntimeException("Interrupted while saving hospital profile.", e);
         } catch (ExecutionException e) {
-
-            throw new RuntimeException(
-                    "Failed to save hospital profile.",
-                    e
-            );
+            throw new RuntimeException("Failed to save hospital profile.", e);
         }
     }
 
-    // =========================================================
-    // UPDATE CURRENT HOSPITAL PROFILE
-    // =========================================================
-
-    public void updateHospitalProfile(
-            HospitalProfile hospitalProfile) {
-
+    public void updateHospitalProfile(HospitalProfile hospitalProfile) {
         if (hospitalProfile == null) {
-            throw new IllegalArgumentException(
-                    "Hospital profile cannot be null."
-            );
+            throw new IllegalArgumentException("Hospital profile cannot be null.");
         }
-
         String uid = getCurrentHospitalUid();
-
         try {
-
-            db.collection("hospitals")
-                    .document(uid)
-                    .set(hospitalProfile)
-                    .get();
-
+            db.collection("hospitals").document(uid).set(hospitalProfile).get();
         } catch (InterruptedException e) {
-
             Thread.currentThread().interrupt();
-
-            throw new RuntimeException(
-                    "Interrupted while updating hospital profile.",
-                    e
-            );
-
+            throw new RuntimeException("Interrupted while updating hospital profile.", e);
         } catch (ExecutionException e) {
-
-            throw new RuntimeException(
-                    "Failed to update hospital profile.",
-                    e
-            );
+            throw new RuntimeException("Failed to update hospital profile.", e);
         }
     }
-
-    // =========================================================
-    // CHECK CURRENT HOSPITAL PROFILE
-    // =========================================================
 
     public boolean hospitalProfileExists() {
-
         String uid = getCurrentHospitalUid();
-
         try {
-
-            DocumentSnapshot document =
-                    db.collection("hospitals")
-                            .document(uid)
-                            .get()
-                            .get();
-
+            DocumentSnapshot document = db.collection("hospitals").document(uid).get().get();
             return document.exists();
-
         } catch (InterruptedException e) {
-
             Thread.currentThread().interrupt();
-
-            throw new RuntimeException(
-                    "Interrupted while checking hospital profile.",
-                    e
-            );
-
+            throw new RuntimeException("Interrupted while checking hospital profile.", e);
         } catch (ExecutionException e) {
-
-            throw new RuntimeException(
-                    "Failed to check hospital profile.",
-                    e
-            );
+            throw new RuntimeException("Failed to check hospital profile.", e);
         }
     }
 }
-

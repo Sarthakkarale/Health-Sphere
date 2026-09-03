@@ -5,121 +5,81 @@ import com.healthsphere.model.UserProfile;
 
 public final class SessionManager {
 
-    // ============================================================
-    // SINGLETON INSTANCE
-    // ============================================================
-
-    private static final SessionManager INSTANCE =
-            new SessionManager();
-
-    // ============================================================
-    // SESSION DATA
-    // ============================================================
+    private static final SessionManager INSTANCE = new SessionManager();
 
     private AuthenticationResponse authenticationResponse;
-
-    private static UserProfile currentUser;
-
-    // ============================================================
-    // PRIVATE CONSTRUCTOR
-    // ============================================================
+    private static UserProfile currentUserProfile;
+    private static volatile AuthenticationResponse currentUser;
+    private static String cachedDoctorName = null;
 
     private SessionManager() {
-        // Prevent object creation from outside.
     }
 
-    // ============================================================
-    // GET SINGLETON INSTANCE
-    // ============================================================
-
     public static SessionManager getInstance() {
-
         return INSTANCE;
     }
 
-    // ============================================================
-    // CREATE SESSION
-    // ============================================================
-
-    public static void createSession(
-            AuthenticationResponse authenticationResponse) {
-
-        if (authenticationResponse == null) {
-            throw new IllegalArgumentException(
-                    "Authentication response cannot be null."
-            );
+    public static synchronized void createSession(AuthenticationResponse authResponse) {
+        if (authResponse == null) {
+            throw new IllegalArgumentException("Authentication response cannot be null.");
         }
 
-        SessionManager session =
-                getInstance();
+        SessionManager session = getInstance();
+        session.authenticationResponse = authResponse;
+        currentUser = authResponse;
 
-        session.authenticationResponse =
-                authenticationResponse;
-
-        currentUser = new UserProfile(
-                authenticationResponse.getUid(),
-                authenticationResponse.getEmail(),
+        currentUserProfile = new UserProfile(
+                authResponse.getUid(),
+                authResponse.getEmail(),
                 null,
                 null
         );
     }
 
-    // ============================================================
-    // AUTHENTICATION RESPONSE
-    // ============================================================
-
     public AuthenticationResponse getAuthenticationResponse() {
-
         if (authenticationResponse == null) {
-
-            throw new IllegalStateException(
-                    "No active user session."
-            );
+            throw new IllegalStateException("No active user session.");
         }
-
         return authenticationResponse;
     }
 
-    // ============================================================
-    // CURRENT USER PROFILE
-    // ============================================================
-
-    public void setCurrentUser(
-            UserProfile userProfile) {
-
-        if (userProfile == null) {
-
-            throw new IllegalArgumentException(
-                    "User profile cannot be null."
-            );
+    public static UserProfile getCurrentUser() {
+        if (currentUserProfile != null) {
+            return currentUserProfile;
         }
-
-        this.currentUser =
-                userProfile;
+        if (currentUser != null) {
+            return new UserProfile(currentUser.getUid(), currentUser.getEmail(), null, null);
+        }
+        return null;
     }
 
-    public static UserProfile getCurrentUser() {
-
-        if (currentUser == null) {
-
-            throw new IllegalStateException(
-                    "No active user session."
-            );
-        }
-
+    public static AuthenticationResponse getCurrentAuthUser() {
         return currentUser;
     }
 
-    // ============================================================
-    // LOGIN STATUS
-    // ============================================================
-
-    public static boolean isLoggedIn() {
-
-        return INSTANCE.authenticationResponse != null;
+    public void setCurrentUser(UserProfile userProfile) {
+        if (userProfile == null) {
+            throw new IllegalArgumentException("User profile cannot be null.");
+        }
+        currentUserProfile = userProfile;
     }
 
-    private static String cachedDoctorName = null;
+    public static boolean isLoggedIn() {
+        return currentUser != null || currentUserProfile != null || INSTANCE.authenticationResponse != null;
+    }
+
+    public static String getCurrentUserId() {
+        if (!isLoggedIn()) {
+            return null;
+        }
+        if (currentUserProfile != null) {
+            return currentUserProfile.getUid();
+        }
+        if (currentUser != null) {
+            return currentUser.getUid();
+        }
+        return null;
+    }
 
     public static String getDoctorDisplayName() {
         if (cachedDoctorName != null && !cachedDoctorName.isBlank()) {
@@ -127,8 +87,9 @@ public final class SessionManager {
         }
 
         try {
-            if (currentUser != null && currentUser.getEmail() != null) {
-                String email = currentUser.getEmail().trim();
+            UserProfile user = getCurrentUser();
+            if (user != null && user.getEmail() != null) {
+                String email = user.getEmail().trim();
                 if (email.contains("@")) {
                     String name = email.split("@")[0];
                     if (name.contains(".")) {
@@ -158,17 +119,15 @@ public final class SessionManager {
         }
     }
 
-    // ============================================================
-    // LOGOUT / CLEAR SESSION
-    // ============================================================
-
-    public static void clearSession() {
-
-        SessionManager session =
-                getInstance();
-
+    public static synchronized void clearSession() {
+        SessionManager session = getInstance();
         session.authenticationResponse = null;
-        session.currentUser = null;
+        currentUserProfile = null;
+        currentUser = null;
         cachedDoctorName = null;
+    }
+
+    public static synchronized void logout() {
+        clearSession();
     }
 }

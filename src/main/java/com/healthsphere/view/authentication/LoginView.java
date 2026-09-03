@@ -3,7 +3,7 @@ package com.healthsphere.view.authentication;
 <<<<<<< HEAD
 import com.healthsphere.view.patient.PatientDashboardView;
 import com.healthsphere.view.doctor.DoctorDashboardView;
-import com.healthsphere.view.hospital.HospitalDashboardView;
+import com.healthsphere.view.Hospital.HospitalDashboardView;
 import com.healthsphere.view.admin.AdminDashboardView;
 import com.healthsphere.view.admin.AdminMainShell;
 import com.healthsphere.view.authentication.*;
@@ -1230,6 +1230,7 @@ public class LoginView {
         return Role.PATIENT.name();
     }
 
+<<<<<<< HEAD
     // =========================================================
     // LOGIN DESTINATION
     // =========================================================
@@ -1324,8 +1325,41 @@ public class LoginView {
             errorLabel.setManaged(
                     true
             );
+=======
+    private void handleLoginDestination(LoginDestination destination) {
+    switch (destination) {
+
+        case PATIENT_DASHBOARD -> {
+            stage.setScene(new PatientDashboardView(stage).getScene());
+        }
+
+        case DOCTOR_DASHBOARD -> {
+            stage.setScene(new DoctorDashboardView(stage).getScene());
+        }
+
+        case DOCTOR_PENDING -> {
+            stage.setScene(new DoctorPendingApprovalView(stage).getScene());
+        }
+
+        case HOSPITAL_DASHBOARD -> {
+            HospitalDashboardView hospitalView = new HospitalDashboardView();
+            stage.setScene(hospitalView.createScene(stage));
+        }
+
+        case HOSPITAL_PENDING -> {
+            stage.setScene(new DoctorPendingApprovalView(stage).getScene());
+        }
+
+        case ADMIN_DASHBOARD -> {
+            stage.setScene(new AdminDashboardView(stage).getScene());
+        }
+
+        case LOGIN -> {
+            showError("Unable to determine user access.");
+>>>>>>> origin/feature/hospital
         }
     }
+}
 
 <<<<<<< HEAD
     private void setFormDisabled(boolean disabled, TextField emailField, PasswordField passField, CheckBox rememberBox, Hyperlink forgotPass, Button loginBtn, Button createAccountBtn) {
