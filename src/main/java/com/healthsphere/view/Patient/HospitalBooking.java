@@ -26,14 +26,31 @@ import javafx.stage.Stage;
 public class HospitalBooking {
 
     private final Stage stage;
-
     private final AppointmentController appointmentController;
-
     private final PatientController patientController;
+    private final HospitalProfile preselectedHospital;
+    private final String preselectedHospitalName;
 
     public HospitalBooking(Stage stage) {
+        this(stage, (HospitalProfile) null);
+    }
 
+    public HospitalBooking(Stage stage, HospitalProfile preselectedHospital) {
         this.stage = stage;
+        this.preselectedHospital = preselectedHospital;
+        this.preselectedHospitalName = preselectedHospital != null ? preselectedHospital.getHospitalName() : null;
+
+        this.appointmentController =
+                new AppointmentController();
+
+        this.patientController =
+                new PatientController();
+    }
+
+    public HospitalBooking(Stage stage, String hospitalName) {
+        this.stage = stage;
+        this.preselectedHospital = null;
+        this.preselectedHospitalName = hospitalName;
 
         this.appointmentController =
                 new AppointmentController();
@@ -360,6 +377,29 @@ public class HospitalBooking {
             hospitalComboBox
                     .getItems()
                     .addAll(hospitals);
+
+            if (hospitals != null) {
+                if (preselectedHospital != null) {
+                    for (HospitalProfile h : hospitals) {
+                        if (h != null) {
+                            boolean matchUid = h.getUid() != null && preselectedHospital.getUid() != null
+                                    && h.getUid().equals(preselectedHospital.getUid());
+                            boolean matchName = getHospitalDisplayName(h).equalsIgnoreCase(getHospitalDisplayName(preselectedHospital));
+                            if (matchUid || matchName) {
+                                hospitalComboBox.setValue(h);
+                                break;
+                            }
+                        }
+                    }
+                } else if (preselectedHospitalName != null && !preselectedHospitalName.isBlank()) {
+                    for (HospitalProfile h : hospitals) {
+                        if (h != null && getHospitalDisplayName(h).equalsIgnoreCase(preselectedHospitalName.trim())) {
+                            hospitalComboBox.setValue(h);
+                            break;
+                        }
+                    }
+                }
+            }
 
             // -------------------------------------------------
             // SELECTED ITEM DISPLAY

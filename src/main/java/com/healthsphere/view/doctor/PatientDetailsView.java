@@ -2665,414 +2665,7 @@ public class PatientDetailsView {
     // ============================================================
 
     private VBox createSidebar() {
-
-        VBox sidebar =
-                new VBox();
-
-        sidebar.setPadding(
-                new Insets(
-                        25,
-                        15,
-                        25,
-                        15
-                )
-        );
-
-        sidebar.setMinWidth(
-                260
-        );
-
-        sidebar.setPrefWidth(
-                260
-        );
-
-        sidebar.setMaxWidth(
-                260
-        );
-
-        sidebar.setStyle(
-                "-fx-background-color: #0F172A;"
-        );
-
-        // --------------------------------------------------------
-        // Logo
-        // --------------------------------------------------------
-
-        HBox logoSection =
-                new HBox(12);
-
-        logoSection.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        logoSection.setPadding(
-                new Insets(
-                        0,
-                        0,
-                        25,
-                        5
-                )
-        );
-
-        StackPane logoIconBox =
-                new StackPane();
-
-        logoIconBox.setPrefSize(
-                42,
-                42
-        );
-
-        logoIconBox.setStyle(
-                "-fx-background-color: #2563EB;"
-                        + "-fx-background-radius: 10;"
-        );
-
-        Label logo =
-                new Label(
-                        "+"
-                );
-
-        logo.setStyle(
-                "-fx-text-fill: white;"
-                        + "-fx-font-size: 25px;"
-                        + "-fx-font-weight: bold;"
-        );
-
-        logoIconBox
-                .getChildren()
-                .add(
-                        logo
-                );
-
-        VBox logoText =
-                new VBox(1);
-
-        Label appName =
-                new Label(
-                        "Health-Sphere"
-                );
-
-        appName.setStyle(
-                "-fx-text-fill: white;"
-                        + "-fx-font-size: 17px;"
-                        + "-fx-font-weight: bold;"
-        );
-
-        Label sub =
-                new Label(
-                        "Doctor Dashboard"
-                );
-
-        sub.setStyle(
-                "-fx-text-fill: #94A3B8;"
-                        + "-fx-font-size: 11px;"
-        );
-
-        logoText
-                .getChildren()
-                .addAll(
-                        appName,
-                        sub
-                );
-
-        logoSection
-                .getChildren()
-                .addAll(
-                        logoIconBox,
-                        logoText
-                );
-
-        // --------------------------------------------------------
-        // Navigation
-        // --------------------------------------------------------
-
-        VBox navItems =
-                new VBox(6);
-
-        String[] tabs = {
-                "Dashboard",
-                "Today's Schedule",
-                "Appointments",
-                "Patient Details",
-                "Medical Reports & Prescription",
-                "Availability & Schedule",
-                "Doctor Profile",
-                "AI Health Assistant"
-        };
-
-        String[] icons = {
-                "ic_dashboard",
-                "ic_schedule",
-                "ic_appointments",
-                "ic_patient",
-                "ic_reports",
-                "ic_availability",
-                "ic_profile",
-                "ic_ai"
-        };
-
-        for (int i = 0;
-             i < tabs.length;
-             i++) {
-
-            final int index =
-                    i;
-
-            HBox navTab =
-                    new HBox(14);
-
-            navTab.setAlignment(
-                    Pos.CENTER_LEFT
-            );
-
-            navTab.setPadding(
-                    new Insets(
-                            10,
-                            14,
-                            10,
-                            14
-                    )
-            );
-
-            navTab.getStyleClass()
-                    .add(
-                            "nav-tab"
-                    );
-
-            if (i == 3) {
-
-                navTab.getStyleClass()
-                        .add(
-                                "nav-tab-active"
-                        );
-            }
-
-            ImageView icon =
-                    createImageView(
-                            "/images/icons/"
-                                    + icons[i]
-                                    + ".png",
-                            18,
-                            18
-                    );
-
-            Label label =
-                    new Label(
-                            tabs[i]
-                    );
-
-            label.getStyleClass()
-                    .add(
-                            "nav-text"
-                    );
-
-            if (icon != null) {
-
-                navTab
-                        .getChildren()
-                        .add(
-                                icon
-                        );
-            }
-
-            navTab
-                    .getChildren()
-                    .add(
-                            label
-                    );
-
-            navTab.setOnMouseClicked(
-                    e ->
-                            handleSidebarTabClick(
-                                    index
-                            )
-            );
-
-            navItems
-                    .getChildren()
-                    .add(
-                            navTab
-                    );
-        }
-
-        // --------------------------------------------------------
-        // Footer
-        // --------------------------------------------------------
-
-        VBox footer =
-                new VBox(12);
-
-        footer.setAlignment(
-                Pos.BOTTOM_CENTER
-        );
-
-        VBox.setVgrow(
-                footer,
-                Priority.ALWAYS
-        );
-
-        HBox doctorProfile =
-                new HBox(12);
-
-        doctorProfile.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        doctorProfile.setPadding(
-                new Insets(
-                        10,
-                        14,
-                        10,
-                        14
-                )
-        );
-
-        doctorProfile.getStyleClass()
-                .add(
-                        "sidebar-profile"
-                );
-
-        ImageView profileIcon =
-                createImageView(
-                        "/images/doctor/doctor_profile.png",
-                        32,
-                        32
-                );
-
-        VBox profileText =
-                new VBox(2);
-
-        Label profileTitle =
-                new Label(
-                        "Doctor Profile"
-                );
-
-        profileTitle.getStyleClass()
-                .add(
-                        "sidebar-profile-role"
-                );
-
-        Label profileName =
-                new Label(
-                        SessionManager.getDoctorDisplayName()
-                );
-
-        profileName.getStyleClass()
-                .add(
-                        "sidebar-profile-name"
-                );
-
-        profileText
-                .getChildren()
-                .addAll(
-                        profileTitle,
-                        profileName
-                );
-
-        if (profileIcon != null) {
-
-            doctorProfile
-                    .getChildren()
-                    .add(
-                            profileIcon
-                    );
-        }
-
-        doctorProfile
-                .getChildren()
-                .add(
-                        profileText
-                );
-
-        doctorProfile.setOnMouseClicked(
-                e ->
-                        Navigation.goTo(
-                                stage,
-                                () ->
-                                        new DoctorProfileView(
-                                                stage
-                                        ).getScene()
-                        )
-        );
-
-        // --------------------------------------------------------
-        // Logout
-        // --------------------------------------------------------
-
-        HBox logout =
-                new HBox(14);
-
-        logout.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        logout.setPadding(
-                new Insets(
-                        10,
-                        14,
-                        10,
-                        14
-                )
-        );
-
-        logout.getStyleClass()
-                .add(
-                        "nav-tab"
-                );
-
-        ImageView logoutIcon =
-                createImageView(
-                        "/images/icons/ic_logout.png",
-                        18,
-                        18
-                );
-
-        Label logoutLabel =
-                new Label(
-                        "Logout"
-                );
-
-        logoutLabel.getStyleClass()
-                .add(
-                        "nav-text"
-                );
-
-        if (logoutIcon != null) {
-
-            logout
-                    .getChildren()
-                    .add(
-                            logoutIcon
-                    );
-        }
-
-        logout
-                .getChildren()
-                .add(
-                        logoutLabel
-                );
-
-        logout.setOnMouseClicked(
-                e ->
-                        handleLogout()
-        );
-
-        footer
-                .getChildren()
-                .addAll(
-                        doctorProfile,
-                        logout
-                );
-
-        sidebar
-                .getChildren()
-                .addAll(
-                        logoSection,
-                        navItems,
-                        footer
-                );
-
-        return sidebar;
+        return DoctorSidebar.create(stage, 4, selectedPatient != null ? selectedPatient.getUid() : null);
     }
 
     // ============================================================
@@ -3126,7 +2719,7 @@ public class PatientDetailsView {
                 Navigation.goTo(
                         stage,
                         () ->
-                                new PatientDetailsView(
+                                new DoctorSessionsView(
                                         stage
                                 ).getScene()
                 );
@@ -3134,6 +2727,18 @@ public class PatientDetailsView {
                 break;
 
             case 4:
+
+                Navigation.goTo(
+                        stage,
+                        () ->
+                                new PatientDetailsView(
+                                        stage
+                                ).getScene()
+                );
+
+                break;
+
+            case 5:
 
                 if (selectedPatient != null
                         && selectedPatient.getUid() != null) {
@@ -3160,7 +2765,7 @@ public class PatientDetailsView {
 
                 break;
 
-            case 5:
+            case 6:
 
                 Navigation.goTo(
                         stage,
@@ -3172,24 +2777,12 @@ public class PatientDetailsView {
 
                 break;
 
-            case 6:
-
-                Navigation.goTo(
-                        stage,
-                        () ->
-                                new DoctorProfileView(
-                                        stage
-                                ).getScene()
-                );
-
-                break;
-
             case 7:
 
                 Navigation.goTo(
                         stage,
                         () ->
-                                new AIHealthAssistantView(
+                                new DoctorProfileView(
                                         stage
                                 ).getScene()
                 );

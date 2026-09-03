@@ -377,431 +377,7 @@ public class DoctorDashboardView {
     // ============================================================
 
     private VBox createSidebar() {
-
-        VBox sidebar =
-                new VBox();
-
-        sidebar.setPadding(
-                new Insets(
-                        24,
-                        16,
-                        24,
-                        16
-                )
-        );
-
-        sidebar.getStyleClass()
-                .add("sidebar");
-
-        sidebar.setMinWidth(
-                260
-        );
-
-        sidebar.setPrefWidth(
-                260
-        );
-
-
-        // --------------------------------------------------------
-        // LOGO
-        // --------------------------------------------------------
-
-        HBox logoSection =
-                new HBox(12);
-
-        logoSection.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        logoSection.setPadding(
-                new Insets(
-                        0,
-                        0,
-                        32,
-                        0
-                )
-        );
-
-
-        ImageView logoImage =
-                createImageView(
-                        "/images/doctor/doctor_logo.png",
-                        32,
-                        32
-                );
-
-
-        VBox logoText =
-                new VBox(2);
-
-
-        Label appName =
-                new Label(
-                        "Health-Sphere"
-                );
-
-        appName.getStyleClass()
-                .add(
-                        "logo-name"
-                );
-
-
-        Label doctorSubtext =
-                new Label(
-                        "Doctor Dashboard"
-                );
-
-        doctorSubtext.getStyleClass()
-                .add(
-                        "logo-subtext"
-                );
-
-
-        logoText.getChildren()
-                .addAll(
-                        appName,
-                        doctorSubtext
-                );
-
-
-        if (logoImage != null) {
-
-            logoSection.getChildren()
-                    .add(
-                            logoImage
-                    );
-        }
-
-
-        logoSection.getChildren()
-                .add(
-                        logoText
-                );
-
-
-        // --------------------------------------------------------
-        // NAVIGATION
-        // --------------------------------------------------------
-
-        VBox navItems =
-                new VBox(6);
-
-
-        String[] tabs = {
-
-                "Dashboard",
-
-                "Today's Schedule",
-
-                "Appointments",
-
-                "Patient Details",
-
-                "Medical Reports & Prescription",
-
-                "Availability & Schedule",
-
-                "Doctor Profile",
-
-                "AI Health Assistant"
-        };
-
-
-        String[] icons = {
-
-                "ic_dashboard",
-
-                "ic_schedule",
-
-                "ic_appointments",
-
-                "ic_patient",
-
-                "ic_reports",
-
-                "ic_availability",
-
-                "ic_profile",
-
-                "ic_ai"
-        };
-
-
-        for (int i = 0;
-             i < tabs.length;
-             i++) {
-
-            final int tabIndex =
-                    i;
-
-
-            HBox navTab =
-                    new HBox(14);
-
-            navTab.setAlignment(
-                    Pos.CENTER_LEFT
-            );
-
-            navTab.setPadding(
-                    new Insets(
-                            10,
-                            14,
-                            10,
-                            14
-                    )
-            );
-
-            navTab.getStyleClass()
-                    .add(
-                            "nav-tab"
-                    );
-
-
-            if (i == 0) {
-
-                navTab.getStyleClass()
-                        .add(
-                                "nav-tab-active"
-                        );
-            }
-
-
-            ImageView icon =
-                    createImageView(
-                            "/images/icons/"
-                                    + icons[i]
-                                    + ".png",
-                            18,
-                            18
-                    );
-
-
-            Label tabLabel =
-                    new Label(
-                            tabs[i]
-                    );
-
-            tabLabel.getStyleClass()
-                    .add(
-                            "nav-text"
-                    );
-
-
-            if (icon != null) {
-
-                navTab.getChildren()
-                        .add(
-                                icon
-                        );
-            }
-
-
-            navTab.getChildren()
-                    .add(
-                            tabLabel
-                    );
-
-
-            navTab.setOnMouseClicked(
-                    event ->
-                            handleSidebarTabClick(
-                                    tabIndex
-                            )
-            );
-
-
-            navItems.getChildren()
-                    .add(
-                            navTab
-                    );
-        }
-
-
-        // --------------------------------------------------------
-        // FOOTER
-        // --------------------------------------------------------
-
-        VBox footer =
-                new VBox(12);
-
-        footer.setAlignment(
-                Pos.BOTTOM_CENTER
-        );
-
-        VBox.setVgrow(
-                footer,
-                Priority.ALWAYS
-        );
-
-
-        HBox doctorProfile =
-                new HBox(12);
-
-        doctorProfile.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        doctorProfile.setPadding(
-                new Insets(
-                        10,
-                        14,
-                        10,
-                        14
-                )
-        );
-
-        doctorProfile.getStyleClass()
-                .add(
-                        "sidebar-profile"
-                );
-
-
-        ImageView profileIcon =
-                createImageView(
-                        "/images/doctor/doctor_profile.png",
-                        32,
-                        32
-                );
-
-
-        VBox profileText =
-                new VBox(2);
-
-
-        Label doctorName =
-                new Label(
-                        "Doctor Profile"
-                );
-
-        doctorName.getStyleClass()
-                .add(
-                        "sidebar-profile-role"
-                );
-
-
-        doctorSidebarName =
-                new Label(
-                        getDoctorDisplayName()
-                );
-
-        doctorSidebarName.getStyleClass()
-                .add(
-                        "sidebar-profile-name"
-                );
-
-
-        profileText.getChildren()
-                .addAll(
-                        doctorName,
-                        doctorSidebarName
-                );
-
-
-        if (profileIcon != null) {
-
-            doctorProfile.getChildren()
-                    .add(
-                            profileIcon
-                    );
-        }
-
-
-        doctorProfile.getChildren()
-                .add(
-                        profileText
-                );
-
-
-        doctorProfile.setOnMouseClicked(
-                event ->
-                        handleSidebarTabClick(
-                                6
-                        )
-        );
-
-
-        // --------------------------------------------------------
-        // LOGOUT
-        // --------------------------------------------------------
-
-        HBox logout =
-                new HBox(14);
-
-        logout.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        logout.setPadding(
-                new Insets(
-                        10,
-                        14,
-                        10,
-                        14
-                )
-        );
-
-        logout.getStyleClass()
-                .add(
-                        "nav-tab"
-                );
-
-
-        ImageView logoutIcon =
-                createImageView(
-                        "/images/icons/ic_logout.png",
-                        18,
-                        18
-                );
-
-
-        Label logoutLabel =
-                new Label(
-                        "Logout"
-                );
-
-        logoutLabel.getStyleClass()
-                .add(
-                        "nav-text"
-                );
-
-
-        if (logoutIcon != null) {
-
-            logout.getChildren()
-                    .add(
-                            logoutIcon
-                    );
-        }
-
-
-        logout.getChildren()
-                .add(
-                        logoutLabel
-                );
-
-
-        logout.setOnMouseClicked(
-                event ->
-                        handleLogout()
-        );
-
-
-        footer.getChildren()
-                .addAll(
-                        doctorProfile,
-                        logout
-                );
-
-
-        sidebar.getChildren()
-                .addAll(
-                        logoSection,
-                        navItems,
-                        footer
-                );
-
-
-        return sidebar;
+        return DoctorSidebar.create(stage, 0);
     }
 
 
@@ -859,7 +435,7 @@ public class DoctorDashboardView {
                 Navigation.goTo(
                         stage,
                         () ->
-                                new PatientDetailsView(
+                                new DoctorSessionsView(
                                         stage
                                 ).getScene()
                 );
@@ -872,7 +448,7 @@ public class DoctorDashboardView {
                 Navigation.goTo(
                         stage,
                         () ->
-                                new MedicalReportsView(
+                                new PatientDetailsView(
                                         stage
                                 ).getScene()
                 );
@@ -885,7 +461,7 @@ public class DoctorDashboardView {
                 Navigation.goTo(
                         stage,
                         () ->
-                                new AvailabilityScheduleView(
+                                new MedicalReportsView(
                                         stage
                                 ).getScene()
                 );
@@ -898,7 +474,7 @@ public class DoctorDashboardView {
                 Navigation.goTo(
                         stage,
                         () ->
-                                new DoctorProfileView(
+                                new AvailabilityScheduleView(
                                         stage
                                 ).getScene()
                 );
@@ -911,13 +487,12 @@ public class DoctorDashboardView {
                 Navigation.goTo(
                         stage,
                         () ->
-                                new AIHealthAssistantView(
+                                new DoctorProfileView(
                                         stage
                                 ).getScene()
                 );
 
                 break;
-
 
             default:
                 break;

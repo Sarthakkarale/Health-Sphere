@@ -26,6 +26,15 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import com.healthsphere.config.RoomGenerator;
+import com.healthsphere.dao.CallDao;
+import com.healthsphere.model.Call;
+import com.healthsphere.model.UserModel;
+import com.healthsphere.util.SessionManager;
+import com.healthsphere.view.common.VideoCallScreen;
+import com.healthsphere.controller.PaymentController;
+import com.healthsphere.model.PaymentRecord;
+import com.healthsphere.util.SessionManager;
 
 public class Appointments {
 
@@ -36,6 +45,8 @@ public class Appointments {
     private final ReviewController reviewController;
 
     private final DoctorDAO doctorDAO;
+
+    private final PaymentController paymentController;
 
 
     public Appointments(Stage stage) {
@@ -50,6 +61,9 @@ public class Appointments {
 
         this.doctorDAO =
                 new DoctorDAO();
+
+        this.paymentController =
+                new PaymentController();
     }
 
 
@@ -267,130 +281,51 @@ public class Appointments {
         }
 
 
+        final List<Appointment> finalApps = appointments;
+        final String finalErr = errorMessage;
+
         // =====================================================
-        // UPCOMING APPOINTMENTS
+        // FILTER BAR & DYNAMIC VIEWS CONTAINER
         // =====================================================
 
-        VBox upcoming =
-                PatientUI.card(
-                        "Upcoming Appointments"
-                );
+        VBox dynamicContainer = new VBox(15);
+        dynamicContainer.setMinWidth(0);
+        dynamicContainer.setMaxWidth(Double.MAX_VALUE);
 
-        upcoming.setMinWidth(0);
+        HBox filterBar = new HBox(12);
+        filterBar.setPadding(new Insets(10, 0, 10, 0));
+        filterBar.setAlignment(Pos.CENTER_LEFT);
 
-        upcoming.setMaxWidth(
-                Double.MAX_VALUE
-        );
+        String[] filterTabs = { "Pending Payments", "All Appointments", "Completed Payments", "Payment History" };
+        Button[] filterBtns = new Button[filterTabs.length];
 
-        if (errorMessage != null) {
+        for (int i = 0; i < filterTabs.length; i++) {
+            final int tabIndex = i;
+            Button btn = new Button(filterTabs[i]);
+            filterBtns[i] = btn;
 
-            upcoming.getChildren().add(
-
-                    errorLabel(
-                            "Unable to load appointments: "
-                                    + errorMessage
-                    )
-            );
-
-        } else {
-
-            List<Appointment> upcomingAppointments =
-                    getUpcomingAppointments(
-                            appointments
-                    );
-
-            if (upcomingAppointments.isEmpty()) {
-
-                upcoming.getChildren().add(
-
-                        emptyLabel(
-                                "You have no upcoming appointments."
-                        )
-                );
-
-            } else {
-
-                for (Appointment appointment :
-                        upcomingAppointments) {
-
-                    HBox appointmentBox =
-                            appointmentCard(
-                                    appointment
-                            );
-
-                    appointmentBox.setMaxWidth(
-                            Double.MAX_VALUE
-                    );
-
-                    upcoming.getChildren().add(
-                            appointmentBox
-                    );
+            btn.setOnAction(e -> {
+                for (int j = 0; j < filterBtns.length; j++) {
+                    if (j == tabIndex) {
+                        filterBtns[j].setStyle("-fx-background-color: #2563eb; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 20; -fx-padding: 8 18; -fx-cursor: hand;");
+                    } else {
+                        filterBtns[j].setStyle("-fx-background-color: #e2e8f0; -fx-text-fill: #475569; -fx-font-weight: bold; -fx-background-radius: 20; -fx-padding: 8 18; -fx-cursor: hand;");
+                    }
                 }
-            }
+                renderFilterView(dynamicContainer, tabIndex, finalApps, finalErr);
+            });
+            filterBar.getChildren().add(btn);
         }
 
-
-        // =====================================================
-        // PREVIOUS APPOINTMENTS
-        // =====================================================
-
-        VBox previous =
-                PatientUI.card(
-                        "Previous Appointments"
-                );
-
-        previous.setMinWidth(0);
-
-        previous.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        if (errorMessage != null) {
-
-            previous.getChildren().add(
-
-                    errorLabel(
-                            "Unable to load previous appointments."
-                    )
-            );
-
-        } else {
-
-            List<Appointment> previousAppointments =
-                    getPreviousAppointments(
-                            appointments
-                    );
-
-            if (previousAppointments.isEmpty()) {
-
-                previous.getChildren().add(
-
-                        emptyLabel(
-                                "You have no completed appointments."
-                        )
-                );
-
-            } else {
-
-                for (Appointment appointment :
-                        previousAppointments) {
-
-                    HBox previousBox =
-                            previousAppointment(
-                                    appointment
-                            );
-
-                    previousBox.setMaxWidth(
-                            Double.MAX_VALUE
-                    );
-
-                    previous.getChildren().add(
-                            previousBox
-                    );
-                }
-            }
+        // Set default filter: Pending Payments (index 0)
+        filterBtns[0].setStyle("-fx-background-color: #2563eb; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 20; -fx-padding: 8 18; -fx-cursor: hand;");
+        for (int j = 1; j < filterBtns.length; j++) {
+            filterBtns[j].setStyle("-fx-background-color: #e2e8f0; -fx-text-fill: #475569; -fx-font-weight: bold; -fx-background-radius: 20; -fx-padding: 8 18; -fx-cursor: hand;");
         }
 
+        renderFilterView(dynamicContainer, 0, finalApps, finalErr);
+
+        setupIncomingCallListener();
 
         // =====================================================
         // ADD CONTENT
@@ -399,8 +334,8 @@ public class Appointments {
         content.getChildren().addAll(
                 imageRow,
                 bookingOptions,
-                upcoming,
-                previous
+                filterBar,
+                dynamicContainer
         );
 
 
@@ -718,27 +653,25 @@ public class Appointments {
         );
 
 
-        Label status =
-                new Label(
+        Label statusLbl = new Label(safe(appointment.getStatus(), "Upcoming"));
+        statusLbl.setStyle("-fx-text-fill: #16a34a; -fx-font-weight: bold;");
 
-                        safe(
-                                appointment.getStatus(),
-                                "Upcoming"
-                        )
-                );
+        boolean isPaid = "PAID".equalsIgnoreCase(appointment.getPaymentStatus());
 
-        status.setStyle(
-                "-fx-text-fill: #16a34a;"
-                        + "-fx-font-weight: bold;"
-        );
+        Label paymentBadge = new Label(isPaid ? "✓ PAID" : "⚡ PAYMENT PENDING");
+        paymentBadge.setStyle(isPaid ?
+                "-fx-background-color: #d1fae5; -fx-text-fill: #059669; -fx-font-weight: bold; -fx-font-size: 11px; -fx-padding: 3 8; -fx-background-radius: 12;" :
+                "-fx-background-color: #fef3c7; -fx-text-fill: #d97706; -fx-font-weight: bold; -fx-font-size: 11px; -fx-padding: 3 8; -fx-background-radius: 12;");
 
+        HBox statusBox = new HBox(10, statusLbl, paymentBadge);
+        statusBox.setAlignment(Pos.CENTER_LEFT);
 
         information.getChildren().addAll(
                 type,
                 mainName,
                 specialty,
                 date,
-                status
+                statusBox
         );
 
         HBox.setHgrow(
@@ -746,26 +679,258 @@ public class Appointments {
                 Priority.ALWAYS
         );
 
+        HBox actions = new HBox(8);
+        actions.setAlignment(Pos.CENTER_RIGHT);
 
         Button view =
                 PatientUI.button(
-
                         "View",
-
                         () ->
                                 showAppointmentDetails(
                                         appointment
                                 )
                 );
 
+        actions.getChildren().add(view);
+
+        Button videoCallBtn = new Button("📹 Join Video Call");
+        videoCallBtn.setStyle("-fx-background-color: #ba54f5; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 16; -fx-cursor: hand;");
+        videoCallBtn.setOnAction(e -> handleJoinVideoCall(appointment));
+        actions.getChildren().add(videoCallBtn);
+
+        if (!isPaid) {
+            Button payNowBtn = new Button("Pay Now ₹" + (int) (appointment.getFee() > 0 ? appointment.getFee() : 150));
+            payNowBtn.setStyle("-fx-background-color: #2563eb; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 16; -fx-cursor: hand;");
+            payNowBtn.setOnAction(e -> handlePayNow(appointment));
+            actions.getChildren().add(payNowBtn);
+        }
 
         box.getChildren().addAll(
                 image,
                 information,
-                view
+                actions
         );
 
         return box;
+    }
+
+    // =========================================================
+    // RENDER FILTER VIEWS
+    // =========================================================
+
+    private void renderFilterView(VBox container, int tabIndex, List<Appointment> appointments, String errorMessage) {
+        container.getChildren().clear();
+
+        if (errorMessage != null) {
+            container.getChildren().add(errorLabel("Unable to load data: " + errorMessage));
+            return;
+        }
+
+        if (tabIndex == 0) {
+            // Pending Payments Tab (Default)
+            VBox pendingCard = PatientUI.card("Pending Payments Appointments");
+            List<Appointment> pendingList = new ArrayList<>();
+            for (Appointment app : appointments) {
+                if (app != null && !"PAID".equalsIgnoreCase(app.getPaymentStatus())) {
+                    pendingList.add(app);
+                }
+            }
+            if (pendingList.isEmpty()) {
+                pendingCard.getChildren().add(emptyLabel("No pending payment appointments found. All payments completed!"));
+            } else {
+                for (Appointment app : pendingList) {
+                    HBox card = appointmentCard(app);
+                    card.setMaxWidth(Double.MAX_VALUE);
+                    pendingCard.getChildren().add(card);
+                }
+            }
+            container.getChildren().add(pendingCard);
+
+        } else if (tabIndex == 1) {
+            // All Appointments Tab (Upcoming & Previous)
+            VBox upcoming = PatientUI.card("Upcoming Appointments");
+            List<Appointment> upcomingList = getUpcomingAppointments(appointments);
+            if (upcomingList.isEmpty()) {
+                upcoming.getChildren().add(emptyLabel("You have no upcoming appointments."));
+            } else {
+                for (Appointment app : upcomingList) {
+                    HBox card = appointmentCard(app);
+                    card.setMaxWidth(Double.MAX_VALUE);
+                    upcoming.getChildren().add(card);
+                }
+            }
+
+            VBox previous = PatientUI.card("Previous Appointments");
+            List<Appointment> previousList = getPreviousAppointments(appointments);
+            if (previousList.isEmpty()) {
+                previous.getChildren().add(emptyLabel("You have no completed appointments."));
+            } else {
+                for (Appointment app : previousList) {
+                    HBox card = previousAppointment(app);
+                    card.setMaxWidth(Double.MAX_VALUE);
+                    previous.getChildren().add(card);
+                }
+            }
+            container.getChildren().addAll(upcoming, previous);
+
+        } else if (tabIndex == 2) {
+            // Completed Payments Tab
+            VBox paidCard = PatientUI.card("Completed Payments Appointments");
+            List<Appointment> paidList = new ArrayList<>();
+            for (Appointment app : appointments) {
+                if (app != null && "PAID".equalsIgnoreCase(app.getPaymentStatus())) {
+                    paidList.add(app);
+                }
+            }
+            if (paidList.isEmpty()) {
+                paidCard.getChildren().add(emptyLabel("No completed payment appointments yet."));
+            } else {
+                for (Appointment app : paidList) {
+                    HBox card = appointmentCard(app);
+                    card.setMaxWidth(Double.MAX_VALUE);
+                    paidCard.getChildren().add(card);
+                }
+            }
+            container.getChildren().add(paidCard);
+
+        } else if (tabIndex == 3) {
+            // Payment History Tab
+            renderPaymentHistory(container);
+        }
+    }
+
+    // =========================================================
+    // PAYMENT HISTORY TAB
+    // =========================================================
+
+    private void renderPaymentHistory(VBox container) {
+        VBox card = PatientUI.card("Payment History & Account Balance");
+
+        // Account Balance Banner
+        double currentBal = 1000.00;
+        String patientUid = SessionManager.getPatientUid();
+        if (patientUid != null && !patientUid.isBlank()) {
+            currentBal = paymentController.getPatientAccountBalance(patientUid);
+        }
+
+        HBox balBox = new HBox(15);
+        balBox.setPadding(new Insets(16));
+        balBox.setStyle("-fx-background-color: #0f172a; -fx-background-radius: 12;");
+        balBox.setAlignment(Pos.CENTER_LEFT);
+
+        VBox balTexts = new VBox(4);
+        Label balTitle = new Label("PATIENT ACCOUNT BALANCE");
+        balTitle.setStyle("-fx-text-fill: #94a3b8; -fx-font-size: 11px; -fx-font-weight: bold;");
+        Label balVal = new Label(String.format("₹%.2f", currentBal));
+        balVal.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 24px; -fx-font-weight: bold;");
+        balTexts.getChildren().addAll(balTitle, balVal);
+
+        balBox.getChildren().add(balTexts);
+        card.getChildren().add(balBox);
+
+        List<PaymentRecord> records = paymentController.getPaymentsForPatient(patientUid);
+        if (records == null || records.isEmpty()) {
+            card.getChildren().add(emptyLabel("No payment transactions recorded yet."));
+        } else {
+            VBox list = new VBox(10);
+            list.setPadding(new Insets(10, 0, 0, 0));
+
+            for (PaymentRecord record : records) {
+                HBox row = new HBox(15);
+                row.setPadding(new Insets(14));
+                row.setAlignment(Pos.CENTER_LEFT);
+                row.setStyle("-fx-background-color: #f8fafc; -fx-background-radius: 10; -fx-border-color: #e2e8f0; -fx-border-radius: 10;");
+
+                VBox left = new VBox(4);
+                Label doc = new Label(record.getDoctorName() != null ? record.getDoctorName() : "Doctor Consultation");
+                doc.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #1e293b;");
+                Label date = new Label(record.getCreatedAt() != null ? record.getCreatedAt() : "Recently");
+                date.setStyle("-fx-text-fill: #64748b; -fx-font-size: 12px;");
+                left.getChildren().addAll(doc, date);
+
+                HBox.setHgrow(left, Priority.ALWAYS);
+
+                boolean completed = "COMPLETED".equalsIgnoreCase(record.getStatus());
+                Label stBadge = new Label(completed ? "✓ COMPLETED" : "⚡ PENDING");
+                stBadge.setStyle(completed ?
+                        "-fx-background-color: #d1fae5; -fx-text-fill: #059669; -fx-font-weight: bold; -fx-font-size: 11px; -fx-padding: 4 10; -fx-background-radius: 12;" :
+                        "-fx-background-color: #fef3c7; -fx-text-fill: #d97706; -fx-font-weight: bold; -fx-font-size: 11px; -fx-padding: 4 10; -fx-background-radius: 12;");
+
+                Label amt = new Label(String.format("₹%.2f", record.getAmount()));
+                amt.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #0f172a;");
+
+                row.getChildren().addAll(left, stBadge, amt);
+                list.getChildren().add(row);
+            }
+            card.getChildren().add(list);
+        }
+
+        container.getChildren().add(card);
+    }
+
+    // =========================================================
+    // PAY NOW HANDLER
+    // =========================================================
+
+    private void handlePayNow(Appointment appointment) {
+        try {
+            PaymentRecord record = paymentController.initiatePayment(appointment);
+
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.setTitle("Razorpay Payment");
+
+            VBox box = new VBox(15);
+            box.setPadding(new Insets(25));
+            box.setAlignment(Pos.CENTER);
+            box.setStyle("-fx-background-color: white; -fx-background-radius: 12;");
+
+            Label title = new Label("Razorpay Payment Opened");
+            title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #1e293b;");
+
+            Label sub = new Label("Payment link has opened in your default browser.\nComplete the payment on Razorpay and click 'Verify Status'.");
+            sub.setStyle("-fx-text-fill: #64748b; -fx-font-size: 13px; -fx-text-alignment: center;");
+            sub.setWrapText(true);
+
+            Button verifyBtn = new Button("Verify Status");
+            verifyBtn.setStyle("-fx-background-color: #10b981; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 8; -fx-cursor: hand;");
+
+            Label statusMsg = new Label();
+            statusMsg.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
+
+            verifyBtn.setOnAction(ev -> {
+                boolean success = paymentController.checkAndUpdatePaymentStatus(record, appointment);
+                if (success) {
+                    statusMsg.setStyle("-fx-text-fill: #059669;");
+                    statusMsg.setText("✓ Payment Verified & Completed! Balance updated.");
+                    verifyBtn.setDisable(true);
+                    javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(1.5));
+                    pause.setOnFinished(pe -> {
+                        dialog.close();
+                        stage.setScene(getScene());
+                    });
+                    pause.play();
+                } else {
+                    statusMsg.setStyle("-fx-text-fill: #dc2626;");
+                    statusMsg.setText("Payment pending or not captured yet on Razorpay.");
+                }
+            });
+
+            Button closeBtn = new Button("Close");
+            closeBtn.setStyle("-fx-background-color: #e2e8f0; -fx-text-fill: #475569; -fx-padding: 8 16; -fx-background-radius: 8; -fx-cursor: hand;");
+            closeBtn.setOnAction(ev -> dialog.close());
+
+            HBox btns = new HBox(10, verifyBtn, closeBtn);
+            btns.setAlignment(Pos.CENTER);
+
+            box.getChildren().addAll(title, sub, btns, statusMsg);
+            Scene scene = new Scene(box, 440, 250);
+            dialog.setScene(scene);
+            dialog.show();
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
 
@@ -2364,5 +2529,89 @@ public class Appointments {
 
             stage.setMaximized(true);
         }
+    }
+
+    // =========================================================
+    // VIDEO CALL INTEGRATION (FIREBASE SIGNALING & JITSI)
+    // =========================================================
+
+    private void setupIncomingCallListener() {
+        String patientEmail = UserModel.getInstance().getEmail();
+        CallDao callDao = new CallDao();
+
+        callDao.listenToIncomingCalls(patientEmail, incomingCall -> {
+            javafx.application.Platform.runLater(() -> {
+                Stage dialog = new Stage();
+                dialog.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+                dialog.setTitle("Incoming Video Call");
+
+                VBox box = new VBox(15);
+                box.setPadding(new javafx.geometry.Insets(25));
+                box.setAlignment(Pos.CENTER);
+                box.setStyle("-fx-background-color: #121222; -fx-background-radius: 12;");
+
+                Label title = new Label("Incoming Video Call");
+                title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
+
+                String callerName = incomingCall.getCallerName() != null ? incomingCall.getCallerName() : "Doctor";
+                Label sub = new Label("Doctor " + callerName + " is inviting you to a live video consultation.");
+                sub.setStyle("-fx-text-fill: #deb7ff; -fx-font-size: 13px; -fx-text-alignment: center;");
+                sub.setWrapText(true);
+
+                Button acceptBtn = new Button("Accept Call");
+                acceptBtn.setStyle("-fx-background-color: #43e188; -fx-text-fill: #000000; -fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 20; -fx-cursor: hand;");
+
+                Button declineBtn = new Button("Decline");
+                declineBtn.setStyle("-fx-background-color: #f5365c; -fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 20; -fx-cursor: hand;");
+
+                acceptBtn.setOnAction(ev -> {
+                    callDao.acceptCall(incomingCall.getCallId());
+                    dialog.close();
+                    openVideoCallStage(incomingCall);
+                });
+
+                declineBtn.setOnAction(ev -> {
+                    callDao.declineCall(incomingCall.getCallId());
+                    dialog.close();
+                });
+
+                HBox btns = new HBox(15, acceptBtn, declineBtn);
+                btns.setAlignment(Pos.CENTER);
+
+                box.getChildren().addAll(title, sub, btns);
+                Scene dialogScene = new Scene(box, 420, 220);
+                dialog.setScene(dialogScene);
+                dialog.show();
+            });
+        });
+    }
+
+    private void handleJoinVideoCall(Appointment appointment) {
+        String patientEmail = UserModel.getInstance().getEmail();
+        String patientName = UserModel.getInstance().getName();
+
+        String doctorEmail = appointment.getDoctorUid() != null ? appointment.getDoctorUid() : "doctor@healthsphere.com";
+        String doctorName = appointment.getDoctorName() != null ? appointment.getDoctorName() : "Doctor";
+
+        String roomId = RoomGenerator.generateRoomId(doctorEmail, patientEmail);
+        CallDao callDao = new CallDao();
+
+        String callId = callDao.startCall(patientEmail, patientName, doctorEmail, doctorName, roomId);
+        Call call = new Call(patientEmail, patientName, doctorEmail, doctorName, roomId, "CALLING");
+        call.setCallId(callId);
+
+        openVideoCallStage(call);
+    }
+
+    private void openVideoCallStage(Call call) {
+        Stage modalStage = new Stage();
+        modalStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        modalStage.initOwner(stage);
+        modalStage.setTitle("Patient Video Call");
+
+        VideoCallScreen videoCallScreen = new VideoCallScreen(call, modalStage::close);
+        Scene modalScene = new Scene(videoCallScreen, 680, 520);
+        modalStage.setScene(modalScene);
+        modalStage.show();
     }
 }

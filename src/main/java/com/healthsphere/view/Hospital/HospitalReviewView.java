@@ -68,7 +68,7 @@ public class HospitalReviewView {
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: " + LIGHT_BACKGROUND + ";");
 
-        root.setLeft(createSidebar(stage));
+        root.setLeft(HospitalSidebar.createSidebar(stage, HospitalSidebar.HospitalTab.REVIEWS));
         root.setTop(createTopBar(stage));
 
         ScrollPane scrollPane = new ScrollPane(createMainContent(stage));
@@ -85,99 +85,7 @@ public class HospitalReviewView {
     // =========================================================
 
     private VBox createSidebar(Stage stage) {
-
-        VBox sidebar = new VBox(6);
-        sidebar.setPrefWidth(240);
-        sidebar.setPadding(new Insets(24, 16, 20, 16));
-
-        sidebar.setStyle(
-                "-fx-background-color: " + SIDEBAR_BG + ";" +
-                "-fx-border-color: " + SIDEBAR_BORDER + ";" +
-                "-fx-border-width: 0 1 0 0;"
-        );
-
-        // LOGO
-        VBox logoBox = new VBox(2);
-        logoBox.setPadding(new Insets(0, 8, 24, 8));
-
-        Label logo = new Label("Health-Sphere");
-        logo.setStyle("-fx-font-size: 22px; -fx-font-weight: 800; -fx-text-fill: #FFFFFF;");
-
-        Label subtitle = new Label("SMART HEALTHCARE");
-        subtitle.setStyle("-fx-font-size: 9px; -fx-font-weight: bold; -fx-letter-spacing: 1px; -fx-text-fill: " + SECONDARY_TEXT + ";");
-
-        logoBox.getChildren().addAll(logo, subtitle);
-        sidebar.getChildren().add(logoBox);
-
-        // NAVIGATION BUTTONS
-        Button dashboardButton = createNavigationButton("▦", "Dashboard", false);
-        Button doctorButton = createNavigationButton("♙", "Doctors", false);
-        Button departmentButton = createNavigationButton("✚", "Departments", false);
-        Button bedButton = createNavigationButton("▥", "Beds", false);
-        Button appointmentButton = createNavigationButton("▣", "Appointments", false);
-        Button reviewsButton = createNavigationButton("★", "Patient Reviews", true); // Selected
-        Button analyticsButton = createNavigationButton("◈", "Analytics", false);
-        Button settingsButton = createNavigationButton("⚙", "Hospital Settings", false);
-
-        sidebar.getChildren().addAll(
-                dashboardButton,
-                doctorButton,
-                departmentButton,
-                bedButton,
-                appointmentButton,
-                reviewsButton,
-                analyticsButton,
-                settingsButton
-        );
-
-        // NAVIGATION ACTIONS
-        dashboardButton.setOnAction(event -> stage.setScene(new HospitalDashboardView().createScene(stage)));
-        
-        doctorButton.setOnAction(event -> {
-            DoctorManagementView doctorView = new DoctorManagementView();
-            stage.setScene(doctorView.createScene(stage));
-        });
-
-        departmentButton.setOnAction(event -> {
-            DepartmentManagementView departmentView = new DepartmentManagementView();
-            stage.setScene(departmentView.createScene(stage));
-        });
-
-        bedButton.setOnAction(event -> {
-            BedManagementView bedView = new BedManagementView();
-            stage.setScene(bedView.createScene(stage));
-        });
-
-        appointmentButton.setOnAction(event -> {
-            AppointmentManagementView appointmentView = new AppointmentManagementView();
-            stage.setScene(appointmentView.createScene(stage));
-        });
-
-        analyticsButton.setOnAction(event -> {
-            HospitalAnalyticsView analyticsView = new HospitalAnalyticsView();
-            stage.setScene(analyticsView.createScene(stage));
-        });
-
-        settingsButton.setOnAction(event -> {
-            HospitalProfileSettingsView settingsView = new HospitalProfileSettingsView();
-            stage.setScene(settingsView.createScene(stage));
-        });
-
-        // SPACER
-        Region spacer = new Region();
-        VBox.setVgrow(spacer, Priority.ALWAYS);
-        sidebar.getChildren().add(spacer);
-
-        // FOOTER BUTTONS
-        Button helpButton = createNavigationButton("?", "Help Center", false);
-        Button logoutButton = createNavigationButton("↪", "Logout", false);
-
-        helpButton.setOnAction(e -> showInformationDialog("Help Center", "Support Email: support@healthsphere.com"));
-        logoutButton.setOnAction(e -> Navigation.logout(stage));
-
-        sidebar.getChildren().addAll(helpButton, logoutButton);
-
-        return sidebar;
+        return HospitalSidebar.createSidebar(stage, HospitalSidebar.HospitalTab.REVIEWS);
     }
 
     private Button createNavigationButton(String icon, String text, boolean selected) {

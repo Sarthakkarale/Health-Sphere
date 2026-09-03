@@ -398,431 +398,7 @@ public class AppointmentsView {
     // ============================================================
 
     private VBox createSidebar() {
-
-        VBox sidebar =
-                new VBox();
-
-        sidebar.setPadding(
-                new Insets(
-                        25,
-                        15,
-                        25,
-                        15
-                )
-        );
-
-        sidebar.setMinWidth(
-                260
-        );
-
-        sidebar.setPrefWidth(
-                260
-        );
-
-        sidebar.setMaxWidth(
-                260
-        );
-
-        sidebar.setStyle(
-                "-fx-background-color: #0F172A;"
-        );
-
-        // --------------------------------------------------------
-        // LOGO
-        // --------------------------------------------------------
-
-        HBox logoSection =
-                new HBox(12);
-
-        logoSection.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        logoSection.setPadding(
-                new Insets(
-                        0,
-                        0,
-                        25,
-                        5
-                )
-        );
-
-        StackPane logoBox =
-                new StackPane();
-
-        logoBox.setStyle(
-                "-fx-background-color: #3B82F6;"
-                        + "-fx-background-radius: 8px;"
-                        + "-fx-padding: 8px;"
-        );
-
-        ImageView logo =
-                createImageView(
-                        "/images/icons/ic_shield.png",
-                        20,
-                        20
-                );
-
-        if (logo != null) {
-
-            logoBox
-                    .getChildren()
-                    .add(
-                            logo
-                    );
-        }
-
-        VBox logoText =
-                new VBox(2);
-
-        Label appName =
-                new Label(
-                        "Health-Sphere"
-                );
-
-        appName.setStyle(
-                "-fx-text-fill: white;"
-                        + "-fx-font-size: 16px;"
-                        + "-fx-font-weight: bold;"
-        );
-
-        Label subtitle =
-                new Label(
-                        "Doctor Dashboard"
-                );
-
-        subtitle.setStyle(
-                "-fx-text-fill: #94A3B8;"
-                        + "-fx-font-size: 12px;"
-        );
-
-        logoText
-                .getChildren()
-                .addAll(
-                        appName,
-                        subtitle
-                );
-
-        logoSection
-                .getChildren()
-                .addAll(
-                        logoBox,
-                        logoText
-                );
-
-        // --------------------------------------------------------
-        // NAVIGATION
-        // --------------------------------------------------------
-
-        VBox navigation =
-                new VBox(6);
-
-        String[] names = {
-                "Dashboard",
-                "Today's Schedule",
-                "Appointments",
-                "Patient Details",
-                "Medical Reports & Prescription",
-                "Availability & Schedule",
-                "Doctor Profile",
-                "AI Health Assistant"
-        };
-
-        String[] icons = {
-                "ic_dashboard.png",
-                "ic_schedule.png",
-                "ic_appointments.png",
-                "ic_patient.png",
-                "ic_reports.png",
-                "ic_availability.png",
-                "ic_profile.png",
-                "ic_ai.png"
-        };
-
-        for (int i = 0;
-             i < names.length;
-             i++) {
-
-            HBox navItem =
-                    new HBox(12);
-
-            navItem.setAlignment(
-                    Pos.CENTER_LEFT
-            );
-
-            navItem.setPadding(
-                    new Insets(
-                            10,
-                            14,
-                            10,
-                            14
-                    )
-            );
-
-            ImageView icon =
-                    createImageView(
-                            "/images/icons/"
-                                    + icons[i],
-                            18,
-                            18
-                    );
-
-            Label label =
-                    new Label(
-                            names[i]
-                    );
-
-            // ----------------------------------------------------
-            // ACTIVE APPOINTMENTS
-            // ----------------------------------------------------
-
-            if (i == 2) {
-
-                navItem.setStyle(
-                        "-fx-background-color: #3B82F6;"
-                                + "-fx-background-radius: 8px;"
-                                + "-fx-cursor: hand;"
-                );
-
-                label.setStyle(
-                        "-fx-text-fill: white;"
-                                + "-fx-font-size: 14px;"
-                                + "-fx-font-weight: bold;"
-                );
-
-            } else {
-
-                navItem.setStyle(
-                        "-fx-background-color: transparent;"
-                                + "-fx-background-radius: 8px;"
-                                + "-fx-cursor: hand;"
-                );
-
-                label.setStyle(
-                        "-fx-text-fill: #94A3B8;"
-                                + "-fx-font-size: 14px;"
-                );
-            }
-
-            if (icon != null) {
-
-                navItem
-                        .getChildren()
-                        .add(
-                                icon
-                        );
-            }
-
-            navItem
-                    .getChildren()
-                    .add(
-                            label
-                    );
-
-            final int index = i;
-
-            navItem.setOnMouseClicked(
-                    e ->
-                            handleSidebarNavigation(
-                                    index
-                            )
-            );
-
-            navigation
-                    .getChildren()
-                    .add(
-                            navItem
-                    );
-        }
-
-        // --------------------------------------------------------
-        // SPACER
-        // --------------------------------------------------------
-
-        Region spacer =
-                new Region();
-
-        VBox.setVgrow(
-                spacer,
-                Priority.ALWAYS
-        );
-
-        // --------------------------------------------------------
-        // PROFILE
-        // --------------------------------------------------------
-
-        HBox profile =
-                new HBox(12);
-
-        profile.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        profile.setPadding(
-                new Insets(
-                        10,
-                        12,
-                        10,
-                        12
-                )
-        );
-
-        profile.setStyle(
-                "-fx-background-color: #1E293B;"
-                        + "-fx-background-radius: 10px;"
-                        + "-fx-cursor: hand;"
-        );
-
-        ImageView profileImage =
-                createImageView(
-                        "/images/mocks/dr_sarah_avatar.png",
-                        36,
-                        36
-                );
-
-        if (profileImage != null) {
-
-            Circle clip =
-                    new Circle(
-                            18,
-                            18,
-                            18
-                    );
-
-            profileImage.setClip(
-                    clip
-            );
-        }
-
-        VBox profileText =
-                new VBox(2);
-
-        Label profileCaption =
-                new Label(
-                        "Doctor Profile"
-                );
-
-        profileCaption.setStyle(
-                "-fx-text-fill: #64748B;"
-                        + "-fx-font-size: 11px;"
-        );
-
-        Label profileName =
-                new Label(
-                        SessionManager.getDoctorDisplayName()
-                );
-
-        profileName.setStyle(
-                "-fx-text-fill: white;"
-                        + "-fx-font-size: 13px;"
-                        + "-fx-font-weight: bold;"
-        );
-
-        profileText
-                .getChildren()
-                .addAll(
-                        profileCaption,
-                        profileName
-                );
-
-        if (profileImage != null) {
-
-            profile
-                    .getChildren()
-                    .add(
-                            profileImage
-                    );
-        }
-
-        profile
-                .getChildren()
-                .add(
-                        profileText
-                );
-
-        profile.setOnMouseClicked(
-                e ->
-                        Navigation.goTo(
-                                stage,
-                                () ->
-                                        new DoctorProfileView(
-                                                stage
-                                        ).getScene()
-                        )
-        );
-
-        // --------------------------------------------------------
-        // LOGOUT
-        // --------------------------------------------------------
-
-        HBox logout =
-                new HBox(12);
-
-        logout.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        logout.setPadding(
-                new Insets(
-                        10,
-                        14,
-                        10,
-                        14
-                )
-        );
-
-        logout.setStyle(
-                "-fx-cursor: hand;"
-        );
-
-        ImageView logoutIcon =
-                createImageView(
-                        "/images/icons/ic_logout.png",
-                        18,
-                        18
-                );
-
-        Label logoutLabel =
-                new Label(
-                        "Logout"
-                );
-
-        logoutLabel.setStyle(
-                "-fx-text-fill: #94A3B8;"
-                        + "-fx-font-size: 14px;"
-        );
-
-        if (logoutIcon != null) {
-
-            logout
-                    .getChildren()
-                    .add(
-                            logoutIcon
-                    );
-        }
-
-        logout
-                .getChildren()
-                .add(
-                        logoutLabel
-                );
-
-        logout.setOnMouseClicked(
-                e ->
-                        handleLogout()
-        );
-
-        sidebar
-                .getChildren()
-                .addAll(
-                        logoSection,
-                        navigation,
-                        spacer,
-                        profile,
-                        logout
-                );
-
-        return sidebar;
+        return DoctorSidebar.create(stage, 2);
     }
 
     // ============================================================
@@ -875,7 +451,7 @@ public class AppointmentsView {
                 Navigation.goTo(
                         stage,
                         () ->
-                                new PatientDetailsView(
+                                new DoctorSessionsView(
                                         stage
                                 ).getScene()
                 );
@@ -887,7 +463,7 @@ public class AppointmentsView {
                 Navigation.goTo(
                         stage,
                         () ->
-                                new MedicalReportsView(
+                                new PatientDetailsView(
                                         stage
                                 ).getScene()
                 );
@@ -899,7 +475,7 @@ public class AppointmentsView {
                 Navigation.goTo(
                         stage,
                         () ->
-                                new AvailabilityScheduleView(
+                                new MedicalReportsView(
                                         stage
                                 ).getScene()
                 );
@@ -911,7 +487,7 @@ public class AppointmentsView {
                 Navigation.goTo(
                         stage,
                         () ->
-                                new DoctorProfileView(
+                                new AvailabilityScheduleView(
                                         stage
                                 ).getScene()
                 );
@@ -923,7 +499,7 @@ public class AppointmentsView {
                 Navigation.goTo(
                         stage,
                         () ->
-                                new AIHealthAssistantView(
+                                new DoctorProfileView(
                                         stage
                                 ).getScene()
                 );
@@ -1898,12 +1474,21 @@ public class AppointmentsView {
                 )
         );
 
+        boolean isPaid = "PAID".equalsIgnoreCase(appointment.getPaymentStatus());
+        Label paymentBadge = new Label(isPaid ? "✓ PAID" : "⚡ PENDING");
+        paymentBadge.setStyle(isPaid ?
+                "-fx-background-color: #D1FAE5; -fx-text-fill: #059669; -fx-font-weight: bold; -fx-font-size: 10px; -fx-padding: 3 7; -fx-background-radius: 5px;" :
+                "-fx-background-color: #FEF3C7; -fx-text-fill: #D97706; -fx-font-weight: bold; -fx-font-size: 10px; -fx-padding: 3 7; -fx-background-radius: 5px;");
+
+        HBox rightHeader = new HBox(6, statusLabel, paymentBadge);
+        rightHeader.setAlignment(Pos.CENTER_RIGHT);
+
         topRow.setLeft(
                 idLabel
         );
 
         topRow.setRight(
-                statusLabel
+                rightHeader
         );
 
         // --------------------------------------------------------

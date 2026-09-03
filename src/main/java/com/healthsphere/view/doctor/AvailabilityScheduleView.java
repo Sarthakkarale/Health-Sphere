@@ -2456,372 +2456,11 @@ public class AvailabilityScheduleView {
     // =========================================================
     // SIDEBAR
     // =========================================================
+    // SIDEBAR
+    // =========================================================
 
     private VBox createSidebar() {
-
-        VBox sidebar =
-                new VBox(6);
-
-        sidebar.setPrefWidth(
-                250
-        );
-
-        sidebar.setMinWidth(
-                250
-        );
-
-        sidebar.setMaxWidth(
-                250
-        );
-
-        sidebar.setPadding(
-                new Insets(
-                        24,
-                        15,
-                        20,
-                        15
-                )
-        );
-
-        sidebar.setStyle(
-                "-fx-background-color: "
-                        + SIDEBAR_BACKGROUND
-                        + ";"
-        );
-
-        // -----------------------------------------------------
-        // LOGO
-        // -----------------------------------------------------
-
-        HBox logo =
-                new HBox(10);
-
-        logo.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        StackPane logoIcon =
-                new StackPane();
-
-        logoIcon.setPrefSize(
-                40,
-                40
-        );
-
-        logoIcon.setStyle(
-                "-fx-background-color: "
-                        + PRIMARY_BLUE
-                        + ";"
-                        + "-fx-background-radius: 9;"
-        );
-
-        Label plus =
-                new Label(
-                        "+"
-                );
-
-        plus.setStyle(
-                "-fx-text-fill: white;"
-                        + "-fx-font-size: 24px;"
-                        + "-fx-font-weight: bold;"
-        );
-
-        logoIcon.getChildren().add(
-                plus
-        );
-
-        VBox logoText =
-                new VBox(1);
-
-        Label appName =
-                new Label(
-                        "Health-Sphere"
-                );
-
-        appName.setStyle(
-                "-fx-text-fill: white;"
-                        + "-fx-font-size: 17px;"
-                        + "-fx-font-weight: bold;"
-        );
-
-        Label dashboard =
-                new Label(
-                        "Doctor Dashboard"
-                );
-
-        dashboard.setStyle(
-                "-fx-text-fill: "
-                        + SIDEBAR_TEXT
-                        + ";"
-                        + "-fx-font-size: 10px;"
-        );
-
-        logoText.getChildren().addAll(
-                appName,
-                dashboard
-        );
-
-        logo.getChildren().addAll(
-                logoIcon,
-                logoText
-        );
-
-        sidebar.getChildren().add(
-                logo
-        );
-
-        // -----------------------------------------------------
-        // NAVIGATION
-        // -----------------------------------------------------
-
-        VBox navigation =
-                new VBox(5);
-
-        navigation.setPadding(
-                new Insets(
-                        25,
-                        0,
-                        0,
-                        0
-                )
-        );
-
-        String[] names = {
-                "Dashboard",
-                "Today's Schedule",
-                "Appointments",
-                "Patient Details",
-                "Medical Reports & Prescription",
-                "Availability & Schedule",
-                "Doctor Profile",
-                "AI Health Assistant"
-        };
-
-        String[] icons = {
-                "ic_dashboard",
-                "ic_schedule",
-                "ic_appointments",
-                "ic_patient",
-                "ic_reports",
-                "ic_availability",
-                "ic_profile",
-                "ic_ai"
-        };
-
-        for (int i = 0;
-             i < names.length;
-             i++) {
-
-            final int index =
-                    i;
-
-            HBox item =
-                    createNavigationItem(
-                            names[i],
-                            icons[i],
-                            i == 5
-                    );
-
-            item.setOnMouseClicked(
-                    event ->
-                            handleSidebarTabClick(
-                                    index
-                            )
-            );
-
-            navigation.getChildren()
-                    .add(
-                            item
-                    );
-        }
-
-        sidebar.getChildren().add(
-                navigation
-        );
-
-        // -----------------------------------------------------
-        // SPACER
-        // -----------------------------------------------------
-
-        Region spacer =
-                new Region();
-
-        VBox.setVgrow(
-                spacer,
-                Priority.ALWAYS
-        );
-
-        sidebar.getChildren().add(
-                spacer
-        );
-
-        // -----------------------------------------------------
-        // PROFILE
-        // -----------------------------------------------------
-
-        HBox profile =
-                new HBox(10);
-
-        profile.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        profile.setPadding(
-                new Insets(
-                        10
-                )
-        );
-
-        profile.setStyle(
-                "-fx-background-color: #1E293B;"
-                        + "-fx-background-radius: 9;"
-                        + "-fx-cursor: hand;"
-        );
-
-        Circle circle =
-                new Circle(
-                        18
-                );
-
-        circle.setFill(
-                Color.web(
-                        PRIMARY_LIGHT
-                )
-        );
-
-        Label initials =
-                new Label(
-                        getDoctorInitials()
-                );
-
-        initials.setStyle(
-                "-fx-text-fill: "
-                        + PRIMARY_BLUE
-                        + ";"
-                        + "-fx-font-weight: bold;"
-                        + "-fx-font-size: 11px;"
-        );
-
-        StackPane profileAvatar =
-                new StackPane(
-                        circle,
-                        initials
-                );
-
-        VBox profileText =
-                new VBox(2);
-
-        Label role =
-                new Label(
-                        "Doctor Profile"
-                );
-
-        role.setStyle(
-                "-fx-text-fill: "
-                        + SIDEBAR_TEXT
-                        + ";"
-                        + "-fx-font-size: 9px;"
-        );
-
-        Label name =
-                new Label(
-                        getDoctorDisplayName()
-                );
-
-        name.setStyle(
-                "-fx-text-fill: white;"
-                        + "-fx-font-size: 12px;"
-                        + "-fx-font-weight: bold;"
-        );
-
-        profileText.getChildren().addAll(
-                role,
-                name
-        );
-
-        profile.getChildren().addAll(
-                profileAvatar,
-                profileText
-        );
-
-        profile.setOnMouseClicked(
-                event ->
-                        Navigation.goTo(
-                                stage,
-                                () ->
-                                        new DoctorProfileView(
-                                                stage
-                                        ).getScene()
-                        )
-        );
-
-        sidebar.getChildren().add(
-                profile
-        );
-
-        // -----------------------------------------------------
-        // LOGOUT
-        // -----------------------------------------------------
-
-        HBox logout =
-                new HBox(12);
-
-        logout.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        logout.setPadding(
-                new Insets(
-                        10,
-                        12,
-                        10,
-                        12
-                )
-        );
-
-        logout.setStyle(
-                "-fx-cursor: hand;"
-        );
-
-        Label logoutIcon =
-                new Label(
-                        "↪"
-                );
-
-        logoutIcon.setStyle(
-                "-fx-text-fill: "
-                        + SIDEBAR_TEXT
-                        + ";"
-                        + "-fx-font-size: 17px;"
-        );
-
-        Label logoutText =
-                new Label(
-                        "Logout"
-                );
-
-        logoutText.setStyle(
-                "-fx-text-fill: "
-                        + SIDEBAR_TEXT
-                        + ";"
-                        + "-fx-font-size: 12px;"
-        );
-
-        logout.getChildren().addAll(
-                logoutIcon,
-                logoutText
-        );
-
-        logout.setOnMouseClicked(
-                event ->
-                        handleLogout()
-        );
-
-        sidebar.getChildren().add(
-                logout
-        );
-
-        return sidebar;
+        return DoctorSidebar.create(stage, 6);
     }
 
     // =========================================================
@@ -2976,7 +2615,7 @@ public class AvailabilityScheduleView {
                     Navigation.goTo(
                             stage,
                             () ->
-                                    new PatientDetailsView(
+                                    new DoctorSessionsView(
                                             stage
                                     ).getScene()
                     );
@@ -2988,7 +2627,7 @@ public class AvailabilityScheduleView {
                     Navigation.goTo(
                             stage,
                             () ->
-                                    new MedicalReportsView(
+                                    new PatientDetailsView(
                                             stage
                                     ).getScene()
                     );
@@ -2997,17 +2636,17 @@ public class AvailabilityScheduleView {
 
                 case 5:
 
-                    break;
-
-                case 6:
-
                     Navigation.goTo(
                             stage,
                             () ->
-                                    new DoctorProfileView(
+                                    new MedicalReportsView(
                                             stage
                                     ).getScene()
                     );
+
+                    break;
+
+                case 6:
 
                     break;
 
@@ -3016,7 +2655,7 @@ public class AvailabilityScheduleView {
                     Navigation.goTo(
                             stage,
                             () ->
-                                    new AIHealthAssistantView(
+                                    new DoctorProfileView(
                                             stage
                                     ).getScene()
                     );

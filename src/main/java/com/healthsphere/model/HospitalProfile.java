@@ -17,6 +17,17 @@ public class HospitalProfile {
     // NEW
     private String rating;
 
+    // Account Balance
+    private double accountBalance = 5000.00;
+
+    public double getAccountBalance() {
+        return accountBalance;
+    }
+
+    public void setAccountBalance(double accountBalance) {
+        this.accountBalance = accountBalance;
+    }
+
     // Verification information
     private String verificationStatus;
     private String verifiedBy;

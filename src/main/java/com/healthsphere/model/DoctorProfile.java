@@ -17,6 +17,17 @@ public class DoctorProfile {
     // NEW
     private String rating;
 
+    // Account Balance
+    private double accountBalance = 3450.00;
+
+    public double getAccountBalance() {
+        return accountBalance;
+    }
+
+    public void setAccountBalance(double accountBalance) {
+        this.accountBalance = accountBalance;
+    }
+
     public DoctorProfile() {
     }
 

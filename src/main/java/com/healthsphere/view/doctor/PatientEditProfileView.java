@@ -202,102 +202,7 @@ public class PatientEditProfileView {
     }
 
     private VBox createSidebar() {
-        VBox sidebar = new VBox();
-        sidebar.setPadding(new Insets(30, 15, 30, 15));
-        sidebar.getStyleClass().add("sidebar");
-        sidebar.setMinWidth(250);
-
-        // Brand Logo Section
-        HBox logoSection = new HBox(10);
-        logoSection.setPadding(new Insets(0, 0, 30, 0));
-        logoSection.setAlignment(Pos.CENTER_LEFT);
-
-        StackPane logoIconBox = new StackPane();
-        logoIconBox.getStyleClass().add("logo-icon-box");
-        Label logoAbbr = new Label("HS");
-        logoAbbr.getStyleClass().add("logo-icon-text");
-        logoIconBox.getChildren().add(logoAbbr);
-
-        VBox logoText = new VBox(0);
-        Label appName = new Label("Health-Sphere");
-        appName.getStyleClass().add("logo-name");
-        Label doctorSubtext = new Label("Doctor Dashboard");
-        doctorSubtext.getStyleClass().add("logo-subtext");
-        logoText.getChildren().addAll(appName, doctorSubtext);
-        logoSection.getChildren().addAll(logoIconBox, logoText);
-
-        // Sidebar Navigation Links
-        VBox navItems = new VBox(8);
-        String[] tabs = {
-            "Dashboard", "Today's Schedule", "Appointments", "Patient Details",
-            "Medical Reports & Prescription", "Availability & Schedule", "Doctor Profile", "AI Health Assistant"
-        };
-        String[] icons = {
-            "ic_dashboard", "ic_schedule", "ic_appointments", "ic_patient",
-            "ic_reports", "ic_availability", "ic_profile", "ic_ai"
-        };
-
-        for (int i = 0; i < tabs.length; i++) {
-            HBox navTab = new HBox(15);
-            navTab.getStyleClass().add("nav-tab");
-            navTab.setAlignment(Pos.CENTER_LEFT);
-
-            // Highlight 'Patient Details' as active item (index 3)
-            if (i == 3) {
-                navTab.getStyleClass().add("nav-tab-active");
-            }
-
-            ImageView icon = new ImageView(ResourceImage.load("/images/icons/" + icons[i] + ".png"));
-            icon.setFitWidth(18); icon.setFitHeight(18);
-
-            Label tabLabel = new Label(tabs[i]);
-            tabLabel.getStyleClass().add("nav-text");
-
-            navTab.getChildren().addAll(icon, tabLabel);
-            navItems.getChildren().add(navTab);
-
-            final int index = i;
-            navTab.setOnMouseClicked(e -> handleSidebarTabClick(index));
-        }
-
-        // Bottom Footer (Profile & Logout)
-        VBox footer = new VBox(15);
-        footer.setAlignment(Pos.BOTTOM_CENTER);
-        VBox.setVgrow(footer, Priority.ALWAYS);
-
-        HBox doctorProfile = new HBox(12);
-        doctorProfile.getStyleClass().add("sidebar-profile");
-        doctorProfile.setAlignment(Pos.CENTER_LEFT);
-
-        ImageView profilePhoto = new ImageView(ResourceImage.load("/images/doctor/portrait-3d-male-doctor.png"));
-        profilePhoto.setFitWidth(28); profilePhoto.setFitHeight(28);
-        Circle profileClip = new Circle(14, 14, 14);
-        profilePhoto.setClip(profileClip);
-
-        VBox profileText = new VBox(0);
-        Label doctorName = new Label(SessionManager.getDoctorDisplayName());
-        doctorName.getStyleClass().add("sidebar-profile-name");
-        profileText.getChildren().add(doctorName);
-        doctorProfile.getChildren().addAll(profilePhoto, profileText);
-
-        doctorProfile.setOnMouseClicked(e -> Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()));
-
-        HBox logout = new HBox(15);
-        logout.getStyleClass().add("nav-tab");
-        logout.setAlignment(Pos.CENTER_LEFT);
-
-        ImageView logoutIcon = new ImageView(ResourceImage.load("/images/icons/ic_logout.png"));
-        logoutIcon.setFitWidth(18); logoutIcon.setFitHeight(18);
-
-        Label logoutLabel = new Label("Logout");
-        logoutLabel.getStyleClass().add("nav-text-logout");
-        logout.getChildren().addAll(logoutIcon, logoutLabel);
-
-        logout.setOnMouseClicked(e -> handleLogout());
-
-        footer.getChildren().addAll(doctorProfile, logout);
-        sidebar.getChildren().addAll(logoSection, navItems, footer);
-        return sidebar;
+        return DoctorSidebar.create(stage, 4);
     }
 
     private void handleLogout() {
@@ -314,11 +219,11 @@ public class PatientEditProfileView {
             case 0: Navigation.goTo(stage, () -> new DoctorDashboardView(stage).getScene()); break;
             case 1: Navigation.goTo(stage, () -> new TodaysScheduleView(stage).getScene()); break;
             case 2: Navigation.goTo(stage, () -> new AppointmentsView(stage).getScene()); break;
-            case 3: Navigation.goTo(stage, () -> new PatientDetailsView(stage).getScene()); break;
-            case 4: Navigation.goTo(stage, () -> new MedicalReportsView(stage).getScene()); break;
-            case 5: Navigation.goTo(stage, () -> new AvailabilityScheduleView(stage).getScene()); break;
-            case 6: Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()); break;
-            case 7: Navigation.goTo(stage, () -> new AIHealthAssistantView(stage).getScene()); break;
+            case 3: Navigation.goTo(stage, () -> new DoctorSessionsView(stage).getScene()); break;
+            case 4: Navigation.goTo(stage, () -> new PatientDetailsView(stage).getScene()); break;
+            case 5: Navigation.goTo(stage, () -> new MedicalReportsView(stage).getScene()); break;
+            case 6: Navigation.goTo(stage, () -> new AvailabilityScheduleView(stage).getScene()); break;
+            case 7: Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()); break;
             default: break;
         }
     }

@@ -26,8 +26,28 @@ public class Appointment {
     // PENDING / PENDING_ASSIGNMENT / CONFIRMED / CANCELLED
     private String status;
 
+    // Payment fields: PENDING / PAID
+    private String paymentStatus = "PENDING";
+    private double fee = 150.00;
+
     private String createdAt;
     private String updatedAt;
+
+    public String getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(String paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
+    public double getFee() {
+        return fee;
+    }
+
+    public void setFee(double fee) {
+        this.fee = fee;
+    }
 
     public Appointment() {
     }

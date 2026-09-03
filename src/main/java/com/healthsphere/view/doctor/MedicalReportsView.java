@@ -676,478 +676,7 @@ public class MedicalReportsView {
     // ============================================================
 
     private VBox createSidebar() {
-
-        VBox sidebar =
-                new VBox();
-
-        sidebar.setPadding(
-                new Insets(
-                        25,
-                        15,
-                        25,
-                        15
-                )
-        );
-
-        sidebar.getStyleClass()
-                .add("sidebar");
-
-        sidebar.setStyle(
-                "-fx-background-color: #0F172A;"
-        );
-
-        sidebar.setMinWidth(260);
-        sidebar.setPrefWidth(260);
-        sidebar.setMaxWidth(260);
-
-
-        // --------------------------------------------------------
-        // LOGO
-        // --------------------------------------------------------
-
-        HBox logoSection =
-                new HBox(12);
-
-        logoSection.setPadding(
-                new Insets(
-                        0,
-                        0,
-                        25,
-                        5
-                )
-        );
-
-        logoSection.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-
-        StackPane logoIconBox =
-                new StackPane();
-
-        logoIconBox.getStyleClass()
-                .add("logo-icon-box");
-
-        logoIconBox.setStyle(
-                "-fx-background-color: #3B82F6;"
-                        + "-fx-background-radius: 8px;"
-                        + "-fx-padding: 8px;"
-        );
-
-
-        ImageView logoIcon =
-                new ImageView(
-                        ResourceImage.load(
-                                "/images/icons/ic_shield.png"
-                        )
-                );
-
-        logoIcon.setFitWidth(20);
-        logoIcon.setFitHeight(20);
-
-
-        logoIconBox.getChildren()
-                .add(logoIcon);
-
-
-        VBox logoText =
-                new VBox(2);
-
-
-        Label appName =
-                new Label(
-                        "Health-Sphere"
-                );
-
-        appName.getStyleClass()
-                .add("logo-name");
-
-        appName.setStyle(
-                "-fx-text-fill: #FFFFFF;"
-                        + "-fx-font-weight: bold;"
-                        + "-fx-font-size: 16px;"
-        );
-
-
-        Label doctorSubtext =
-                new Label(
-                        "Doctor Dashboard"
-                );
-
-        doctorSubtext.getStyleClass()
-                .add("logo-subtext");
-
-        doctorSubtext.setStyle(
-                "-fx-text-fill: #94A3B8;"
-                        + "-fx-font-size: 12px;"
-        );
-
-
-        logoText.getChildren()
-                .addAll(
-                        appName,
-                        doctorSubtext
-                );
-
-
-        logoSection.getChildren()
-                .addAll(
-                        logoIconBox,
-                        logoText
-                );
-
-
-        // --------------------------------------------------------
-        // NAVIGATION
-        // --------------------------------------------------------
-
-        VBox navItems =
-                new VBox(6);
-
-
-        String[] tabs = {
-                "Dashboard",
-                "Today's Schedule",
-                "Appointments",
-                "Patient Details",
-                "Medical Reports & Prescription",
-                "Availability & Schedule",
-                "Doctor Profile",
-                "AI Health Assistant"
-        };
-
-
-        String[] icons = {
-                "ic_dashboard",
-                "ic_schedule",
-                "ic_appointments",
-                "ic_patient",
-                "ic_reports",
-                "ic_availability",
-                "ic_profile",
-                "ic_ai"
-        };
-
-
-        for (int i = 0;
-             i < tabs.length;
-             i++) {
-
-            HBox navTab =
-                    new HBox(12);
-
-            navTab.setAlignment(
-                    Pos.CENTER_LEFT
-            );
-
-            navTab.setPadding(
-                    new Insets(
-                            10,
-                            14,
-                            10,
-                            14
-                    )
-            );
-
-            navTab.getStyleClass()
-                    .add("nav-tab");
-
-
-            ImageView icon =
-                    new ImageView(
-                            ResourceImage.load(
-                                    "/images/icons/"
-                                            + icons[i]
-                                            + ".png"
-                            )
-                    );
-
-            icon.setFitWidth(18);
-            icon.setFitHeight(18);
-
-
-            Label tabLabel =
-                    new Label(
-                            tabs[i]
-                    );
-
-            tabLabel.getStyleClass()
-                    .add("nav-text");
-
-
-            if (i == 4) {
-
-                navTab.getStyleClass()
-                        .add(
-                                "nav-tab-active"
-                        );
-
-                navTab.setStyle(
-                        "-fx-background-color: #3B82F6;"
-                                + "-fx-background-radius: 8px;"
-                );
-
-                tabLabel.setStyle(
-                        "-fx-text-fill: #FFFFFF;"
-                                + "-fx-font-weight: bold;"
-                );
-
-            } else {
-
-                navTab.setStyle(
-                        "-fx-background-color: transparent;"
-                                + "-fx-background-radius: 8px;"
-                );
-
-                tabLabel.setStyle(
-                        "-fx-text-fill: #94A3B8;"
-                );
-            }
-
-
-            navTab.getChildren()
-                    .addAll(
-                            icon,
-                            tabLabel
-                    );
-
-
-            navItems.getChildren()
-                    .add(navTab);
-
-
-            final int index = i;
-
-
-            navTab.setOnMouseClicked(
-                    e ->
-                            handleSidebarTabClick(
-                                    index
-                            )
-            );
-        }
-
-
-        // --------------------------------------------------------
-        // SPACER
-        // --------------------------------------------------------
-
-        Region spacer =
-                new Region();
-
-        VBox.setVgrow(
-                spacer,
-                Priority.ALWAYS
-        );
-
-
-        // --------------------------------------------------------
-        // FOOTER
-        // --------------------------------------------------------
-
-        VBox footer =
-                new VBox(10);
-
-        footer.setPadding(
-                new Insets(
-                        15,
-                        0,
-                        0,
-                        0
-                )
-        );
-
-
-        HBox sidebarProfile =
-                new HBox(12);
-
-        sidebarProfile.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        sidebarProfile.setPadding(
-                new Insets(
-                        10,
-                        12,
-                        10,
-                        12
-                )
-        );
-
-        sidebarProfile.getStyleClass()
-                .add(
-                        "sidebar-profile-box"
-                );
-
-        sidebarProfile.setStyle(
-                "-fx-background-color: #1E293B;"
-                        + "-fx-background-radius: 10px;"
-                        + "-fx-cursor: hand;"
-        );
-
-
-        ImageView profileAvatar =
-                new ImageView(
-                        ResourceImage.load(
-                                "/images/doctor/portrait-3d-male-doctor.png"
-                        )
-                );
-
-        profileAvatar.setFitWidth(36);
-        profileAvatar.setFitHeight(36);
-
-
-        Circle profileClip =
-                new Circle(
-                        18,
-                        18,
-                        18
-                );
-
-        profileAvatar.setClip(
-                profileClip
-        );
-
-
-        VBox profileTexts =
-                new VBox(2);
-
-
-        Label profSubText =
-                new Label(
-                        "Doctor Profile"
-                );
-
-        profSubText.setStyle(
-                "-fx-text-fill: #64748B;"
-                        + "-fx-font-size: 11px;"
-        );
-
-
-        Label profName =
-                new Label(
-                        SessionManager.getDoctorDisplayName()
-                );
-
-        profName.getStyleClass()
-                .add(
-                        "sidebar-profile-name"
-                );
-
-        profName.setStyle(
-                "-fx-text-fill: #FFFFFF;"
-                        + "-fx-font-weight: bold;"
-                        + "-fx-font-size: 13px;"
-        );
-
-
-        profileTexts.getChildren()
-                .addAll(
-                        profSubText,
-                        profName
-                );
-
-
-        sidebarProfile.getChildren()
-                .addAll(
-                        profileAvatar,
-                        profileTexts
-                );
-
-
-        sidebarProfile.setOnMouseClicked(
-                e ->
-                        Navigation.goTo(
-                                stage,
-                                () ->
-                                        new DoctorProfileView(
-                                                stage
-                                        ).getScene()
-                        )
-        );
-
-
-        // --------------------------------------------------------
-        // LOGOUT
-        // --------------------------------------------------------
-
-        HBox logoutTab =
-                new HBox(12);
-
-        logoutTab.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        logoutTab.setPadding(
-                new Insets(
-                        10,
-                        14,
-                        10,
-                        14
-                )
-        );
-
-        logoutTab.getStyleClass()
-                .add("nav-tab");
-
-        logoutTab.setStyle(
-                "-fx-cursor: hand;"
-        );
-
-
-        ImageView logoutIcon =
-                new ImageView(
-                        ResourceImage.load(
-                                "/images/icons/ic_logout.png"
-                        )
-                );
-
-        logoutIcon.setFitWidth(18);
-        logoutIcon.setFitHeight(18);
-
-
-        Label logoutLabel =
-                new Label(
-                        "Logout"
-                );
-
-        logoutLabel.getStyleClass()
-                .add("nav-text");
-
-        logoutLabel.setStyle(
-                "-fx-text-fill: #94A3B8;"
-        );
-
-
-        logoutTab.getChildren()
-                .addAll(
-                        logoutIcon,
-                        logoutLabel
-                );
-
-
-        logoutTab.setOnMouseClicked(
-                e -> handleLogout()
-        );
-
-
-        footer.getChildren()
-                .addAll(
-                        sidebarProfile,
-                        logoutTab
-                );
-
-
-        sidebar.getChildren()
-                .addAll(
-                        logoSection,
-                        navItems,
-                        spacer,
-                        footer
-                );
-
-
-        return sidebar;
+        return DoctorSidebar.create(stage, 5, patientUid);
     }
 
 
@@ -1205,7 +734,7 @@ public class MedicalReportsView {
                 Navigation.goTo(
                         stage,
                         () ->
-                                new PatientDetailsView(
+                                new DoctorSessionsView(
                                         stage
                                 ).getScene()
                 );
@@ -1214,6 +743,19 @@ public class MedicalReportsView {
 
 
             case 4:
+
+                Navigation.goTo(
+                        stage,
+                        () ->
+                                new PatientDetailsView(
+                                        stage
+                                ).getScene()
+                );
+
+                break;
+
+
+            case 5:
 
                 if (patientUid != null
                         && !patientUid.isBlank()) {
@@ -1241,7 +783,7 @@ public class MedicalReportsView {
                 break;
 
 
-            case 5:
+            case 6:
 
                 Navigation.goTo(
                         stage,
@@ -1254,25 +796,12 @@ public class MedicalReportsView {
                 break;
 
 
-            case 6:
-
-                Navigation.goTo(
-                        stage,
-                        () ->
-                                new DoctorProfileView(
-                                        stage
-                                ).getScene()
-                );
-
-                break;
-
-
             case 7:
 
                 Navigation.goTo(
                         stage,
                         () ->
-                                new AIHealthAssistantView(
+                                new DoctorProfileView(
                                         stage
                                 ).getScene()
                 );

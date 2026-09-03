@@ -126,7 +126,7 @@ public class HospitalAnalyticsView {
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: " + LIGHT_BACKGROUND + ";");
 
-        root.setLeft(createSidebar(stage));
+        root.setLeft(HospitalSidebar.createSidebar(stage, HospitalSidebar.HospitalTab.ANALYTICS));
         root.setTop(createTopBar());
 
         // Smooth scroll wrapper
@@ -145,80 +145,7 @@ public class HospitalAnalyticsView {
     // =========================================================
 
     private VBox createSidebar(Stage stage) {
-
-        VBox sidebar = new VBox(6);
-        sidebar.setPrefWidth(240);
-        sidebar.setPadding(new Insets(24, 16, 20, 16));
-
-        sidebar.setStyle(
-                "-fx-background-color: " + SIDEBAR_BG + ";" +
-                "-fx-border-color: " + SIDEBAR_BORDER + ";" +
-                "-fx-border-width: 0 1 0 0;"
-        );
-
-        // LOGO
-        VBox logoBox = new VBox(2);
-        logoBox.setPadding(new Insets(0, 8, 24, 8));
-
-        Label logo = new Label("Health-Sphere");
-        logo.setStyle(
-                "-fx-font-size: 22px;" +
-                "-fx-font-weight: 800;" +
-                "-fx-text-fill: #60A5FA;"
-        );
-
-        Label subtitle = new Label("SMART HEALTHCARE");
-        subtitle.setStyle(
-                "-fx-font-size: 9px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-letter-spacing: 1px;" +
-                "-fx-text-fill: " + SIDEBAR_TEXT + ";"
-        );
-
-        logoBox.getChildren().addAll(logo, subtitle);
-        sidebar.getChildren().add(logoBox);
-
-        // NAVIGATION BUTTONS
-        Button dashboardButton = createNavigationButton("▦", "Dashboard", false);
-        Button doctorButton = createNavigationButton("♙", "Doctors", false);
-        Button departmentButton = createNavigationButton("✚", "Departments", false);
-        Button bedButton = createNavigationButton("▥", "Beds", false);
-        Button appointmentButton = createNavigationButton("▣", "Appointments", false);
-        Button analyticsButton = createNavigationButton("◈", "Analytics", true);
-        Button settingsButton = createNavigationButton("⚙", "Hospital Settings", false);
-
-        sidebar.getChildren().addAll(
-                dashboardButton,
-                doctorButton,
-                departmentButton,
-                bedButton,
-                appointmentButton,
-                analyticsButton,
-                settingsButton
-        );
-
-        // DIRECT NAVIGATION
-        dashboardButton.setOnAction(event -> stage.setScene(new HospitalDashboardView().createScene(stage)));
-        doctorButton.setOnAction(event -> stage.setScene(new DoctorManagementView().createScene(stage)));
-        departmentButton.setOnAction(event -> stage.setScene(new DepartmentManagementView().createScene(stage)));
-        bedButton.setOnAction(event -> stage.setScene(new BedManagementView().createScene(stage)));
-        appointmentButton.setOnAction(event -> stage.setScene(new AppointmentManagementView().createScene(stage)));
-        settingsButton.setOnAction(event -> stage.setScene(new HospitalProfileSettingsView().createScene(stage)));
-
-        // SPACER
-        Region sidebarSpacer = new Region();
-        VBox.setVgrow(sidebarSpacer, Priority.ALWAYS);
-        sidebar.getChildren().add(sidebarSpacer);
-
-        // HELP & LOGOUT
-        Button helpButton = createNavigationButton("?", "Help Center", false);
-        Button logoutButton = createNavigationButton("↪", "Logout", false);
-
-        logoutButton.setOnAction(e -> Navigation.logout(stage));
-
-        sidebar.getChildren().addAll(helpButton, logoutButton);
-
-        return sidebar;
+        return HospitalSidebar.createSidebar(stage, HospitalSidebar.HospitalTab.ANALYTICS);
     }
 
     // =========================================================

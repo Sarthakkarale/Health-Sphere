@@ -1003,8 +1003,16 @@ public class SearchHospitals {
         );
 
         // =====================================================
-        // VIEW BUTTON
+        // BUTTONS
         // =====================================================
+
+        Button bookButton =
+                PatientUI.button(
+                        "Book Appointment",
+                        () -> showBookHospital(
+                                hospital
+                        )
+                );
 
         Button viewButton =
                 PatientUI.secondaryButton(
@@ -1014,20 +1022,15 @@ public class SearchHospitals {
                         )
                 );
 
-        viewButton.setMinWidth(105);
-
-        VBox buttonContainer =
-                new VBox();
+        HBox buttonContainer =
+                new HBox(8);
 
         buttonContainer.setAlignment(
                 Pos.CENTER_RIGHT
         );
 
-        buttonContainer.setMinWidth(
-                105
-        );
-
-        buttonContainer.getChildren().add(
+        buttonContainer.getChildren().addAll(
+                bookButton,
                 viewButton
         );
 
@@ -1200,8 +1203,16 @@ public class SearchHospitals {
         );
 
         // =====================================================
-        // VIEW BUTTON
+        // BUTTONS
         // =====================================================
+
+        Button bookButton =
+                PatientUI.button(
+                        "Book Appointment",
+                        () -> showBookDoctor(
+                                doctor
+                        )
+                );
 
         Button viewButton =
                 PatientUI.secondaryButton(
@@ -1211,20 +1222,15 @@ public class SearchHospitals {
                         )
                 );
 
-        viewButton.setMinWidth(105);
-
-        VBox buttonContainer =
-                new VBox();
+        HBox buttonContainer =
+                new HBox(8);
 
         buttonContainer.setAlignment(
                 Pos.CENTER_RIGHT
         );
 
-        buttonContainer.setMinWidth(
-                105
-        );
-
-        buttonContainer.getChildren().add(
+        buttonContainer.getChildren().addAll(
+                bookButton,
                 viewButton
         );
 
@@ -1469,6 +1475,18 @@ public class SearchHospitals {
         phone.setWrapText(true);
 
         // =====================================================
+        // BOOK BUTTON
+        // =====================================================
+
+        Button bookButton =
+                PatientUI.button(
+                        "Book Appointment",
+                        () -> showBookDoctor(
+                                doctor
+                        )
+                );
+
+        // =====================================================
         // ADD DETAILS
         // =====================================================
 
@@ -1481,7 +1499,8 @@ public class SearchHospitals {
                 registration,
                 council,
                 email,
-                phone
+                phone,
+                bookButton
         );
 
         // =====================================================
@@ -1726,6 +1745,44 @@ public class SearchHospitals {
         }
 
         return rating.trim() + " / 5";
+    }
+
+    // =========================================================
+    // NAVIGATION TO BOOKING
+    // =========================================================
+
+    private void showBookDoctor(
+            DoctorProfile doctor) {
+
+        stage.setScene(
+                new DoctorBooking(
+                        stage,
+                        doctor
+                ).getScene()
+        );
+
+        stage.show();
+
+        if (!stage.isMaximized()) {
+            stage.setMaximized(true);
+        }
+    }
+
+    private void showBookHospital(
+            HospitalProfile hospital) {
+
+        stage.setScene(
+                new HospitalBooking(
+                        stage,
+                        hospital
+                ).getScene()
+        );
+
+        stage.show();
+
+        if (!stage.isMaximized()) {
+            stage.setMaximized(true);
+        }
     }
 }
 

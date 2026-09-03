@@ -81,6 +81,14 @@ public final class SessionManager {
         return null;
     }
 
+    public static String getPatientUid() {
+        return getCurrentUserId();
+    }
+
+    public static String getDoctorUid() {
+        return getCurrentUserId();
+    }
+
     public static String getDoctorDisplayName() {
         if (cachedDoctorName != null && !cachedDoctorName.isBlank()) {
             return cachedDoctorName;

@@ -126,7 +126,7 @@ public class AppointmentManagementView {
         );
 
         root.setLeft(
-                createSidebar(stage)
+                HospitalSidebar.createSidebar(stage, HospitalSidebar.HospitalTab.APPOINTMENTS)
         );
 
         root.setTop(
@@ -253,209 +253,7 @@ public class AppointmentManagementView {
     // =========================================================
 
     private VBox createSidebar(Stage stage) {
-
-        VBox sidebar = new VBox(6);
-
-        sidebar.setPrefWidth(240);
-
-        sidebar.setPadding(
-                new Insets(24, 16, 20, 16)
-        );
-
-        sidebar.setStyle(
-                "-fx-background-color: "
-                        + SIDEBAR_BG
-                        + ";" +
-                "-fx-border-color: "
-                        + SIDEBAR_BORDER
-                        + ";" +
-                "-fx-border-width: 0 1 0 0;"
-        );
-
-        VBox logoBox = new VBox(2);
-
-        logoBox.setPadding(
-                new Insets(0, 8, 24, 8)
-        );
-
-        Label logo =
-                new Label("Health-Sphere");
-
-        logo.setStyle(
-                "-fx-font-size: 22px;" +
-                "-fx-font-weight: 800;" +
-                "-fx-text-fill: #FFFFFF;"
-        );
-
-        Label subtitle =
-                new Label("SMART HEALTHCARE");
-
-        subtitle.setStyle(
-                "-fx-font-size: 9px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-letter-spacing: 1px;" +
-                "-fx-text-fill: "
-                        + SECONDARY_TEXT
-                        + ";"
-        );
-
-        logoBox.getChildren().addAll(
-                logo,
-                subtitle
-        );
-
-        sidebar.getChildren().add(
-                logoBox
-        );
-
-        Button dashboardButton =
-                createNavigationButton(
-                        "▦",
-                        "Dashboard",
-                        false
-                );
-
-        Button doctorButton =
-                createNavigationButton(
-                        "♙",
-                        "Doctors",
-                        false
-                );
-
-        Button departmentButton =
-                createNavigationButton(
-                        "✚",
-                        "Departments",
-                        false
-                );
-
-        Button bedButton =
-                createNavigationButton(
-                        "▥",
-                        "Beds",
-                        false
-                );
-
-        Button appointmentButton =
-                createNavigationButton(
-                        "▣",
-                        "Appointments",
-                        true
-                );
-
-        Button analyticsButton =
-                createNavigationButton(
-                        "◈",
-                        "Analytics",
-                        false
-                );
-
-        Button settingsButton =
-                createNavigationButton(
-                        "⚙",
-                        "Hospital Settings",
-                        false
-                );
-
-        sidebar.getChildren().addAll(
-                dashboardButton,
-                doctorButton,
-                departmentButton,
-                bedButton,
-                appointmentButton,
-                analyticsButton,
-                settingsButton
-        );
-
-        dashboardButton.setOnAction(
-                e -> navigateSafely(
-                        stage,
-                        () -> new HospitalDashboardView()
-                                .createScene(stage)
-                )
-        );
-
-        doctorButton.setOnAction(
-                e -> navigateSafely(
-                        stage,
-                        () -> new DoctorManagementView()
-                                .createScene(stage)
-                )
-        );
-
-        departmentButton.setOnAction(
-                e -> navigateSafely(
-                        stage,
-                        () -> new DepartmentManagementView()
-                                .createScene(stage)
-                )
-        );
-
-        bedButton.setOnAction(
-                e -> navigateSafely(
-                        stage,
-                        () -> new BedManagementView()
-                                .createScene(stage)
-                )
-        );
-
-        analyticsButton.setOnAction(
-                e -> navigateSafely(
-                        stage,
-                        () -> new HospitalAnalyticsView()
-                                .createScene(stage)
-                )
-        );
-
-        settingsButton.setOnAction(
-                e -> navigateSafely(
-                        stage,
-                        () -> new HospitalProfileSettingsView()
-                                .createScene(stage)
-                )
-        );
-
-        Region spacer = new Region();
-
-        VBox.setVgrow(
-                spacer,
-                Priority.ALWAYS
-        );
-
-        sidebar.getChildren().add(spacer);
-
-        Button helpButton =
-                createNavigationButton(
-                        "?",
-                        "Help Center",
-                        false
-                );
-
-        Button logoutButton =
-                createNavigationButton(
-                        "↪",
-                        "Logout",
-                        false
-                );
-
-        helpButton.setOnAction(
-                e -> showAlert(
-                        Alert.AlertType.INFORMATION,
-                        "Help Center",
-                        "Support contact: support@healthsphere.com"
-                )
-        );
-
-        logoutButton.setOnAction(
-                e -> Navigation.logout(stage)
-        );
-
-        sidebar.getChildren().addAll(
-                helpButton,
-                logoutButton
-        );
-
-        return sidebar;
+        return HospitalSidebar.createSidebar(stage, HospitalSidebar.HospitalTab.APPOINTMENTS);
     }
 
     // =========================================================
@@ -1749,13 +1547,29 @@ public class AppointmentManagementView {
                 "-fx-background-radius: 12;"
         );
 
+        boolean isPaid = "PAID".equalsIgnoreCase(appt.getPaymentStatus());
+        Label paymentBadge = new Label(isPaid ? "✓ PAID" : "⚡ PENDING");
+        paymentBadge.setPadding(
+                new Insets(
+                        4,
+                        8,
+                        4,
+                        8
+                )
+        );
+        paymentBadge.setStyle(isPaid ?
+                "-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #059669; -fx-background-color: #ECFDF5; -fx-background-radius: 12;" :
+                "-fx-font-size: 10px; -fx-font-weight: 700; -fx-text-fill: #D97706; -fx-background-color: #FFFBEB; -fx-background-radius: 12;");
+
         HBox statusBox =
                 new HBox(
-                        statusLabel
+                        6,
+                        statusLabel,
+                        paymentBadge
                 );
 
         statusBox.setPrefWidth(
-                150
+                220
         );
 
         statusBox.setAlignment(

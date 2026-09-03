@@ -26,14 +26,18 @@ import javafx.stage.Stage;
 public class DoctorBooking {
 
     private final Stage stage;
-
     private final AppointmentController appointmentController;
-
     private final PatientController patientController;
+    private final DoctorProfile preselectedDoctor;
 
     public DoctorBooking(Stage stage) {
+        this(stage, null);
+    }
+
+    public DoctorBooking(Stage stage, DoctorProfile preselectedDoctor) {
 
         this.stage = stage;
+        this.preselectedDoctor = preselectedDoctor;
 
         this.appointmentController =
                 new AppointmentController();
@@ -386,6 +390,20 @@ public class DoctorBooking {
             doctorComboBox
                     .getItems()
                     .addAll(doctors);
+
+            if (preselectedDoctor != null && doctors != null) {
+                for (DoctorProfile d : doctors) {
+                    if (d != null) {
+                        boolean matchUid = d.getUid() != null && preselectedDoctor.getUid() != null
+                                && d.getUid().equals(preselectedDoctor.getUid());
+                        boolean matchName = getDoctorDisplayName(d).equalsIgnoreCase(getDoctorDisplayName(preselectedDoctor));
+                        if (matchUid || matchName) {
+                            doctorComboBox.setValue(d);
+                            break;
+                        }
+                    }
+                }
+            }
 
             // Display doctor name instead of
             // object memory address.

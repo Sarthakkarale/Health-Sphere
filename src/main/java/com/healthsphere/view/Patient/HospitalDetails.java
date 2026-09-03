@@ -53,7 +53,7 @@ public class HospitalDetails {
         content.setFillWidth(true);
 
         // =====================================================
-        // BACK BUTTON
+        // ACTION TOP BAR (BACK + BOOK)
         // =====================================================
 
         Button back =
@@ -61,6 +61,15 @@ public class HospitalDetails {
                         "← Back to Hospitals",
                         this::showSearchHospitals
                 );
+
+        Button topBook =
+                PatientUI.button(
+                        "Book Appointment",
+                        this::showBookAppointment
+                );
+
+        HBox topBar = new HBox(12, back, topBook);
+        topBar.setAlignment(Pos.CENTER_LEFT);
 
         // =====================================================
         // HOSPITAL HEADER
@@ -321,7 +330,7 @@ public class HospitalDetails {
 
         content.getChildren().addAll(
 
-                back,
+                topBar,
 
                 hospitalHeader,
 
@@ -479,8 +488,10 @@ public class HospitalDetails {
     private void showBookAppointment() {
 
         stage.setScene(
-                new BookAppointment(stage)
-                        .getScene()
+                new HospitalBooking(
+                        stage,
+                        hospitalName
+                ).getScene()
         );
 
         stage.show();

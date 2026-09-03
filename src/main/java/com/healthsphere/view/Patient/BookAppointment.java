@@ -43,9 +43,32 @@ public class BookAppointment {
     private List<DoctorProfile> doctors =
             new ArrayList<>();
 
+    private final DoctorProfile preselectedDoctor;
+    private final HospitalProfile preselectedHospital;
+    private final String preselectedHospitalName;
+
     public BookAppointment(Stage stage) {
+        this(stage, null, null, null);
+    }
+
+    public BookAppointment(Stage stage, DoctorProfile preselectedDoctor) {
+        this(stage, preselectedDoctor, null, null);
+    }
+
+    public BookAppointment(Stage stage, HospitalProfile preselectedHospital) {
+        this(stage, null, preselectedHospital, preselectedHospital != null ? preselectedHospital.getHospitalName() : null);
+    }
+
+    public BookAppointment(Stage stage, String hospitalName) {
+        this(stage, null, null, hospitalName);
+    }
+
+    private BookAppointment(Stage stage, DoctorProfile preselectedDoctor, HospitalProfile preselectedHospital, String preselectedHospitalName) {
 
         this.stage = stage;
+        this.preselectedDoctor = preselectedDoctor;
+        this.preselectedHospital = preselectedHospital;
+        this.preselectedHospitalName = preselectedHospitalName;
 
         this.appointmentController =
                 new AppointmentController();
@@ -534,6 +557,32 @@ public class BookAppointment {
                     }
                 }
         );
+
+        if (preselectedDoctor != null) {
+            bookingType.setValue("Book a Doctor");
+            String docName = getDoctorFullName(preselectedDoctor);
+            if (doctor.getItems().contains(docName)) {
+                doctor.setValue(docName);
+            } else if (!docName.isBlank()) {
+                doctor.getItems().add(docName);
+                doctor.setValue(docName);
+            }
+            if (preselectedDoctor.getSpecialization() != null && !preselectedDoctor.getSpecialization().isBlank()) {
+                specialty.getItems().add(preselectedDoctor.getSpecialization().trim());
+                specialty.setValue(preselectedDoctor.getSpecialization().trim());
+            }
+        } else if (preselectedHospital != null || (preselectedHospitalName != null && !preselectedHospitalName.isBlank())) {
+            bookingType.setValue("Book a Hospital");
+            String hospName = preselectedHospital != null ? preselectedHospital.getHospitalName() : preselectedHospitalName;
+            if (hospName != null && !hospName.isBlank()) {
+                if (hospital.getItems().contains(hospName)) {
+                    hospital.setValue(hospName);
+                } else {
+                    hospital.getItems().add(hospName);
+                    hospital.setValue(hospName);
+                }
+            }
+        }
 
         // =====================================================
         // DATE + TIME SECTION

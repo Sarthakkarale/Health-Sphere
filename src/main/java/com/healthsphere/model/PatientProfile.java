@@ -20,6 +20,17 @@ public class PatientProfile {
     private String oxygenLevel;
     private String lastHealthCheck;
 
+    // Account Balance
+    private double accountBalance = 1000.00;
+
+    public double getAccountBalance() {
+        return accountBalance;
+    }
+
+    public void setAccountBalance(double accountBalance) {
+        this.accountBalance = accountBalance;
+    }
+
     public PatientProfile() {
     }
 
