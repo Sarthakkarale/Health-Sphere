@@ -1,5 +1,7 @@
 package com.healthsphere.view.hospital;
 
+import com.healthsphere.util.Navigation;
+import com.healthsphere.util.ShimmerPlaceholder;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -211,6 +213,8 @@ public class HospitalAnalyticsView {
         // HELP & LOGOUT
         Button helpButton = createNavigationButton("?", "Help Center", false);
         Button logoutButton = createNavigationButton("↪", "Logout", false);
+
+        logoutButton.setOnAction(e -> Navigation.logout(stage));
 
         sidebar.getChildren().addAll(helpButton, logoutButton);
 

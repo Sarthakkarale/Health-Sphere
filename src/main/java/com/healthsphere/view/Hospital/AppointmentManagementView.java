@@ -4,6 +4,8 @@ import com.healthsphere.controller.hospital.AppointmentController;
 import com.healthsphere.controller.hospital.DoctorController;
 import com.healthsphere.model.Appointment;
 import com.healthsphere.model.HospitalDoctorDetails;
+import com.healthsphere.util.Navigation;
+import com.healthsphere.util.ShimmerPlaceholder;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -210,34 +212,40 @@ public class AppointmentManagementView {
     // =========================================================
 
     private void loadAppointments() {
+        if (tableRowsContainer != null) {
+            tableRowsContainer.getChildren().clear();
+            tableRowsContainer.getChildren().add(ShimmerPlaceholder.createListShimmer(4));
+        }
 
-        try {
+        javafx.concurrent.Task<List<Appointment>> loadTask =
+                new javafx.concurrent.Task<>() {
+                    @Override
+                    protected List<Appointment> call() throws Exception {
+                        return appointmentController.getHospitalAppointments();
+                    }
+                };
 
-            List<Appointment> appointments =
-                    appointmentController
-                            .getHospitalAppointments();
-
+        loadTask.setOnSucceeded(event -> {
             masterAppointmentList.clear();
-
+            List<Appointment> appointments = loadTask.getValue();
             if (appointments != null) {
-
-                masterAppointmentList.addAll(
-                        appointments
-                );
+                masterAppointmentList.addAll(appointments);
             }
-
             updateDoctorFilter();
-
             updateFilteredData();
+        });
 
-        } catch (Exception e) {
-
+        loadTask.setOnFailed(event -> {
+            masterAppointmentList.clear();
+            updateFilteredData();
             showAlert(
                     Alert.AlertType.ERROR,
                     "Unable to Load Appointments",
-                    getErrorMessage(e)
+                    getErrorMessage(loadTask.getException())
             );
-        }
+        });
+
+        new Thread(loadTask).start();
     }
 
     // =========================================================
@@ -439,11 +447,7 @@ public class AppointmentManagementView {
         );
 
         logoutButton.setOnAction(
-                e -> showAlert(
-                        Alert.AlertType.INFORMATION,
-                        "Logout",
-                        "Logged out successfully."
-                )
+                e -> Navigation.logout(stage)
         );
 
         sidebar.getChildren().addAll(
@@ -3254,7 +3258,7 @@ public class AppointmentManagementView {
     }
 
     private String getErrorMessage(
-            Exception e
+            Throwable e
     ) {
 
         if (e == null) {

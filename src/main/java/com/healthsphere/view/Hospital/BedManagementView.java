@@ -4,6 +4,8 @@ import com.healthsphere.controller.hospital.BedController;
 import com.healthsphere.controller.hospital.WardController;
 import com.healthsphere.model.HospitalBed;
 import com.healthsphere.model.HospitalWard;
+import com.healthsphere.util.Navigation;
+import com.healthsphere.util.ShimmerPlaceholder;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -222,76 +224,59 @@ public class BedManagementView {
     // =========================================================
 
     private void loadData() {
-
-        try {
-
-            bedList.clear();
-            wardList.clear();
-
-            // -------------------------------------------------
-            // Load wards
-            // -------------------------------------------------
-
-            List<HospitalWard> wards =
-                    wardController.getAllWards();
-
-            if (wards != null) {
-
-                wardList.addAll(
-                        wards
-                );
-            }
-
-            // -------------------------------------------------
-            // Load beds
-            // -------------------------------------------------
-
-            List<HospitalBed> beds =
-                    bedController.getAllBeds();
-
-            if (beds != null) {
-
-                bedList.addAll(
-                        beds
-                );
-            }
-
-            // -------------------------------------------------
-            // Sort beds by bed number
-            // -------------------------------------------------
-
-            bedList.sort(
-                    Comparator.comparing(
-                            bed -> safe(
-                                    bed.getBedNumber()
-                            )
-                    )
-            );
-
-            // -------------------------------------------------
-            // Populate filters
-            // -------------------------------------------------
-
-            populateWardFilter();
-
-            // -------------------------------------------------
-            // Update UI
-            // -------------------------------------------------
-
-            updateBedMetrics();
-
-            renderReservationGrid();
-
-            renderWardManagement();
-
-        } catch (Exception e) {
-
-            showAlert(
-                    Alert.AlertType.ERROR,
-                    "Unable to Load Bed Data",
-                    getErrorMessage(e)
-            );
+        if (reservationGrid != null) {
+            reservationGrid.getChildren().clear();
+            reservationGrid.add(ShimmerPlaceholder.createListShimmer(3), 0, 0);
         }
+
+        javafx.concurrent.Task<Void> loadTask = new javafx.concurrent.Task<>() {
+            private List<HospitalWard> wards;
+            private List<HospitalBed> beds;
+
+            @Override
+            protected Void call() throws Exception {
+                wards = wardController.getAllWards();
+                beds = bedController.getAllBeds();
+                return null;
+            }
+
+            @Override
+            protected void succeeded() {
+                bedList.clear();
+                wardList.clear();
+
+                if (wards != null) {
+                    wardList.addAll(wards);
+                }
+                if (beds != null) {
+                    bedList.addAll(beds);
+                }
+
+                bedList.sort(
+                        Comparator.comparing(
+                                bed -> safe(
+                                        bed.getBedNumber()
+                                )
+                        )
+                );
+
+                populateWardFilter();
+                updateBedMetrics();
+                renderReservationGrid();
+                renderWardManagement();
+            }
+
+            @Override
+            protected void failed() {
+                showAlert(
+                        Alert.AlertType.ERROR,
+                        "Unable to Load Bed Data",
+                        getErrorMessage(getException())
+                );
+            }
+        };
+
+        new Thread(loadTask).start();
     }
 
     // =========================================================
@@ -706,11 +691,7 @@ public class BedManagementView {
         );
 
         logout.setOnAction(
-                e -> showAlert(
-                        Alert.AlertType.INFORMATION,
-                        "Logout",
-                        "Please use the application's existing logout flow."
-                )
+                e -> Navigation.logout(stage)
         );
 
         sidebar.getChildren().addAll(

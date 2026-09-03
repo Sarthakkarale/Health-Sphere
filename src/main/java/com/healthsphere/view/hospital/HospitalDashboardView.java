@@ -4,6 +4,8 @@ import com.healthsphere.controller.hospital.HospitalDashboardController;
 import com.healthsphere.model.Appointment;
 import com.healthsphere.model.HospitalDepartment;
 import com.healthsphere.util.SessionManager;
+import com.healthsphere.util.ShimmerPlaceholder;
+import com.healthsphere.util.Navigation;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -2921,191 +2923,82 @@ public class HospitalDashboardView {
     // =========================================================
 
     private void refreshDashboardData() {
+        if (departmentRowsContainer != null) {
+            departmentRowsContainer.getChildren().clear();
+            departmentRowsContainer.getChildren().add(ShimmerPlaceholder.createListShimmer(2));
+        }
+        if (recentActivityList != null) {
+            recentActivityList.getChildren().clear();
+            recentActivityList.getChildren().add(ShimmerPlaceholder.createListShimmer(2));
+        }
 
-        try {
+        javafx.concurrent.Task<HospitalDashboardController.DashboardSummary> loadTask =
+                new javafx.concurrent.Task<>() {
+                    @Override
+                    protected HospitalDashboardController.DashboardSummary call() throws Exception {
+                        return dashboardController.getSummary();
+                    }
+                };
 
-            HospitalDashboardController
-                    .DashboardSummary summary =
-                    dashboardController
-                            .getSummary();
+        loadTask.setOnSucceeded(event -> {
+            HospitalDashboardController.DashboardSummary summary = loadTask.getValue();
+            if (summary == null) return;
 
-            // =================================================
-            // TOP CARDS
-            // =================================================
-
-            if (
-                    totalDoctorsValue != null
-            ) {
-
-                totalDoctorsValue.setText(
-                        String.valueOf(
-                                summary
-                                        .getTotalDoctors()
-                        )
-                );
+            if (totalDoctorsValue != null) {
+                totalDoctorsValue.setText(String.valueOf(summary.getTotalDoctors()));
+            }
+            if (totalAppointmentsValue != null) {
+                totalAppointmentsValue.setText(String.valueOf(summary.getTotalAppointments()));
+            }
+            if (availableBedsValue != null) {
+                availableBedsValue.setText(String.valueOf(summary.getAvailableBeds()));
+            }
+            if (emergencyCasesValue != null) {
+                emergencyCasesValue.setText(String.valueOf(summary.getEmergencyCases()));
+            }
+            if (todayApptLabel != null) {
+                todayApptLabel.setText(String.valueOf(summary.getTodayAppointments()));
+            }
+            if (completedApptLabel != null) {
+                completedApptLabel.setText(String.valueOf(summary.getCompletedAppointments()));
+            }
+            if (waitingApptLabel != null) {
+                waitingApptLabel.setText(String.valueOf(summary.getWaitingAppointments()));
+            }
+            if (upcomingApptLabel != null) {
+                upcomingApptLabel.setText(String.valueOf(summary.getUpcomingAppointments()));
+            }
+            if (cancelledApptLabel != null) {
+                cancelledApptLabel.setText(String.valueOf(summary.getCancelledAppointments()));
             }
 
-            if (
-                    totalAppointmentsValue != null
-            ) {
-
-                totalAppointmentsValue.setText(
-                        String.valueOf(
-                                summary
-                                        .getTotalAppointments()
-                        )
-                );
+            currentOccupancyPercentage = clampPercentage(summary.getOccupancyPercentage());
+            if (bedOccupancyLabel != null) {
+                bedOccupancyLabel.setText(String.format("%.1f%%", currentOccupancyPercentage));
             }
-
-            // =================================================
-            // BED + EMERGENCY
-            // =================================================
-
-            if (
-                    availableBedsValue != null
-            ) {
-
-                availableBedsValue.setText(
-                        String.valueOf(
-                                summary.getAvailableBeds()
-                        )
-                );
-            }
-
-            if (
-                    emergencyCasesValue != null
-            ) {
-
-                emergencyCasesValue.setText(
-                        String.valueOf(
-                                summary.getEmergencyCases()
-                        )
-                );
-            }
-
-            // =================================================
-            // APPOINTMENT OVERVIEW
-            // =================================================
-
-            if (
-                    todayApptLabel != null
-            ) {
-
-                todayApptLabel.setText(
-                        String.valueOf(
-                                summary
-                                        .getTodayAppointments()
-                        )
-                );
-            }
-
-            if (
-                    completedApptLabel != null
-            ) {
-
-                completedApptLabel.setText(
-                        String.valueOf(
-                                summary
-                                        .getCompletedAppointments()
-                        )
-                );
-            }
-
-            if (
-                    waitingApptLabel != null
-            ) {
-
-                waitingApptLabel.setText(
-                        String.valueOf(
-                                summary
-                                        .getWaitingAppointments()
-                        )
-                );
-            }
-
-            if (
-                    upcomingApptLabel != null
-            ) {
-
-                upcomingApptLabel.setText(
-                        String.valueOf(
-                                summary
-                                        .getUpcomingAppointments()
-                        )
-                );
-            }
-
-            if (
-                    cancelledApptLabel != null
-            ) {
-
-                cancelledApptLabel.setText(
-                        String.valueOf(
-                                summary
-                                        .getCancelledAppointments()
-                        )
-                );
-            }
-
-            // =================================================
-            // BED OCCUPANCY
-            // =================================================
-
-            currentOccupancyPercentage =
-                    clampPercentage(
-                            summary.getOccupancyPercentage()
-                    );
-
-            if (
-                    bedOccupancyLabel != null
-            ) {
-
-                bedOccupancyLabel.setText(
-                        String.format(
-                                "%.1f%%",
-                                currentOccupancyPercentage
-                        )
-                );
-            }
-
-            if (
-                    bedCapacityDetailsLabel != null
-            ) {
-
+            if (bedCapacityDetailsLabel != null) {
                 bedCapacityDetailsLabel.setText(
-                        "Total: "
-                                + summary.getTotalBeds()
-                                + "  •  Occupied: "
-                                + summary.getOccupiedBeds()
-                                + "  •  Available: "
-                                + summary.getAvailableBeds()
-                                + "  •  Reserved: "
-                                + summary.getReservedBeds()
+                        "Total: " + summary.getTotalBeds() +
+                        "  •  Occupied: " + summary.getOccupiedBeds() +
+                        "  •  Available: " + summary.getAvailableBeds() +
+                        "  •  Reserved: " + summary.getReservedBeds()
                 );
             }
-
             updateBedOccupancyProgress();
-
-            // =================================================
-            // DEPARTMENTS
-            // =================================================
-
             refreshDepartmentSection();
-
-            // =================================================
-            // ACTIVITIES
-            // =================================================
-
             refreshRecentActivities();
+        });
 
-        } catch (Exception e) {
-
+        loadTask.setOnFailed(event -> {
+            Throwable e = loadTask.getException();
             showAlert(
                     Alert.AlertType.ERROR,
                     "Dashboard Loading Error",
                     getRootMessage(e)
             );
-        }
+        });
+
+        new Thread(loadTask).start();
     }
 
     // =========================================================
@@ -3471,42 +3364,7 @@ public class HospitalDashboardView {
     private void handleLogout(
             Stage stage
     ) {
-
-        Alert alert =
-                new Alert(
-                        Alert.AlertType.CONFIRMATION
-                );
-
-        alert.setTitle(
-                "Confirm Logout"
-        );
-
-        alert.setHeaderText(
-                "Log Out of Health-Sphere?"
-        );
-
-        alert.setContentText(
-                "Are you sure you want to end "
-                        + "your current hospital session?"
-        );
-
-        Optional<ButtonType> result =
-                alert.showAndWait();
-
-        if (
-                result.isPresent()
-                &&
-                result.get() == ButtonType.OK
-        ) {
-
-            /*
-             * Clear only the temporary in-memory session.
-             * Firestore data is not deleted.
-             */
-            SessionManager.clearSession();
-
-            stage.close();
-        }
+        Navigation.logout(stage);
     }
 
     // =========================================================

@@ -3,6 +3,8 @@ package com.healthsphere.view.hospital;
 import com.healthsphere.controller.hospital.DoctorController;
 import com.healthsphere.model.DoctorProfile;
 import com.healthsphere.model.HospitalDoctorDetails;
+import com.healthsphere.util.Navigation;
+import com.healthsphere.util.ShimmerPlaceholder;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -330,97 +332,70 @@ public class DoctorManagementView {
     // =========================================================
 
     private void loadDoctorData() {
-
-        masterDoctorList.clear();
-
-        try {
-
-            List<HospitalDoctorDetails> doctors =
-                    doctorController
-                            .getAllDoctorDetails();
-
-            for (HospitalDoctorDetails details :
-                    doctors) {
-
-                if (details == null) {
-                    continue;
-                }
-
-                String doctorName =
-                        details.getFullName();
-
-                if (doctorName == null
-                        || doctorName.trim().isEmpty()) {
-
-                    doctorName =
-                            "Unknown Doctor";
-
-                } else if (
-                        !doctorName
-                                .trim()
-                                .startsWith("Dr.")
-                ) {
-
-                    doctorName =
-                            "Dr. "
-                                    + doctorName.trim();
-                }
-
-                String department =
-                        details.getDepartmentId();
-
-                if (department == null
-                        || department.trim().isEmpty()) {
-
-                    department =
-                            "Unassigned";
-                }
-
-                String qualification =
-                        details.getQualification();
-
-                if (qualification == null
-                        || qualification.trim().isEmpty()) {
-
-                    qualification =
-                            "Not Specified";
-                }
-
-                String status =
-                        details.getStatus();
-
-                if (status == null
-                        || status.trim().isEmpty()) {
-
-                    status =
-                            "Inactive";
-                }
-
-                masterDoctorList.add(
-                        new Doctor(
-                                details.getDoctorId(),
-                                details.getAssociationId(),
-                                doctorName,
-                                department,
-                                qualification,
-                                status
-                        )
-                );
-            }
-
-        } catch (Exception e) {
-
-            showAlert(
-                    "Unable to Load Doctors",
-                    getRootMessage(e)
-            );
+        if (doctorRowsContainer != null) {
+            doctorRowsContainer.getChildren().clear();
+            doctorRowsContainer.getChildren().add(ShimmerPlaceholder.createListShimmer(4));
         }
 
-        filteredDoctorList =
-                new FilteredList<>(
-                        masterDoctorList,
-                        doctor -> true
-                );
+        javafx.concurrent.Task<List<HospitalDoctorDetails>> loadTask =
+                new javafx.concurrent.Task<>() {
+                    @Override
+                    protected List<HospitalDoctorDetails> call() throws Exception {
+                        return doctorController.getAllDoctorDetails();
+                    }
+                };
+
+        loadTask.setOnSucceeded(event -> {
+            masterDoctorList.clear();
+            List<HospitalDoctorDetails> doctors = loadTask.getValue();
+            if (doctors != null) {
+                for (HospitalDoctorDetails details : doctors) {
+                    if (details == null) {
+                        continue;
+                    }
+                    String doctorName = details.getFullName();
+                    if (doctorName == null || doctorName.trim().isEmpty()) {
+                        doctorName = "Unknown Doctor";
+                    } else if (!doctorName.trim().startsWith("Dr.")) {
+                        doctorName = "Dr. " + doctorName.trim();
+                    }
+                    String department = details.getDepartmentId();
+                    if (department == null || department.trim().isEmpty()) {
+                        department = "Unassigned";
+                    }
+                    String qualification = details.getQualification();
+                    if (qualification == null || qualification.trim().isEmpty()) {
+                        qualification = "Not Specified";
+                    }
+                    String status = details.getStatus();
+                    if (status == null || status.trim().isEmpty()) {
+                        status = "Inactive";
+                    }
+
+                    masterDoctorList.add(
+                            new Doctor(
+                                    details.getDoctorId(),
+                                    details.getAssociationId(),
+                                    doctorName,
+                                    department,
+                                    qualification,
+                                    status
+                            )
+                    );
+                }
+            }
+            filteredDoctorList = new FilteredList<>(masterDoctorList, doctor -> true);
+            applyFiltersAndRefreshUI();
+        });
+
+        loadTask.setOnFailed(event -> {
+            masterDoctorList.clear();
+            filteredDoctorList = new FilteredList<>(masterDoctorList, doctor -> true);
+            applyFiltersAndRefreshUI();
+            showAlert("Unable to Load Doctors", getRootMessage(loadTask.getException()));
+        });
+
+        new Thread(loadTask).start();
     }
 
     // =========================================================
@@ -658,11 +633,7 @@ public class DoctorManagementView {
         );
 
         logoutButton.setOnAction(
-                e ->
-                        showAlert(
-                                "Logout",
-                                "Logged out successfully."
-                        )
+                e -> Navigation.logout(stage)
         );
 
         sidebar.getChildren().addAll(
@@ -3318,7 +3289,11 @@ public class DoctorManagementView {
     // =========================================================
 
     private String getRootMessage(
-            Exception exception) {
+            Throwable exception) {
+
+        if (exception == null) {
+            return "Unknown error.";
+        }
 
         Throwable cause =
                 exception;

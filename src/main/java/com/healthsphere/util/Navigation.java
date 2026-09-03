@@ -36,4 +36,19 @@ public final class Navigation {
     public static void clearHistory() {
         history.clear();
     }
+
+    public static void logout(Stage stage) {
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Confirm Logout");
+        alert.setHeaderText("Log Out of Health-Sphere?");
+        alert.setContentText("Are you sure you want to end your current session?");
+        java.util.Optional<javafx.scene.control.ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == javafx.scene.control.ButtonType.OK) {
+            SessionManager.clearSession();
+            clearHistory();
+            if (stage != null) {
+                stage.setScene(new com.healthsphere.view.authentication.LoginView(stage).getScene());
+            }
+        }
+    }
 }

@@ -1,5 +1,6 @@
 package com.healthsphere.view.hospital;
 
+import com.healthsphere.util.Navigation;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -172,7 +173,7 @@ public class HospitalReviewView {
         Button logoutButton = createNavigationButton("↪", "Logout", false);
 
         helpButton.setOnAction(e -> showInformationDialog("Help Center", "Support Email: support@healthsphere.com"));
-        logoutButton.setOnAction(e -> stage.close());
+        logoutButton.setOnAction(e -> Navigation.logout(stage));
 
         sidebar.getChildren().addAll(helpButton, logoutButton);
 

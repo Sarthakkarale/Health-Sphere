@@ -742,40 +742,7 @@ public class HospitalProfileSettingsController {
     // =========================================================
 
     private void logout() {
-
-        Alert alert =
-                new Alert(
-                        Alert.AlertType.CONFIRMATION
-                );
-
-        alert.setTitle(
-                "Confirm Logout"
-        );
-
-        alert.setHeaderText(
-                "Log Out of Health-Sphere?"
-        );
-
-        alert.setContentText(
-                "End the current hospital session?"
-        );
-
-        Optional<ButtonType> result =
-                alert.showAndWait();
-
-        if (result.isPresent()
-                && result.get() == ButtonType.OK) {
-
-            /*
-             * Clear the current in-memory session.
-             */
-            SessionManager.clearSession();
-
-            /*
-             * Close the current hospital window.
-             */
-            stage.close();
-        }
+        com.healthsphere.util.Navigation.logout(stage);
     }
 
     // =========================================================

@@ -3,6 +3,8 @@ package com.healthsphere.view.hospital;
 import com.healthsphere.controller.hospital.DepartmentController;
 import com.healthsphere.model.HospitalDepartment;
 import com.healthsphere.util.SessionManager;
+import com.healthsphere.util.Navigation;
+import com.healthsphere.util.ShimmerPlaceholder;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -289,26 +291,6 @@ public class DepartmentManagementView {
             );
         }
 
-        try {
-
-            loadDepartmentsFromFirestore();
-
-        } catch (Exception e) {
-
-            masterDepartmentList.clear();
-
-            filteredDepartmentList =
-                    new FilteredList<>(
-                            masterDepartmentList,
-                            p -> true
-                    );
-
-            showAlert(
-                    "Department Loading Error",
-                    getErrorMessage(e)
-            );
-        }
-
         BorderPane root =
                 new BorderPane();
 
@@ -341,7 +323,7 @@ public class DepartmentManagementView {
 
         root.setCenter(scrollPane);
 
-        applyFiltersAndRefreshUI();
+        loadDepartmentsFromFirestore();
 
         return new Scene(
                 root,
@@ -355,38 +337,42 @@ public class DepartmentManagementView {
     // =========================================================
 
     private void loadDepartmentsFromFirestore() {
-
-        masterDepartmentList.clear();
-
-        List<HospitalDepartment> departments =
-                departmentController.getAllDepartments();
-
-        for (HospitalDepartment hospitalDepartment :
-                departments) {
-
-            if (hospitalDepartment == null) {
-                continue;
-            }
-
-            if (!hospitalDepartment.isActive()) {
-                continue;
-            }
-
-            Department department =
-                    convertToUIDepartment(
-                            hospitalDepartment
-                    );
-
-            masterDepartmentList.add(
-                    department
-            );
+        if (departmentGridPane != null) {
+            departmentGridPane.getChildren().clear();
+            departmentGridPane.getChildren().add(ShimmerPlaceholder.createListShimmer(3));
         }
 
-        filteredDepartmentList =
-                new FilteredList<>(
-                        masterDepartmentList,
-                        p -> true
-                );
+        javafx.concurrent.Task<List<HospitalDepartment>> loadTask =
+                new javafx.concurrent.Task<>() {
+                    @Override
+                    protected List<HospitalDepartment> call() throws Exception {
+                        return departmentController.getAllDepartments();
+                    }
+                };
+
+        loadTask.setOnSucceeded(event -> {
+            masterDepartmentList.clear();
+            List<HospitalDepartment> departments = loadTask.getValue();
+            if (departments != null) {
+                for (HospitalDepartment hospitalDepartment : departments) {
+                    if (hospitalDepartment == null || !hospitalDepartment.isActive()) {
+                        continue;
+                    }
+                    masterDepartmentList.add(convertToUIDepartment(hospitalDepartment));
+                }
+            }
+            filteredDepartmentList = new FilteredList<>(masterDepartmentList, p -> true);
+            applyFiltersAndRefreshUI();
+        });
+
+        loadTask.setOnFailed(event -> {
+            masterDepartmentList.clear();
+            filteredDepartmentList = new FilteredList<>(masterDepartmentList, p -> true);
+            applyFiltersAndRefreshUI();
+            showAlert("Department Loading Error", getErrorMessage(loadTask.getException()));
+        });
+
+        new Thread(loadTask).start();
     }
 
     // =========================================================
@@ -749,26 +735,7 @@ public class DepartmentManagementView {
                 );
 
         logoutButton.setOnAction(
-                event -> {
-
-                    SessionManager.clearSession();
-
-                    try {
-
-                        stage.setScene(
-                                new com.healthsphere.view.authentication.LoginView(
-                                        stage
-                                ).getScene()
-                        );
-
-                    } catch (Exception e) {
-
-                        showAlert(
-                                "Logout Error",
-                                "Unable to return to login screen."
-                        );
-                    }
-                }
+                event -> Navigation.logout(stage)
         );
 
         sidebar.getChildren().add(
@@ -3327,7 +3294,7 @@ public class DepartmentManagementView {
     // =========================================================
 
     private String getErrorMessage(
-            Exception exception) {
+            Throwable exception) {
 
         if (exception == null) {
             return "Unknown error.";

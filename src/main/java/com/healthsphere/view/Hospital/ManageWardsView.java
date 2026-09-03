@@ -4,6 +4,7 @@ import com.healthsphere.controller.hospital.BedController;
 import com.healthsphere.controller.hospital.WardController;
 import com.healthsphere.model.HospitalBed;
 import com.healthsphere.model.HospitalWard;
+import com.healthsphere.util.Navigation;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -610,11 +611,7 @@ public class ManageWardsView {
         );
 
         logout.setOnAction(
-                e -> showAlert(
-                        Alert.AlertType.INFORMATION,
-                        "Logout",
-                        "Please use the application's existing logout flow."
-                )
+                e -> Navigation.logout(stage)
         );
 
         sidebar.getChildren().addAll(
