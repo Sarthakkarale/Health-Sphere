@@ -1,5 +1,11 @@
 package com.healthsphere.view.Patient;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.healthsphere.controller.patient.HospitalController;
+import com.healthsphere.model.HospitalProfile;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -17,8 +23,24 @@ public class SearchHospitals {
 
     private final Stage stage;
 
+    private final HospitalController hospitalController;
+
+    // Stores hospitals currently loaded from Firestore
+    private List<HospitalProfile> allHospitals =
+            new ArrayList<>();
+
+    // Results container
+    private VBox results;
+
+    // Search field
+    private TextField searchField;
+
     public SearchHospitals(Stage stage) {
+
         this.stage = stage;
+
+        this.hospitalController =
+                new HospitalController();
     }
 
     // =========================================================
@@ -27,20 +49,22 @@ public class SearchHospitals {
 
     public Scene getScene() {
 
-        VBox content = new VBox(20);
+        VBox content =
+                new VBox(20);
 
         /*
-         * IMPORTANT
-         *
-         * PatientUI.createScene() already creates the
-         * ScrollPane.
+         * PatientUI already creates the ScrollPane.
          *
          * Therefore DO NOT create another ScrollPane here.
          */
+
         content.setFillWidth(true);
 
         content.setMinWidth(0);
-        content.setMaxWidth(Double.MAX_VALUE);
+
+        content.setMaxWidth(
+                Double.MAX_VALUE
+        );
 
         content.setPadding(
                 new Insets(5)
@@ -56,13 +80,14 @@ public class SearchHospitals {
                 );
 
         searchCard.setMinWidth(0);
+
         searchCard.setMaxWidth(
                 Double.MAX_VALUE
         );
 
         Label instruction =
                 new Label(
-                        "Search for hospitals, clinics and healthcare facilities near you."
+                        "Search for hospitals, clinics and healthcare facilities."
                 );
 
         instruction.setWrapText(true);
@@ -90,15 +115,20 @@ public class SearchHospitals {
         searchRow.setFillHeight(true);
 
         searchRow.setMinWidth(0);
+
         searchRow.setMaxWidth(
                 Double.MAX_VALUE
         );
 
-        TextField searchField =
+        // =====================================================
+        // SEARCH FIELD
+        // =====================================================
+
+        searchField =
                 new TextField();
 
         searchField.setPromptText(
-                "Enter hospital name, location or speciality"
+                "Enter hospital name, location or hospital type"
         );
 
         searchField.setPrefHeight(42);
@@ -122,6 +152,10 @@ public class SearchHospitals {
                 "-fx-padding: 10;"
         );
 
+        // =====================================================
+        // SEARCH BUTTON
+        // =====================================================
+
         Button searchButton =
                 PatientUI.button(
                         "Search",
@@ -130,9 +164,27 @@ public class SearchHospitals {
                         )
                 );
 
+        // =====================================================
+        // CLEAR BUTTON
+        // =====================================================
+
+        Button clearButton =
+                PatientUI.secondaryButton(
+                        "Clear",
+                        () -> {
+
+                            searchField.clear();
+
+                            displayHospitals(
+                                    allHospitals
+                            );
+                        }
+                );
+
         searchRow.getChildren().addAll(
                 searchField,
-                searchButton
+                searchButton,
+                clearButton
         );
 
         searchCard.getChildren().addAll(
@@ -141,12 +193,23 @@ public class SearchHospitals {
         );
 
         // =====================================================
-        // HOSPITAL RESULTS
+        // SEARCH WHEN PRESSING ENTER
         // =====================================================
 
-        VBox results =
+        searchField.setOnAction(
+                event ->
+                        filterHospitals(
+                                searchField.getText()
+                        )
+        );
+
+        // =====================================================
+        // HOSPITAL RESULTS CARD
+        // =====================================================
+
+        results =
                 PatientUI.card(
-                        "Nearby Hospitals"
+                        "Hospitals"
                 );
 
         results.setFillWidth(true);
@@ -158,65 +221,6 @@ public class SearchHospitals {
         );
 
         // =====================================================
-        // HOSPITAL 1
-        // =====================================================
-
-        HBox hospital1 =
-                hospital(
-                        "/images/hospitals/hospital1.jpg",
-                        "Apollo Hospitals",
-                        "Hyderabad",
-                        "Multi-Speciality Hospital",
-                        "4.8"
-                );
-
-        // =====================================================
-        // HOSPITAL 2
-        // =====================================================
-
-        HBox hospital2 =
-                hospital(
-                        "/images/hospitals/hospital2.jpg",
-                        "Care Hospitals",
-                        "Hyderabad",
-                        "General & Specialty Care",
-                        "4.6"
-                );
-
-        // =====================================================
-        // HOSPITAL 3
-        // =====================================================
-
-        HBox hospital3 =
-                hospital(
-                        "/images/hospitals/hospital3.jpg",
-                        "Yashoda Hospitals",
-                        "Hyderabad",
-                        "Advanced Healthcare Centre",
-                        "4.7"
-                );
-
-        // =====================================================
-        // HOSPITAL 4
-        // =====================================================
-
-        HBox hospital4 =
-                hospital(
-                        "/images/hospitals/hospital4.jpg",
-                        "KIMS Hospitals",
-                        "Hyderabad",
-                        "Multi-Speciality Hospital",
-                        "4.5"
-                );
-
-        results.getChildren().addAll(
-                hospital1,
-                hospital2,
-                hospital3,
-                hospital4
-        );
-
-        // =====================================================
         // ADD CONTENT
         // =====================================================
 
@@ -225,19 +229,69 @@ public class SearchHospitals {
                 results
         );
 
-        /*
-         * IMPORTANT
-         *
-         * Content itself is passed to PatientUI.
-         * PatientUI will create the ONLY ScrollPane.
-         */
+        // =====================================================
+        // LOAD REAL HOSPITALS
+        // =====================================================
+
+        loadHospitals();
+
+        // =====================================================
+        // CREATE PATIENT SCENE
+        // =====================================================
+
         return PatientUI.createScene(
+
                 stage,
+
                 "Search Hospitals",
+
                 "Search Hospitals",
-                "Find nearby hospitals and healthcare facilities.",
+
+                "Find hospitals and healthcare facilities.",
+
                 content
         );
+    }
+
+    // =========================================================
+    // LOAD HOSPITALS FROM FIRESTORE
+    // =========================================================
+
+    private void loadHospitals() {
+
+        try {
+
+            System.out.println(
+                    "Loading hospitals from Firestore..."
+            );
+
+            allHospitals =
+                    hospitalController
+                            .getAllHospitals();
+
+            if (allHospitals == null) {
+
+                allHospitals =
+                        new ArrayList<>();
+            }
+
+            System.out.println(
+                    "Hospitals loaded: "
+                            + allHospitals.size()
+            );
+
+            displayHospitals(
+                    allHospitals
+            );
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            showError(
+                    "Unable to load hospitals from Firestore."
+            );
+        }
     }
 
     // =========================================================
@@ -245,27 +299,97 @@ public class SearchHospitals {
     // =========================================================
 
     private void filterHospitals(
-            String searchText
-    ) {
+            String searchText) {
 
         if (searchText == null ||
                 searchText.trim().isEmpty()) {
 
-            System.out.println(
-                    "Please enter a hospital, location or speciality."
+            displayHospitals(
+                    allHospitals
             );
 
             return;
         }
 
-        System.out.println(
-                "Searching hospitals for: "
-                        + searchText.trim()
-        );
+        try {
 
-        /*
-         * Backend hospital search can be connected here later.
-         */
+            List<HospitalProfile> filtered =
+                    hospitalController
+                            .searchHospitals(
+                                    searchText
+                            );
+
+            displayHospitals(
+                    filtered
+            );
+
+            System.out.println(
+                    "Hospitals found for '"
+                            + searchText.trim()
+                            + "': "
+                            + filtered.size()
+            );
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            showError(
+                    "Unable to search hospitals."
+            );
+        }
+    }
+
+    // =========================================================
+    // DISPLAY HOSPITALS
+    // =========================================================
+
+    private void displayHospitals(
+            List<HospitalProfile> hospitals) {
+
+        if (results == null) {
+            return;
+        }
+
+        // Remove old cards
+        results.getChildren().clear();
+
+        if (hospitals == null ||
+                hospitals.isEmpty()) {
+
+            Label empty =
+                    new Label(
+                            "No hospitals found."
+                    );
+
+            empty.setStyle(
+                    "-fx-text-fill: #64748b;" +
+                    "-fx-font-size: 15px;" +
+                    "-fx-padding: 20;"
+            );
+
+            results.getChildren().add(
+                    empty
+            );
+
+            return;
+        }
+
+        // =====================================================
+        // ADD REAL FIRESTORE HOSPITALS
+        // =====================================================
+
+        for (HospitalProfile hospital :
+                hospitals) {
+
+            if (hospital == null) {
+                continue;
+            }
+
+            results.getChildren().add(
+                    hospital(hospital)
+            );
+        }
     }
 
     // =========================================================
@@ -273,12 +397,7 @@ public class SearchHospitals {
     // =========================================================
 
     private HBox hospital(
-            String imagePath,
-            String name,
-            String location,
-            String speciality,
-            String rating
-    ) {
+            HospitalProfile hospital) {
 
         HBox box =
                 new HBox(18);
@@ -291,11 +410,6 @@ public class SearchHospitals {
                 Pos.CENTER_LEFT
         );
 
-        /*
-         * IMPORTANT
-         *
-         * Allow this card to use the entire available width.
-         */
         box.setMinWidth(0);
 
         box.setMaxWidth(
@@ -319,17 +433,13 @@ public class SearchHospitals {
         // =====================================================
 
         ImageView image =
-                createImage(
-                        imagePath,
-                        180,
-                        110
-                );
+                createHospitalImage();
 
-        /*
-         * Do not allow image to consume unlimited width.
-         */
         image.setFitWidth(180);
+
         image.setFitHeight(110);
+
+        image.setPreserveRatio(false);
 
         // =====================================================
         // INFORMATION
@@ -349,8 +459,20 @@ public class SearchHospitals {
                 Priority.ALWAYS
         );
 
+        // =====================================================
+        // HOSPITAL NAME
+        // =====================================================
+
+        String hospitalName =
+                safeDisplay(
+                        hospital.getHospitalName(),
+                        "Hospital"
+                );
+
         Label nameLabel =
-                new Label(name);
+                new Label(
+                        hospitalName
+                );
 
         nameLabel.setWrapText(true);
 
@@ -364,42 +486,99 @@ public class SearchHospitals {
                 "-fx-text-fill: #0f172a;"
         );
 
+        // =====================================================
+        // LOCATION
+        // =====================================================
+
+        String address =
+                safeDisplay(
+                        hospital.getAddress(),
+                        "Address not available"
+                );
+
         Label locationLabel =
                 new Label(
-                        "📍 " + location
+                        "📍 " + address
                 );
 
         locationLabel.setWrapText(true);
+
+        locationLabel.setMaxWidth(
+                Double.MAX_VALUE
+        );
 
         locationLabel.setStyle(
                 "-fx-text-fill: #64748b;"
         );
 
-        Label specialityLabel =
-                new Label(speciality);
+        // =====================================================
+        // HOSPITAL TYPE
+        // =====================================================
 
-        specialityLabel.setWrapText(true);
+        String hospitalType =
+                safeDisplay(
+                        hospital.getHospitalType(),
+                        "Healthcare Facility"
+                );
 
-        specialityLabel.setStyle(
+        Label typeLabel =
+                new Label(
+                        hospitalType
+                );
+
+        typeLabel.setWrapText(true);
+
+        typeLabel.setStyle(
                 "-fx-text-fill: #2563eb;" +
                 "-fx-font-weight: bold;"
         );
 
-        Label ratingLabel =
-                new Label(
-                        "★ " + rating + " rating"
+        // =====================================================
+        // BEDS
+        // =====================================================
+
+        String beds =
+                safeDisplay(
+                        hospital.getBeds(),
+                        "N/A"
                 );
 
-        ratingLabel.setStyle(
-                "-fx-text-fill: #16a34a;" +
-                "-fx-font-weight: bold;"
+        Label bedsLabel =
+                new Label(
+                        "Beds: " + beds
+                );
+
+        bedsLabel.setStyle(
+                "-fx-text-fill: #64748b;"
+        );
+
+        // =====================================================
+        // CONTACT
+        // =====================================================
+
+        String contact =
+                safeDisplay(
+                        hospital.getContact(),
+                        "Contact not available"
+                );
+
+        Label contactLabel =
+                new Label(
+                        "☎ " + contact
+                );
+
+        contactLabel.setWrapText(true);
+
+        contactLabel.setStyle(
+                "-fx-text-fill: #64748b;"
         );
 
         information.getChildren().addAll(
                 nameLabel,
                 locationLabel,
-                specialityLabel,
-                ratingLabel
+                typeLabel,
+                bedsLabel,
+                contactLabel
         );
 
         // =====================================================
@@ -409,12 +588,10 @@ public class SearchHospitals {
         Button view =
                 PatientUI.secondaryButton(
                         "View",
-                        () -> showHospitalDetails(
-                                name,
-                                location,
-                                speciality,
-                                rating
-                        )
+                        () ->
+                                showHospitalDetails(
+                                        hospital
+                                )
                 );
 
         box.getChildren().addAll(
@@ -431,11 +608,39 @@ public class SearchHospitals {
     // =========================================================
 
     private void showHospitalDetails(
-            String name,
-            String location,
-            String speciality,
-            String rating
-    ) {
+            HospitalProfile hospital) {
+
+        String name =
+                safeDisplay(
+                        hospital.getHospitalName(),
+                        "Hospital"
+                );
+
+        String location =
+                safeDisplay(
+                        hospital.getAddress(),
+                        "Address not available"
+                );
+
+        String speciality =
+                safeDisplay(
+                        hospital.getHospitalType(),
+                        "Healthcare Facility"
+                );
+
+        /*
+         * Your current HospitalDetails class expects a
+         * rating String.
+         *
+         * HospitalProfile does not currently contain a
+         * rating field, so we use "Not Rated".
+         *
+         * If you later add rating to HospitalProfile,
+         * this can be replaced with the real rating.
+         */
+
+        String rating =
+                "Not Rated";
 
         stage.setScene(
                 new HospitalDetails(
@@ -444,18 +649,17 @@ public class SearchHospitals {
                         location,
                         speciality,
                         rating,
-                        getSpecialties(name)
+                        getSpecialties(
+                                hospital
+                        )
                 ).getScene()
         );
 
         stage.show();
 
-        /*
-         * Do NOT create a new Stage.
-         *
-         * Keep the common Patient Stage maximized.
-         */
+        // Keep the common Patient Stage maximized
         if (!stage.isMaximized()) {
+
             stage.setMaximized(true);
         }
     }
@@ -465,85 +669,145 @@ public class SearchHospitals {
     // =========================================================
 
     private String getSpecialties(
-            String hospitalName
-    ) {
+            HospitalProfile hospital) {
 
-        switch (hospitalName) {
+        String type =
+                hospital.getHospitalType();
 
-            case "Apollo Hospitals":
+        if (type == null ||
+                type.isBlank()) {
 
-                return "Cardiology, Neurology, Orthopedics, "
-                        + "Oncology, General Medicine";
-
-            case "Care Hospitals":
-
-                return "Cardiology, Gastroenterology, Pulmonology, "
-                        + "Orthopedics, General Medicine";
-
-            case "Yashoda Hospitals":
-
-                return "Cardiology, Neurology, Oncology, "
-                        + "Nephrology, Gastroenterology";
-
-            case "KIMS Hospitals":
-
-                return "Cardiology, Orthopedics, Neurology, "
-                        + "Urology, General Medicine";
-
-            default:
-
-                return "General Medicine, Cardiology, Orthopedics";
+            return "General Medicine, "
+                    + "Cardiology, "
+                    + "Orthopedics";
         }
+
+        /*
+         * Currently HospitalProfile contains hospitalType,
+         * not a separate specialties field.
+         *
+         * Therefore show the hospital type here.
+         */
+
+        return type.trim();
     }
 
     // =========================================================
-    // IMAGE LOADER
+    // DEFAULT HOSPITAL IMAGE
     // =========================================================
 
-    private ImageView createImage(
-            String path,
-            double width,
-            double height
-    ) {
+    private ImageView createHospitalImage() {
 
         ImageView view =
                 new ImageView();
 
-        view.setFitWidth(width);
-        view.setFitHeight(height);
+        view.setFitWidth(180);
+
+        view.setFitHeight(110);
 
         view.setPreserveRatio(false);
 
-        var resource =
-                getClass().getResource(path);
+        /*
+         * Uses one default image for real Firestore
+         * hospitals.
+         *
+         * You can later add imagePath to HospitalProfile
+         * and load individual hospital images.
+         */
 
-        if (resource == null) {
+        String[] possibleImages = {
 
-            System.err.println(
-                    "Hospital image not found: "
-                            + path
-            );
+                "/images/hospitals/hospital1.jpg",
 
-            return view;
-        }
+                "/images/hospitals/hospital2.jpg",
 
-        try {
+                "/images/hospitals/hospital3.jpg",
 
-            Image image =
-                    new Image(
-                            resource.toExternalForm()
-                    );
+                "/images/hospitals/hospital4.jpg"
+        };
 
-            view.setImage(image);
+        /*
+         * Use the first available image.
+         */
 
-        } catch (Exception e) {
+        for (String path :
+                possibleImages) {
 
-            System.err.println(
-                    "Unable to load hospital image: "
-                            + path
-            );
+            var resource =
+                    getClass().getResource(path);
+
+            if (resource == null) {
+                continue;
+            }
+
+            try {
+
+                Image image =
+                        new Image(
+                                resource.toExternalForm()
+                        );
+
+                view.setImage(image);
+
+                return view;
+
+            } catch (Exception e) {
+
+                System.err.println(
+                        "Unable to load hospital image: "
+                                + path
+                );
+            }
         }
 
         return view;
+    }
+
+    // =========================================================
+    // ERROR MESSAGE
+    // =========================================================
+
+    private void showError(
+            String message) {
+
+        if (results == null) {
+            return;
+        }
+
+        results.getChildren().clear();
+
+        Label error =
+                new Label(
+                        message
+                );
+
+        error.setWrapText(true);
+
+        error.setStyle(
+                "-fx-text-fill: #dc2626;" +
+                "-fx-font-size: 15px;" +
+                "-fx-padding: 20;"
+        );
+
+        results.getChildren().add(
+                error
+        );
+    }
+
+    // =========================================================
+    // SAFE DISPLAY VALUE
+    // =========================================================
+
+    private String safeDisplay(
+            String value,
+            String defaultValue) {
+
+        if (value == null ||
+                value.trim().isEmpty()) {
+
+            return defaultValue;
+        }
+
+        return value.trim();
     }
 }

@@ -145,19 +145,31 @@ public class HospitalDAO {
                                 HospitalProfile.class
                         );
 
-                if (hospital != null) {
-
-                    if (hospital.getUid() == null ||
-                            hospital.getUid().isBlank()) {
-
-                        hospital.setUid(
-                                document.getId()
-                        );
-                    }
-
-                    hospitals.add(hospital);
+                if (hospital == null) {
+                    continue;
                 }
+
+                // -------------------------------------------------
+                // Make sure UID is available.
+                // If UID was not stored inside the document,
+                // use Firestore document ID.
+                // -------------------------------------------------
+
+                if (hospital.getUid() == null ||
+                        hospital.getUid().isBlank()) {
+
+                    hospital.setUid(
+                            document.getId()
+                    );
+                }
+
+                hospitals.add(hospital);
             }
+
+            System.out.println(
+                    "Total hospitals loaded: "
+                            + hospitals.size()
+            );
 
             return hospitals;
 

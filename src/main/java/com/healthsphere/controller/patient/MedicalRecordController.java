@@ -1,7 +1,8 @@
 package com.healthsphere.controller.patient;
 
 import java.util.List;
-//import com.healthsphere.dao.patient.MedicalRecordDAO;
+
+import com.healthsphere.dao.patient.MedicalRecordDAO;
 import com.healthsphere.model.MedicalRecord;
 import com.healthsphere.util.SessionManager;
 
