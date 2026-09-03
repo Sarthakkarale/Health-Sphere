@@ -1,10 +1,19 @@
 package com.healthsphere.dao.authentication;
 
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.QuerySnapshot;
+
 import com.healthsphere.config.FirebaseConfig;
 import com.healthsphere.exceptions.DatabaseException;
 import com.healthsphere.model.HospitalProfile;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class HospitalDAO {
 
@@ -21,11 +30,43 @@ public class HospitalDAO {
     public void createHospitalProfile(
             HospitalProfile hospitalProfile) {
 
+        if (hospitalProfile == null) {
+            throw new IllegalArgumentException(
+                    "Hospital profile cannot be null."
+            );
+        }
+
+        if (hospitalProfile.getUid() == null
+                || hospitalProfile.getUid().trim().isEmpty()) {
+
+            throw new IllegalArgumentException(
+                    "Hospital UID is required."
+            );
+        }
+
         try {
+
+            /*
+             * New hospital accounts start as PENDING.
+             * Existing supplied status is preserved.
+             */
+            if (hospitalProfile.getVerificationStatus() == null
+                    || hospitalProfile.getVerificationStatus()
+                    .trim()
+                    .isEmpty()) {
+
+                hospitalProfile.setVerificationStatus(
+                        "PENDING"
+                );
+            }
+
+            hospitalProfile.setUpdatedAt(
+                    Instant.now()
+            );
 
             db.collection("hospitals")
                     .document(hospitalProfile.getUid())
-                    .set(hospitalProfile)
+                    .set(toMap(hospitalProfile))
                     .get();
 
             System.out.println(
@@ -48,11 +89,13 @@ public class HospitalDAO {
     public HospitalProfile getHospitalProfile(
             String uid) {
 
+        validateUid(uid);
+
         try {
 
             DocumentSnapshot document =
                     db.collection("hospitals")
-                            .document(uid)
+                            .document(uid.trim())
                             .get()
                             .get();
 
@@ -63,9 +106,7 @@ public class HospitalDAO {
                 );
             }
 
-            return document.toObject(
-                    HospitalProfile.class
-            );
+            return fromDocument(document);
 
         } catch (DatabaseException e) {
 
@@ -81,17 +122,77 @@ public class HospitalDAO {
     }
 
     // ============================================================
+    // GET ALL HOSPITAL PROFILES
+    // ============================================================
+
+    public List<HospitalProfile> getAllHospitalProfiles() {
+
+        try {
+
+            QuerySnapshot snapshot =
+                    db.collection("hospitals")
+                            .get()
+                            .get();
+
+            List<HospitalProfile> hospitals =
+                    new ArrayList<>();
+
+            for (DocumentSnapshot document :
+                    snapshot.getDocuments()) {
+
+                if (!document.exists()) {
+                    continue;
+                }
+
+                HospitalProfile hospital =
+                        fromDocument(document);
+
+                if (hospital != null) {
+                    hospitals.add(hospital);
+                }
+            }
+
+            return hospitals;
+
+        } catch (Exception e) {
+
+            throw new DatabaseException(
+                    "Unable to retrieve hospital profiles.",
+                    e
+            );
+        }
+    }
+
+    // ============================================================
     // UPDATE HOSPITAL PROFILE
     // ============================================================
 
     public void updateHospitalProfile(
             HospitalProfile hospitalProfile) {
 
+        if (hospitalProfile == null) {
+            throw new IllegalArgumentException(
+                    "Hospital profile cannot be null."
+            );
+        }
+
+        validateUid(
+                hospitalProfile.getUid()
+        );
+
         try {
 
+            hospitalProfile.setUpdatedAt(
+                    Instant.now()
+            );
+
             db.collection("hospitals")
-                    .document(hospitalProfile.getUid())
-                    .set(hospitalProfile)
+                    .document(
+                            hospitalProfile
+                                    .getUid()
+                                    .trim()
+                    )
+                    .set(toMap(hospitalProfile))
                     .get();
 
             System.out.println(
@@ -103,6 +204,219 @@ public class HospitalDAO {
             throw new DatabaseException(
                     "Unable to update hospital profile.",
                     e
+            );
+        }
+    }
+
+    // ============================================================
+    // DELETE HOSPITAL PROFILE
+    // ============================================================
+
+    public void deleteHospitalProfile(
+            String uid) {
+
+        validateUid(uid);
+
+        try {
+
+            db.collection("hospitals")
+                    .document(uid.trim())
+                    .delete()
+                    .get();
+
+            System.out.println(
+                    "Hospital profile deleted successfully."
+            );
+
+        } catch (Exception e) {
+
+            throw new DatabaseException(
+                    "Unable to delete hospital profile.",
+                    e
+            );
+        }
+    }
+
+    // ============================================================
+    // MODEL -> FIRESTORE MAP
+    // ============================================================
+
+    private Map<String, Object> toMap(
+            HospitalProfile hospitalProfile) {
+
+        Map<String, Object> map =
+                new HashMap<>();
+
+        map.put(
+                "uid",
+                hospitalProfile.getUid()
+        );
+
+        map.put(
+                "email",
+                hospitalProfile.getEmail()
+        );
+
+        map.put(
+                "hospitalName",
+                hospitalProfile.getHospitalName()
+        );
+
+        map.put(
+                "registrationNumber",
+                hospitalProfile.getRegistrationNumber()
+        );
+
+        map.put(
+                "hospitalType",
+                hospitalProfile.getHospitalType()
+        );
+
+        map.put(
+                "beds",
+                hospitalProfile.getBeds()
+        );
+
+        map.put(
+                "contact",
+                hospitalProfile.getContact()
+        );
+
+        map.put(
+                "address",
+                hospitalProfile.getAddress()
+        );
+
+        map.put(
+                "verificationStatus",
+                hospitalProfile.getVerificationStatus()
+        );
+
+        map.put(
+                "verifiedBy",
+                hospitalProfile.getVerifiedBy()
+        );
+
+        if (hospitalProfile.getUpdatedAt() != null) {
+
+            map.put(
+                    "updatedAt",
+                    Timestamp.ofTimeSecondsAndNanos(
+                            hospitalProfile
+                                    .getUpdatedAt()
+                                    .getEpochSecond(),
+                            hospitalProfile
+                                    .getUpdatedAt()
+                                    .getNano()
+                    )
+            );
+        }
+
+        return map;
+    }
+
+    // ============================================================
+    // FIRESTORE -> MODEL
+    // ============================================================
+
+    private HospitalProfile fromDocument(
+            DocumentSnapshot document) {
+
+        if (document == null
+                || !document.exists()) {
+
+            return null;
+        }
+
+        HospitalProfile hospital =
+                new HospitalProfile();
+
+        hospital.setUid(
+                document.getString("uid")
+        );
+
+        /*
+         * Backward compatibility:
+         * if uid field is missing, use document ID.
+         */
+        if (hospital.getUid() == null
+                || hospital.getUid().isBlank()) {
+
+            hospital.setUid(
+                    document.getId()
+            );
+        }
+
+        hospital.setEmail(
+                document.getString("email")
+        );
+
+        hospital.setHospitalName(
+                document.getString("hospitalName")
+        );
+
+        hospital.setRegistrationNumber(
+                document.getString(
+                        "registrationNumber"
+                )
+        );
+
+        hospital.setHospitalType(
+                document.getString("hospitalType")
+        );
+
+        hospital.setBeds(
+                document.getString("beds")
+        );
+
+        hospital.setContact(
+                document.getString("contact")
+        );
+
+        hospital.setAddress(
+                document.getString("address")
+        );
+
+        hospital.setVerificationStatus(
+                document.getString(
+                        "verificationStatus"
+                )
+        );
+
+        hospital.setVerifiedBy(
+                document.getString(
+                        "verifiedBy"
+                )
+        );
+
+        Timestamp updatedTimestamp =
+                document.getTimestamp("updatedAt");
+
+        if (updatedTimestamp != null) {
+
+            hospital.setUpdatedAt(
+                    Instant.ofEpochSecond(
+                            updatedTimestamp.getSeconds(),
+                            updatedTimestamp.getNanos()
+                    )
+            );
+        }
+
+        return hospital;
+    }
+
+    // ============================================================
+    // VALIDATION
+    // ============================================================
+
+    private void validateUid(
+            String uid) {
+
+        if (uid == null
+                || uid.trim().isEmpty()) {
+
+            throw new IllegalArgumentException(
+                    "Hospital UID is required."
             );
         }
     }

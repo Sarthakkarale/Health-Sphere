@@ -248,12 +248,11 @@ public class View extends Application {
         );
 
         Button signUpBtn =
-                new Button("Sign In");
+                new Button("Log In");
 
         signUpBtn.getStyleClass().add(
                 "btn-primary"
         );
-
         signUpBtn.setOnAction(e -> {
 
             // Direct stage scene switching using shared static stage

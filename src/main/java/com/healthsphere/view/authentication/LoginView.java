@@ -4,6 +4,7 @@ import com.healthsphere.view.patient.PatientDashboardView;
 import com.healthsphere.view.doctor.DoctorDashboardView;
 import com.healthsphere.view.hospital.HospitalDashboardView;
 import com.healthsphere.view.admin.AdminDashboardView;
+import com.healthsphere.view.admin.AdminMainShell;
 import com.healthsphere.view.authentication.*;
 
 import com.healthsphere.controller.authentication.LoginController;
@@ -462,7 +463,7 @@ public class LoginView {
                 stage.setScene(new DoctorPendingApprovalView(stage).getScene());
             }
             case ADMIN_DASHBOARD -> {
-                stage.setScene(new AdminDashboardView(stage).getScene());
+                stage.setScene(new AdminMainShell(stage).getScene(stage));
             }
             case LOGIN -> {
                 showError("Unable to determine user access.");

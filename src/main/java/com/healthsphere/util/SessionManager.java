@@ -45,7 +45,6 @@ public final class SessionManager {
             AuthenticationResponse authenticationResponse) {
 
         if (authenticationResponse == null) {
-
             throw new IllegalArgumentException(
                     "Authentication response cannot be null."
             );
@@ -56,6 +55,8 @@ public final class SessionManager {
 
         session.authenticationResponse =
                 authenticationResponse;
+
+        currentUser = authenticationResponse;
     }
 
     // ============================================================
