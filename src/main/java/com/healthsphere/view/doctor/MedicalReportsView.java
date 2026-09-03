@@ -9,7 +9,9 @@ import com.healthsphere.model.Prescription;
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ResourceImage;
 import com.healthsphere.util.SessionManager;
+import com.healthsphere.util.ShimmerPlaceholder;
 
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -112,35 +114,49 @@ public class MedicalReportsView {
             Stage stage,
             String patientUid
     ) {
-
         this.stage = stage;
         this.patientUid = patientUid;
 
-        this.patientController =
-                new PatientController();
+        this.patientController = new PatientController();
+        this.medicalReportController = new MedicalReportController();
+        this.prescriptionController = new PrescriptionController();
 
-        this.medicalReportController =
-                new MedicalReportController();
-
-        this.prescriptionController =
-                new PrescriptionController();
-
-        /*
-         * First load all patients belonging to this doctor.
-         */
-        loadDoctorPatients();
-
-        /*
-         * Then load the selected patient if one was supplied.
-         */
-        loadPatient();
-
+        // Create scene immediately so navigation is instant
         this.scene = createScene();
-    }
 
+        // Load patients asynchronously
+        loadDoctorPatientsAsync();
+    }
 
     public Scene getScene() {
         return this.scene;
+    }
+
+    private void loadDoctorPatientsAsync() {
+        String doctorUid = getCurrentDoctorUid();
+        if (doctorUid == null || doctorUid.isBlank()) {
+            return;
+        }
+
+        Task<List<PatientProfile>> loadTask = new Task<>() {
+            @Override
+            protected List<PatientProfile> call() throws Exception {
+                List<PatientProfile> patients = patientController.getPatientsForDoctorSafe(doctorUid);
+                return patients != null ? patients : new ArrayList<>();
+            }
+        };
+
+        loadTask.setOnSucceeded(event -> {
+            doctorPatients = loadTask.getValue();
+            if (patientSelector != null) {
+                patientSelector.getItems().setAll(doctorPatients);
+            }
+            loadPatient();
+        });
+
+        Thread thread = new Thread(loadTask);
+        thread.setDaemon(true);
+        thread.start();
     }
 
 

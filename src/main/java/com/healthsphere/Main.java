@@ -44,27 +44,9 @@ public class Main extends Application {
             return;
         }
 
-        /*
-         * Start the authentication View.
-         *
-         * IMPORTANT:
-         * Do not use:
-         *
-         * Application.launch(View.class, stage);
-         *
-         * because launch() accepts String arguments, not Stage.
-         */
+      
 
         View view = new View();
-
-        /*
-         * If View contains its own JavaFX UI initialization,
-         * call the appropriate method from View here.
-         *
-         * For example:
-         *
-         * view.start(stage);
-         */
 
         view.start(stage);
     }

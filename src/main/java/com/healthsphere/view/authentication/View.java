@@ -248,7 +248,7 @@ public class View extends Application {
         );
 
         Button signUpBtn =
-                new Button("Sign Up");
+                new Button("Sign In");
 
         signUpBtn.getStyleClass().add(
                 "btn-primary"

@@ -5,7 +5,9 @@ import com.healthsphere.model.Appointment;
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ResourceImage;
 import com.healthsphere.util.SessionManager;
+import com.healthsphere.util.ShimmerPlaceholder;
 
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -121,125 +123,72 @@ public class AppointmentsView {
     // ============================================================
 
     public AppointmentsView(Stage stage) {
-
         this.stage = stage;
+        this.appointmentController = new AppointmentController();
+        this.doctorUid = getCurrentDoctorUid();
 
-        this.appointmentController =
-                new AppointmentController();
+        // Create scene immediately so navigation is instant
+        this.scene = createScene();
 
-        this.doctorUid =
-                getCurrentDoctorUid();
-
-        /*
-         * Load REAL appointments from Firebase.
-         */
-        loadAppointmentsFromFirebase();
-
-        this.scene =
-                createScene();
+        // Load appointments asynchronously
+        loadAppointmentsFromFirebaseAsync();
     }
 
-    // ============================================================
-    // GET SCENE
-    // ============================================================
-
     public Scene getScene() {
-
         return scene;
     }
 
-    // ============================================================
-    // CURRENT DOCTOR UID
-    // ============================================================
-
     private String getCurrentDoctorUid() {
-
-        if (SessionManager
-                .getInstance()
-                .getCurrentUser() == null) {
-
-            throw new IllegalStateException(
-                    "No logged-in user was found."
-            );
+        if (SessionManager.getInstance().getCurrentUser() == null) {
+            throw new IllegalStateException("No logged-in user was found.");
         }
-
-        String uid =
-                SessionManager
-                        .getInstance()
-                        .getCurrentUser()
-                        .getUid();
-
-        if (uid == null
-                || uid.trim().isEmpty()) {
-
-            throw new IllegalStateException(
-                    "Doctor UID is not available in the current session."
-            );
+        String uid = SessionManager.getInstance().getCurrentUser().getUid();
+        if (uid == null || uid.trim().isEmpty()) {
+            throw new IllegalStateException("Doctor UID is not available in the current session.");
         }
-
         return uid;
     }
 
-    // ============================================================
-    // LOAD REAL APPOINTMENTS
-    // ============================================================
+    private void loadAppointmentsFromFirebaseAsync() {
+        // Show initial shimmer skeleton cards in cardsGrid
+        if (cardsGrid != null) {
+            cardsGrid.getChildren().clear();
+            for (int i = 0; i < 4; i++) {
+                cardsGrid.getChildren().add(ShimmerPlaceholder.createAppointmentCardShimmer());
+            }
+        }
+
+        Task<List<Appointment>> loadTask = new Task<>() {
+            @Override
+            protected List<Appointment> call() throws Exception {
+                List<Appointment> appointments = appointmentController.getDoctorAppointments(doctorUid);
+                return appointments != null ? appointments : new ArrayList<>();
+            }
+        };
+
+        loadTask.setOnSucceeded(event -> {
+            appointmentList.clear();
+            appointmentList.addAll(loadTask.getValue());
+            appointmentList.sort(Comparator.comparing(this::getSortableDateTime));
+            System.out.println("REAL APPOINTMENTS LOADED ASYNC: " + appointmentList.size());
+            renderAppointments();
+        });
+
+        loadTask.setOnFailed(event -> {
+            appointmentList.clear();
+            Throwable ex = loadTask.getException();
+            if (ex != null) ex.printStackTrace();
+            showErrorAlert("Appointments Error", ex != null ? getRootErrorMessage(ex) : "Unable to load appointments.");
+            renderAppointments();
+        });
+
+        Thread thread = new Thread(loadTask);
+        thread.setDaemon(true);
+        thread.start();
+    }
 
     private void loadAppointmentsFromFirebase() {
-
-        appointmentList.clear();
-
-        try {
-
-            List<Appointment> appointments =
-                    appointmentController
-                            .getDoctorAppointments(
-                                    doctorUid
-                            );
-
-            if (appointments != null) {
-
-                appointmentList.addAll(
-                        appointments
-                );
-            }
-
-            /*
-             * Sort by appointment date and time.
-             */
-            appointmentList.sort(
-                    Comparator
-                            .comparing(
-                                    this::getSortableDateTime
-                            )
-            );
-
-            System.out.println(
-                    "========================================"
-            );
-
-            System.out.println(
-                    "Doctor UID: "
-                            + doctorUid
-            );
-
-            System.out.println(
-                    "REAL APPOINTMENTS LOADED: "
-                            + appointmentList.size()
-            );
-
-            System.out.println(
-                    "========================================"
-            );
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            showErrorAlert(
-                    "Appointments Error",
-                    getRootErrorMessage(e)
-            );
-        }
+        loadAppointmentsFromFirebaseAsync();
     }
 
     // ============================================================

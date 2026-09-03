@@ -1,5 +1,8 @@
 package com.healthsphere.model;
 
+import com.google.cloud.firestore.annotation.IgnoreExtraProperties;
+
+@IgnoreExtraProperties
 public class Appointment {
 
     private String appointmentId;
@@ -14,6 +17,7 @@ public class Appointment {
 
     private String hospitalId;
     private String hospitalName;
+    private String hospital;
 
     private String specialty;
 
@@ -114,7 +118,11 @@ public class Appointment {
     }
 
     public String getHospitalName() {
-        return hospitalName;
+        return hospitalName != null ? hospitalName : hospital;
+    }
+
+    public String getHospital() {
+        return hospital != null ? hospital : hospitalName;
     }
 
     public String getSpecialty() {
@@ -179,6 +187,16 @@ public class Appointment {
 
     public void setHospitalName(String hospitalName) {
         this.hospitalName = hospitalName;
+        if (this.hospital == null || this.hospital.trim().isEmpty()) {
+            this.hospital = hospitalName;
+        }
+    }
+
+    public void setHospital(String hospital) {
+        this.hospital = hospital;
+        if (this.hospitalName == null || this.hospitalName.trim().isEmpty()) {
+            this.hospitalName = hospital;
+        }
     }
 
     public void setSpecialty(String specialty) {

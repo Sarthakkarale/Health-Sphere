@@ -7,7 +7,9 @@ import com.healthsphere.model.PatientProfile;
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ResourceImage;
 import com.healthsphere.util.SessionManager;
+import com.healthsphere.util.ShimmerPlaceholder;
 
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -126,108 +128,62 @@ public class TodaysScheduleView {
     // ============================================================
 
     public TodaysScheduleView(Stage stage) {
-
         this.stage = stage;
+        this.appointmentController = new AppointmentController();
+        this.patientDAO = new PatientDAO();
 
-        this.appointmentController =
-                new AppointmentController();
+        // Create scene immediately so navigation is instant
+        this.scene = createScene();
 
-        this.patientDAO =
-                new PatientDAO();
-
-
-        loadDoctorAppointments();
-
-
-        this.scene =
-                createScene();
+        // Load data asynchronously
+        loadDoctorAppointmentsAsync();
     }
 
-
-    // ============================================================
-    // GET SCENE
-    // ============================================================
-
     public Scene getScene() {
-
         return scene;
     }
 
-
-    // ============================================================
-    // LOAD DOCTOR APPOINTMENTS
-    // ============================================================
-
-    private void loadDoctorAppointments() {
-
-        doctorAppointments =
-                new ArrayList<>();
-
-
-        String doctorUid =
-                getCurrentDoctorUid();
-
-
-        if (doctorUid == null
-                || doctorUid.trim().isEmpty()) {
-
-            System.err.println(
-                    "Unable to load Today's Schedule: "
-                            + "No logged-in doctor UID."
-            );
-
+    private void loadDoctorAppointmentsAsync() {
+        String doctorUid = getCurrentDoctorUid();
+        if (doctorUid == null || doctorUid.trim().isEmpty()) {
+            System.err.println("Unable to load Today's Schedule: No logged-in doctor UID.");
             return;
         }
 
-
-        try {
-
-            List<Appointment> appointments =
-                    appointmentController
-                            .getDoctorAppointments(
-                                    doctorUid
-                            );
-
-
-            if (appointments != null) {
-
-                doctorAppointments.addAll(
-                        appointments
-                );
+        Task<List<Appointment>> loadTask = new Task<>() {
+            @Override
+            protected List<Appointment> call() throws Exception {
+                List<Appointment> appointments = appointmentController.getDoctorAppointments(doctorUid);
+                return appointments != null ? appointments : new ArrayList<>();
             }
+        };
 
+        loadTask.setOnSucceeded(event -> {
+            doctorAppointments = loadTask.getValue();
+            doctorAppointments.sort(Comparator.comparing(this::getAppointmentDateTime));
+            System.out.println("Today's Schedule loaded " + doctorAppointments.size() + " appointments.");
+            updateScheduleView();
+        });
 
-            doctorAppointments.sort(
-                    Comparator.comparing(
-                            this::getAppointmentDateTime
-                    )
-            );
+        loadTask.setOnFailed(event -> {
+            System.err.println("Unable to load doctor appointments: " + getRootMessage(loadTask.getException()));
+            updateScheduleView();
+        });
 
+        Thread thread = new Thread(loadTask);
+        thread.setDaemon(true);
+        thread.start();
+    }
 
-            System.out.println(
-                    "Today's Schedule:"
-            );
+    private void loadDoctorAppointments() {
+        loadDoctorAppointmentsAsync();
+    }
 
-
-            System.out.println(
-                    "Doctor UID: "
-                            + doctorUid
-            );
-
-
-            System.out.println(
-                    "Total appointments: "
-                            + doctorAppointments.size()
-            );
-
-
-        } catch (Exception e) {
-
-            System.err.println(
-                    "Unable to load doctor appointments: "
-                            + getRootMessage(e)
-            );
-        }
+    private void updateScheduleView() {
+        // Triggers UI refresh once background data completes
+        refreshTimeline();
+        refreshCalendarDisplay();
+        refreshSideCards();
     }
 
 

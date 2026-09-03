@@ -4,7 +4,9 @@ import com.healthsphere.controller.appointment.AppointmentController;
 import com.healthsphere.model.Appointment;
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.SessionManager;
+import com.healthsphere.util.ShimmerPlaceholder;
 
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -112,88 +114,93 @@ public class DoctorDashboardView {
     // ============================================================
 
     public DoctorDashboardView(Stage stage) {
-
         this.stage = stage;
+        this.appointmentController = new AppointmentController();
 
-        this.appointmentController =
-                new AppointmentController();
-
-        loadDashboardData();
-
+        // Create scene immediately so navigation is non-blocking and instant
         this.scene = createScene();
+
+        // Load data asynchronously on background thread
+        loadDashboardDataAsync();
     }
-
-
-    // ============================================================
-    // GET SCENE
-    // ============================================================
 
     public Scene getScene() {
         return scene;
     }
 
+    private void loadDashboardDataAsync() {
+        showShimmerLoadingState();
 
-    // ============================================================
-    // LOAD DASHBOARD DATA
-    // ============================================================
-
-    private void loadDashboardData() {
-
-        doctorAppointments =
-                new ArrayList<>();
-
-        String doctorUid =
-                getCurrentDoctorUid();
-
-
-        if (doctorUid == null
-                || doctorUid.isBlank()) {
-
-            System.err.println(
-                    "No logged-in doctor found."
-            );
-
+        String doctorUid = getCurrentDoctorUid();
+        if (doctorUid == null || doctorUid.isBlank()) {
+            System.err.println("No logged-in doctor found.");
             return;
         }
 
-
-        try {
-
-            List<Appointment> appointments =
-                    appointmentController
-                            .getDoctorAppointments(
-                                    doctorUid
-                            );
-
-
-            if (appointments != null) {
-
-                doctorAppointments.addAll(
-                        appointments
-                );
+        Task<List<Appointment>> loadTask = new Task<>() {
+            @Override
+            protected List<Appointment> call() throws Exception {
+                List<Appointment> appointments = appointmentController.getDoctorAppointments(doctorUid);
+                return appointments != null ? appointments : new ArrayList<>();
             }
+        };
 
+        loadTask.setOnSucceeded(event -> {
+            doctorAppointments = loadTask.getValue();
+            doctorAppointments.sort(Comparator.comparing(this::getAppointmentDateTimeSafe));
+            System.out.println("Doctor Dashboard loaded " + doctorAppointments.size() + " appointments.");
+            updateUIWithLoadedData();
+        });
 
-            doctorAppointments.sort(
-                    Comparator.comparing(
-                            this::getAppointmentDateTimeSafe
-                    )
-            );
+        loadTask.setOnFailed(event -> {
+            System.err.println("Unable to load dashboard data: " + getRootMessage(loadTask.getException()));
+            updateUIWithLoadedData();
+        });
 
+        Thread thread = new Thread(loadTask);
+        thread.setDaemon(true);
+        thread.start();
+    }
 
-            System.out.println(
-                    "Doctor Dashboard loaded "
-                            + doctorAppointments.size()
-                            + " appointments."
-            );
+    private void loadDashboardData() {
+        loadDashboardDataAsync();
+    }
 
+    private void showShimmerLoadingState() {
+        if (appointmentsList != null) {
+            appointmentsList.getChildren().setAll(ShimmerPlaceholder.createListShimmer(3));
+        }
+        if (activityList != null) {
+            activityList.getChildren().setAll(ShimmerPlaceholder.createListShimmer(2));
+        }
+        if (totalPatientsValue != null) totalPatientsValue.setText("...");
+        if (todayAppointmentsValue != null) todayAppointmentsValue.setText("...");
+        if (patientGrowthValue != null) patientGrowthValue.setText("...");
+        if (revenueValue != null) revenueValue.setText("...");
+    }
 
-        } catch (Exception e) {
-
-            System.err.println(
-                    "Unable to load dashboard data: "
-                            + getRootMessage(e)
-            );
+    private void updateUIWithLoadedData() {
+        if (totalPatientsValue != null) {
+            totalPatientsValue.setText(String.valueOf(getTotalPatientCount()));
+        }
+        if (todayAppointmentsValue != null) {
+            todayAppointmentsValue.setText(String.valueOf(getTodayAppointments().size()));
+        }
+        if (patientGrowthValue != null) {
+            int growth = calculatePatientGrowth();
+            patientGrowthValue.setText(growth >= 0 ? "+" + growth : String.valueOf(growth));
+        }
+        if (todayAppointmentsDetail != null) {
+            todayAppointmentsDetail.setText(getTodayAppointmentDetail());
+        }
+        if (patientGrowthDetail != null) {
+            patientGrowthDetail.setText(getPatientGrowthDetail());
+        }
+        if (appointmentsList != null) {
+            refreshAppointmentsList();
+        }
+        if (activityList != null) {
+            refreshActivityList();
         }
     }
 

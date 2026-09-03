@@ -13,6 +13,7 @@ import com.healthsphere.model.LoginDestination;
 import com.healthsphere.model.Role;
 import com.healthsphere.model.UserProfile;
 
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -22,6 +23,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
@@ -262,20 +264,60 @@ public class LoginView {
         CheckBox rememberBox = new CheckBox("Remember me for 30 days");
         rememberBox.setStyle("-fx-font-size: 12px; -fx-text-fill: #475569;");
 
+        // Loading Container with ProgressIndicator
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        progressIndicator.setMaxSize(24, 24);
+        
+        Label loadingLabel = new Label("Connecting to Firebase...");
+        loadingLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #0256D0; -fx-font-weight: bold;");
+
+        HBox loadingBox = new HBox(10);
+        loadingBox.setAlignment(Pos.CENTER);
+        loadingBox.getChildren().addAll(progressIndicator, loadingLabel);
+        loadingBox.setVisible(false);
+        loadingBox.setManaged(false);
+
         // Main Action Buttons
         Button loginBtn = new Button("Login");
         loginBtn.getStyleClass().add("btn-login-primary");
         loginBtn.setMaxWidth(Double.MAX_VALUE);
 
-        // Login Action validating that selected tab matches user's role from profile
+        Button createAccountBtn = new Button("Create New Account");
+        createAccountBtn.getStyleClass().add("btn-outline");
+        createAccountBtn.setMaxWidth(Double.MAX_VALUE);
+
+        // Login Action using background Task so UI does not freeze when hitting Firebase Auth
         loginBtn.setOnAction(e -> {
             String email = emailField.getText().trim();
             String password = passField.getText();
 
-            try {
-                UserProfile profile = loginController.login(email, password);
+            if (email.isEmpty() || password.isEmpty()) {
+                showError("Please enter both email and password.");
+                return;
+            }
 
-                // Determine selected role from UI tab
+            // Hide previous error and show progress loader
+            if (errorLabel != null) {
+                errorLabel.setVisible(false);
+                errorLabel.setManaged(false);
+            }
+            loadingBox.setVisible(true);
+            loadingBox.setManaged(true);
+            setFormDisabled(true, emailField, passField, rememberBox, forgotPass, loginBtn, createAccountBtn);
+
+            Task<UserProfile> loginTask = new Task<>() {
+                @Override
+                protected UserProfile call() throws Exception {
+                    return loginController.login(email, password);
+                }
+            };
+
+            loginTask.setOnSucceeded(event -> {
+                loadingBox.setVisible(false);
+                loadingBox.setManaged(false);
+                setFormDisabled(false, emailField, passField, rememberBox, forgotPass, loginBtn, createAccountBtn);
+
+                UserProfile profile = loginTask.getValue();
                 String selectedTabRole = getSelectedTabRoleString();
                 String accountRole = profile.getRole();
 
@@ -287,19 +329,31 @@ public class LoginView {
 
                 LoginDestination destination = loginController.determineDestination(profile);
                 handleLoginDestination(destination);
+            });
 
-            } catch (AuthenticationException ex) {
-                showError(ex.getMessage());
-            } catch (DatabaseException ex) {
-                showError(ex.getMessage());
-            } catch (Exception ex) {
-                showError("Unable to login. Please try again.");
-            }
+            loginTask.setOnFailed(event -> {
+                loadingBox.setVisible(false);
+                loadingBox.setManaged(false);
+                setFormDisabled(false, emailField, passField, rememberBox, forgotPass, loginBtn, createAccountBtn);
+
+                Throwable ex = loginTask.getException();
+                if (ex instanceof AuthenticationException || ex instanceof DatabaseException) {
+                    showError(ex.getMessage());
+                } else if (ex != null && ex.getCause() instanceof AuthenticationException) {
+                    showError(ex.getCause().getMessage());
+                } else if (ex != null && ex.getCause() instanceof DatabaseException) {
+                    showError(ex.getCause().getMessage());
+                } else if (ex != null && ex.getMessage() != null && !ex.getMessage().isBlank()) {
+                    showError(ex.getMessage());
+                } else {
+                    showError("Unable to login. Please try again.");
+                }
+            });
+
+            Thread authThread = new Thread(loginTask);
+            authThread.setDaemon(true);
+            authThread.start();
         });
-
-        Button createAccountBtn = new Button("Create New Account");
-        createAccountBtn.getStyleClass().add("btn-outline");
-        createAccountBtn.setMaxWidth(Double.MAX_VALUE);
 
         createAccountBtn.setOnAction(e -> {
             RegisterView registerView = new RegisterView(stage);
@@ -309,7 +363,7 @@ public class LoginView {
         // Assemble Form Card (Google and Microsoft login buttons removed per request)
         card.getChildren().addAll(
                 cardLogo, titleBox, roleSection, errorLabel, emailBox, passBox, rememberBox,
-                loginBtn, createAccountBtn
+                loadingBox, loginBtn, createAccountBtn
         );
 
         container.getChildren().addAll(card, formFooterHelper());
@@ -422,6 +476,19 @@ public class LoginView {
             errorLabel.setVisible(true);
             errorLabel.setManaged(true);
         }
+    }
+
+    private void setFormDisabled(boolean disabled, TextField emailField, PasswordField passField, CheckBox rememberBox, Hyperlink forgotPass, Button loginBtn, Button createAccountBtn) {
+        emailField.setDisable(disabled);
+        passField.setDisable(disabled);
+        rememberBox.setDisable(disabled);
+        forgotPass.setDisable(disabled);
+        loginBtn.setDisable(disabled);
+        createAccountBtn.setDisable(disabled);
+        if (btnPatient != null) btnPatient.setDisable(disabled);
+        if (btnDoctor != null) btnDoctor.setDisable(disabled);
+        if (btnHospital != null) btnHospital.setDisable(disabled);
+        if (btnAdmin != null) btnAdmin.setDisable(disabled);
     }
 
     private HBox createSecurityNotice() {

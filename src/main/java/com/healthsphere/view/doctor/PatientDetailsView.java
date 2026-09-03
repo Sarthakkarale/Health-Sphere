@@ -9,7 +9,9 @@ import com.healthsphere.model.PatientProfile;
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ResourceImage;
 import com.healthsphere.util.SessionManager;
+import com.healthsphere.util.ShimmerPlaceholder;
 
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -143,54 +145,96 @@ public class PatientDetailsView {
             Stage stage,
             String patientUid
     ) {
-
         if (stage == null) {
-
-            throw new IllegalArgumentException(
-                    "Application Stage cannot be null."
-            );
+            throw new IllegalArgumentException("Application Stage cannot be null.");
         }
 
         this.stage = stage;
+        this.patientController = new PatientController();
+        this.medicalRecordDAO = new MedicalRecordDAO();
+        this.appointmentDAO = new AppointmentDAO();
+        this.doctorUid = getCurrentDoctorUid();
 
-        this.patientController =
-                new PatientController();
+        // Create scene immediately so navigation is instant
+        this.scene = createScene();
 
-        this.medicalRecordDAO =
-                new MedicalRecordDAO();
-
-        this.appointmentDAO =
-                new AppointmentDAO();
-
-        this.doctorUid =
-                getCurrentDoctorUid();
-
-        loadDoctorPatients();
-
-        if (patientUid != null
-                && !patientUid.trim().isEmpty()) {
-
-            selectPatientByUid(patientUid);
-
-        } else if (!doctorPatients.isEmpty()) {
-
-            selectedPatient =
-                    doctorPatients.get(0);
-        }
-
-        loadSelectedPatientData();
-
-        this.scene =
-                createScene();
+        // Load patients asynchronously
+        loadDoctorPatientsAsync(patientUid);
     }
 
-    // ============================================================
-    // PUBLIC SCENE
-    // ============================================================
-
     public Scene getScene() {
-
         return scene;
+    }
+
+    private void loadDoctorPatientsAsync(String initialPatientUid) {
+        if (doctorUid == null || doctorUid.trim().isEmpty()) {
+            return;
+        }
+
+        Task<List<PatientProfile>> loadTask = new Task<>() {
+            @Override
+            protected List<PatientProfile> call() throws Exception {
+                List<PatientProfile> patients = patientController.getPatientsForDoctorSafe(doctorUid);
+                return patients != null ? patients : new ArrayList<>();
+            }
+        };
+
+        loadTask.setOnSucceeded(event -> {
+            doctorPatients = loadTask.getValue();
+            doctorPatients.removeIf(Objects::isNull);
+
+            if (initialPatientUid != null && !initialPatientUid.trim().isEmpty()) {
+                selectPatientByUid(initialPatientUid);
+            } else if (!doctorPatients.isEmpty()) {
+                selectedPatient = doctorPatients.get(0);
+            }
+
+            if (selectedPatient != null) {
+                loadSelectedPatientDataAsync();
+            }
+        });
+
+        Thread thread = new Thread(loadTask);
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private void loadSelectedPatientDataAsync() {
+        if (selectedPatient == null || selectedPatient.getUid() == null || selectedPatient.getUid().trim().isEmpty()) {
+            return;
+        }
+
+        String targetUid = selectedPatient.getUid();
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                medicalRecords = new ArrayList<>();
+                appointments = new ArrayList<>();
+
+                try {
+                    List<MedicalRecord> records = medicalRecordDAO.getPatientMedicalRecords(targetUid);
+                    if (records != null) medicalRecords.addAll(records);
+                } catch (Exception ignored) {}
+
+                try {
+                    List<Appointment> patientApps = appointmentDAO.getPatientAppointments(targetUid);
+                    if (patientApps != null) appointments.addAll(patientApps);
+                } catch (Exception ignored) {}
+
+                medicalRecords.sort(Comparator.comparing(PatientDetailsView.this::getRecordDateValue, Comparator.nullsLast(Comparator.reverseOrder())));
+                appointments.sort(Comparator.comparing(PatientDetailsView.this::getAppointmentDateValue, Comparator.nullsLast(Comparator.reverseOrder())));
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            // Update UI elements if needed
+        });
+
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();
     }
 
     // ============================================================
