@@ -2,6 +2,10 @@ package com.healthsphere.model;
 
 public class ComplaintModel {
 
+    // ============================================================
+    // FIELDS
+    // ============================================================
+
     private String ticketId;
     private String category;
     private String issueTitle;
@@ -14,15 +18,14 @@ public class ComplaintModel {
 
     // ============================================================
     // DEFAULT CONSTRUCTOR
-    // Required for Firestore object mapping
+    // Required for Firebase / Firestore
     // ============================================================
 
     public ComplaintModel() {
     }
 
     // ============================================================
-    // EXISTING CONSTRUCTOR
-    // Keeps compatibility with ComplaintsManagementView
+    // CONSTRUCTOR
     // ============================================================
 
     public ComplaintModel(
@@ -35,34 +38,6 @@ public class ComplaintModel {
             String status,
             String createdDate) {
 
-        this(
-                ticketId,
-                category,
-                issueTitle,
-                description,
-                complainant,
-                priority,
-                status,
-                createdDate,
-                null
-        );
-    }
-
-    // ============================================================
-    // FULL CONSTRUCTOR
-    // ============================================================
-
-    public ComplaintModel(
-            String ticketId,
-            String category,
-            String issueTitle,
-            String description,
-            String complainant,
-            String priority,
-            String status,
-            String createdDate,
-            String resolvedDate) {
-
         this.ticketId = ticketId;
         this.category = category;
         this.issueTitle = issueTitle;
@@ -71,7 +46,7 @@ public class ComplaintModel {
         this.priority = priority;
         this.status = status;
         this.createdDate = createdDate;
-        this.resolvedDate = resolvedDate;
+        this.resolvedDate = "";
     }
 
     // ============================================================
