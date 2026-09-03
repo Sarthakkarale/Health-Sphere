@@ -1,5 +1,8 @@
 package com.healthsphere.dao.authentication;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.FieldValue;
 import com.google.cloud.firestore.Firestore;
@@ -94,9 +97,21 @@ public class DoctorDAO {
                 return null;
             }
 
-            return document.toObject(
-                    DoctorProfile.class
-            );
+            DoctorProfile doctor =
+                    document.toObject(
+                            DoctorProfile.class
+                    );
+
+            if (doctor != null &&
+                    (doctor.getUid() == null ||
+                     doctor.getUid().isBlank())) {
+
+                doctor.setUid(
+                        document.getId()
+                );
+            }
+
+            return doctor;
 
         } catch (InterruptedException e) {
 
@@ -120,9 +135,7 @@ public class DoctorDAO {
      * Get all doctor profiles.
      */
     public List<DoctorProfile> getAllDoctorProfiles() {
-
         try {
-
             QuerySnapshot snapshot =
                     firestore
                             .collection(COLLECTION_NAME)
@@ -132,10 +145,7 @@ public class DoctorDAO {
             List<DoctorProfile> doctors =
                     new ArrayList<>();
 
-            for (
-                    DocumentSnapshot document :
-                    snapshot.getDocuments()
-            ) {
+            for (DocumentSnapshot document : snapshot.getDocuments()) {
 
                 if (document.exists()) {
 
@@ -145,6 +155,9 @@ public class DoctorDAO {
                             );
 
                     if (doctor != null) {
+                        if (doctor.getUid() == null || doctor.getUid().isBlank()) {
+                            doctor.setUid(document.getId());
+                        }
                         doctors.add(doctor);
                     }
                 }
@@ -168,6 +181,10 @@ public class DoctorDAO {
                     e
             );
         }
+    }
+
+    public List<DoctorProfile> getAllDoctors() {
+        return getAllDoctorProfiles();
     }
 
     /**

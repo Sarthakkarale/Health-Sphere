@@ -1,8 +1,5 @@
 package com.healthsphere.model;
 
-import com.google.cloud.firestore.annotation.IgnoreExtraProperties;
-
-@IgnoreExtraProperties
 public class Appointment {
 
     private String appointmentId;
@@ -10,217 +7,223 @@ public class Appointment {
     private String patientUid;
     private String patientName;
 
+    // DOCTOR or HOSPITAL
     private String bookingType;
+
+    // =========================================================
+    // DOCTOR
+    // =========================================================
 
     private String doctorUid;
     private String doctorName;
 
+    // =========================================================
+    // HOSPITAL
+    // =========================================================
+
     private String hospitalId;
     private String hospitalName;
-    private String hospital;
+
+    // =========================================================
+    // APPOINTMENT DETAILS
+    // =========================================================
 
     private String specialty;
-
     private String appointmentDate;
     private String appointmentTime;
-
     private String reason;
 
+    // PENDING / PENDING_ASSIGNMENT / CONFIRMED / CANCELLED
     private String status;
 
     private String createdAt;
     private String updatedAt;
 
-    // ============================================================
-    // FIRESTORE CONSTRUCTOR
-    // ============================================================
+    // =========================================================
+    // EMPTY CONSTRUCTOR
+    // =========================================================
 
     public Appointment() {
     }
 
-    // ============================================================
-    // FULL CONSTRUCTOR
-    // ============================================================
-
-    public Appointment(
-            String appointmentId,
-            String patientUid,
-            String patientName,
-            String bookingType,
-            String doctorUid,
-            String doctorName,
-            String hospitalId,
-            String hospitalName,
-            String specialty,
-            String appointmentDate,
-            String appointmentTime,
-            String reason,
-            String status,
-            String createdAt,
-            String updatedAt) {
-
-        this.appointmentId = appointmentId;
-
-        this.patientUid = patientUid;
-        this.patientName = patientName;
-
-        this.bookingType = bookingType;
-
-        this.doctorUid = doctorUid;
-        this.doctorName = doctorName;
-
-        this.hospitalId = hospitalId;
-        this.hospitalName = hospitalName;
-
-        this.specialty = specialty;
-
-        this.appointmentDate = appointmentDate;
-        this.appointmentTime = appointmentTime;
-
-        this.reason = reason;
-
-        this.status = status;
-
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
-
-    // ============================================================
-    // GETTERS
-    // ============================================================
+    // =========================================================
+    // APPOINTMENT ID
+    // =========================================================
 
     public String getAppointmentId() {
         return appointmentId;
     }
 
-    public String getPatientUid() {
-        return patientUid;
-    }
-
-    public String getPatientName() {
-        return patientName;
-    }
-
-    public String getBookingType() {
-        return bookingType;
-    }
-
-    public String getDoctorUid() {
-        return doctorUid;
-    }
-
-    public String getDoctorName() {
-        return doctorName;
-    }
-
-    public String getHospitalId() {
-        return hospitalId;
-    }
-
-    public String getHospitalName() {
-        return hospitalName != null ? hospitalName : hospital;
-    }
-
-    public String getHospital() {
-        return hospital != null ? hospital : hospitalName;
-    }
-
-    public String getSpecialty() {
-        return specialty;
-    }
-
-    public String getAppointmentDate() {
-        return appointmentDate;
-    }
-
-    public String getAppointmentTime() {
-        return appointmentTime;
-    }
-
-    public String getReason() {
-        return reason;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public String getCreatedAt() {
-        return createdAt;
-    }
-
-    public String getUpdatedAt() {
-        return updatedAt;
-    }
-
-    // ============================================================
-    // SETTERS
-    // ============================================================
-
     public void setAppointmentId(String appointmentId) {
         this.appointmentId = appointmentId;
+    }
+
+    // =========================================================
+    // PATIENT
+    // =========================================================
+
+    public String getPatientUid() {
+        return patientUid;
     }
 
     public void setPatientUid(String patientUid) {
         this.patientUid = patientUid;
     }
 
+    public String getPatientName() {
+        return patientName;
+    }
+
     public void setPatientName(String patientName) {
         this.patientName = patientName;
+    }
+
+    // =========================================================
+    // BOOKING TYPE
+    // =========================================================
+
+    public String getBookingType() {
+        return bookingType;
     }
 
     public void setBookingType(String bookingType) {
         this.bookingType = bookingType;
     }
 
+    // =========================================================
+    // DOCTOR
+    // =========================================================
+
+    public String getDoctorUid() {
+        return doctorUid;
+    }
+
     public void setDoctorUid(String doctorUid) {
         this.doctorUid = doctorUid;
+    }
+
+    public String getDoctorName() {
+        return doctorName;
     }
 
     public void setDoctorName(String doctorName) {
         this.doctorName = doctorName;
     }
 
+    // =========================================================
+    // HOSPITAL
+    // =========================================================
+
+    public String getHospitalId() {
+        return hospitalId;
+    }
+
     public void setHospitalId(String hospitalId) {
         this.hospitalId = hospitalId;
     }
 
-    public void setHospitalName(String hospitalName) {
-        this.hospitalName = hospitalName;
-        if (this.hospital == null || this.hospital.trim().isEmpty()) {
-            this.hospital = hospitalName;
-        }
+    public String getHospitalName() {
+        return hospitalName;
     }
 
-    public void setHospital(String hospital) {
-        this.hospital = hospital;
-        if (this.hospitalName == null || this.hospitalName.trim().isEmpty()) {
-            this.hospitalName = hospital;
-        }
+    public void setHospitalName(String hospitalName) {
+        this.hospitalName = hospitalName;
+    }
+
+    /*
+     * Backward-compatible getter.
+     *
+     * Your existing Appointments.java is currently calling:
+     *
+     * appointment.getHospital()
+     *
+     * The actual model field is hospitalName.
+     *
+     * Keeping this method prevents the existing Appointments.java
+     * from producing compilation errors.
+     */
+    public String getHospital() {
+        return hospitalName;
+    }
+
+    // =========================================================
+    // SPECIALTY
+    // =========================================================
+
+    public String getSpecialty() {
+        return specialty;
     }
 
     public void setSpecialty(String specialty) {
         this.specialty = specialty;
     }
 
+    // =========================================================
+    // DATE
+    // =========================================================
+
+    public String getAppointmentDate() {
+        return appointmentDate;
+    }
+
     public void setAppointmentDate(String appointmentDate) {
         this.appointmentDate = appointmentDate;
+    }
+
+    // =========================================================
+    // TIME
+    // =========================================================
+
+    public String getAppointmentTime() {
+        return appointmentTime;
     }
 
     public void setAppointmentTime(String appointmentTime) {
         this.appointmentTime = appointmentTime;
     }
 
+    // =========================================================
+    // REASON
+    // =========================================================
+
+    public String getReason() {
+        return reason;
+    }
+
     public void setReason(String reason) {
         this.reason = reason;
+    }
+
+    // =========================================================
+    // STATUS
+    // =========================================================
+
+    public String getStatus() {
+        return status;
     }
 
     public void setStatus(String status) {
         this.status = status;
     }
 
+    // =========================================================
+    // CREATED AT
+    // =========================================================
+
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
+    }
+
+    // =========================================================
+    // UPDATED AT
+    // =========================================================
+
+    public String getUpdatedAt() {
+        return updatedAt;
     }
 
     public void setUpdatedAt(String updatedAt) {

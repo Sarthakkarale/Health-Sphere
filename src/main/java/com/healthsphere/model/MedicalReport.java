@@ -1,3 +1,4 @@
+
 package com.healthsphere.model;
 
 public class MedicalReport {

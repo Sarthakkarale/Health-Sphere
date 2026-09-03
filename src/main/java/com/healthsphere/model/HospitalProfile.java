@@ -1,3 +1,4 @@
+
 package com.healthsphere.model;
 
 import java.time.Instant;
@@ -12,6 +13,9 @@ public class HospitalProfile {
     private String beds;
     private String contact;
     private String address;
+
+    // NEW
+    private String rating;
 
     // Verification information
     private String verificationStatus;
@@ -105,6 +109,20 @@ public class HospitalProfile {
     public void setAddress(String address) {
         this.address = address;
     }
+
+    // =========================================================
+    // RATING
+    // =========================================================
+
+    public String getRating() {
+        return rating;
+    }
+
+    public void setRating(String rating) {
+        this.rating = rating;
+    }
+
+
 
     // ============================================================
     // VERIFICATION STATUS

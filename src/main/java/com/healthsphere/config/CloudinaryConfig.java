@@ -11,11 +11,6 @@ public class CloudinaryConfig {
         // Prevent object creation
     }
 
-    /**
-     * Returns the configured Cloudinary instance.
-     *
-     * Uses environment variables instead of hardcoded credentials.
-     */
     public static Cloudinary getCloudinary() {
 
         if (cloudinary != null) {
@@ -23,9 +18,7 @@ public class CloudinaryConfig {
         }
 
         String cloudName = "ks2hd1ox";
-
         String apiKey = "348493465234243";
-
         String apiSecret = "EENAcNBm4vyApAxa4LDOkgX6VYQ";
 
         if (isEmpty(cloudName)
@@ -33,10 +26,7 @@ public class CloudinaryConfig {
                 || isEmpty(apiSecret)) {
 
             throw new IllegalStateException(
-                    "Cloudinary credentials are not configured. "
-                            + "Set CLOUDINARY_CLOUD_NAME, "
-                            + "CLOUDINARY_API_KEY and "
-                            + "CLOUDINARY_API_SECRET."
+                    "Cloudinary credentials are not configured."
             );
         }
 
@@ -44,7 +34,8 @@ public class CloudinaryConfig {
                 ObjectUtils.asMap(
                         "cloud_name", cloudName,
                         "api_key", apiKey,
-                        "api_secret", apiSecret
+                        "api_secret", apiSecret,
+                        "secure", true
                 )
         );
 

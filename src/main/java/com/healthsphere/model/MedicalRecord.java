@@ -5,6 +5,15 @@ import java.util.List;
 
 public class MedicalRecord {
 
+    private String recordId;
+    private String patientUid;
+    private String title;
+    private String type;
+    private String date;
+    private String description;
+    private String doctorName;
+    private String hospitalName;
+
     // ============================================================
     // RECORD IDENTIFICATION
     // ============================================================

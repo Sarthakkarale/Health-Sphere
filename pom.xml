@@ -16,7 +16,6 @@
 
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-
         <javafx.version>17.0.13</javafx.version>
     </properties>
 
@@ -44,6 +43,18 @@
             <version>${javafx.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-media</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
         <!-- JavaFX Media for Video / Audio -->
         <dependency>
             <groupId>org.openjfx</groupId>
@@ -60,6 +71,13 @@
             <groupId>com.google.firebase</groupId>
             <artifactId>firebase-admin</artifactId>
             <version>9.7.0</version>
+        </dependency>
+
+        <!-- Cloudinary -->
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http44</artifactId>
+            <version>1.39.0</version>
         </dependency>
 
 
@@ -82,6 +100,13 @@
             <groupId>org.jfree</groupId>
             <artifactId>jfreechart</artifactId>
             <version>1.5.6</version>
+        </dependency>
+
+        <!-- Jackson -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.19.2</version>
         </dependency>
 
 
@@ -126,7 +151,6 @@
     <!-- ============================= -->
 
     <build>
-
         <plugins>
 
             <!-- Java Compiler -->
@@ -137,7 +161,6 @@
                 <artifactId>maven-compiler-plugin</artifactId>
 
                 <version>3.14.0</version>
-
                 <configuration>
 
                     <source>17</source>
@@ -153,7 +176,6 @@
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
-
                 <configuration>
 
                     <mainClass>
@@ -162,9 +184,7 @@
 
                 </configuration>
             </plugin>
-
         </plugins>
-
     </build>
 
 </project>

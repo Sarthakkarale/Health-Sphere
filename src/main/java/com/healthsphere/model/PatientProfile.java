@@ -1,3 +1,4 @@
+
 package com.healthsphere.model;
 
 public class PatientProfile {
@@ -12,6 +13,12 @@ public class PatientProfile {
     private String bloodGroup;
     private String emergencyContact;
     private String address;
+
+    // Health Status
+    private String heartRate;
+    private String bloodPressure;
+    private String oxygenLevel;
+    private String lastHealthCheck;
 
     public PatientProfile() {
     }
@@ -119,4 +126,41 @@ public class PatientProfile {
     public void setAddress(String address) {
         this.address = address;
     }
+
+    // ============================================================
+    // HEALTH STATUS
+    // ============================================================
+
+    public String getHeartRate() {
+        return heartRate;
+    }
+
+    public void setHeartRate(String heartRate) {
+        this.heartRate = heartRate;
+    }
+
+    public String getBloodPressure() {
+        return bloodPressure;
+    }
+
+    public void setBloodPressure(String bloodPressure) {
+        this.bloodPressure = bloodPressure;
+    }
+
+    public String getOxygenLevel() {
+        return oxygenLevel;
+    }
+
+    public void setOxygenLevel(String oxygenLevel) {
+        this.oxygenLevel = oxygenLevel;
+    }
+
+    public String getLastHealthCheck() {
+        return lastHealthCheck;
+    }
+
+    public void setLastHealthCheck(String lastHealthCheck) {
+        this.lastHealthCheck = lastHealthCheck;
+    }
 }
+
