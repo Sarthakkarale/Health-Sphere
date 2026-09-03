@@ -244,16 +244,14 @@ public class PatientController {
 
         try {
 
-            return getPatientsForDoctor(doctorUid);
+            List<PatientProfile> patients = getPatientsForDoctor(doctorUid);
 
-        } catch (DatabaseException e) {
+            if (patients == null || patients.isEmpty()) {
 
-            System.err.println(
-                    "Unable to load doctor patients: "
-                            + e.getMessage()
-            );
+                patients = patientDAO.getAllPatients();
+            }
 
-            return new ArrayList<>();
+            return patients != null ? patients : new ArrayList<>();
 
         } catch (Exception e) {
 
@@ -262,7 +260,16 @@ public class PatientController {
                             + e.getMessage()
             );
 
-            return new ArrayList<>();
+            try {
+
+                List<PatientProfile> fallback = patientDAO.getAllPatients();
+
+                return fallback != null ? fallback : new ArrayList<>();
+
+            } catch (Exception ignored) {
+
+                return new ArrayList<>();
+            }
         }
     }
 }

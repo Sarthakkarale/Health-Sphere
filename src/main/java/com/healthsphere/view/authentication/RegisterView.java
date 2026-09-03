@@ -6,8 +6,6 @@ import com.healthsphere.controller.authentication.HospitalRegistrationController
 import com.healthsphere.model.DoctorProfile;
 import com.healthsphere.model.HospitalProfile;
 import com.healthsphere.model.PatientProfile;
-import com.healthsphere.model.UserProfile;
-
 import javafx.animation.ScaleTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
@@ -36,11 +34,6 @@ public class RegisterView {
         private final PatientRegistrationController patientRegistrationController = new PatientRegistrationController();
         private final DoctorRegistrationController doctorRegistrationController = new DoctorRegistrationController();
         private final HospitalRegistrationController hospitalRegistrationController = new HospitalRegistrationController();
-
-        // Persisted UserProfile returned after registration
-        private PatientProfile registeredPatientProfile;
-        private DoctorProfile registeredDoctorProfile;
-        private HospitalProfile registeredHospitalProfile;
 
         // Multi-Step State Tracking
         // 1: Portal, 2: Personal Information, 3: Role Details, 4: Registration Outcome
@@ -769,7 +762,7 @@ public class RegisterView {
 
                                         case "Patient":
 
-                                                registeredPatientProfile = patientRegistrationController.register(
+                                                patientRegistrationController.register(
                                                                 firstNameField.getText().trim(),
                                                                 lastNameField.getText().trim(),
                                                                 emailField.getText().trim(),
@@ -785,7 +778,7 @@ public class RegisterView {
 
                                         case "Doctor":
 
-                                                registeredDoctorProfile = doctorRegistrationController.register(
+                                                doctorRegistrationController.register(
                                                                 firstNameField.getText().trim(),
                                                                 lastNameField.getText().trim(),
                                                                 emailField.getText().trim(),
@@ -801,7 +794,7 @@ public class RegisterView {
 
                                         case "Hospital":
 
-                                                registeredHospitalProfile = hospitalRegistrationController.register(
+                                                hospitalRegistrationController.register(
                                                                 emailField.getText().trim(),
                                                                 passwordField.getText(),
                                                                 hospitalNameField.getText().trim(),

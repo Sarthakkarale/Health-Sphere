@@ -119,6 +119,45 @@ public final class SessionManager {
         return INSTANCE.authenticationResponse != null;
     }
 
+    private static String cachedDoctorName = null;
+
+    public static String getDoctorDisplayName() {
+        if (cachedDoctorName != null && !cachedDoctorName.isBlank()) {
+            return cachedDoctorName;
+        }
+
+        try {
+            if (currentUser != null && currentUser.getEmail() != null) {
+                String email = currentUser.getEmail().trim();
+                if (email.contains("@")) {
+                    String name = email.split("@")[0];
+                    if (name.contains(".")) {
+                        String[] parts = name.split("\\.");
+                        StringBuilder sb = new StringBuilder("Dr. ");
+                        for (String p : parts) {
+                            if (!p.isBlank()) {
+                                sb.append(Character.toUpperCase(p.charAt(0))).append(p.substring(1).toLowerCase()).append(" ");
+                            }
+                        }
+                        cachedDoctorName = sb.toString().trim();
+                        return cachedDoctorName;
+                    } else if (!name.isBlank()) {
+                        cachedDoctorName = "Dr. " + Character.toUpperCase(name.charAt(0)) + name.substring(1).toLowerCase();
+                        return cachedDoctorName;
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+
+        return "Dr. Medical Practitioner";
+    }
+
+    public static void setDoctorDisplayName(String name) {
+        if (name != null && !name.isBlank()) {
+            cachedDoctorName = name;
+        }
+    }
+
     // ============================================================
     // LOGOUT / CLEAR SESSION
     // ============================================================
@@ -130,5 +169,6 @@ public final class SessionManager {
 
         session.authenticationResponse = null;
         session.currentUser = null;
+        cachedDoctorName = null;
     }
 }

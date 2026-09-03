@@ -7,6 +7,7 @@ import com.healthsphere.util.ResourceImage;
 
 import com.healthsphere.model.UserProfile;
 import com.healthsphere.util.SessionManager;
+import com.healthsphere.view.authentication.LoginView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -524,8 +525,7 @@ public class DoctorProfileView {
                                 logoutLabel);
 
                 logoutTab.setOnMouseClicked(
-                                e -> System.out.println(
-                                                "Logging out..."));
+                                e -> handleLogout());
 
                 footer.getChildren().addAll(
                                 sidebarProfile,
@@ -541,16 +541,7 @@ public class DoctorProfileView {
         }
 
         private String getDoctorFirstNameForSidebar() {
-
-                if (doctorProfile == null ||
-                                doctorProfile.getFirstName() == null ||
-                                doctorProfile.getFirstName().isBlank()) {
-
-                        return "Doctor";
-                }
-
-                return "Dr. " +
-                                doctorProfile.getFirstName();
+                return SessionManager.getDoctorDisplayName();
         }
 
         // ============================================================
@@ -612,6 +603,15 @@ public class DoctorProfileView {
                         default:
                                 break;
                 }
+        }
+
+        private void handleLogout() {
+                try {
+                        SessionManager.getInstance().clearSession();
+                } catch (Exception e) {
+                        e.printStackTrace();
+                }
+                Navigation.goTo(stage, () -> new LoginView(stage).getScene());
         }
 
         // ============================================================

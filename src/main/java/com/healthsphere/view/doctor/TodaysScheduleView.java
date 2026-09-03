@@ -8,6 +8,7 @@ import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ResourceImage;
 import com.healthsphere.util.SessionManager;
 import com.healthsphere.util.ShimmerPlaceholder;
+import com.healthsphere.view.authentication.LoginView;
 
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -1074,19 +1075,15 @@ public class TodaysScheduleView {
                     .getInstance()
                     .clearSession();
 
-
-            showInformationAlert(
-                    "Logout",
-                    "Logged out successfully."
-            );
-
         } catch (Exception e) {
 
-            showInformationAlert(
-                    "Logout Error",
-                    "Unable to clear the current session."
-            );
+            e.printStackTrace();
         }
+
+        Navigation.goTo(
+                stage,
+                () -> new LoginView(stage).getScene()
+        );
     }
 
 
@@ -4577,19 +4574,15 @@ public class TodaysScheduleView {
     // ============================================================
 
     private String getDoctorDisplayName() {
-
         for (Appointment appointment :
                 doctorAppointments) {
 
             if (appointment == null) {
-
                 continue;
             }
 
-
             String doctorName =
                     appointment.getDoctorName();
-
 
             if (doctorName != null
                     && !doctorName.trim().isEmpty()) {
@@ -4597,25 +4590,16 @@ public class TodaysScheduleView {
                 String name =
                         doctorName.trim();
 
-
-                if (!name
-                        .toLowerCase()
-                        .startsWith(
-                                "dr."
-                        )) {
-
-                    name =
-                            "Dr. "
-                                    + name;
+                if (!name.toLowerCase().startsWith("dr.")) {
+                    name = "Dr. " + name;
                 }
 
-
+                SessionManager.setDoctorDisplayName(name);
                 return name;
             }
         }
 
-
-        return "Doctor";
+        return SessionManager.getDoctorDisplayName();
     }
 
 

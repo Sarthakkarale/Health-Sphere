@@ -7,6 +7,7 @@ import com.healthsphere.model.UserProfile;
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ResourceImage;
 import com.healthsphere.util.SessionManager;
+import com.healthsphere.view.authentication.LoginView;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -3043,38 +3044,21 @@ public class AvailabilityScheduleView {
 
     private void handleLogout() {
 
-        Alert alert =
-                new Alert(
-                        Alert.AlertType.CONFIRMATION
-                );
+        try {
 
-        alert.setTitle(
-                "Logout"
+            SessionManager
+                    .getInstance()
+                    .clearSession();
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        Navigation.goTo(
+                stage,
+                () -> new LoginView(stage).getScene()
         );
-
-        alert.setHeaderText(
-                "Logout from Health-Sphere?"
-        );
-
-        alert.setContentText(
-                "Are you sure you want to logout?"
-        );
-
-        alert.showAndWait()
-                .ifPresent(
-                        result -> {
-
-                            if (result
-                                    == ButtonType.OK) {
-
-                                SessionManager
-                                        .getInstance()
-                                        .clearSession();
-
-                                stage.close();
-                            }
-                        }
-                );
     }
 
     // =========================================================
@@ -3585,36 +3569,18 @@ public class AvailabilityScheduleView {
 
     private String getDoctorDisplayName() {
 
-        if (doctorProfile == null) {
-
-            return "Doctor";
+        if (doctorProfile != null) {
+            String first = safe(doctorProfile.getFirstName());
+            String last = safe(doctorProfile.getLastName());
+            String fullName = (first + " " + last).trim();
+            if (!fullName.isEmpty()) {
+                String name = "Dr. " + fullName;
+                SessionManager.setDoctorDisplayName(name);
+                return name;
+            }
         }
 
-        String first =
-                safe(
-                        doctorProfile
-                                .getFirstName()
-                );
-
-        String last =
-                safe(
-                        doctorProfile
-                                .getLastName()
-                );
-
-        String fullName =
-                (
-                        first
-                                + " "
-                                + last
-                ).trim();
-
-        if (fullName.isEmpty()) {
-
-            return "Doctor";
-        }
-
-        return "Dr. " + fullName;
+        return SessionManager.getDoctorDisplayName();
     }
 
     // =========================================================

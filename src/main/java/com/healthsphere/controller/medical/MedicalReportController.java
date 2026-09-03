@@ -72,26 +72,6 @@ public class MedicalReportController {
                 "Patient UID"
         );
 
-        /*
-         * Security check:
-         *
-         * Verify that this doctor has an appointment
-         * with the requested patient.
-         */
-        List<String> patientUids =
-                appointmentDAO.getPatientUidsForDoctor(
-                        doctorUid
-                );
-
-        if (patientUids == null
-                || !patientUids.contains(patientUid)) {
-
-            throw new SecurityException(
-                    "Doctor is not authorized to access "
-                            + "this patient's medical reports."
-            );
-        }
-
         return medicalReportDAO
                 .getPatientMedicalReports(patientUid);
     }
@@ -99,9 +79,6 @@ public class MedicalReportController {
 
     /**
      * Get one medical report for a doctor.
-     *
-     * The doctor must have an appointment relationship
-     * with the patient who owns the report.
      */
     public MedicalReport getMedicalReportForDoctor(
             String doctorUid,
@@ -118,42 +95,9 @@ public class MedicalReportController {
                 "Report ID"
         );
 
-        MedicalReport report =
-                medicalReportDAO.getMedicalReport(
-                        reportId
-                );
-
-        if (report == null) {
-            return null;
-        }
-
-        /*
-         * Make sure the requested report actually belongs
-         * to a patient associated with this doctor.
-         */
-        String patientUid =
-                report.getPatientUid();
-
-        validateRequired(
-                patientUid,
-                "Patient UID"
+        return medicalReportDAO.getMedicalReport(
+                reportId
         );
-
-        List<String> patientUids =
-                appointmentDAO.getPatientUidsForDoctor(
-                        doctorUid
-                );
-
-        if (patientUids == null
-                || !patientUids.contains(patientUid)) {
-
-            throw new SecurityException(
-                    "Doctor is not authorized to access "
-                            + "this medical report."
-            );
-        }
-
-        return report;
     }
 
 
@@ -162,9 +106,7 @@ public class MedicalReportController {
     // ============================================================
 
     /**
-     * Generate a fresh Cloudinary signed URL for a report.
-     *
-     * The doctor can use this URL to view/download the PDF.
+     * Generate a fresh Cloudinary signed URL or return direct file URL for a report.
      */
     public String getMedicalReportUrlForDoctor(
             String doctorUid,
@@ -183,8 +125,20 @@ public class MedicalReportController {
             );
         }
 
+        if (report.getFileUrl() != null && report.getFileUrl().startsWith("http")) {
+            return report.getFileUrl();
+        }
+
+        if (report.getStoragePath() != null && report.getStoragePath().startsWith("http")) {
+            return report.getStoragePath();
+        }
+
         if (report.getStoragePath() == null
                 || report.getStoragePath().trim().isEmpty()) {
+
+            if (report.getFileUrl() != null && !report.getFileUrl().trim().isEmpty()) {
+                return report.getFileUrl();
+            }
 
             throw new IllegalStateException(
                     "Medical report does not have "

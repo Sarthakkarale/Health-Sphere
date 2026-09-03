@@ -2,6 +2,8 @@ package com.healthsphere.view.doctor;
 
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ResourceImage;
+import com.healthsphere.util.SessionManager;
+import com.healthsphere.view.authentication.LoginView;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -273,7 +275,7 @@ public class PatientEditProfileView {
         profilePhoto.setClip(profileClip);
 
         VBox profileText = new VBox(0);
-        Label doctorName = new Label("Dr. Sarah");
+        Label doctorName = new Label(SessionManager.getDoctorDisplayName());
         doctorName.getStyleClass().add("sidebar-profile-name");
         profileText.getChildren().add(doctorName);
         doctorProfile.getChildren().addAll(profilePhoto, profileText);
@@ -291,9 +293,20 @@ public class PatientEditProfileView {
         logoutLabel.getStyleClass().add("nav-text-logout");
         logout.getChildren().addAll(logoutIcon, logoutLabel);
 
+        logout.setOnMouseClicked(e -> handleLogout());
+
         footer.getChildren().addAll(doctorProfile, logout);
         sidebar.getChildren().addAll(logoSection, navItems, footer);
         return sidebar;
+    }
+
+    private void handleLogout() {
+        try {
+            SessionManager.clearSession();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Navigation.goTo(stage, () -> new LoginView(stage).getScene());
     }
 
     private void handleSidebarTabClick(int index) {

@@ -106,4 +106,30 @@ public class PatientDAO {
             );
         }
     }
+
+    // ============================================================
+    // GET ALL PATIENTS
+    // ============================================================
+
+    public java.util.List<PatientProfile> getAllPatients() {
+        try {
+            java.util.List<com.google.cloud.firestore.QueryDocumentSnapshot> documents =
+                    db.collection("patients")
+                            .get()
+                            .get()
+                            .getDocuments();
+
+            java.util.List<PatientProfile> list = new java.util.ArrayList<>();
+            for (com.google.cloud.firestore.QueryDocumentSnapshot doc : documents) {
+                PatientProfile profile = doc.toObject(PatientProfile.class);
+                if (profile != null) {
+                    list.add(profile);
+                }
+            }
+            return list;
+        } catch (Exception e) {
+            System.err.println("Unable to get all patients: " + e.getMessage());
+            return new java.util.ArrayList<>();
+        }
+    }
 }

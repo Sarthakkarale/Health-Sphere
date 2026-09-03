@@ -12,6 +12,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+import com.healthsphere.util.SessionManager;
+import com.healthsphere.view.authentication.LoginView;
+
 import java.util.List;
 
 public class AdminMainShell {
@@ -353,11 +356,14 @@ public class AdminMainShell {
         );
 
         // =====================================================
-        // USER PROFILE FOOTER
+        // USER PROFILE FOOTER & LOGOUT
         // =====================================================
 
         VBox userProfileCard =
                 createUserProfileFooter();
+
+        Button logoutBtn =
+                createLogoutButton();
 
         // =====================================================
         // ADD SIDEBAR COMPONENTS
@@ -383,7 +389,9 @@ public class AdminMainShell {
 
                 spacer,
 
-                userProfileCard
+                userProfileCard,
+
+                logoutBtn
         );
 
         // Dashboard active initially
@@ -570,5 +578,81 @@ public class AdminMainShell {
         );
 
         return footer;
+    }
+
+    // =========================================================
+    // LOGOUT BUTTON
+    // =========================================================
+
+    private Button createLogoutButton() {
+
+        Button logoutBtn =
+                new Button("🚪  Logout");
+
+        logoutBtn.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        logoutBtn.setAlignment(
+                Pos.CENTER
+        );
+
+        logoutBtn.setPadding(
+                new Insets(
+                        10,
+                        14,
+                        10,
+                        14
+                )
+        );
+
+        logoutBtn.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.BOLD,
+                        13
+                )
+        );
+
+        logoutBtn.setStyle(
+                "-fx-background-color: #EF4444;" +
+                "-fx-text-fill: #FFFFFF;" +
+                "-fx-background-radius: 8px;" +
+                "-fx-cursor: hand;"
+        );
+
+        logoutBtn.setOnMouseEntered(
+                e -> logoutBtn.setStyle(
+                        "-fx-background-color: #DC2626;" +
+                        "-fx-text-fill: #FFFFFF;" +
+                        "-fx-background-radius: 8px;" +
+                        "-fx-cursor: hand;"
+                )
+        );
+
+        logoutBtn.setOnMouseExited(
+                e -> logoutBtn.setStyle(
+                        "-fx-background-color: #EF4444;" +
+                        "-fx-text-fill: #FFFFFF;" +
+                        "-fx-background-radius: 8px;" +
+                        "-fx-cursor: hand;"
+                )
+        );
+
+        logoutBtn.setOnAction(e -> {
+
+            SessionManager.clearSession();
+
+            LoginView loginView =
+                    new LoginView(
+                            primaryStage
+                    );
+
+            primaryStage.setScene(
+                    loginView.getScene()
+            );
+        });
+
+        return logoutBtn;
     }
 }

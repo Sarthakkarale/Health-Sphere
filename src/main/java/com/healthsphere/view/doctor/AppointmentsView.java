@@ -6,6 +6,7 @@ import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ResourceImage;
 import com.healthsphere.util.SessionManager;
 import com.healthsphere.util.ShimmerPlaceholder;
+import com.healthsphere.view.authentication.LoginView;
 
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -708,7 +709,7 @@ public class AppointmentsView {
 
         Label profileName =
                 new Label(
-                        "Dr. Sarah"
+                        SessionManager.getDoctorDisplayName()
                 );
 
         profileName.setStyle(
@@ -950,6 +951,11 @@ public class AppointmentsView {
 
             e.printStackTrace();
         }
+
+        Navigation.goTo(
+                stage,
+                () -> new LoginView(stage).getScene()
+        );
     }
 
     // ============================================================

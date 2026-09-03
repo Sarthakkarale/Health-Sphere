@@ -10,6 +10,7 @@ import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ResourceImage;
 import com.healthsphere.util.SessionManager;
 import com.healthsphere.util.ShimmerPlaceholder;
+import com.healthsphere.view.authentication.LoginView;
 
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -520,7 +521,8 @@ public class MedicalReportsView {
          * automatically select that patient.
          */
         if (patientUid != null
-                && !patientUid.isBlank()) {
+                && !patientUid.isBlank()
+                && doctorPatients != null) {
 
             for (PatientProfile patient :
                     doctorPatients) {
@@ -1024,7 +1026,7 @@ public class MedicalReportsView {
 
         Label profName =
                 new Label(
-                        "Doctor"
+                        SessionManager.getDoctorDisplayName()
                 );
 
         profName.getStyleClass()
@@ -1301,9 +1303,13 @@ public class MedicalReportsView {
             e.printStackTrace();
         }
 
-
         System.out.println(
                 "Doctor logged out."
+        );
+
+        Navigation.goTo(
+                stage,
+                () -> new LoginView(stage).getScene()
         );
     }
 
@@ -3037,46 +3043,41 @@ public class MedicalReportsView {
             }
 
 
-            String url =
-                    medicalReportController
-                            .getMedicalReportUrlForDoctor(
-                                    doctorUid,
-                                    report.getReportId()
-                            );
+            String url = null;
+            try {
+                url = medicalReportController.getMedicalReportUrlForDoctor(
+                        doctorUid,
+                        report.getReportId()
+                );
+            } catch (Exception ignored) {}
 
+            if ((url == null || url.isBlank()) && report.getFileUrl() != null && report.getFileUrl().startsWith("http")) {
+                url = report.getFileUrl();
+            }
 
-            if (url == null
-                    || url.isBlank()) {
+            if ((url == null || url.isBlank()) && report.getStoragePath() != null && report.getStoragePath().startsWith("http")) {
+                url = report.getStoragePath();
+            }
 
+            if (url == null || url.isBlank()) {
                 throw new IllegalStateException(
                         "Unable to generate medical report URL."
                 );
             }
 
-
             if (!Desktop.isDesktopSupported()) {
-
                 showAlert(
                         Alert.AlertType.ERROR,
                         "Unable to Open Report",
                         "Desktop browser is not available."
                 );
-
                 return;
             }
 
-
-            Desktop.getDesktop()
-                    .browse(
-                            new URI(url)
-                    );
-
+            Desktop.getDesktop().browse(new URI(url));
 
         } catch (Exception e) {
-
             e.printStackTrace();
-
-
             showAlert(
                     Alert.AlertType.ERROR,
                     "Unable to Open Report",
@@ -3104,10 +3105,8 @@ public class MedicalReportsView {
             return;
         }
 
-
         String doctorUid =
                 getCurrentDoctorUid();
-
 
         if (doctorUid == null
                 || doctorUid.isBlank()) {
@@ -3121,16 +3120,14 @@ public class MedicalReportsView {
             return;
         }
 
-
         try {
 
             List<MedicalReport> reports =
                     medicalReportController
-                            .getPatientMedicalReportsForDoctor(
+                            .getPatientMedicalReportsForDoctorSafe(
                                     doctorUid,
                                     patientUid
                             );
-
 
             if (reports == null
                     || reports.isEmpty()) {
@@ -3144,24 +3141,30 @@ public class MedicalReportsView {
                 return;
             }
 
-
             for (MedicalReport report :
                     reports) {
 
-                if (report == null
-                        || report.getReportId() == null) {
-
+                if (report == null) {
                     continue;
                 }
 
+                String url = null;
+                try {
+                    if (report.getReportId() != null) {
+                        url = medicalReportController.getMedicalReportUrlForDoctor(
+                                doctorUid,
+                                report.getReportId()
+                        );
+                    }
+                } catch (Exception ignored) {}
 
-                String url =
-                        medicalReportController
-                                .getMedicalReportUrlForDoctor(
-                                        doctorUid,
-                                        report.getReportId()
-                                );
+                if ((url == null || url.isBlank()) && report.getFileUrl() != null && report.getFileUrl().startsWith("http")) {
+                    url = report.getFileUrl();
+                }
 
+                if ((url == null || url.isBlank()) && report.getStoragePath() != null && report.getStoragePath().startsWith("http")) {
+                    url = report.getStoragePath();
+                }
 
                 if (url != null
                         && !url.isBlank()
@@ -3174,11 +3177,9 @@ public class MedicalReportsView {
                 }
             }
 
-
         } catch (Exception e) {
 
             e.printStackTrace();
-
 
             showAlert(
                     Alert.AlertType.ERROR,

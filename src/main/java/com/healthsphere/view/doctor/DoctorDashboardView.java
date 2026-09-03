@@ -5,6 +5,7 @@ import com.healthsphere.model.Appointment;
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.SessionManager;
 import com.healthsphere.util.ShimmerPlaceholder;
+import com.healthsphere.view.authentication.LoginView;
 
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -941,9 +942,13 @@ public class DoctorDashboardView {
             e.printStackTrace();
         }
 
-
         System.out.println(
                 "Doctor logged out."
+        );
+
+        Navigation.goTo(
+                stage,
+                () -> new LoginView(stage).getScene()
         );
     }
 
@@ -3255,7 +3260,6 @@ public class DoctorDashboardView {
     // ============================================================
 
     private String getDoctorDisplayName() {
-
         for (Appointment appointment :
                 doctorAppointments) {
 
@@ -3263,10 +3267,8 @@ public class DoctorDashboardView {
                 continue;
             }
 
-
             String doctorName =
                     appointment.getDoctorName();
-
 
             if (doctorName != null
                     && !doctorName.isBlank()) {
@@ -3274,23 +3276,16 @@ public class DoctorDashboardView {
                 String name =
                         doctorName.trim();
 
-
-                if (!name.startsWith(
-                        "Dr."
-                )) {
-
-                    name =
-                            "Dr. "
-                                    + name;
+                if (!name.startsWith("Dr.")) {
+                    name = "Dr. " + name;
                 }
 
-
+                SessionManager.setDoctorDisplayName(name);
                 return name;
             }
         }
 
-
-        return "Doctor";
+        return SessionManager.getDoctorDisplayName();
     }
 
 

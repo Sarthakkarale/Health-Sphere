@@ -566,24 +566,64 @@ public class MedicalReportDAO {
                 "Storage path"
         );
 
+        if (storagePath.startsWith("http://") || storagePath.startsWith("https://")) {
+            return storagePath;
+        }
 
-        /*
-         * IMPORTANT:
-         *
-         * Instead of assuming PDF, first ask Cloudinary
-         * what the asset actually is.
-         */
         CloudinaryAssetInfo asset =
                 resolveCloudinaryAsset(
                         storagePath
                 );
-
 
         return generateAuthenticatedUrl(
                 storagePath,
                 asset.format,
                 asset.resourceType
         );
+    }
+
+    private String generateAuthenticatedUrl(
+            String storagePath,
+            String format,
+            String resourceType
+    ) {
+
+        validateRequired(
+                storagePath,
+                "Storage path"
+        );
+
+        if (storagePath.startsWith("http://") || storagePath.startsWith("https://")) {
+            return storagePath;
+        }
+
+        validateRequired(
+                format,
+                "File format"
+        );
+
+        validateRequired(
+                resourceType,
+                "Resource type"
+        );
+
+        return cloudinary
+                .url()
+                .resourceType(
+                        resourceType
+                )
+                .secure(
+                        true
+                )
+                .signed(
+                        true
+                )
+                .format(
+                        format
+                )
+                .generate(
+                        storagePath
+                );
     }
 
 
@@ -890,63 +930,6 @@ public class MedicalReportDAO {
                 );
 
         return asset.resourceType;
-    }
-
-
-    // ============================================================
-    // CLOUDINARY SIGNED URL
-    // ============================================================
-
-    /**
-     * Generate authenticated signed Cloudinary URL.
-     *
-     * Compatible with the Cloudinary Java SDK currently used
-     * by this project.
-     */
-    private String generateAuthenticatedUrl(
-            String storagePath,
-            String format,
-            String resourceType
-    ) {
-
-        validateRequired(
-                storagePath,
-                "Storage path"
-        );
-
-
-        validateRequired(
-                format,
-                "File format"
-        );
-
-
-        validateRequired(
-                resourceType,
-                "Resource type"
-        );
-
-
-        return cloudinary
-                .url()
-                .resourceType(
-                        resourceType
-                )
-                .type(
-                        "authenticated"
-                )
-                .secure(
-                        true
-                )
-                .signed(
-                        true
-                )
-                .format(
-                        format
-                )
-                .generate(
-                        storagePath
-                );
     }
 
 

@@ -2,6 +2,8 @@ package com.healthsphere.view.doctor;
 
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ResourceImage;
+import com.healthsphere.util.SessionManager;
+import com.healthsphere.view.authentication.LoginView;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -282,7 +284,7 @@ public class NewAppointmentView {
         VBox profileTexts = new VBox(2);
         Label profSubText = new Label("Doctor Profile");
         profSubText.setStyle("-fx-text-fill: #64748B; -fx-font-size: 11px;");
-        Label profName = new Label("Dr. Sarah");
+        Label profName = new Label(SessionManager.getDoctorDisplayName());
         profName.getStyleClass().add("sidebar-profile-name");
         profName.setStyle("-fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-font-size: 13px;");
 
@@ -306,11 +308,20 @@ public class NewAppointmentView {
         logoutLabel.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 14px;");
 
         logoutTab.getChildren().addAll(logoutIcon, logoutLabel);
-        logoutTab.setOnMouseClicked(e -> System.out.println("Logging out..."));
+        logoutTab.setOnMouseClicked(e -> handleLogout());
 
         footer.getChildren().addAll(sidebarProfile, logoutTab);
         sidebar.getChildren().addAll(logoSection, navItems, spacer, footer);
         return sidebar;
+    }
+
+    private void handleLogout() {
+        try {
+            SessionManager.clearSession();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Navigation.goTo(stage, () -> new LoginView(stage).getScene());
     }
 
     private void handleSidebarTabClick(int index) {

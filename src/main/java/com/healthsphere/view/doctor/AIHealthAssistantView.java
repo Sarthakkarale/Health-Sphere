@@ -2,6 +2,8 @@ package com.healthsphere.view.doctor;
 
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ResourceImage;
+import com.healthsphere.util.SessionManager;
+import com.healthsphere.view.authentication.LoginView;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -91,7 +93,7 @@ public class AIHealthAssistantView {
     private VBox createSidebar() {
         VBox sidebar = new VBox();
         sidebar.setPadding(new Insets(25, 15, 25, 15));
-        sidebar.setStyle("-fx-background-color: #1B2533;");
+        sidebar.setStyle("-fx-background-color: #0F172A;");
         sidebar.setMinWidth(260);
         sidebar.setPrefWidth(260);
         sidebar.setMaxWidth(260);
@@ -104,16 +106,17 @@ public class AIHealthAssistantView {
         logoSection.setOnMouseClicked(e -> Navigation.goTo(stage, () -> new DoctorDashboardView(stage).getScene()));
 
         StackPane logoIconBox = new StackPane();
-        logoIconBox.setStyle("-fx-background-color: #2563EB; -fx-background-radius: 8px; -fx-padding: 8px;");
-        Label logoBadgeText = new Label("HS");
-        logoBadgeText.setStyle("-fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-font-size: 14px;");
-        logoIconBox.getChildren().add(logoBadgeText);
+        logoIconBox.setPrefSize(42, 42);
+        logoIconBox.setStyle("-fx-background-color: #2563EB; -fx-background-radius: 10px;");
+        Label logo = new Label("+");
+        logo.setStyle("-fx-text-fill: white; -fx-font-size: 25px; -fx-font-weight: bold;");
+        logoIconBox.getChildren().add(logo);
 
-        VBox logoText = new VBox(2);
+        VBox logoText = new VBox(1);
         Label appName = new Label("Health-Sphere");
-        appName.setStyle("-fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-font-size: 16px;");
+        appName.setStyle("-fx-text-fill: white; -fx-font-size: 17px; -fx-font-weight: bold;");
         Label doctorSubtext = new Label("Doctor Dashboard");
-        doctorSubtext.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 12px;");
+        doctorSubtext.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 11px;");
         logoText.getChildren().addAll(appName, doctorSubtext);
         logoSection.getChildren().addAll(logoIconBox, logoText);
 
@@ -129,17 +132,20 @@ public class AIHealthAssistantView {
         };
 
         for (int i = 0; i < tabs.length; i++) {
-            HBox navTab = new HBox(12);
+            HBox navTab = new HBox(14);
             navTab.setAlignment(Pos.CENTER_LEFT);
             navTab.setPadding(new Insets(10, 14, 10, 14));
+            navTab.getStyleClass().add("nav-tab");
 
             ImageView icon = new ImageView(ResourceImage.load("/images/icons/" + icons[i] + ".png"));
             icon.setFitWidth(18); 
             icon.setFitHeight(18);
 
             Label tabLabel = new Label(tabs[i]);
+            tabLabel.getStyleClass().add("nav-text");
             
             if (i == 7) { 
+                navTab.getStyleClass().add("nav-tab-active");
                 navTab.setStyle("-fx-background-color: #2563EB; -fx-background-radius: 8px; -fx-cursor: hand;");
                 tabLabel.setStyle("-fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-font-size: 13px;");
             } else {
@@ -147,7 +153,10 @@ public class AIHealthAssistantView {
                 tabLabel.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 13px;");
             }
 
-            navTab.getChildren().addAll(icon, tabLabel);
+            if (icon != null) {
+                navTab.getChildren().add(icon);
+            }
+            navTab.getChildren().add(tabLabel);
             navItems.getChildren().add(navTab);
 
             final int index = i;
@@ -158,36 +167,35 @@ public class AIHealthAssistantView {
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
         // Footer Section
-        VBox footer = new VBox(10);
-        footer.setPadding(new Insets(15, 0, 0, 0));
-
-        Separator lineDivider = new Separator();
-        lineDivider.setStyle("-fx-background-color: #334155; -fx-opacity: 0.3;");
+        VBox footer = new VBox(12);
+        footer.setAlignment(Pos.BOTTOM_CENTER);
+        VBox.setVgrow(footer, Priority.ALWAYS);
 
         HBox sidebarProfile = new HBox(12);
         sidebarProfile.setAlignment(Pos.CENTER_LEFT);
-        sidebarProfile.setPadding(new Insets(10, 12, 10, 12));
-        sidebarProfile.setStyle("-fx-background-color: #19202B; -fx-background-radius: 10px; -fx-cursor: hand;");
+        sidebarProfile.setPadding(new Insets(10, 14, 10, 14));
+        sidebarProfile.getStyleClass().add("sidebar-profile");
+        sidebarProfile.setStyle("-fx-cursor: hand;");
 
-        ImageView profileAvatar = new ImageView(ResourceImage.load("/images/doctor/portrait-3d-male-doctor.png"));
-        profileAvatar.setFitWidth(34);
-        profileAvatar.setFitHeight(34);
-        Circle profileClip = new Circle(17, 17, 17);
-        profileAvatar.setClip(profileClip);
+        ImageView profileIcon = new ImageView(ResourceImage.load("/images/doctor/doctor_profile.png"));
+        profileIcon.setFitWidth(32);
+        profileIcon.setFitHeight(32);
 
         VBox profileTexts = new VBox(2);
         Label profSubText = new Label("Doctor Profile");
-        profSubText.setStyle("-fx-text-fill: #64748B; -fx-font-size: 11px;");
-        Label profName = new Label("Dr. Sarah");
+        profSubText.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 11px;");
+        
+        Label profName = new Label(SessionManager.getDoctorDisplayName());
         profName.setStyle("-fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-font-size: 13px;");
 
         profileTexts.getChildren().addAll(profSubText, profName);
-        sidebarProfile.getChildren().addAll(profileAvatar, profileTexts);
+        sidebarProfile.getChildren().addAll(profileIcon, profileTexts);
         sidebarProfile.setOnMouseClicked(e -> Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()));
 
-        HBox logoutTab = new HBox(12);
+        HBox logoutTab = new HBox(14);
         logoutTab.setAlignment(Pos.CENTER_LEFT);
         logoutTab.setPadding(new Insets(10, 14, 10, 14));
+        logoutTab.getStyleClass().add("nav-tab");
         logoutTab.setStyle("-fx-cursor: hand; -fx-background-radius: 8px;");
 
         ImageView logoutIcon = new ImageView(ResourceImage.load("/images/icons/ic_logout.png"));
@@ -195,22 +203,25 @@ public class AIHealthAssistantView {
         logoutIcon.setFitHeight(18);
 
         Label logoutLabel = new Label("Logout");
+        logoutLabel.getStyleClass().add("nav-text");
         logoutLabel.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 13px;");
 
         logoutTab.getChildren().addAll(logoutIcon, logoutLabel);
-        logoutTab.setOnMouseClicked(e -> {
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Are you sure you want to log out?", ButtonType.YES, ButtonType.NO);
-            alert.showAndWait().ifPresent(response -> {
-                if (response == ButtonType.YES) {
-                    System.out.println("User logged out.");
-                }
-            });
-        });
+        logoutTab.setOnMouseClicked(e -> handleLogout());
 
-        footer.getChildren().addAll(lineDivider, sidebarProfile, logoutTab);
+        footer.getChildren().addAll(sidebarProfile, logoutTab);
 
-        sidebar.getChildren().addAll(logoSection, navItems, spacer, footer);
+        sidebar.getChildren().addAll(logoSection, navItems, footer);
         return sidebar;
+    }
+
+    private void handleLogout() {
+        try {
+            SessionManager.clearSession();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Navigation.goTo(stage, () -> new LoginView(stage).getScene());
     }
 
     private void handleSidebarTabClick(int index) {

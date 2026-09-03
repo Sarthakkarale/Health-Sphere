@@ -10,6 +10,7 @@ import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ResourceImage;
 import com.healthsphere.util.SessionManager;
 import com.healthsphere.util.ShimmerPlaceholder;
+import com.healthsphere.view.authentication.LoginView;
 
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -181,7 +182,16 @@ public class PatientDetailsView {
 
         loadTask.setOnSucceeded(event -> {
             doctorPatients = loadTask.getValue();
-            doctorPatients.removeIf(Objects::isNull);
+            if (doctorPatients != null) {
+                doctorPatients.removeIf(Objects::isNull);
+            } else {
+                doctorPatients = new ArrayList<>();
+            }
+
+            if (patientSelector != null) {
+                patientSelector.getItems().setAll(doctorPatients);
+                patientSelector.setPromptText(doctorPatients.isEmpty() ? "No patients found" : "Choose a patient");
+            }
 
             if (initialPatientUid != null && !initialPatientUid.trim().isEmpty()) {
                 selectPatientByUid(initialPatientUid);
@@ -189,8 +199,16 @@ public class PatientDetailsView {
                 selectedPatient = doctorPatients.get(0);
             }
 
+            if (patientSelector != null && selectedPatient != null) {
+                patientSelector.setValue(selectedPatient);
+            }
+
+            updateMatchingCount(doctorPatients.size());
+
             if (selectedPatient != null) {
                 loadSelectedPatientDataAsync();
+            } else {
+                refreshPatientUI();
             }
         });
 
@@ -201,6 +219,7 @@ public class PatientDetailsView {
 
     private void loadSelectedPatientDataAsync() {
         if (selectedPatient == null || selectedPatient.getUid() == null || selectedPatient.getUid().trim().isEmpty()) {
+            refreshPatientUI();
             return;
         }
 
@@ -229,7 +248,7 @@ public class PatientDetailsView {
         };
 
         task.setOnSucceeded(event -> {
-            // Update UI elements if needed
+            refreshPatientUI();
         });
 
         Thread t = new Thread(task);
@@ -2935,7 +2954,7 @@ public class PatientDetailsView {
 
         Label profileName =
                 new Label(
-                        getLoggedInDoctorDisplayName()
+                        SessionManager.getDoctorDisplayName()
                 );
 
         profileName.getStyleClass()
@@ -3200,17 +3219,16 @@ public class PatientDetailsView {
 
         } catch (Exception e) {
 
-            showAlert(
-                    Alert.AlertType.ERROR,
-                    "Logout Error",
-                    "Unable to clear the current session."
-            );
-
             System.err.println(
                     "Logout error: "
                             + e.getMessage()
             );
         }
+
+        Navigation.goTo(
+                stage,
+                () -> new LoginView(stage).getScene()
+        );
     }
 
     // ============================================================
