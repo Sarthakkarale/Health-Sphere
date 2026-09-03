@@ -1,3 +1,4 @@
+
 package com.healthsphere.model;
 
 public class HospitalProfile {
@@ -10,6 +11,9 @@ public class HospitalProfile {
     private String beds;
     private String contact;
     private String address;
+
+    // NEW
+    private String rating;
 
     public HospitalProfile() {
     }
@@ -97,4 +101,17 @@ public class HospitalProfile {
     public void setAddress(String address) {
         this.address = address;
     }
+
+    // =========================================================
+    // RATING
+    // =========================================================
+
+    public String getRating() {
+        return rating;
+    }
+
+    public void setRating(String rating) {
+        this.rating = rating;
+    }
 }
+

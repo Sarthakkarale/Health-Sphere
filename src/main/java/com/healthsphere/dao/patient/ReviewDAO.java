@@ -1,3 +1,5 @@
+
+
 package com.healthsphere.dao.patient;
 
 import java.time.LocalDateTime;
@@ -96,7 +98,6 @@ public class ReviewDAO {
     // =========================================================
 
     public List<Review> getReviewsByTarget(
-
             String targetType,
             String targetId) {
 
@@ -152,6 +153,76 @@ public class ReviewDAO {
 
             throw new DatabaseException(
                     "Unable to retrieve reviews.",
+                    e
+            );
+        }
+    }
+
+    // =========================================================
+    // GET AVERAGE RATING BY TARGET
+    // =========================================================
+
+    public double getAverageRating(
+            String targetType,
+            String targetId) {
+
+        try {
+
+            if (targetType == null ||
+                    targetType.isBlank()) {
+
+                return 0.0;
+            }
+
+            if (targetId == null ||
+                    targetId.isBlank()) {
+
+                return 0.0;
+            }
+
+            List<Review> reviews =
+                    getReviewsByTarget(
+                            targetType.trim().toUpperCase(),
+                            targetId.trim()
+                    );
+
+            if (reviews == null ||
+                    reviews.isEmpty()) {
+
+                return 0.0;
+            }
+
+            int totalRating = 0;
+            int validRatings = 0;
+
+            for (Review review : reviews) {
+
+                if (review == null) {
+                    continue;
+                }
+
+                int rating =
+                        review.getRating();
+
+                if (rating >= 1 &&
+                        rating <= 5) {
+
+                    totalRating += rating;
+                    validRatings++;
+                }
+            }
+
+            if (validRatings == 0) {
+                return 0.0;
+            }
+
+            return (double) totalRating /
+                    validRatings;
+
+        } catch (Exception e) {
+
+            throw new DatabaseException(
+                    "Unable to calculate average rating.",
                     e
             );
         }
@@ -221,7 +292,6 @@ public class ReviewDAO {
     // =========================================================
 
     public boolean hasReview(
-
             String patientUid,
             String appointmentId,
             String targetType,
@@ -304,3 +374,4 @@ public class ReviewDAO {
         }
     }
 }
+

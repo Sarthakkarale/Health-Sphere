@@ -1,3 +1,4 @@
+
 package com.healthsphere.view.Patient;
 
 import java.net.URL;
@@ -29,15 +30,11 @@ import javafx.stage.Stage;
 public class HealthPassport {
 
     private final Stage stage;
-
     private final PatientController patientController;
 
     public HealthPassport(Stage stage) {
-
         this.stage = stage;
-
-        this.patientController =
-                new PatientController();
+        this.patientController = new PatientController();
     }
 
     // =========================================================
@@ -69,6 +66,8 @@ public class HealthPassport {
         content.setPadding(
                 new Insets(5)
         );
+
+        content.setFillWidth(true);
 
         // =========================================================
         // IMAGE GALLERY
@@ -110,20 +109,20 @@ public class HealthPassport {
                         )
                 ),
 
-              information(
-        "Gender",
-        safeValue(
-                patientProfile.getGender(),
-                "Not provided"
-        )
-),
+                information(
+                        "Gender",
+                        safeValue(
+                                patientProfile.getGender(),
+                                "Not provided"
+                        )
+                ),
 
-PatientUI.button(
-        "✏ Edit Personal Information",
-        () -> showPersonalEditDialog(
-                patientProfile
-        )
-)
+                PatientUI.button(
+                        "✏ Edit Personal Information",
+                        () -> showPersonalEditDialog(
+                                patientProfile
+                        )
+                )
         );
 
         // =========================================================
@@ -184,6 +183,8 @@ PatientUI.button(
 
         HBox informationRow =
                 new HBox(18);
+
+        informationRow.setFillHeight(true);
 
         personalCard.setMaxWidth(
                 Double.MAX_VALUE
@@ -320,26 +321,45 @@ PatientUI.button(
 
                 status(
                         "Heart Rate",
-                        "72 BPM",
+                        safeValue(
+                                patientProfile.getHeartRate(),
+                                "Not provided"
+                        ),
                         "Normal"
                 ),
 
                 status(
                         "Blood Pressure",
-                        "118 / 76 mmHg",
+                        safeValue(
+                                patientProfile.getBloodPressure(),
+                                "Not provided"
+                        ),
                         "Healthy"
                 ),
 
                 status(
                         "Oxygen Level",
-                        "98%",
+                        safeValue(
+                                patientProfile.getOxygenLevel(),
+                                "Not provided"
+                        ),
                         "Normal"
                 ),
 
                 status(
                         "Last Health Check",
-                        "10 August 2026",
+                        safeValue(
+                                patientProfile.getLastHealthCheck(),
+                                "Not provided"
+                        ),
                         "Up to date"
+                ),
+
+                PatientUI.button(
+                        "✏ Edit Health Status",
+                        () -> showHealthStatusEditDialog(
+                                patientProfile
+                        )
                 )
         );
 
@@ -416,17 +436,11 @@ PatientUI.button(
         // =========================================================
 
         content.getChildren().addAll(
-
                 images,
-
                 informationRow,
-
                 medicalCard,
-
                 recordsCard,
-
                 statusCard,
-
                 actionsCard
         );
 
@@ -446,6 +460,8 @@ PatientUI.button(
         scroll.setVbarPolicy(
                 ScrollPane.ScrollBarPolicy.AS_NEEDED
         );
+
+        scroll.setPannable(true);
 
         scroll.setStyle(
                 "-fx-background-color: transparent;" +
@@ -550,21 +566,10 @@ PatientUI.button(
                 3
         );
 
-        dialog.getDialogPane()
-                .setContent(grid);
+        addDialogButtons(dialog);
 
         dialog.getDialogPane()
-                .getButtonTypes()
-                .addAll(
-                        new ButtonType(
-                                "Save",
-                                ButtonBar.ButtonData.OK_DONE
-                        ),
-                        new ButtonType(
-                                "Cancel",
-                                ButtonBar.ButtonData.CANCEL_CLOSE
-                        )
-                );
+                .setContent(grid);
 
         ButtonType result =
                 dialog.showAndWait()
@@ -710,21 +715,10 @@ PatientUI.button(
                 3
         );
 
-        dialog.getDialogPane()
-                .setContent(grid);
+        addDialogButtons(dialog);
 
         dialog.getDialogPane()
-                .getButtonTypes()
-                .addAll(
-                        new ButtonType(
-                                "Save",
-                                ButtonBar.ButtonData.OK_DONE
-                        ),
-                        new ButtonType(
-                                "Cancel",
-                                ButtonBar.ButtonData.CANCEL_CLOSE
-                        )
-                );
+                .setContent(grid);
 
         ButtonType result =
                 dialog.showAndWait()
@@ -876,21 +870,10 @@ PatientUI.button(
                 3
         );
 
-        dialog.getDialogPane()
-                .setContent(grid);
+        addDialogButtons(dialog);
 
         dialog.getDialogPane()
-                .getButtonTypes()
-                .addAll(
-                        new ButtonType(
-                                "Save",
-                                ButtonBar.ButtonData.OK_DONE
-                        ),
-                        new ButtonType(
-                                "Cancel",
-                                ButtonBar.ButtonData.CANCEL_CLOSE
-                        )
-                );
+                .setContent(grid);
 
         ButtonType result =
                 dialog.showAndWait()
@@ -945,6 +928,177 @@ PatientUI.button(
                 );
             }
         }
+    }
+
+    // =========================================================
+    // HEALTH STATUS EDIT
+    // =========================================================
+
+    private void showHealthStatusEditDialog(
+            PatientProfile profile) {
+
+        Dialog<ButtonType> dialog =
+                new Dialog<>();
+
+        dialog.setTitle(
+                "Edit Health Status"
+        );
+
+        dialog.setHeaderText(
+                "Update your current health status"
+        );
+
+        GridPane grid =
+                createFormGrid();
+
+        TextField heartRate =
+                createTextField(
+                        profile.getHeartRate()
+                );
+
+        TextField bloodPressure =
+                createTextField(
+                        profile.getBloodPressure()
+                );
+
+        TextField oxygenLevel =
+                createTextField(
+                        profile.getOxygenLevel()
+                );
+
+        TextField lastHealthCheck =
+                createTextField(
+                        profile.getLastHealthCheck()
+                );
+
+        heartRate.setPromptText(
+                "Example: 72 BPM"
+        );
+
+        bloodPressure.setPromptText(
+                "Example: 118 / 76 mmHg"
+        );
+
+        oxygenLevel.setPromptText(
+                "Example: 98%"
+        );
+
+        lastHealthCheck.setPromptText(
+                "Example: 10 August 2026"
+        );
+
+        grid.add(
+                new Label("Heart Rate"),
+                0,
+                0
+        );
+
+        grid.add(
+                heartRate,
+                1,
+                0
+        );
+
+        grid.add(
+                new Label("Blood Pressure"),
+                0,
+                1
+        );
+
+        grid.add(
+                bloodPressure,
+                1,
+                1
+        );
+
+        grid.add(
+                new Label("Oxygen Level"),
+                0,
+                2
+        );
+
+        grid.add(
+                oxygenLevel,
+                1,
+                2
+        );
+
+        grid.add(
+                new Label("Last Health Check"),
+                0,
+                3
+        );
+
+        grid.add(
+                lastHealthCheck,
+                1,
+                3
+        );
+
+        addDialogButtons(dialog);
+
+        dialog.getDialogPane()
+                .setContent(grid);
+
+        ButtonType result =
+                dialog.showAndWait()
+                        .orElse(
+                                ButtonType.CANCEL
+                        );
+
+        if (result.getButtonData() ==
+                ButtonBar.ButtonData.OK_DONE) {
+
+            try {
+
+                patientController.updateHealthStatus(
+
+                        heartRate.getText(),
+
+                        bloodPressure.getText(),
+
+                        oxygenLevel.getText(),
+
+                        lastHealthCheck.getText()
+                );
+
+                showSuccess(
+                        "Health status updated successfully."
+                );
+
+                refreshHealthPassport();
+
+            } catch (Exception e) {
+
+                showError(
+                        "Unable to update health status.",
+                        e
+                );
+            }
+        }
+    }
+
+    // =========================================================
+    // ADD DIALOG BUTTONS
+    // =========================================================
+
+    private void addDialogButtons(
+            Dialog<ButtonType> dialog) {
+
+        dialog.getDialogPane()
+                .getButtonTypes()
+                .addAll(
+
+                        new ButtonType(
+                                "Save",
+                                ButtonBar.ButtonData.OK_DONE
+                        ),
+
+                        new ButtonType(
+                                "Cancel",
+                                ButtonBar.ButtonData.CANCEL_CLOSE
+                        )
+                );
     }
 
     // =========================================================
@@ -1066,6 +1220,12 @@ PatientUI.button(
                 new HealthPassport(stage)
                         .getScene()
         );
+
+        stage.show();
+
+        if (!stage.isMaximized()) {
+            stage.setMaximized(true);
+        }
     }
 
     // =========================================================
@@ -1416,6 +1576,8 @@ PatientUI.button(
         Label valueLabel =
                 new Label(value);
 
+        valueLabel.setWrapText(true);
+
         valueLabel.setStyle(
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #0f172a;"
@@ -1517,7 +1679,6 @@ PatientUI.button(
                         .trim();
 
         if (fullName.isEmpty()) {
-
             return "Not provided";
         }
 
@@ -1627,3 +1788,4 @@ PatientUI.button(
         );
     }
 }
+

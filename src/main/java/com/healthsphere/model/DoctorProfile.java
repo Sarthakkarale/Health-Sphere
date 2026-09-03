@@ -1,3 +1,4 @@
+
 package com.healthsphere.model;
 
 public class DoctorProfile {
@@ -12,6 +13,9 @@ public class DoctorProfile {
     private String experience;
     private String hospitalAffiliation;
     private String medicalCouncil;
+
+    // NEW
+    private String rating;
 
     public DoctorProfile() {
     }
@@ -119,4 +123,17 @@ public class DoctorProfile {
     public void setMedicalCouncil(String medicalCouncil) {
         this.medicalCouncil = medicalCouncil;
     }
+
+    // =========================================================
+    // RATING
+    // =========================================================
+
+    public String getRating() {
+        return rating;
+    }
+
+    public void setRating(String rating) {
+        this.rating = rating;
+    }
 }
+

@@ -1,3 +1,4 @@
+
 package com.healthsphere.controller.patient;
 
 import com.healthsphere.dao.authentication.PatientDAO;
@@ -10,9 +11,6 @@ public class PatientController {
 
     /*
      * Cached profile for the currently logged-in patient.
-     *
-     * This prevents every Patient screen from making another
-     * Firebase read for the same profile.
      */
     private static PatientProfile cachedPatientProfile;
 
@@ -41,20 +39,12 @@ public class PatientController {
             );
         }
 
-        /*
-         * Return cached profile if it belongs to the
-         * currently logged-in user.
-         */
         if (cachedPatientProfile != null &&
                 uid.equals(cachedPatientProfile.getUid())) {
 
             return cachedPatientProfile;
         }
 
-        /*
-         * Only read Firebase when the profile is not
-         * already cached.
-         */
         PatientProfile profile =
                 patientDAO.getPatientProfile(uid);
 
@@ -95,11 +85,6 @@ public class PatientController {
                 city
         );
 
-        /*
-         * Use the cached profile when available.
-         * This avoids another Firebase read after
-         * the profile was already loaded.
-         */
         PatientProfile existingProfile;
 
         if (cachedPatientProfile != null &&
@@ -113,10 +98,6 @@ public class PatientController {
                     patientDAO.getPatientProfile(uid);
         }
 
-        // --------------------------------------------------------
-        // Split full name into first + last name
-        // --------------------------------------------------------
-
         String[] nameParts =
                 fullName.trim().split("\\s+", 2);
 
@@ -128,28 +109,16 @@ public class PatientController {
                         ? nameParts[1]
                         : "";
 
-        // --------------------------------------------------------
-        // Update fields represented by ProfileSettings
-        // --------------------------------------------------------
-
         existingProfile.setFirstName(firstName);
         existingProfile.setLastName(lastName);
         existingProfile.setEmail(email.trim());
         existingProfile.setPhone(phone.trim());
         existingProfile.setAddress(city.trim());
 
-        // --------------------------------------------------------
-        // Save to Firebase
-        // --------------------------------------------------------
-
         patientDAO.updatePatientProfile(
                 existingProfile
         );
 
-        /*
-         * Update cache so other Patient screens immediately
-         * receive the latest profile without another Firebase read.
-         */
         cachedPatientProfile = existingProfile;
 
         return existingProfile;
@@ -183,10 +152,6 @@ public class PatientController {
                     "Current user UID is missing."
             );
         }
-
-        // --------------------------------------------------------
-        // Validation
-        // --------------------------------------------------------
 
         if (fullName == null ||
                 fullName.isBlank()) {
@@ -228,10 +193,6 @@ public class PatientController {
             );
         }
 
-        // --------------------------------------------------------
-        // Get existing profile
-        // --------------------------------------------------------
-
         PatientProfile existingProfile;
 
         if (cachedPatientProfile != null &&
@@ -245,10 +206,6 @@ public class PatientController {
             existingProfile =
                     patientDAO.getPatientProfile(uid);
         }
-
-        // --------------------------------------------------------
-        // Split full name
-        // --------------------------------------------------------
 
         String[] nameParts =
                 fullName.trim()
@@ -264,10 +221,6 @@ public class PatientController {
                         : ""
         );
 
-        // --------------------------------------------------------
-        // Contact information
-        // --------------------------------------------------------
-
         existingProfile.setEmail(
                 email.trim()
         );
@@ -279,10 +232,6 @@ public class PatientController {
         existingProfile.setAddress(
                 address.trim()
         );
-
-        // --------------------------------------------------------
-        // Health Passport information
-        // --------------------------------------------------------
 
         existingProfile.setDateOfBirth(
                 clean(dateOfBirth)
@@ -300,17 +249,74 @@ public class PatientController {
                 clean(emergencyContact)
         );
 
-        // --------------------------------------------------------
-        // Save to Firebase
-        // --------------------------------------------------------
-
         patientDAO.updatePatientProfile(
                 existingProfile
         );
 
-        // --------------------------------------------------------
-        // Update cache
-        // --------------------------------------------------------
+        cachedPatientProfile =
+                existingProfile;
+
+        return existingProfile;
+    }
+
+    // ============================================================
+    // UPDATE HEALTH STATUS
+    // ============================================================
+
+    public PatientProfile updateHealthStatus(
+            String heartRate,
+            String bloodPressure,
+            String oxygenLevel,
+            String lastHealthCheck) {
+
+        if (!SessionManager.isLoggedIn()) {
+            throw new IllegalStateException(
+                    "No active user session."
+            );
+        }
+
+        String uid =
+                SessionManager.getCurrentUser().getUid();
+
+        if (uid == null || uid.isBlank()) {
+            throw new IllegalStateException(
+                    "Current user UID is missing."
+            );
+        }
+
+        PatientProfile existingProfile;
+
+        if (cachedPatientProfile != null &&
+                uid.equals(cachedPatientProfile.getUid())) {
+
+            existingProfile =
+                    cachedPatientProfile;
+
+        } else {
+
+            existingProfile =
+                    patientDAO.getPatientProfile(uid);
+        }
+
+        existingProfile.setHeartRate(
+                clean(heartRate)
+        );
+
+        existingProfile.setBloodPressure(
+                clean(bloodPressure)
+        );
+
+        existingProfile.setOxygenLevel(
+                clean(oxygenLevel)
+        );
+
+        existingProfile.setLastHealthCheck(
+                clean(lastHealthCheck)
+        );
+
+        patientDAO.updatePatientProfile(
+                existingProfile
+        );
 
         cachedPatientProfile =
                 existingProfile;
@@ -323,7 +329,6 @@ public class PatientController {
     // ============================================================
 
     public static void clearCachedPatientProfile() {
-
         cachedPatientProfile = null;
     }
 
@@ -391,3 +396,4 @@ public class PatientController {
         return value.trim();
     }
 }
+
