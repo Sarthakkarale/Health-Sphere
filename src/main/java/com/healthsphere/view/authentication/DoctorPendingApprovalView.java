@@ -2,6 +2,7 @@ package com.healthsphere.view.authentication;
 
 import com.healthsphere.dao.authentication.DoctorDAO;
 import com.healthsphere.model.AuthenticationResponse;
+import com.healthsphere.model.UserProfile;
 import com.healthsphere.util.SessionManager;
 import com.healthsphere.view.doctor.DoctorDashboardView;
 
@@ -632,7 +633,7 @@ public class DoctorPendingApprovalView {
                 return;
             }
 
-            AuthenticationResponse currentUser =
+            UserProfile currentUser =
                     SessionManager.getCurrentUser();
 
             String doctorUid =

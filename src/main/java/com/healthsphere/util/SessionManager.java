@@ -56,7 +56,12 @@ public final class SessionManager {
         session.authenticationResponse =
                 authenticationResponse;
 
-        currentUser = authenticationResponse;
+        currentUser = new UserProfile(
+                authenticationResponse.getUid(),
+                authenticationResponse.getEmail(),
+                null,
+                null
+        );
     }
 
     // ============================================================
