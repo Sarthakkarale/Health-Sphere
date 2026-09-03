@@ -1,7 +1,6 @@
 package com.healthsphere.view.authentication;
 
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -24,242 +23,56 @@ import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 
 /**
- * Main application window.
- *
- * IMPORTANT:
- * This class owns the ONE shared Stage used by the entire application.
- *
- * Other views such as LoginView, Dashboard, Appointments etc.
- * must ONLY replace the Scene.
+ * Main Entry View Class for Health-Sphere UI.
+ * Extends Application and holds the central shared static Stage for navigation.
  */
 public class View extends Application {
 
-    /*
-     * =========================================================
-     * ONE SHARED STAGE
-     * =========================================================
-     */
+    // Single static Stage shared across all views in the application
     public static Stage stage;
 
-    /*
-     * =========================================================
-     * START APPLICATION
-     * =========================================================
-     */
     @Override
     public void start(Stage primaryStage) {
+        View.stage = primaryStage;
+        View.stage.setTitle("Health-Sphere | AI Powered Healthcare Management System");
 
-        stage = primaryStage;
-
-        stage.setTitle(
-                "Health-Sphere | AI Powered Healthcare Management System"
-        );
-
-        /*
-         * Prevent the application from becoming a tiny window.
-         */
-        stage.setMinWidth(1100);
-        stage.setMinHeight(700);
-
-        /*
-         * =====================================================
-         * INITIAL SCENE
-         * =====================================================
-         */
-        Scene initialScene = getScene();
-
-        stage.setScene(initialScene);
-
-        /*
-         * =====================================================
-         * SHOW WINDOW
-         * =====================================================
-         */
-        stage.show();
-
-        /*
-         * =====================================================
-         * MAXIMIZE AFTER SHOW
-         * =====================================================
-         *
-         * On Windows, maximizing BEFORE the Stage is actually
-         * displayed can sometimes be ignored/reset.
-         *
-         * Therefore:
-         *
-         * 1. show()
-         * 2. maximize()
-         * 3. force layout
-         */
-        maximizeWindow();
-
-        /*
-         * =====================================================
-         * FINAL LAYOUT PASS
-         * =====================================================
-         */
-        Platform.runLater(() -> {
-
-            maximizeWindow();
-
-            if (stage.getScene() != null) {
-
-                stage.getScene()
-                        .getRoot()
-                        .applyCss();
-
-                stage.getScene()
-                        .getRoot()
-                        .layout();
-            }
-        });
+        View.stage.setScene(getScene());
+        View.stage.centerOnScreen();
+        View.stage.setMaximized(true);
+        View.stage.show();
     }
-
-    /*
-     * =========================================================
-     * MAXIMIZE WINDOW
-     * =========================================================
-     */
-    private void maximizeWindow() {
-        if (stage == null) {
-            return;
-        }
-
-        /*
-         * First make sure the Stage is visible.
-         */
-        if (!stage.isShowing()) {
-            stage.show();
-        }
-
-        /*
-         * Tell JavaFX/Windows to maximize.
-         */
-        stage.setMaximized(true);
-
-        /*
-         * If Windows does not immediately apply the state,
-         * apply it again on the next JavaFX pulse.
-         */
-        Platform.runLater(() -> {
-
-            if (stage != null && stage.isShowing()) {
-                stage.setMaximized(true);
-            }
-        });
-    }
-
-    // =========================================================
-    // INITIAL SCENE
-    // =========================================================
 
     public Scene getScene() {
+        BorderPane root = new BorderPane();
+        root.getStyleClass().add("root");
 
-        BorderPane root =
-                new BorderPane();
+        // Assemble Layout Sections
+        root.setTop(createHeader());
+        root.setCenter(createMainContent());
+        root.setBottom(createFooter());
 
-        /*
-         * Allow the root to completely fill the Scene.
-         */
-        root.setMinWidth(0);
-        root.setMinHeight(0);
-
-        root.setMaxWidth(
-                Double.MAX_VALUE
+        Scene scene = new Scene(
+                root,
+                stage.getWidth(),
+                stage.getHeight()
         );
 
-        root.setMaxHeight(
-                Double.MAX_VALUE
-        );
+        // Attach Stylesheet safely
+        String cssPath = getClass().getResource("/css/view.css") != null
+                ? getClass().getResource("/css/view.css").toExternalForm()
+                : null;
 
-        root.getStyleClass().add(
-                "root"
-        );
-
-        /*
-         * =====================================================
-         * HEADER
-         * =====================================================
-         */
-        root.setTop(
-                createHeader()
-        );
-
-        /*
-         * =====================================================
-         * MAIN
-         * =====================================================
-         */
-        NodeWrapper mainContent =
-                new NodeWrapper(
-                        createMainContent()
-                );
-
-        root.setCenter(
-                mainContent.getNode()
-        );
-
-        /*
-         * =====================================================
-         * FOOTER
-         * =====================================================
-         */
-        root.setBottom(
-                createFooter()
-        );
-
-        /*
-         * =====================================================
-         * SCENE
-         * =====================================================
-         */
-        Scene scene =
-                new Scene(
-                        root,
-                        1100,
-                        700
-                );
-
-        /*
-         * =====================================================
-         * CSS
-         * =====================================================
-         */
-        if (getClass().getResource(
-                "/css/dashboard.css"
-        ) != null) {
-
-            scene.getStylesheets().add(
-                    getClass()
-                            .getResource(
-                                    "/css/dashboard.css"
-                            )
-                            .toExternalForm()
-            );
+        if (cssPath != null) {
+            scene.getStylesheets().add(cssPath);
         }
-
-        /*
-         * =====================================================
-         * ROOT FILL SCENE
-         * =====================================================
-         */
-        root.prefWidthProperty().bind(
-                scene.widthProperty()
-        );
-
-        root.prefHeightProperty().bind(
-                scene.heightProperty()
-        );
 
         return scene;
     }
 
-    // =========================================================
-    // HEADER
-    // =========================================================
-
+    // ==========================================
+    // 1. HEADER SECTION
+    // ==========================================
     private HBox createHeader() {
-<<<<<<< HEAD
 
         HBox header = new HBox();
 
@@ -315,84 +128,6 @@ public class View extends Application {
 
         avatarText.setStyle(
                 "-fx-font-size: 10px; -fx-fill: #475569;"
-=======
-
-        HBox header =
-                new HBox();
-
-        header.getStyleClass().add(
-                "header-bar"
-        );
-
-        header.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        header.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        Text brandText =
-                new Text(
-                        "Health Sphere"
-                );
-
-        brandText.getStyleClass().add(
-                "brand-title"
-        );
-
-        Region spacer =
-                new Region();
-
-        HBox.setHgrow(
-                spacer,
-                Priority.ALWAYS
-        );
-
-        HBox utilityBox =
-                new HBox(12);
-
-        utilityBox.setAlignment(
-                Pos.CENTER_RIGHT
-        );
-
-        Button bellBtn =
-                createIconButton(
-                        "/images/icons/icon_bell.png",
-                        "🔔"
-                );
-
-        Button helpBtn =
-                createIconButton(
-                        "/images/icons/icon_help.png",
-                        "❓"
-                );
-
-        Button newSessionBtn =
-                new Button(
-                        "New Session"
-                );
-
-        newSessionBtn.getStyleClass().add(
-                "btn-primary"
-        );
-
-        StackPane avatar =
-                new StackPane();
-
-        avatar.getStyleClass().add(
-                "avatar-circle"
-        );
-
-        Text avatarText =
-                new Text(
-                        "HS"
-                );
-
-        avatarText.setStyle(
-                "-fx-font-size: 10px;" +
-                "-fx-fill: #475569;"
->>>>>>> origin/feature/patient
         );
 
         avatar.getChildren().add(
@@ -415,7 +150,6 @@ public class View extends Application {
         return header;
     }
 
-<<<<<<< HEAD
     // ==========================================
     // 2. MAIN CONTENT SECTION
     // ==========================================
@@ -438,47 +172,6 @@ public class View extends Application {
         );
 
         // --- LEFT COLUMN: CTA Content ---
-=======
-    // =========================================================
-    // MAIN CONTENT
-    // =========================================================
-
-    private HBox createMainContent() {
-
-        HBox mainContainer =
-                new HBox(40);
-
-        mainContainer.setPadding(
-                new Insets(
-                        30,
-                        50,
-                        30,
-                        50
-                )
-        );
-
-        mainContainer.setAlignment(
-                Pos.CENTER
-        );
-
-        mainContainer.setMinWidth(0);
-        mainContainer.setMinHeight(0);
-
-        mainContainer.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        mainContainer.setMaxHeight(
-                Double.MAX_VALUE
-        );
-
-        /*
-         * =====================================================
-         * LEFT
-         * =====================================================
-         */
-
->>>>>>> origin/feature/patient
         VBox leftContent =
                 new VBox(24);
 
@@ -486,7 +179,6 @@ public class View extends Application {
                 Pos.CENTER_LEFT
         );
 
-<<<<<<< HEAD
         HBox.setHgrow(
                 leftContent,
                 Priority.ALWAYS
@@ -511,32 +203,6 @@ public class View extends Application {
                 "hero-title-dark"
         );
 
-=======
-        leftContent.setMinWidth(0);
-        leftContent.setMaxWidth(520);
-
-        HBox.setHgrow(
-                leftContent,
-                Priority.ALWAYS
-        );
-
-        ImageView logoView =
-                createSafeImageView(
-                        "/images/icons/brand_logo.png",
-                        110,
-                        110
-                );
-
-        Text titleLine1 =
-                new Text(
-                        "The Future of\n"
-                );
-
-        titleLine1.getStyleClass().add(
-                "hero-title-dark"
-        );
-
->>>>>>> origin/feature/patient
         Text titleLine2 =
                 new Text(
                         "Connected Healthcare."
@@ -551,7 +217,6 @@ public class View extends Application {
                         titleLine1,
                         titleLine2
                 );
-<<<<<<< HEAD
 
         // Subtitle Description
         Label description =
@@ -631,116 +296,10 @@ public class View extends Application {
         StackPane rightVisual =
                 new StackPane();
 
-=======
-
-        headline.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        Label description =
-                new Label(
-                        "Precision care at scale. Intelligently " +
-                        "connecting hospital operations and patient outcomes."
-                );
-
-        description.getStyleClass().add(
-                "hero-description"
-        );
-
-        description.setWrapText(true);
-
-        description.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        /*
-         * =====================================================
-         * BUTTONS
-         * =====================================================
-         */
-
-        HBox buttonRow =
-                new HBox(16);
-
-        buttonRow.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        Button signUpBtn =
-                new Button(
-                        "Sign Up"
-                );
-
-        signUpBtn.getStyleClass().add(
-                "btn-primary"
-        );
-
-        signUpBtn.setOnAction(
-                e -> {
-
-                    stage.setScene(
-                            new LoginView(stage)
-                                    .getScene()
-                    );
-
-                    /*
-                     * Keep the shared window maximized.
-                     */
-                    keepMaximized();
-                }
-        );
-
-        Button registerBtn =
-                new Button(
-                        "Register"
-                );
-
-        registerBtn.getStyleClass().add(
-                "btn-teal"
-        );
-
-        registerBtn.setOnAction(
-                e -> {
-
-                    stage.setScene(
-                            new RegisterView(stage)
-                                    .getScene()
-                    );
-
-                    keepMaximized();
-                }
-        );
-
-        buttonRow.getChildren().addAll(
-                signUpBtn,
-                registerBtn
-        );
-
-        leftContent.getChildren().addAll(
-                logoView,
-                headline,
-                description,
-                buttonRow
-        );
-
-        /*
-         * =====================================================
-         * RIGHT VISUAL
-         * =====================================================
-         */
-
-        StackPane rightVisual =
-                new StackPane();
-
-        rightVisual.setMinWidth(0);
-        rightVisual.setMinHeight(0);
-
->>>>>>> origin/feature/patient
         HBox.setHgrow(
                 rightVisual,
                 Priority.ALWAYS
         );
-<<<<<<< HEAD
 
         rightVisual.setAlignment(
                 Pos.BOTTOM_LEFT
@@ -843,87 +402,6 @@ public class View extends Application {
                         14
                 );
 
-=======
-
-        ImageView heroImgView =
-                createSafeImageView(
-                        "/images/icons/hero_banner.png",
-                        560,
-                        360
-                );
-
-        heroImgView.setPreserveRatio(
-                false
-        );
-
-        Rectangle clip =
-                new Rectangle(
-                        560,
-                        360
-                );
-
-        clip.setArcWidth(24);
-        clip.setArcHeight(24);
-
-        heroImgView.setClip(
-                clip
-        );
-
-        StackPane imageWrapper =
-                new StackPane();
-
-        imageWrapper.setMinWidth(0);
-        imageWrapper.setMinHeight(0);
-
-        imageWrapper.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        imageWrapper.getChildren().add(
-                heroImgView
-        );
-
-        /*
-         * =====================================================
-         * FLOATING CARD
-         * =====================================================
-         */
-
-        VBox floatingCard =
-                new VBox(6);
-
-        floatingCard.getStyleClass().add(
-                "floating-card"
-        );
-
-        floatingCard.setMaxSize(
-                160,
-                60
-        );
-
-        floatingCard.setTranslateX(
-                -20
-        );
-
-        floatingCard.setTranslateY(
-                20
-        );
-
-        HBox cardHeader =
-                new HBox(6);
-
-        cardHeader.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        ImageView sparkleIcon =
-                createSafeImageView(
-                        "/images/icons/icon_sparkle.png",
-                        14,
-                        14
-                );
-
->>>>>>> origin/feature/patient
         Text cardTitle =
                 new Text(
                         "LIVE INSIGHT"
@@ -955,10 +433,9 @@ public class View extends Application {
         return mainContainer;
     }
 
-    // =========================================================
-    // FOOTER
-    // =========================================================
-
+    // ==========================================
+    // 3. FOOTER SECTION
+    // ==========================================
     private HBox createFooter() {
 
         HBox footer =
@@ -972,7 +449,6 @@ public class View extends Application {
                 Pos.CENTER_LEFT
         );
 
-<<<<<<< HEAD
         Text footerBrand =
                 new Text(
                         "health sphere"
@@ -994,34 +470,6 @@ public class View extends Application {
         Region spacer =
                 new Region();
 
-=======
-        footer.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        Text footerBrand =
-                new Text(
-                        "health sphere"
-                );
-
-        footerBrand.getStyleClass().add(
-                "footer-brand"
-        );
-
-        Label copyLabel =
-                new Label(
-                        "© 2026 Health-Sphere. All rights reserved. " +
-                        "Clinical precision at scale."
-                );
-
-        copyLabel.getStyleClass().add(
-                "footer-text"
-        );
-
-        Region spacer =
-                new Region();
-
->>>>>>> origin/feature/patient
         HBox.setHgrow(
                 spacer,
                 Priority.ALWAYS
@@ -1036,11 +484,7 @@ public class View extends Application {
 
         Label versionLabel =
                 new Label(
-<<<<<<< HEAD
                         "Version 2.4.1-stable"
-=======
-                        "Version 1.0.4-stable"
->>>>>>> origin/feature/patient
                 );
 
         versionLabel.getStyleClass().add(
@@ -1091,7 +535,6 @@ public class View extends Application {
         return footer;
     }
 
-<<<<<<< HEAD
     // ==========================================
     // HERO VIDEO HELPER
     // ==========================================
@@ -1208,19 +651,12 @@ public class View extends Application {
     // ==========================================
     // HELPER UTILITIES
     // ==========================================
-=======
-    // =========================================================
-    // SAFE IMAGE
-    // =========================================================
-
->>>>>>> origin/feature/patient
     private ImageView createSafeImageView(
             String path,
             double width,
             double height
     ) {
 
-<<<<<<< HEAD
         ImageView imgView =
                 new ImageView();
 
@@ -1233,20 +669,6 @@ public class View extends Application {
         );
 
         imgView.setPreserveRatio(
-=======
-        ImageView imageView =
-                new ImageView();
-
-        imageView.setFitWidth(
-                width
-        );
-
-        imageView.setFitHeight(
-                height
-        );
-
-        imageView.setPreserveRatio(
->>>>>>> origin/feature/patient
                 true
         );
 
@@ -1254,11 +676,7 @@ public class View extends Application {
 
             if (getClass().getResource(path) != null) {
 
-<<<<<<< HEAD
                 imgView.setImage(
-=======
-                imageView.setImage(
->>>>>>> origin/feature/patient
                         new Image(
                                 getClass()
                                         .getResourceAsStream(path)
@@ -1267,7 +685,6 @@ public class View extends Application {
             }
 
         } catch (Exception ignored) {
-<<<<<<< HEAD
 
             // Gracefully handles missing assets during UI development
         }
@@ -1275,33 +692,15 @@ public class View extends Application {
         return imgView;
     }
 
-=======
-        }
-
-        return imageView;
-    }
-
-    // =========================================================
-    // ICON BUTTON
-    // =========================================================
-
->>>>>>> origin/feature/patient
     private Button createIconButton(
             String imagePath,
             String fallbackText
     ) {
 
-<<<<<<< HEAD
         Button btn =
                 new Button();
 
         btn.getStyleClass().add(
-=======
-        Button button =
-                new Button();
-
-        button.getStyleClass().add(
->>>>>>> origin/feature/patient
                 "icon-btn"
         );
 
@@ -1314,81 +713,17 @@ public class View extends Application {
 
         if (icon.getImage() != null) {
 
-<<<<<<< HEAD
             btn.setGraphic(
-=======
-            button.setGraphic(
->>>>>>> origin/feature/patient
                     icon
             );
 
         } else {
 
-<<<<<<< HEAD
             btn.setText(
                     fallbackText
             );
         }
 
         return btn;
-=======
-            button.setText(
-                    fallbackText
-            );
-        }
-
-        return button;
-    }
-
-    // =========================================================
-    // KEEP WINDOW MAXIMIZED
-    // =========================================================
-
-    private void keepMaximized() {
-
-        if (stage == null) {
-            return;
-        }
-
-        Platform.runLater(() -> {
-
-            if (stage.isShowing()) {
-
-                stage.setMaximized(true);
-
-                if (stage.getScene() != null) {
-
-                    stage.getScene()
-                            .getRoot()
-                            .applyCss();
-
-                    stage.getScene()
-                            .getRoot()
-                            .layout();
-                }
-            }
-        });
-    }
-
-    // =========================================================
-    // SIMPLE NODE WRAPPER
-    // =========================================================
-
-    private static class NodeWrapper {
-
-        private final javafx.scene.Node node;
-
-        NodeWrapper(
-                javafx.scene.Node node
-        ) {
-
-            this.node = node;
-        }
-
-        javafx.scene.Node getNode() {
-
-            return node;
-        }
->>>>>>> origin/feature/patient
     }
 }

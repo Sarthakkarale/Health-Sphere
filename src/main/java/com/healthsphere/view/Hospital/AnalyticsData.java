@@ -1,4 +1,4 @@
-package com.healthsphere.view.Hospital;
+package com.healthsphere.view.hospital;
 
 import java.util.List;
 import java.util.Map;

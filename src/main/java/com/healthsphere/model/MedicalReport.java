@@ -256,15 +256,27 @@ public class MedicalReport {
     }
 
 
-    // ============================================================
-    // UPLOADED AT
-    // ============================================================
-
     public String getUploadedAt() {
         return uploadedAt;
     }
 
     public void setUploadedAt(String uploadedAt) {
         this.uploadedAt = uploadedAt;
+    }
+
+    public String getUploadedBy() {
+        return uploadedByUid != null ? uploadedByUid : "User";
+    }
+
+    public void setUploadedBy(String uploadedBy) {
+        this.uploadedByUid = uploadedBy;
+    }
+
+    public String getUploadDate() {
+        return uploadedAt != null ? uploadedAt : "";
+    }
+
+    public void setUploadDate(String uploadDate) {
+        this.uploadedAt = uploadDate;
     }
 }

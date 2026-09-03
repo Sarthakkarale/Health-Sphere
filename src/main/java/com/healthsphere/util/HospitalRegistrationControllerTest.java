@@ -4,7 +4,7 @@ import com.healthsphere.config.FirebaseConfig;
 import com.healthsphere.controller.authentication.HospitalRegistrationController;
 import com.healthsphere.exceptions.AuthenticationException;
 import com.healthsphere.exceptions.DatabaseException;
-import com.healthsphere.model.UserProfile;
+import com.healthsphere.model.HospitalProfile;
 
 public class HospitalRegistrationControllerTest {
 
@@ -12,22 +12,25 @@ public class HospitalRegistrationControllerTest {
 
         try {
             FirebaseConfig.initialize();
-
             System.out.println("Firebase initialized successfully.");
 
             HospitalRegistrationController controller = new HospitalRegistrationController();
 
-            UserProfile profile = controller.register(
+            HospitalProfile profile = controller.register(
                     "hospitaltest@example.com",
-                    "Test@12345"
+                    "Test@12345",
+                    "City Hospital",
+                    "HOSP12345",
+                    "General",
+                    "200",
+                    "9876543210",
+                    "Main Street"
             );
 
             System.out.println("Hospital registration successful!");
             System.out.println("--------------------------------");
             System.out.println("UID: " + profile.getUid());
             System.out.println("Email: " + profile.getEmail());
-            System.out.println("Role: " + profile.getRole());
-            System.out.println("Status: " + profile.getStatus());
             System.out.println("--------------------------------");
 
         } catch (AuthenticationException e) {

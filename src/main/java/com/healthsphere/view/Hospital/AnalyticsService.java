@@ -1,7 +1,7 @@
-package com.healthsphere.view.Hospital;
+package com.healthsphere.view.hospital;
 
-import com.healthsphere.view.Hospital.AnalyticsData;
-import com.healthsphere.view.Hospital.AnalyticsData.ReportItem;
+import com.healthsphere.view.hospital.AnalyticsData;
+import com.healthsphere.view.hospital.AnalyticsData.ReportItem;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;

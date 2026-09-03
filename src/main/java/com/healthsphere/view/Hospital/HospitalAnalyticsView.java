@@ -1,4 +1,4 @@
-package com.healthsphere.view.Hospital;
+package com.healthsphere.view.hospital;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

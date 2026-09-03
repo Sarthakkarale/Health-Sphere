@@ -1,4 +1,4 @@
-package com.healthsphere.view.Hospital;
+package com.healthsphere.view.hospital;
 
 import com.healthsphere.controller.hospital.DepartmentController;
 import com.healthsphere.model.HospitalDepartment;

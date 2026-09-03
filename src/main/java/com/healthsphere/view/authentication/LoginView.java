@@ -1,25 +1,18 @@
 package com.healthsphere.view.authentication;
 
-<<<<<<< HEAD
-import com.healthsphere.view.patient.PatientDashboardView;
+import com.healthsphere.view.Patient.Dashboard;
 import com.healthsphere.view.doctor.DoctorDashboardView;
-import com.healthsphere.view.Hospital.HospitalDashboardView;
+import com.healthsphere.view.hospital.HospitalDashboardView;
 import com.healthsphere.view.admin.AdminDashboardView;
 import com.healthsphere.view.admin.AdminMainShell;
 import com.healthsphere.view.authentication.*;
 
-=======
->>>>>>> origin/feature/patient
 import com.healthsphere.controller.authentication.LoginController;
 import com.healthsphere.exceptions.AuthenticationException;
 import com.healthsphere.exceptions.DatabaseException;
 import com.healthsphere.model.LoginDestination;
 import com.healthsphere.model.Role;
 import com.healthsphere.model.UserProfile;
-import com.healthsphere.view.Patient.Dashboard;
-import com.healthsphere.view.admin.AdminDashboardView;
-import com.healthsphere.view.doctor.DoctorDashboardView;
-import com.healthsphere.view.hospital.HospitalDashboardView;
 
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -33,6 +26,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -46,122 +40,74 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+/**
+ * Pure JavaFX Login View for Health-Sphere / MediNexus AI.
+ * Implements navigation using the static View.stage reference and dynamic role routing.
+ */
 public class LoginView {
 
+    private Button selectedRoleBtn = null;
     private final Stage stage;
-    private final LoginController loginController;
 
-    private Button selectedRoleBtn;
-
+    // Role references to track active selection
     private Button btnPatient;
     private Button btnDoctor;
     private Button btnHospital;
     private Button btnAdmin;
 
+    private final LoginController loginController;
     private Label errorLabel;
 
-    // =========================================================
-    // CONSTRUCTOR
-    // =========================================================
-
-    public LoginView(Stage stage) {
-
-        this.stage = stage;
-
-        this.loginController =
-                new LoginController();
+    // Default Constructor
+    public LoginView() {
+        this.stage = new Stage();
+        this.loginController = new LoginController();
     }
 
-    // =========================================================
-    // LOGIN SCENE
-    // =========================================================
+    // Overloaded Constructor for compatibility
+    public LoginView(Stage stage) {
+        this.stage = stage;
+        this.loginController = new LoginController();
+    }
 
     public Scene getScene() {
+        HBox root = new HBox();
+        root.getStyleClass().add("login-root");
 
-        HBox root =
-                new HBox();
+        // Assemble Left and Right Columns
+        VBox leftHero = createLeftHeroPanel();
+        ScrollPane rightScroll = createRightFormPanel();
 
-        root.setMinWidth(0);
-        root.setMinHeight(0);
+        HBox.setHgrow(leftHero, Priority.ALWAYS);
+        HBox.setHgrow(rightScroll, Priority.ALWAYS);
 
-        root.setMaxWidth(
-                Double.MAX_VALUE
-        );
+        // Proportion split: 40% Left, 60% Right
+        leftHero.prefWidthProperty().bind(root.widthProperty().multiply(0.40));
+        rightScroll.prefWidthProperty().bind(root.widthProperty().multiply(0.60));
 
-        root.setMaxHeight(
-                Double.MAX_VALUE
-        );
+        root.getChildren().addAll(leftHero, rightScroll);
 
-        root.getStyleClass().add(
-                "login-root"
-        );
+        Scene scene = new Scene(root, stage.getWidth(), stage.getHeight());
 
-        VBox leftHero =
-                createLeftHeroPanel();
-
-        ScrollPane rightScroll =
-                createRightFormPanel();
-
-        HBox.setHgrow(
-                leftHero,
-                Priority.ALWAYS
-        );
-
-        HBox.setHgrow(
-                rightScroll,
-                Priority.ALWAYS
-        );
-
-        leftHero.prefWidthProperty()
-                .bind(
-                        root.widthProperty()
-                                .multiply(0.40)
-                );
-
-        rightScroll.prefWidthProperty()
-                .bind(
-                        root.widthProperty()
-                                .multiply(0.60)
-                );
-
-        root.getChildren().addAll(
-                leftHero,
-                rightScroll
-        );
-
-        Scene scene =
-                new Scene(root);
-
-        if (getClass().getResource(
-                "/css/login.css"
-        ) != null) {
-
-            scene.getStylesheets().add(
-                    getClass()
-                            .getResource(
-                                    "/css/login.css"
-                            )
-                            .toExternalForm()
-            );
+        // Load CSS stylesheet safely
+        String cssPath = getClass().getResource("/css/login.css") != null 
+                ? getClass().getResource("/css/login.css").toExternalForm() 
+                : null;
+        if (cssPath != null) {
+            scene.getStylesheets().add(cssPath);
         }
-
-        /*
-         * IMPORTANT:
-         *
-         * Do NOT maximize here.
-         * View already maximized the shared Stage.
-         */
 
         return scene;
     }
 
-    // =========================================================
-    // LEFT HERO
-    // =========================================================
-
+    // ==========================================
+    // 1. LEFT HERO PANEL
+    // ==========================================
     private VBox createLeftHeroPanel() {
+        VBox leftBox = new VBox(28);
+        leftBox.getStyleClass().add("left-panel");
+        leftBox.setAlignment(Pos.TOP_LEFT);
 
-<<<<<<< HEAD
         // Brand Header Row
         HBox brandRow = new HBox(10);
         brandRow.setAlignment(Pos.CENTER_LEFT);
@@ -169,331 +115,98 @@ public class LoginView {
         Text brandTitle = new Text("Health Spere");
         brandTitle.getStyleClass().add("panel-brand");
         brandRow.getChildren().addAll(logoView, brandTitle);
-=======
-        VBox leftBox =
-                new VBox(28);
->>>>>>> origin/feature/patient
 
-        leftBox.getStyleClass().add(
-                "left-panel"
-        );
+        // Text Content
+        VBox textContent = new VBox(12);
+        Text headline = new Text("Advanced Clinical\nIntelligence");
+        headline.getStyleClass().add("hero-header");
 
-        leftBox.setAlignment(
-                Pos.TOP_LEFT
-        );
-
-        leftBox.setMinWidth(0);
-        leftBox.setMinHeight(0);
-
-        leftBox.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        leftBox.setMaxHeight(
-                Double.MAX_VALUE
-        );
-
-        HBox brandRow =
-                new HBox(10);
-
-        brandRow.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        ImageView logoView =
-                createSafeImageView(
-                        "/images/icons/brand_logo.png",
-                        32,
-                        32
-                );
-
-        Text brandTitle =
-                new Text(
-                        "Health-Sphere"
-                );
-
-        brandTitle.getStyleClass().add(
-                "panel-brand"
-        );
-
-        brandRow.getChildren().addAll(
-                logoView,
-                brandTitle
-        );
-
-        VBox textContent =
-                new VBox(12);
-
-        Text headline =
-                new Text(
-                        "Advanced Clinical\nIntelligence"
-                );
-
-        headline.getStyleClass().add(
-                "hero-header"
-        );
-
-        Label subtext =
-                new Label(
-                        "Empowering healthcare professionals " +
-                        "with real-time AI insights and seamless patient management."
-                );
-
-        subtext.getStyleClass().add(
-                "hero-subtext"
-        );
-
+        Label subtext = new Label("Empowering healthcare professionals with real-time AI insights and seamless patient management.");
+        subtext.getStyleClass().add("hero-subtext");
         subtext.setWrapText(true);
+        textContent.getChildren().addAll(headline, subtext);
 
-        subtext.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        textContent.getChildren().addAll(
-                headline,
-                subtext
-        );
-
-        VBox featureList =
-                new VBox(12);
-
+        // Feature Highlights Pills
+        VBox featureList = new VBox(12);
         featureList.getChildren().addAll(
-
-                createFeaturePill(
-                        "✓  AI-powered Healthcare"
-                ),
-
-                createFeaturePill(
-                        "✓  Smart Appointment Management"
-                ),
-
-                createFeaturePill(
-                        "✓  Secure Medical Records"
-                )
+                createFeaturePill("✓  AI-powered Healthcare"),
+                createFeaturePill("✓  Smart Appointment Management"),
+                createFeaturePill("✓  Secure Medical Records")
         );
 
-        Region spacer =
-                new Region();
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
 
-        VBox.setVgrow(
-                spacer,
-                Priority.ALWAYS
-        );
-
-        ImageView heroImg =
-                createSafeImageView(
-                        "/images/icons/login_hero.png",
-                        420,
-                        220
-                );
-
-<<<<<<< HEAD
         // Bottom Illustration Image
         ImageView heroImg = createSafeImageView("/images/auth-background.jpg", 430, 250);
-=======
->>>>>>> origin/feature/patient
         heroImg.setPreserveRatio(false);
-
-        Rectangle clip =
-                new Rectangle(
-                        420,
-                        220
-                );
-
+        Rectangle clip = new Rectangle(420, 220);
         clip.setArcWidth(16);
         clip.setArcHeight(16);
-
         heroImg.setClip(clip);
 
-        leftBox.getChildren().addAll(
-                brandRow,
-                textContent,
-                featureList,
-                spacer,
-                heroImg
-        );
-
+        leftBox.getChildren().addAll(brandRow, textContent, featureList, spacer, heroImg);
         return leftBox;
     }
 
-    // =========================================================
-    // FEATURE PILL
-    // =========================================================
-
-    private HBox createFeaturePill(
-            String text
-    ) {
-
-        HBox pill =
-                new HBox();
-
-        pill.getStyleClass().add(
-                "feature-pill"
-        );
-
-        pill.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        Label label =
-                new Label(text);
-
-        label.getStyleClass().add(
-                "feature-pill-text"
-        );
-
-        pill.getChildren().add(
-                label
-        );
-
+    private HBox createFeaturePill(String text) {
+        HBox pill = new HBox();
+        pill.getStyleClass().add("feature-pill");
+        pill.setAlignment(Pos.CENTER_LEFT);
+        Label pillText = new Label(text);
+        pillText.getStyleClass().add("feature-pill-text");
+        pill.getChildren().add(pillText);
         return pill;
     }
 
-    // =========================================================
-    // RIGHT FORM
-    // =========================================================
-
+    // ==========================================
+    // 2. RIGHT FORM PANEL
+    // ==========================================
     private ScrollPane createRightFormPanel() {
+        VBox container = new VBox();
+        container.setAlignment(Pos.CENTER);
+        container.setPadding(new Insets(40, 60, 40, 60));
 
-        VBox container =
-                new VBox();
-
-        container.setAlignment(
-                Pos.CENTER
-        );
-
-        container.setPadding(
-                new Insets(
-                        40,
-                        60,
-                        40,
-                        60
-                )
-        );
-
-        container.setMinWidth(0);
-
-        container.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        VBox card =
-                new VBox(20);
-
-        card.getStyleClass().add(
-                "form-card"
-        );
-
+        VBox card = new VBox(20);
+        card.getStyleClass().add("form-card");
         card.setMaxWidth(480);
+        card.setAlignment(Pos.TOP_CENTER);
 
-        card.setAlignment(
-                Pos.TOP_CENTER
-        );
+        // Emblem Logo at Top of Card
+        ImageView cardLogo = createSafeImageView("/images/icons/brand_logo.png", 44, 44);
 
-        ImageView cardLogo =
-                createSafeImageView(
-                        "/images/icons/brand_logo.png",
-                        44,
-                        44
-                );
+        // Titles
+        VBox titleBox = new VBox(4);
+        titleBox.setAlignment(Pos.CENTER);
+        Text title = new Text("Welcome Back");
+        title.getStyleClass().add("form-title");
 
-        VBox titleBox =
-                new VBox(4);
+        Text subtitle = new Text("Sign in to continue to your healthcare dashboard.");
+        subtitle.getStyleClass().add("form-subtitle");
 
-        titleBox.setAlignment(
-                Pos.CENTER
-        );
+        Text accentText = new Text("SMART HEALTHCARE. CONNECTED CARE.");
+        accentText.getStyleClass().add("accent-subtext");
 
-        Text title =
-                new Text(
-                        "Welcome Back"
-                );
+        titleBox.getChildren().addAll(title, subtitle, accentText);
 
-        title.getStyleClass().add(
-                "form-title"
-        );
+        // Role Selection Section
+        VBox roleSection = new VBox(8);
+        roleSection.setAlignment(Pos.CENTER_LEFT);
+        Label roleLabel = new Label("Select Your Role");
+        roleLabel.getStyleClass().add("input-label");
 
-        Text subtitle =
-                new Text(
-                        "Sign in to continue to your healthcare dashboard."
-                );
-
-        subtitle.getStyleClass().add(
-                "form-subtitle"
-        );
-
-        Text accentText =
-                new Text(
-                        "SMART HEALTHCARE. CONNECTED CARE."
-                );
-
-        accentText.getStyleClass().add(
-                "accent-subtext"
-        );
-
-        titleBox.getChildren().addAll(
-                title,
-                subtitle,
-                accentText
-        );
-
-        // =====================================================
-        // ROLE
-        // =====================================================
-
-        VBox roleSection =
-                new VBox(8);
-
-        roleSection.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        Label roleLabel =
-                new Label(
-                        "Select Your Role"
-                );
-
-        roleLabel.getStyleClass().add(
-                "input-label"
-        );
-
-        GridPane roleGrid =
-                new GridPane();
-
+        GridPane roleGrid = new GridPane();
         roleGrid.setHgap(10);
         roleGrid.setVgap(10);
 
-        btnPatient =
-                createRoleButton(
-                        "Patient",
-                        "/images/icon_patient.png",
-                        "👤"
-                );
+        btnPatient = createRoleButton("Patient", "/images/icon_patient.png", "👤");
+        btnDoctor = createRoleButton("Doctor", "/images/icon_doctor.png", "🩺");
+        btnHospital = createRoleButton("Hospital", "/images/icon_hospital.png", "🏥");
+        btnAdmin = createRoleButton("Admin", "/images/icon_admin.png", "🔑");
 
-        btnDoctor =
-                createRoleButton(
-                        "Doctor",
-                        "/images/icon_doctor.png",
-                        "🩺"
-                );
-
-        btnHospital =
-                createRoleButton(
-                        "Hospital",
-                        "/images/icon_hospital.png",
-                        "🏥"
-                );
-
-        btnAdmin =
-                createRoleButton(
-                        "Admin",
-                        "/images/icon_admin.png",
-                        "🔑"
-                );
-
+        // Autofocus / Default Selected Role set to Patient
         selectRole(btnPatient);
 
-<<<<<<< HEAD
         btnPatient.setOnAction(e -> selectRole(btnPatient));
         btnDoctor.setOnAction(e -> selectRole(btnDoctor));
         btnHospital.setOnAction(e -> selectRole(btnHospital));
@@ -652,716 +365,120 @@ public class LoginView {
         card.getChildren().addAll(
                 cardLogo, titleBox, roleSection, errorLabel, emailBox, passBox, rememberBox,
                 loadingBox, loginBtn, createAccountBtn
-=======
-        btnPatient.setOnAction(
-                e -> selectRole(btnPatient)
->>>>>>> origin/feature/patient
         );
 
-        btnDoctor.setOnAction(
-                e -> selectRole(btnDoctor)
-        );
+        container.getChildren().addAll(card, formFooterHelper());
 
-        btnHospital.setOnAction(
-                e -> selectRole(btnHospital)
-        );
-
-        btnAdmin.setOnAction(
-                e -> selectRole(btnAdmin)
-        );
-
-        roleGrid.add(
-                btnPatient,
-                0,
-                0
-        );
-
-        roleGrid.add(
-                btnDoctor,
-                1,
-                0
-        );
-
-        roleGrid.add(
-                btnHospital,
-                2,
-                0
-        );
-
-        roleGrid.add(
-                btnAdmin,
-                3,
-                0
-        );
-
-        for (int i = 0; i < 4; i++) {
-
-            ColumnConstraints column =
-                    new ColumnConstraints();
-
-            column.setPercentWidth(25);
-
-            roleGrid
-                    .getColumnConstraints()
-                    .add(column);
-        }
-
-        roleSection.getChildren().addAll(
-                roleLabel,
-                roleGrid
-        );
-
-        // =====================================================
-        // ERROR
-        // =====================================================
-
-        errorLabel =
-                new Label();
-
-        errorLabel.setWrapText(true);
-
-        errorLabel.setVisible(false);
-
-        errorLabel.setManaged(false);
-
-        errorLabel.setStyle(
-                "-fx-text-fill: #ef4444;" +
-                "-fx-font-size: 12px;" +
-                "-fx-background-color: #ffeeef;" +
-                "-fx-padding: 8px;" +
-                "-fx-background-radius: 4px;"
-        );
-
-        errorLabel.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        // =====================================================
-        // EMAIL
-        // =====================================================
-
-        VBox emailBox =
-                new VBox(6);
-
-        Label emailLabel =
-                new Label(
-                        "Email Address"
-                );
-
-        emailLabel.getStyleClass().add(
-                "input-label"
-        );
-
-        TextField emailField =
-                new TextField();
-
-        emailField.setPromptText(
-                "e.g. dr.smith@healthsphere.ai"
-        );
-
-        emailField.getStyleClass().add(
-                "text-field-custom"
-        );
-
-        emailBox.getChildren().addAll(
-                emailLabel,
-                emailField
-        );
-
-        // =====================================================
-        // PASSWORD
-        // =====================================================
-
-        VBox passBox =
-                new VBox(6);
-
-        HBox passHeader =
-                new HBox();
-
-        Label passLabel =
-                new Label(
-                        "Password"
-                );
-
-        passLabel.getStyleClass().add(
-                "input-label"
-        );
-
-        Region passSpacer =
-                new Region();
-
-        HBox.setHgrow(
-                passSpacer,
-                Priority.ALWAYS
-        );
-
-        Hyperlink forgotPass =
-                new Hyperlink(
-                        "Forgot Password?"
-                );
-
-        forgotPass.setStyle(
-                "-fx-font-size: 11px;" +
-                "-fx-text-fill: #0256D0;" +
-                "-fx-padding: 0;"
-        );
-
-        forgotPass.setOnAction(
-                event -> {
-
-                    ForgotPasswordView forgot =
-                            new ForgotPasswordView(stage);
-
-                    stage.setScene(
-                            forgot.getScene()
-                    );
-                }
-        );
-
-        passHeader.getChildren().addAll(
-                passLabel,
-                passSpacer,
-                forgotPass
-        );
-
-        PasswordField passField =
-                new PasswordField();
-
-        passField.setPromptText(
-                "••••••••"
-        );
-
-        passField.getStyleClass().add(
-                "text-field-custom"
-        );
-
-        passBox.getChildren().addAll(
-                passHeader,
-                passField
-        );
-
-        // =====================================================
-        // REMEMBER
-        // =====================================================
-
-        CheckBox rememberBox =
-                new CheckBox(
-                        "Remember me for 30 days"
-                );
-
-        rememberBox.setStyle(
-                "-fx-font-size: 12px;" +
-                "-fx-text-fill: #475569;"
-        );
-
-        // =====================================================
-        // LOGIN
-        // =====================================================
-
-        Button loginBtn =
-                new Button(
-                        "Login"
-                );
-
-        loginBtn.getStyleClass().add(
-                "btn-login-primary"
-        );
-
-        loginBtn.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        loginBtn.setOnAction(
-                e -> {
-
-                    String email =
-                            emailField
-                                    .getText()
-                                    .trim();
-
-                    String password =
-                            passField
-                                    .getText();
-
-                    if (email.isEmpty()
-                            || password.isEmpty()) {
-
-                        showError(
-                                "Please enter your email and password."
-                        );
-
-                        return;
-                    }
-
-                    try {
-
-                        UserProfile profile =
-                                loginController.login(
-                                        email,
-                                        password
-                                );
-
-                        String selectedRole =
-                                getSelectedTabRoleString();
-
-                        String accountRole =
-                                profile.getRole();
-
-                        if (!accountRole.equalsIgnoreCase(
-                                selectedRole
-                        )) {
-
-                            showError(
-                                    "Access Denied: Selected role tab (" +
-                                    selectedRole +
-                                    ") does not match your account role."
-                            );
-
-                            return;
-                        }
-
-                        LoginDestination destination =
-                                loginController
-                                        .determineDestination(
-                                                profile
-                                        );
-
-                        handleLoginDestination(
-                                destination
-                        );
-
-                    } catch (
-                            AuthenticationException ex
-                    ) {
-
-                        showError(
-                                ex.getMessage()
-                        );
-
-                    } catch (
-                            DatabaseException ex
-                    ) {
-
-                        showError(
-                                ex.getMessage()
-                        );
-
-                    } catch (Exception ex) {
-
-                        ex.printStackTrace();
-
-                        showError(
-                                "Unable to login. Please try again."
-                        );
-                    }
-                }
-        );
-
-        // =====================================================
-        // REGISTER
-        // =====================================================
-
-        Button createAccountBtn =
-                new Button(
-                        "Create New Account"
-                );
-
-        createAccountBtn.getStyleClass().add(
-                "btn-outline"
-        );
-
-        createAccountBtn.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        createAccountBtn.setOnAction(
-                e -> {
-
-                    RegisterView registerView =
-                            new RegisterView(stage);
-
-                    stage.setScene(
-                            registerView.getScene()
-                    );
-                }
-        );
-
-        card.getChildren().addAll(
-                cardLogo,
-                titleBox,
-                roleSection,
-                errorLabel,
-                emailBox,
-                passBox,
-                rememberBox,
-                loginBtn,
-                createAccountBtn
-        );
-
-        container.getChildren().addAll(
-                card,
-                formFooterHelper()
-        );
-
-        ScrollPane scrollPane =
-                new ScrollPane(container);
-
-        scrollPane.getStyleClass().add(
-                "right-panel-scroll"
-        );
-
-        scrollPane.setFitToWidth(true);
-
-        scrollPane.setHbarPolicy(
-                ScrollPane.ScrollBarPolicy.NEVER
-        );
-
-        scrollPane.setVbarPolicy(
-                ScrollPane.ScrollBarPolicy.AS_NEEDED
-        );
-
-        scrollPane.setMinWidth(0);
-        scrollPane.setMinHeight(0);
-
-        scrollPane.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        scrollPane.setMaxHeight(
-                Double.MAX_VALUE
-        );
-
+        ScrollPane scrollPane = new ScrollPane(container);
+        scrollPane.getStyleClass().add("right-panel-scroll");
         return scrollPane;
     }
 
-    // =========================================================
-    // FOOTER
-    // =========================================================
-
     private HBox formFooterHelper() {
+        HBox formFooter = new HBox(12);
+        formFooter.setAlignment(Pos.CENTER);
+        formFooter.setPadding(new Insets(16, 0, 0, 0));
 
-        HBox footer =
-                new HBox(12);
+        Hyperlink privacyLink = new Hyperlink("Privacy Policy");
+        Hyperlink termsLink = new Hyperlink("Terms of Service");
+        Hyperlink helpLink = new Hyperlink("Help");
+        String linkStyle = "-fx-font-size: 11px; -fx-text-fill: #64748B;";
+        privacyLink.setStyle(linkStyle);
+        termsLink.setStyle(linkStyle);
+        helpLink.setStyle(linkStyle);
 
-        footer.setAlignment(
-                Pos.CENTER
-        );
+        Region footSpacer = new Region();
+        HBox.setHgrow(footSpacer, Priority.ALWAYS);
 
-        footer.setPadding(
-                new Insets(
-                        16,
-                        0,
-                        0,
-                        0
-                )
-        );
+        Text verText = new Text("Version 1.0.4-stable");
+        verText.setStyle("-fx-font-size: 11px; -fx-fill: #94A3B8;");
 
-        Hyperlink privacy =
-                new Hyperlink(
-                        "Privacy Policy"
-                );
-
-        Hyperlink terms =
-                new Hyperlink(
-                        "Terms of Service"
-                );
-
-        Hyperlink help =
-                new Hyperlink(
-                        "Help"
-                );
-
-        String style =
-                "-fx-font-size: 11px;" +
-                "-fx-text-fill: #64748B;";
-
-        privacy.setStyle(style);
-        terms.setStyle(style);
-        help.setStyle(style);
-
-        Text version =
-                new Text(
-                        "Version 1.0.4-stable"
-                );
-
-        version.setStyle(
-                "-fx-font-size: 11px;" +
-                "-fx-fill: #94A3B8;"
-        );
-
-        footer.getChildren().addAll(
-                privacy,
-                terms,
-                help,
-                version
-        );
-
-        return footer;
+        formFooter.getChildren().addAll(privacyLink, termsLink, helpLink, footSpacer, verText);
+        return formFooter;
     }
 
-    // =========================================================
-    // ROLE BUTTON
-    // =========================================================
+    // ==========================================
+    // HELPER METHODS
+    // ==========================================
+    private Button createRoleButton(String title, String iconPath, String fallbackEmoji) {
+        Button btn = new Button();
+        btn.getStyleClass().add("role-btn");
+        btn.setMaxWidth(Double.MAX_VALUE);
 
-    private Button createRoleButton(
-            String title,
-            String iconPath,
-            String fallbackEmoji
-    ) {
+        VBox content = new VBox(4);
+        content.setAlignment(Pos.CENTER);
 
-        Button button =
-                new Button();
+        ImageView icon = createSafeImageView(iconPath, 20, 20);
+        Node graphic = icon.getImage() != null ? icon : new Text(fallbackEmoji);
 
-        button.getStyleClass().add(
-                "role-btn"
-        );
+        Label label = new Label(title);
+        label.getStyleClass().add("role-label");
 
-        button.setMaxWidth(
-                Double.MAX_VALUE
-        );
+        content.getChildren().addAll(graphic, label);
+        btn.setGraphic(content);
 
-        VBox content =
-                new VBox(4);
-
-        content.setAlignment(
-                Pos.CENTER
-        );
-
-        ImageView icon =
-                createSafeImageView(
-                        iconPath,
-                        20,
-                        20
-                );
-
-        Node graphic =
-                icon.getImage() != null
-                        ? icon
-                        : new Text(fallbackEmoji);
-
-        Label label =
-                new Label(title);
-
-        label.getStyleClass().add(
-                "role-label"
-        );
-
-        content.getChildren().addAll(
-                graphic,
-                label
-        );
-
-        button.setGraphic(
-                content
-        );
-
-        return button;
+        return btn;
     }
 
-    // =========================================================
-    // SELECT ROLE
-    // =========================================================
-
-    private void selectRole(
-            Button button
-    ) {
-
+    private void selectRole(Button btn) {
         if (selectedRoleBtn != null) {
-
-            selectedRoleBtn
-                    .getStyleClass()
-                    .remove(
-                            "role-btn-selected"
-                    );
-
-            if (!selectedRoleBtn
-                    .getStyleClass()
-                    .contains("role-btn")) {
-
-                selectedRoleBtn
-                        .getStyleClass()
-                        .add("role-btn");
+            selectedRoleBtn.getStyleClass().remove("role-btn-selected");
+            if (!selectedRoleBtn.getStyleClass().contains("role-btn")) {
+                selectedRoleBtn.getStyleClass().add("role-btn");
             }
-
             selectedRoleBtn.setStyle("");
         }
-
-        button.getStyleClass().remove(
-                "role-btn"
-        );
-
-        button.getStyleClass().add(
-                "role-btn-selected"
-        );
-
-        button.setStyle(
-                "-fx-background-color: #E6F0FA;" +
-                "-fx-border-color: #0256D0;" +
-                "-fx-border-width: 2px;" +
-                "-fx-background-radius: 8px;" +
-                "-fx-border-radius: 8px;"
-        );
-
-        selectedRoleBtn = button;
+        btn.getStyleClass().remove("role-btn");
+        btn.getStyleClass().add("role-btn-selected");
+        // Update selection box color styling when a specific role box is clicked/selected
+        btn.setStyle("-fx-background-color: #E6F0FA; -fx-border-color: #0256D0; -fx-border-width: 2px; -fx-background-radius: 8px; -fx-border-radius: 8px;");
+        selectedRoleBtn = btn;
     }
 
-    // =========================================================
-    // ROLE STRING
-    // =========================================================
-
     private String getSelectedTabRoleString() {
-
-        if (selectedRoleBtn == btnPatient) {
-            return Role.PATIENT.name();
-        }
-
-        if (selectedRoleBtn == btnDoctor) {
-            return Role.DOCTOR.name();
-        }
-
-        if (selectedRoleBtn == btnHospital) {
-            return Role.HOSPITAL.name();
-        }
-
-        if (selectedRoleBtn == btnAdmin) {
-            return Role.ADMIN.name();
-        }
-
+        if (selectedRoleBtn == btnPatient) return Role.PATIENT.name();
+        if (selectedRoleBtn == btnDoctor) return Role.DOCTOR.name();
+        if (selectedRoleBtn == btnHospital) return Role.HOSPITAL.name();
+        if (selectedRoleBtn == btnAdmin) return Role.ADMIN.name();
         return Role.PATIENT.name();
     }
 
-<<<<<<< HEAD
-    // =========================================================
-    // LOGIN DESTINATION
-    // =========================================================
-
-    private void handleLoginDestination(
-            LoginDestination destination
-    ) {
-
-        Scene destinationScene;
-
-        switch (destination) {
-
-            case PATIENT_DASHBOARD -> {
-
-                destinationScene =
-                        new Dashboard(stage)
-                                .getScene();
-            }
-
-            case DOCTOR_DASHBOARD -> {
-
-                destinationScene =
-                        new DoctorDashboardView(stage)
-                                .getScene();
-            }
-
-            case DOCTOR_PENDING -> {
-
-                destinationScene =
-                        new DoctorPendingApprovalView(stage)
-                                .getScene();
-            }
-
-            case HOSPITAL_DASHBOARD -> {
-
-                destinationScene =
-                        new HospitalDashboardView(stage)
-                                .getScene();
-            }
-
-            case HOSPITAL_PENDING -> {
-
-                destinationScene =
-                        new DoctorPendingApprovalView(stage)
-                                .getScene();
-            }
-
-            case ADMIN_DASHBOARD -> {
-
-                destinationScene =
-                        new AdminDashboardView(stage)
-                                .getScene();
-            }
-
-            case LOGIN -> {
-
-                showError(
-                        "Unable to determine user access."
-                );
-
-                return;
-            }
-
-            default -> {
-                return;
-            }
-        }
-
-        stage.setScene(
-                destinationScene
-        );
-    }
-
-    // =========================================================
-    // ERROR
-    // =========================================================
-
-    private void showError(
-            String message
-    ) {
-
-        if (errorLabel != null) {
-
-            errorLabel.setText(
-                    message
-            );
-
-            errorLabel.setVisible(
-                    true
-            );
-
-            errorLabel.setManaged(
-                    true
-            );
-=======
     private void handleLoginDestination(LoginDestination destination) {
-    switch (destination) {
+        switch (destination) {
+            case PATIENT_DASHBOARD -> {
+                stage.setScene(new Dashboard(stage).getScene());
+            }
+            case DOCTOR_DASHBOARD -> {
+                stage.setScene(new DoctorDashboardView(stage).getScene());
+            }
+            case DOCTOR_PENDING -> {
+                // Handle doctor pending screen navigation if implemented
+                stage.setScene(new DoctorPendingApprovalView(stage).getScene());
+            }
+            case HOSPITAL_DASHBOARD -> {
+                stage.setScene(new HospitalDashboardView(stage).getScene());
+            }
+            case HOSPITAL_PENDING -> {
+                // Handle hospital pending screen navigation if implemented
+                stage.setScene(new DoctorPendingApprovalView(stage).getScene());
+            }
+            case ADMIN_DASHBOARD -> {
+                stage.setScene(new AdminMainShell(stage).getScene(stage));
+            }
+            case LOGIN -> {
+                showError("Unable to determine user access.");
+            }
+        }  
+    }
 
-        case PATIENT_DASHBOARD -> {
-            stage.setScene(new PatientDashboardView(stage).getScene());
-        }
-
-        case DOCTOR_DASHBOARD -> {
-            stage.setScene(new DoctorDashboardView(stage).getScene());
-        }
-
-        case DOCTOR_PENDING -> {
-            stage.setScene(new DoctorPendingApprovalView(stage).getScene());
-        }
-
-        case HOSPITAL_DASHBOARD -> {
-            HospitalDashboardView hospitalView = new HospitalDashboardView();
-            stage.setScene(hospitalView.createScene(stage));
-        }
-
-        case HOSPITAL_PENDING -> {
-            stage.setScene(new DoctorPendingApprovalView(stage).getScene());
-        }
-
-        case ADMIN_DASHBOARD -> {
-            stage.setScene(new AdminDashboardView(stage).getScene());
-        }
-
-        case LOGIN -> {
-            showError("Unable to determine user access.");
->>>>>>> origin/feature/hospital
+    private void showError(String message) {
+        if (errorLabel != null) {
+            errorLabel.setText(message);
+            errorLabel.setVisible(true);
+            errorLabel.setManaged(true);
         }
     }
-}
 
-<<<<<<< HEAD
     private void setFormDisabled(boolean disabled, TextField emailField, PasswordField passField, CheckBox rememberBox, Hyperlink forgotPass, Button loginBtn, Button createAccountBtn) {
         emailField.setDisable(disabled);
         passField.setDisable(disabled);
@@ -1379,41 +496,41 @@ public class LoginView {
         HBox box = new HBox(12);
         box.getStyleClass().add("security-box");
         box.setAlignment(Pos.CENTER_LEFT);
-=======
-    // =========================================================
-    // SAFE IMAGE
-    // =========================================================
->>>>>>> origin/feature/patient
 
-    private ImageView createSafeImageView(
-            String path,
-            double width,
-            double height
-    ) {
+        ImageView shieldIcon = createSafeImageView("/images/icon_shield.png", 24, 24);
+        Node iconGraphic = shieldIcon.getImage() != null ? shieldIcon : new Text("🛡");
 
-        ImageView imageView =
-                new ImageView();
+        VBox textGroup = new VBox(4);
+        Text title = new Text("Secure Login");
+        title.getStyleClass().add("security-title");
 
-        imageView.setFitWidth(width);
-        imageView.setFitHeight(height);
+        Label bullet1 = new Label("• End-to-end 256-bit AES Encryption");
+        Label bullet2 = new Label("• Powered by Firebase Identity Platform");
+        Label bullet3 = new Label("• HIPAA & GDPR Compliant Architecture");
 
-        imageView.setPreserveRatio(true);
+        bullet1.getStyleClass().add("security-text");
+        bullet2.getStyleClass().add("security-text");
+        bullet3.getStyleClass().add("security-text");
+
+        textGroup.getChildren().addAll(title, bullet1, bullet2, bullet3);
+        box.getChildren().addAll(iconGraphic, textGroup);
+
+        return box;
+    }
+
+    private ImageView createSafeImageView(String path, double width, double height) {
+        ImageView imgView = new ImageView();
+        imgView.setFitWidth(width);
+        imgView.setFitHeight(height);
+        imgView.setPreserveRatio(true);
 
         try {
-
             if (getClass().getResource(path) != null) {
-
-                imageView.setImage(
-                        new Image(
-                                getClass()
-                                        .getResourceAsStream(path)
-                        )
-                );
+                imgView.setImage(new Image(getClass().getResourceAsStream(path)));
             }
-
         } catch (Exception ignored) {
+            // Safe fallback during UI build phase
         }
-
-        return imageView;
+        return imgView;
     }
 }

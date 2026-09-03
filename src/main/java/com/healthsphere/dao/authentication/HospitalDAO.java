@@ -124,9 +124,9 @@ public class HospitalDAO {
         }
     }
 
-    // =========================================================
-    // GET ALL HOSPITALS
-    // =========================================================
+    public List<HospitalProfile> getAllHospitalProfiles() {
+        return getAllHospitals();
+    }
 
     public List<HospitalProfile> getAllHospitals() {
 

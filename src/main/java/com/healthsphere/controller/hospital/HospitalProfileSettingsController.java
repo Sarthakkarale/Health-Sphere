@@ -3,12 +3,12 @@ package com.healthsphere.controller.hospital;
 import com.healthsphere.dao.hospital.HospitalProfileSettingsDAO;
 import com.healthsphere.model.HospitalProfileModel;
 import com.healthsphere.util.SessionManager;
-import com.healthsphere.view.Hospital.AppointmentManagementView;
-import com.healthsphere.view.Hospital.BedManagementView;
-import com.healthsphere.view.Hospital.DepartmentManagementView;
-import com.healthsphere.view.Hospital.DoctorManagementView;
-import com.healthsphere.view.Hospital.HospitalAnalyticsView;
-import com.healthsphere.view.Hospital.HospitalDashboardView;
+import com.healthsphere.view.hospital.AppointmentManagementView;
+import com.healthsphere.view.hospital.BedManagementView;
+import com.healthsphere.view.hospital.DepartmentManagementView;
+import com.healthsphere.view.hospital.DoctorManagementView;
+import com.healthsphere.view.hospital.HospitalAnalyticsView;
+import com.healthsphere.view.hospital.HospitalDashboardView;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
