@@ -1,3 +1,4 @@
+
 package com.healthsphere.view.Patient;
 
 import java.time.LocalDate;
@@ -6,24 +7,32 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.healthsphere.controller.patient.AppointmentController;
+import com.healthsphere.controller.patient.ReviewController;
 import com.healthsphere.model.Appointment;
+import com.healthsphere.model.Review;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 public class Appointments {
 
     private final Stage stage;
+
     private final AppointmentController appointmentController;
+
+    private final ReviewController reviewController;
 
     public Appointments(Stage stage) {
 
@@ -31,6 +40,9 @@ public class Appointments {
 
         this.appointmentController =
                 new AppointmentController();
+
+        this.reviewController =
+                new ReviewController();
     }
 
     // =========================================================
@@ -115,6 +127,10 @@ public class Appointments {
                 Double.MAX_VALUE
         );
 
+        // =====================================================
+        // HOSPITAL BOOKING
+        // =====================================================
+
         VBox hospitalBooking =
                 PatientUI.card(
                         "Hospital Appointment"
@@ -133,15 +149,15 @@ public class Appointments {
 
         Label hospitalText =
                 new Label(
-                        "Book an appointment directly with a hospital. " +
-                        "No doctor selection is required."
+                        "Book an appointment directly with a hospital. "
+                                + "No doctor selection is required."
                 );
 
         hospitalText.setWrapText(true);
 
         hospitalText.setStyle(
-                "-fx-text-fill: #64748b;" +
-                "-fx-font-size: 14px;"
+                "-fx-text-fill: #64748b;"
+                        + "-fx-font-size: 14px;"
         );
 
         Button hospitalButton =
@@ -154,6 +170,10 @@ public class Appointments {
                 hospitalText,
                 hospitalButton
         );
+
+        // =====================================================
+        // DOCTOR BOOKING
+        // =====================================================
 
         VBox doctorBooking =
                 PatientUI.card(
@@ -173,15 +193,15 @@ public class Appointments {
 
         Label doctorText =
                 new Label(
-                        "Book an appointment directly with a doctor. " +
-                        "No hospital selection is required."
+                        "Book an appointment directly with a doctor. "
+                                + "No hospital selection is required."
                 );
 
         doctorText.setWrapText(true);
 
         doctorText.setStyle(
-                "-fx-text-fill: #64748b;" +
-                "-fx-font-size: 14px;"
+                "-fx-text-fill: #64748b;"
+                        + "-fx-font-size: 14px;"
         );
 
         Button doctorButton =
@@ -294,6 +314,7 @@ public class Appointments {
 
         // =====================================================
         // PREVIOUS
+        // ONLY COMPLETED APPOINTMENTS
         // =====================================================
 
         VBox previous =
@@ -326,7 +347,7 @@ public class Appointments {
 
                 previous.getChildren().add(
                         emptyLabel(
-                                "You have no previous appointments."
+                                "You have no completed appointments."
                         )
                 );
 
@@ -395,6 +416,18 @@ public class Appointments {
                 continue;
             }
 
+            String status =
+                    safe(
+                            appointment.getStatus(),
+                            ""
+                    );
+
+            // Completed appointments belong only
+            // in Previous Appointments.
+            if ("COMPLETED".equalsIgnoreCase(status)) {
+                continue;
+            }
+
             LocalDate appointmentDate =
                     parseDate(
                             appointment.getAppointmentDate()
@@ -425,6 +458,8 @@ public class Appointments {
 
     // =========================================================
     // PREVIOUS APPOINTMENTS
+    //
+    // ONLY COMPLETED APPOINTMENTS
     // =========================================================
 
     private List<Appointment> getPreviousAppointments(
@@ -432,9 +467,6 @@ public class Appointments {
 
         List<Appointment> result =
                 new ArrayList<>();
-
-        LocalDate today =
-                LocalDate.now();
 
         if (appointments == null) {
             return result;
@@ -447,17 +479,27 @@ public class Appointments {
                 continue;
             }
 
-            LocalDate appointmentDate =
-                    parseDate(
-                            appointment.getAppointmentDate()
+            String status =
+                    safe(
+                            appointment.getStatus(),
+                            ""
                     );
 
-            if (appointmentDate != null
-                    && appointmentDate.isBefore(today)) {
+            // =================================================
+            // ONLY COMPLETED
+            // =================================================
+
+            if ("COMPLETED".equalsIgnoreCase(
+                    status.trim()
+            )) {
 
                 result.add(appointment);
             }
         }
+
+        // =====================================================
+        // NEWEST COMPLETED APPOINTMENT FIRST
+        // =====================================================
 
         result.sort(
                 Comparator.comparing(
@@ -476,7 +518,7 @@ public class Appointments {
     }
 
     // =========================================================
-    // APPOINTMENT CARD
+    // UPCOMING APPOINTMENT CARD
     // =========================================================
 
     private HBox appointmentCard(
@@ -500,10 +542,10 @@ public class Appointments {
         );
 
         box.setStyle(
-                "-fx-background-color: #f8fafc;" +
-                "-fx-background-radius: 12;" +
-                "-fx-border-color: #bfdbfe;" +
-                "-fx-border-radius: 12;"
+                "-fx-background-color: #f8fafc;"
+                        + "-fx-background-radius: 12;"
+                        + "-fx-border-color: #bfdbfe;"
+                        + "-fx-border-radius: 12;"
         );
 
         ImageView image;
@@ -547,9 +589,9 @@ public class Appointments {
                 );
 
         type.setStyle(
-                "-fx-font-size: 12px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: #2563eb;"
+                "-fx-font-size: 12px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #2563eb;"
         );
 
         Label mainName;
@@ -579,9 +621,9 @@ public class Appointments {
         mainName.setWrapText(true);
 
         mainName.setStyle(
-                "-fx-font-size: 18px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: #0f172a;"
+                "-fx-font-size: 18px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #0f172a;"
         );
 
         Label specialty =
@@ -607,8 +649,8 @@ public class Appointments {
         specialty.setWrapText(true);
 
         specialty.setStyle(
-                "-fx-text-fill: #2563eb;" +
-                "-fx-font-weight: bold;"
+                "-fx-text-fill: #2563eb;"
+                        + "-fx-font-weight: bold;"
         );
 
         Label date =
@@ -638,8 +680,8 @@ public class Appointments {
                 );
 
         status.setStyle(
-                "-fx-text-fill: #16a34a;" +
-                "-fx-font-weight: bold;"
+                "-fx-text-fill: #16a34a;"
+                        + "-fx-font-weight: bold;"
         );
 
         information.getChildren().addAll(
@@ -674,7 +716,7 @@ public class Appointments {
     }
 
     // =========================================================
-    // PREVIOUS APPOINTMENT
+    // PREVIOUS APPOINTMENT CARD
     // =========================================================
 
     private HBox previousAppointment(
@@ -698,15 +740,19 @@ public class Appointments {
         );
 
         box.setStyle(
-                "-fx-background-color: white;" +
-                "-fx-background-radius: 10;" +
-                "-fx-border-color: #e2e8f0;" +
-                "-fx-border-radius: 10;"
+                "-fx-background-color: white;"
+                        + "-fx-background-radius: 10;"
+                        + "-fx-border-color: #e2e8f0;"
+                        + "-fx-border-radius: 10;"
         );
 
         ImageView image =
                 createImage(
-                        "/images/appointments/appointment2.jpg",
+                        "HOSPITAL".equalsIgnoreCase(
+                                appointment.getBookingType()
+                        )
+                                ? "/images/appointments/appointment2.jpg"
+                                : "/images/appointments/appointment1.jpg",
                         120,
                         80
                 );
@@ -746,9 +792,9 @@ public class Appointments {
         name.setWrapText(true);
 
         name.setStyle(
-                "-fx-font-size: 16px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: #0f172a;"
+                "-fx-font-size: 16px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #0f172a;"
         );
 
         Label type =
@@ -775,6 +821,18 @@ public class Appointments {
                 "-fx-text-fill: #64748b;"
         );
 
+        // =====================================================
+        // COMPLETED STATUS
+        // =====================================================
+
+        Label status =
+                new Label("COMPLETED");
+
+        status.setStyle(
+                "-fx-text-fill: #16a34a;"
+                        + "-fx-font-weight: bold;"
+        );
+
         information.getChildren().addAll(
                 name,
                 type,
@@ -786,30 +844,687 @@ public class Appointments {
                 Priority.ALWAYS
         );
 
-        Label status =
-                new Label(
-                        safe(
-                                appointment.getStatus(),
-                                "Completed"
-                        )
-                );
+        // =====================================================
+        // REVIEW BUTTON
+        // =====================================================
 
-        status.setStyle(
-                "-fx-text-fill: #16a34a;" +
-                "-fx-font-weight: bold;"
-        );
+        Button reviewButton =
+                createReviewButton(
+                        appointment
+                );
 
         box.getChildren().addAll(
                 image,
                 information,
-                status
+                status,
+                reviewButton
         );
 
         return box;
     }
 
     // =========================================================
-    // DETAILS
+    // REVIEW BUTTON
+    // =========================================================
+
+    private Button createReviewButton(
+            Appointment appointment) {
+
+        String targetType;
+
+        String targetId;
+
+        String targetName;
+
+        // =====================================================
+        // HOSPITAL REVIEW
+        // =====================================================
+
+        if ("HOSPITAL".equalsIgnoreCase(
+                appointment.getBookingType())) {
+
+            targetType =
+                    "HOSPITAL";
+
+            targetId =
+                    safe(
+                            appointment.getHospitalId(),
+                            ""
+                    );
+
+            targetName =
+                    safe(
+                            appointment.getHospitalName(),
+                            "Hospital"
+                    );
+
+        }
+
+        // =====================================================
+        // DOCTOR REVIEW
+        // =====================================================
+
+        else {
+
+            targetType =
+                    "DOCTOR";
+
+            targetId =
+                    safe(
+                            appointment.getDoctorUid(),
+                            ""
+                    );
+
+            targetName =
+                    safe(
+                            appointment.getDoctorName(),
+                            "Doctor"
+                    );
+        }
+
+        // =====================================================
+        // CHECK IF TARGET ID EXISTS
+        // =====================================================
+
+        if (targetId.isBlank()) {
+
+            Button unavailable =
+                    new Button(
+                            "Review Unavailable"
+                    );
+
+            unavailable.setDisable(true);
+
+            unavailable.setStyle(
+                    "-fx-background-color: #f1f5f9;"
+                            + "-fx-text-fill: #94a3b8;"
+                            + "-fx-font-weight: bold;"
+                            + "-fx-background-radius: 8;"
+                            + "-fx-padding: 8 14 8 14;"
+            );
+
+            return unavailable;
+        }
+
+        // =====================================================
+        // CHECK EXISTING REVIEW
+        // =====================================================
+
+        boolean alreadyReviewed =
+                false;
+
+        try {
+
+            alreadyReviewed =
+                    reviewController
+                            .hasCurrentPatientReviewed(
+                                    appointment.getAppointmentId(),
+                                    targetType,
+                                    targetId
+                            );
+
+        } catch (Exception e) {
+
+            System.err.println(
+                    "Unable to check review status: "
+                            + e.getMessage()
+            );
+        }
+
+        // =====================================================
+        // ALREADY REVIEWED
+        // =====================================================
+
+        if (alreadyReviewed) {
+
+            Button reviewed =
+                    new Button(
+                            "Reviewed ✓"
+                    );
+
+            reviewed.setDisable(true);
+
+            reviewed.setStyle(
+                    "-fx-background-color: #dcfce7;"
+                            + "-fx-text-fill: #15803d;"
+                            + "-fx-font-weight: bold;"
+                            + "-fx-background-radius: 8;"
+                            + "-fx-padding: 8 14 8 14;"
+            );
+
+            return reviewed;
+        }
+
+        // =====================================================
+        // WRITE REVIEW
+        // =====================================================
+
+        return PatientUI.button(
+                "Write Review",
+                () ->
+                        showReviewDialog(
+                                appointment,
+                                targetType,
+                                targetId,
+                                targetName
+                        )
+        );
+    }
+
+    // =========================================================
+    // REVIEW DIALOG
+    // =========================================================
+
+    private void showReviewDialog(
+            Appointment appointment,
+            String targetType,
+            String targetId,
+            String targetName) {
+
+        Stage reviewStage =
+                new Stage();
+
+        reviewStage.initOwner(stage);
+
+        reviewStage.initModality(
+                Modality.WINDOW_MODAL
+        );
+
+        reviewStage.setTitle(
+                "Write Review"
+        );
+
+        VBox root =
+                new VBox(18);
+
+        root.setPadding(
+                new Insets(28)
+        );
+
+        root.setAlignment(
+                Pos.TOP_CENTER
+        );
+
+        root.setPrefWidth(500);
+
+        root.setStyle(
+                "-fx-background-color: white;"
+        );
+
+        // =====================================================
+        // TITLE
+        // =====================================================
+
+        Label title =
+                new Label(
+                        "Write a Review"
+                );
+
+        title.setStyle(
+                "-fx-font-size: 26px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #0f172a;"
+        );
+
+        Label subtitle =
+                new Label(
+                        "Share your experience with "
+                                + targetName
+                );
+
+        subtitle.setWrapText(true);
+
+        subtitle.setStyle(
+                "-fx-font-size: 14px;"
+                        + "-fx-text-fill: #64748b;"
+        );
+
+        // =====================================================
+        // RATING TITLE
+        // =====================================================
+
+        Label ratingTitle =
+                new Label(
+                        "Your Rating"
+                );
+
+        ratingTitle.setStyle(
+                "-fx-font-size: 16px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #334155;"
+        );
+
+        // =====================================================
+        // STARS
+        // =====================================================
+
+        HBox stars =
+                new HBox(8);
+
+        stars.setAlignment(
+                Pos.CENTER
+        );
+
+        Button[] starButtons =
+                new Button[5];
+
+        final int[] selectedRating =
+                {0};
+
+        Label ratingLabel =
+                new Label(
+                        "Select a rating"
+                );
+
+        ratingLabel.setStyle(
+                "-fx-text-fill: #64748b;"
+                        + "-fx-font-size: 13px;"
+        );
+
+        for (int i = 0; i < 5; i++) {
+
+            final int rating =
+                    i + 1;
+
+            Button star =
+                    new Button("★");
+
+            starButtons[i] =
+                    star;
+
+            star.setStyle(
+                    "-fx-background-color: transparent;"
+                            + "-fx-text-fill: #cbd5e1;"
+                            + "-fx-font-size: 32px;"
+                            + "-fx-padding: 0;"
+                            + "-fx-cursor: hand;"
+            );
+
+            star.setOnMouseEntered(
+                    event ->
+                            updateStarDisplay(
+                                    starButtons,
+                                    rating
+                            )
+            );
+
+            star.setOnMouseExited(
+                    event ->
+                            updateStarDisplay(
+                                    starButtons,
+                                    selectedRating[0]
+                            )
+            );
+
+            star.setOnAction(
+                    event -> {
+
+                        selectedRating[0] =
+                                rating;
+
+                        updateStarDisplay(
+                                starButtons,
+                                selectedRating[0]
+                        );
+
+                        ratingLabel.setText(
+                                rating
+                                        + " out of 5"
+                        );
+                    }
+            );
+
+            stars.getChildren().add(
+                    star
+            );
+        }
+
+        // =====================================================
+        // COMMENT
+        // =====================================================
+
+        Label commentTitle =
+                new Label(
+                        "Your Review"
+                );
+
+        commentTitle.setStyle(
+                "-fx-font-size: 16px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #334155;"
+        );
+
+        TextArea commentArea =
+                new TextArea();
+
+        commentArea.setPromptText(
+                "Write your experience here..."
+        );
+
+        commentArea.setWrapText(true);
+
+        commentArea.setPrefRowCount(5);
+
+        commentArea.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+        commentArea.setStyle(
+                "-fx-font-size: 14px;"
+        );
+
+        // =====================================================
+        // MESSAGE
+        // =====================================================
+
+        Label message =
+                new Label();
+
+        message.setWrapText(true);
+
+        message.setStyle(
+                "-fx-text-fill: #dc2626;"
+                        + "-fx-font-size: 13px;"
+        );
+
+        // =====================================================
+        // BUTTONS
+        // =====================================================
+
+        Button cancel =
+                PatientUI.secondaryButton(
+                        "Cancel",
+                        reviewStage::close
+                );
+
+        Button submit =
+                PatientUI.button(
+                        "Submit Review",
+                        () -> {
+
+                            // -------------------------------
+                            // VALIDATE RATING
+                            // -------------------------------
+
+                            if (selectedRating[0] < 1
+                                    || selectedRating[0] > 5) {
+
+                                message.setText(
+                                        "Please select a rating between 1 and 5."
+                                );
+
+                                return;
+                            }
+
+                            // -------------------------------
+                            // VALIDATE COMMENT
+                            // -------------------------------
+
+                            String comment =
+                                    commentArea
+                                            .getText()
+                                            .trim();
+
+                            if (comment.isBlank()) {
+
+                                message.setText(
+                                        "Please enter your review."
+                                );
+
+                                return;
+                            }
+
+                            // -------------------------------
+                            // SAVE REVIEW
+                            // -------------------------------
+
+                            try {
+
+                                Review review =
+                                        reviewController
+                                                .createReview(
+                                                        appointment
+                                                                .getAppointmentId(),
+
+                                                        targetType,
+
+                                                        targetId,
+
+                                                        targetName,
+
+                                                        selectedRating[0],
+
+                                                        comment
+                                                );
+
+                                if (review != null) {
+
+                                    reviewStage.close();
+
+                                    showSuccessMessage(
+                                            "Your review has been submitted successfully."
+                                    );
+
+                                    refreshAppointments();
+                                }
+
+                            } catch (Exception e) {
+
+                                message.setText(
+                                        safe(
+                                                e.getMessage(),
+                                                "Unable to submit review."
+                                        )
+                                );
+
+                                System.err.println(
+                                        "Review submission failed: "
+                                                + e.getMessage()
+                                );
+                            }
+                        }
+                );
+
+        HBox buttonRow =
+                new HBox(12);
+
+        buttonRow.setAlignment(
+                Pos.CENTER_RIGHT
+        );
+
+        buttonRow.getChildren().addAll(
+                cancel,
+                submit
+        );
+
+        // =====================================================
+        // ADD CONTROLS
+        // =====================================================
+
+        root.getChildren().addAll(
+                title,
+                subtitle,
+                ratingTitle,
+                stars,
+                ratingLabel,
+                commentTitle,
+                commentArea,
+                message,
+                buttonRow
+        );
+
+        // =====================================================
+        // SCROLL
+        // =====================================================
+
+        ScrollPane scrollPane =
+                new ScrollPane(root);
+
+        scrollPane.setFitToWidth(true);
+
+        scrollPane.setHbarPolicy(
+                ScrollPane.ScrollBarPolicy.NEVER
+        );
+
+        scrollPane.setVbarPolicy(
+                ScrollPane.ScrollBarPolicy.AS_NEEDED
+        );
+
+        scrollPane.setStyle(
+                "-fx-background-color: white;"
+        );
+
+        // =====================================================
+        // SCENE
+        // =====================================================
+
+        Scene scene =
+                new Scene(
+                        scrollPane,
+                        550,
+                        600
+                );
+
+        reviewStage.setScene(
+                scene
+        );
+
+        reviewStage.showAndWait();
+    }
+
+    // =========================================================
+    // UPDATE STAR DISPLAY
+    // =========================================================
+
+    private void updateStarDisplay(
+            Button[] stars,
+            int rating) {
+
+        for (int i = 0; i < stars.length; i++) {
+
+            if (i < rating) {
+
+                stars[i].setStyle(
+                        "-fx-background-color: transparent;"
+                                + "-fx-text-fill: #f59e0b;"
+                                + "-fx-font-size: 32px;"
+                                + "-fx-padding: 0;"
+                                + "-fx-cursor: hand;"
+                );
+
+            } else {
+
+                stars[i].setStyle(
+                        "-fx-background-color: transparent;"
+                                + "-fx-text-fill: #cbd5e1;"
+                                + "-fx-font-size: 32px;"
+                                + "-fx-padding: 0;"
+                                + "-fx-cursor: hand;"
+                );
+            }
+        }
+    }
+
+    // =========================================================
+    // SUCCESS MESSAGE
+    // =========================================================
+
+    private void showSuccessMessage(
+            String message) {
+
+        Stage successStage =
+                new Stage();
+
+        successStage.initOwner(stage);
+
+        successStage.initModality(
+                Modality.WINDOW_MODAL
+        );
+
+        successStage.setTitle(
+                "Review Submitted"
+        );
+
+        VBox root =
+                new VBox(15);
+
+        root.setAlignment(
+                Pos.CENTER
+        );
+
+        root.setPadding(
+                new Insets(30)
+        );
+
+        root.setPrefWidth(400);
+
+        Label icon =
+                new Label("✓");
+
+        icon.setStyle(
+                "-fx-font-size: 42px;"
+                        + "-fx-text-fill: #16a34a;"
+                        + "-fx-font-weight: bold;"
+        );
+
+        Label label =
+                new Label(message);
+
+        label.setWrapText(true);
+
+        label.setAlignment(
+                Pos.CENTER
+        );
+
+        label.setStyle(
+                "-fx-font-size: 15px;"
+                        + "-fx-text-fill: #334155;"
+        );
+
+        Button ok =
+                PatientUI.button(
+                        "OK",
+                        successStage::close
+                );
+
+        root.getChildren().addAll(
+                icon,
+                label,
+                ok
+        );
+
+        successStage.setScene(
+                new Scene(
+                        root,
+                        450,
+                        250
+                )
+        );
+
+        successStage.showAndWait();
+    }
+
+    // =========================================================
+    // REFRESH APPOINTMENTS
+    // =========================================================
+
+    private void refreshAppointments() {
+
+        stage.setScene(
+                new Appointments(stage)
+                        .getScene()
+        );
+
+        stage.show();
+
+        if (!stage.isMaximized()) {
+
+            stage.setMaximized(true);
+        }
+    }
+
+    // =========================================================
+    // APPOINTMENT DETAILS
     // =========================================================
 
     private void showAppointmentDetails(
@@ -832,16 +1547,28 @@ public class Appointments {
                 Double.MAX_VALUE
         );
 
+        // =====================================================
+        // TITLE
+        // =====================================================
+
         Label title =
                 new Label(
                         "Appointment Details"
                 );
 
         title.setStyle(
-                "-fx-font-size: 26px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: #0f172a;"
+                "-fx-font-size: 26px;"
+                        + "-fx-font-weight: bold;"
+                        + "-fx-text-fill: #0f172a;"
         );
+
+        content.getChildren().add(
+                title
+        );
+
+        // =====================================================
+        // TYPE
+        // =====================================================
 
         String bookingType =
                 "HOSPITAL".equalsIgnoreCase(
@@ -856,6 +1583,10 @@ public class Appointments {
                         bookingType
                 )
         );
+
+        // =====================================================
+        // TARGET DETAILS
+        // =====================================================
 
         if ("HOSPITAL".equalsIgnoreCase(
                 appointment.getBookingType())) {
@@ -883,9 +1614,11 @@ public class Appointments {
             );
         }
 
-        content.getChildren().addAll(
+        // =====================================================
+        // OTHER DETAILS
+        // =====================================================
 
-                title,
+        content.getChildren().addAll(
 
                 detailLabel(
                         "Date",
@@ -910,6 +1643,32 @@ public class Appointments {
                 )
         );
 
+        // =====================================================
+        // REVIEW BUTTON
+        // ONLY FOR COMPLETED APPOINTMENTS
+        // =====================================================
+
+        if ("COMPLETED".equalsIgnoreCase(
+                safe(
+                        appointment.getStatus(),
+                        ""
+                )
+        )) {
+
+            Button reviewButton =
+                    createReviewButton(
+                            appointment
+                    );
+
+            content.getChildren().add(
+                    reviewButton
+            );
+        }
+
+        // =====================================================
+        // BACK
+        // =====================================================
+
         Button back =
                 PatientUI.secondaryButton(
                         "Back to Appointments",
@@ -933,6 +1692,7 @@ public class Appointments {
         stage.show();
 
         if (!stage.isMaximized()) {
+
             stage.setMaximized(true);
         }
     }
@@ -962,8 +1722,8 @@ public class Appointments {
         );
 
         label.setStyle(
-                "-fx-font-size: 15px;" +
-                "-fx-text-fill: #334155;"
+                "-fx-font-size: 15px;"
+                        + "-fx-text-fill: #334155;"
         );
 
         return label;
@@ -982,8 +1742,8 @@ public class Appointments {
         label.setWrapText(true);
 
         label.setStyle(
-                "-fx-text-fill: #64748b;" +
-                "-fx-font-size: 14px;"
+                "-fx-text-fill: #64748b;"
+                        + "-fx-font-size: 14px;"
         );
 
         return label;
@@ -1006,8 +1766,8 @@ public class Appointments {
         );
 
         label.setStyle(
-                "-fx-text-fill: #dc2626;" +
-                "-fx-font-size: 14px;"
+                "-fx-text-fill: #dc2626;"
+                        + "-fx-font-size: 14px;"
         );
 
         return label;
@@ -1116,6 +1876,7 @@ public class Appointments {
             );
 
             view.setFitWidth(width);
+
             view.setFitHeight(height);
 
             return view;
@@ -1151,6 +1912,7 @@ public class Appointments {
         stage.show();
 
         if (!stage.isMaximized()) {
+
             stage.setMaximized(true);
         }
     }
@@ -1169,6 +1931,7 @@ public class Appointments {
         stage.show();
 
         if (!stage.isMaximized()) {
+
             stage.setMaximized(true);
         }
     }
@@ -1187,7 +1950,9 @@ public class Appointments {
         stage.show();
 
         if (!stage.isMaximized()) {
+
             stage.setMaximized(true);
         }
     }
 }
+
