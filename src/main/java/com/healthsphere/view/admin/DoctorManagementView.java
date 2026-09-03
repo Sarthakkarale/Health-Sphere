@@ -42,6 +42,12 @@ public class DoctorManagementView extends ScrollPane {
 
     private BarChart<String, Number> specializationBarChart;
 
+    /*
+     * Stored as a field so that the specialization dropdown
+     * can be populated after Firestore data is loaded.
+     */
+    private ComboBox<String> specializationFilter;
+
     private final DoctorManagementController doctorController;
 
     public DoctorManagementView() {
@@ -54,6 +60,7 @@ public class DoctorManagementView extends ScrollPane {
         this.doctorController = new DoctorManagementController();
 
         setFitToWidth(true);
+
         setStyle(
                 "-fx-background-color: #F8FAFC;" +
                 "-fx-background: #F8FAFC;" +
@@ -103,9 +110,10 @@ public class DoctorManagementView extends ScrollPane {
 
         VBox titleBox = new VBox(4);
 
-        Label title = new Label(
-                "Doctor & Specialist Directory"
-        );
+        Label title =
+                new Label(
+                        "Doctor & Specialist Directory"
+                );
 
         title.setFont(
                 Font.font(
@@ -119,9 +127,10 @@ public class DoctorManagementView extends ScrollPane {
                 Color.web("#0F172A")
         );
 
-        Label subtitle = new Label(
-                "Manage doctor profiles, credentials and verification approvals."
-        );
+        Label subtitle =
+                new Label(
+                        "Manage doctor profiles, credentials and verification approvals."
+                );
 
         subtitle.setFont(
                 Font.font(
@@ -141,6 +150,7 @@ public class DoctorManagementView extends ScrollPane {
         );
 
         Region spacer = new Region();
+
         HBox.setHgrow(
                 spacer,
                 Priority.ALWAYS
@@ -186,23 +196,56 @@ public class DoctorManagementView extends ScrollPane {
 
     private HBox createAnalyticsSection() {
 
-        HBox section = new HBox(20);
-        section.setAlignment(Pos.CENTER);
+        /*
+         * Hospital-style layout:
+         *
+         * -------------------------------------------------
+         * | Total Doctors | Approved | Specialization      |
+         * |               |          | Breakdown Chart     |
+         * | Pending       | Rejected |                     |
+         * -------------------------------------------------
+         *
+         * The four KPI cards stay compact on the left.
+         */
 
-        GridPane statsGrid = new GridPane();
+        HBox section =
+                new HBox(16);
+
+        section.setAlignment(
+                Pos.TOP_LEFT
+        );
+
+        /*
+         * --------------------------------------------------------
+         * LEFT SIDE - KPI GRID
+         * --------------------------------------------------------
+         */
+
+        GridPane statsGrid =
+                new GridPane();
 
         statsGrid.setHgap(16);
         statsGrid.setVgap(16);
 
-        HBox.setHgrow(
-                statsGrid,
-                Priority.ALWAYS
-        );
+        /*
+         * Fixed preferred size prevents the cards from
+         * stretching too much.
+         */
+        statsGrid.setPrefWidth(760);
+        statsGrid.setMinWidth(760);
+        statsGrid.setMaxWidth(760);
 
-        totalCountLabel = new Label("0");
-        activeCountLabel = new Label("0");
-        pendingCountLabel = new Label("0");
-        rejectedCountLabel = new Label("0");
+        totalCountLabel =
+                new Label("0");
+
+        activeCountLabel =
+                new Label("0");
+
+        pendingCountLabel =
+                new Label("0");
+
+        rejectedCountLabel =
+                new Label("0");
 
         VBox totalCard =
                 createStatCard(
@@ -236,20 +279,50 @@ public class DoctorManagementView extends ScrollPane {
                         "#DC2626"
                 );
 
+        /*
+         * Each card has a fixed compact height.
+         */
+        totalCard.setPrefHeight(145);
+        totalCard.setMinHeight(145);
+        totalCard.setMaxHeight(145);
+
+        activeCard.setPrefHeight(145);
+        activeCard.setMinHeight(145);
+        activeCard.setMaxHeight(145);
+
+        pendingCard.setPrefHeight(145);
+        pendingCard.setMinHeight(145);
+        pendingCard.setMaxHeight(145);
+
+        rejectedCard.setPrefHeight(145);
+        rejectedCard.setMinHeight(145);
+        rejectedCard.setMaxHeight(145);
+
+        /*
+         * Two equal columns.
+         */
         ColumnConstraints c1 =
                 new ColumnConstraints();
 
         c1.setPercentWidth(50);
+        c1.setHgrow(Priority.ALWAYS);
 
         ColumnConstraints c2 =
                 new ColumnConstraints();
 
         c2.setPercentWidth(50);
+        c2.setHgrow(Priority.ALWAYS);
 
         statsGrid
                 .getColumnConstraints()
-                .addAll(c1, c2);
+                .addAll(
+                        c1,
+                        c2
+                );
 
+        /*
+         * First row
+         */
         statsGrid.add(
                 totalCard,
                 0,
@@ -262,6 +335,9 @@ public class DoctorManagementView extends ScrollPane {
                 0
         );
 
+        /*
+         * Second row
+         */
         statsGrid.add(
                 pendingCard,
                 0,
@@ -274,13 +350,26 @@ public class DoctorManagementView extends ScrollPane {
                 1
         );
 
-        VBox chartCard = new VBox(12);
+        /*
+         * --------------------------------------------------------
+         * RIGHT SIDE - SPECIALIZATION CHART
+         * --------------------------------------------------------
+         */
+
+        VBox chartCard =
+                new VBox(12);
 
         chartCard.setPadding(
                 new Insets(16)
         );
 
+        chartCard.setPrefWidth(470);
         chartCard.setMinWidth(420);
+        chartCard.setMaxWidth(470);
+
+        chartCard.setPrefHeight(306);
+        chartCard.setMinHeight(306);
+        chartCard.setMaxHeight(306);
 
         chartCard.setStyle(
                 "-fx-background-color: #FFFFFF;" +
@@ -306,6 +395,23 @@ public class DoctorManagementView extends ScrollPane {
                 Color.web("#0F172A")
         );
 
+        Label chartSubtitle =
+                new Label(
+                        "Registered doctors by specialization"
+                );
+
+        chartSubtitle.setFont(
+                Font.font(
+                        "Segoe UI",
+                        FontWeight.NORMAL,
+                        11
+                )
+        );
+
+        chartSubtitle.setTextFill(
+                Color.web("#64748B")
+        );
+
         CategoryAxis xAxis =
                 new CategoryAxis();
 
@@ -320,21 +426,54 @@ public class DoctorManagementView extends ScrollPane {
                 Color.web("#64748B")
         );
 
+        xAxis.setTickLabelFont(
+                Font.font(
+                        "Segoe UI",
+                        10
+                )
+        );
+
+        yAxis.setTickLabelFont(
+                Font.font(
+                        "Segoe UI",
+                        10
+                )
+        );
+
         specializationBarChart =
                 new BarChart<>(
                         xAxis,
                         yAxis
                 );
 
-        specializationBarChart.setPrefHeight(180);
-        specializationBarChart.setLegendVisible(false);
-        specializationBarChart.setAnimated(false);
+        specializationBarChart.setPrefHeight(220);
+        specializationBarChart.setMinHeight(200);
+
+        specializationBarChart.setLegendVisible(
+                false
+        );
+
+        specializationBarChart.setAnimated(
+                false
+        );
+
+        specializationBarChart.setCategoryGap(
+                18
+        );
+
+        specializationBarChart.setBarGap(
+                3
+        );
 
         chartCard.getChildren().addAll(
                 chartTitle,
+                chartSubtitle,
                 specializationBarChart
         );
 
+        /*
+         * Hospital-style compact analytics section.
+         */
         section.getChildren().addAll(
                 statsGrid,
                 chartCard
@@ -343,22 +482,35 @@ public class DoctorManagementView extends ScrollPane {
         return section;
     }
 
+    // ============================================================
+    // KPI CARD
+    // ============================================================
+
     private VBox createStatCard(
             String title,
             Label valueLabel,
             String subtext,
             String accentColorHex) {
 
-        VBox card = new VBox(6);
+        VBox card =
+                new VBox(6);
 
+        /*
+         * Same compact visual style as Hospital KPI cards.
+         */
         card.setPadding(
-                new Insets(16)
+                new Insets(18)
         );
+
+        card.setPrefHeight(145);
+        card.setMinHeight(145);
+        card.setMaxHeight(145);
 
         card.setStyle(
                 "-fx-background-color: #FFFFFF;" +
                 "-fx-background-radius: 12px;" +
-                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-color: " + accentColorHex + ";" +
+                "-fx-border-width: 1.4px;" +
                 "-fx-border-radius: 12px;"
         );
 
@@ -368,8 +520,8 @@ public class DoctorManagementView extends ScrollPane {
         titleLabel.setFont(
                 Font.font(
                         "Segoe UI",
-                        FontWeight.SEMI_BOLD,
-                        12
+                        FontWeight.NORMAL,
+                        13
                 )
         );
 
@@ -381,12 +533,16 @@ public class DoctorManagementView extends ScrollPane {
                 Font.font(
                         "Segoe UI",
                         FontWeight.BOLD,
-                        22
+                        30
                 )
         );
 
+        /*
+         * Value uses the KPI accent colour,
+         * like the Hospital Verification cards.
+         */
         valueLabel.setTextFill(
-                Color.web("#0F172A")
+                Color.web(accentColorHex)
         );
 
         Label subLabel =
@@ -401,7 +557,7 @@ public class DoctorManagementView extends ScrollPane {
         );
 
         subLabel.setTextFill(
-                Color.web(accentColorHex)
+                Color.web("#64748B")
         );
 
         card.getChildren().addAll(
@@ -419,7 +575,8 @@ public class DoctorManagementView extends ScrollPane {
 
     private HBox createFilterBar() {
 
-        HBox bar = new HBox(14);
+        HBox bar =
+                new HBox(14);
 
         bar.setAlignment(
                 Pos.CENTER_LEFT
@@ -474,7 +631,13 @@ public class DoctorManagementView extends ScrollPane {
                 "-fx-border-radius: 6px;"
         );
 
-        ComboBox<String> specializationFilter =
+        /*
+         * IMPORTANT:
+         *
+         * This is now a class-level ComboBox.
+         * Firestore specializations are added after loading data.
+         */
+        specializationFilter =
                 new ComboBox<>();
 
         specializationFilter.getItems().add(
@@ -485,6 +648,10 @@ public class DoctorManagementView extends ScrollPane {
                 "All Specializations"
         );
 
+        specializationFilter.setPrefWidth(
+                170
+        );
+
         specializationFilter.setStyle(
                 "-fx-background-color: #F8FAFC;" +
                 "-fx-text-fill: #0F172A;" +
@@ -492,70 +659,85 @@ public class DoctorManagementView extends ScrollPane {
                 "-fx-border-radius: 6px;"
         );
 
-        Runnable applyFilter = () -> {
+        /*
+         * --------------------------------------------------------
+         * FILTER LOGIC
+         * --------------------------------------------------------
+         */
 
-            String query =
-                    searchInput
-                            .getText()
-                            .toLowerCase()
-                            .trim();
+        Runnable applyFilter =
+                () -> {
 
-            String selectedVerification =
-                    verificationFilter.getValue();
-
-            String selectedSpecialization =
-                    specializationFilter.getValue();
-
-            filteredData.setPredicate(
-                    doctor -> {
-
-                        boolean matchesQuery =
-                                query.isEmpty()
-                                        ||
-                                doctor.getName()
-                                        .toLowerCase()
-                                        .contains(query)
-                                        ||
-                                doctor.getDoctorId()
-                                        .toLowerCase()
-                                        .contains(query)
-                                        ||
-                                doctor.getSpecialization()
-                                        .toLowerCase()
-                                        .contains(query)
-                                        ||
-                                doctor.getEmail()
-                                        .toLowerCase()
-                                        .contains(query);
-
-                        boolean matchesVerification =
-                                selectedVerification.equals(
-                                        "All Approvals"
-                                )
-                                ||
-                                doctor
-                                        .getVerificationStatus()
-                                        .equalsIgnoreCase(
-                                                selectedVerification
-                                        );
-
-                        boolean matchesSpecialization =
-                                selectedSpecialization.equals(
-                                        "All Specializations"
-                                )
-                                ||
-                                doctor
-                                        .getSpecialization()
-                                        .equalsIgnoreCase(
-                                                selectedSpecialization
-                                        );
-
-                        return matchesQuery
-                                && matchesVerification
-                                && matchesSpecialization;
+                    if (filteredData == null) {
+                        return;
                     }
-            );
-        };
+
+                    String query =
+                            searchInput
+                                    .getText()
+                                    .toLowerCase()
+                                    .trim();
+
+                    String selectedVerification =
+                            verificationFilter.getValue();
+
+                    String selectedSpecialization =
+                            specializationFilter.getValue();
+
+                    filteredData.setPredicate(
+                            doctor -> {
+
+                                boolean matchesQuery =
+                                        query.isEmpty()
+                                                ||
+                                        doctor.getName()
+                                                .toLowerCase()
+                                                .contains(query)
+                                                ||
+                                        doctor.getDoctorId()
+                                                .toLowerCase()
+                                                .contains(query)
+                                                ||
+                                        doctor.getSpecialization()
+                                                .toLowerCase()
+                                                .contains(query)
+                                                ||
+                                        doctor.getEmail()
+                                                .toLowerCase()
+                                                .contains(query);
+
+                                boolean matchesVerification =
+                                        selectedVerification == null
+                                                ||
+                                        selectedVerification.equals(
+                                                "All Approvals"
+                                        )
+                                                ||
+                                        doctor
+                                                .getVerificationStatus()
+                                                .equalsIgnoreCase(
+                                                        selectedVerification
+                                                );
+
+                                boolean matchesSpecialization =
+                                        selectedSpecialization == null
+                                                ||
+                                        selectedSpecialization.equals(
+                                                "All Specializations"
+                                        )
+                                                ||
+                                        doctor
+                                                .getSpecialization()
+                                                .equalsIgnoreCase(
+                                                        selectedSpecialization
+                                                );
+
+                                return matchesQuery
+                                        && matchesVerification
+                                        && matchesSpecialization;
+                            }
+                    );
+                };
 
         searchInput.textProperty()
                 .addListener(
@@ -575,7 +757,8 @@ public class DoctorManagementView extends ScrollPane {
                                 -> applyFilter.run()
                 );
 
-        Region spacer = new Region();
+        Region spacer =
+                new Region();
 
         HBox.setHgrow(
                 spacer,
@@ -583,7 +766,9 @@ public class DoctorManagementView extends ScrollPane {
         );
 
         Button resetBtn =
-                new Button("Reset Filters");
+                new Button(
+                        "Reset Filters"
+                );
 
         resetBtn.setFont(
                 Font.font(
@@ -633,7 +818,8 @@ public class DoctorManagementView extends ScrollPane {
 
     private VBox createTableContainer() {
 
-        VBox container = new VBox(12);
+        VBox container =
+                new VBox(12);
 
         container.setPadding(
                 new Insets(16)
@@ -674,7 +860,9 @@ public class DoctorManagementView extends ScrollPane {
                 "-fx-background-color: transparent;"
         );
 
-        doctorTable.setPrefHeight(500);
+        doctorTable.setPrefHeight(
+                500
+        );
 
         // --------------------------------------------------------
         // DOCTOR
@@ -1185,11 +1373,13 @@ public class DoctorManagementView extends ScrollPane {
                         viewBtn.setOnAction(
                                 e -> {
 
-                                    if (getIndex() < 0 ||
+                                    if (
+                                            getIndex() < 0 ||
                                             getIndex() >=
                                                     getTableView()
                                                             .getItems()
-                                                            .size()) {
+                                                            .size()
+                                    ) {
                                         return;
                                     }
 
@@ -1207,11 +1397,13 @@ public class DoctorManagementView extends ScrollPane {
                         verifyBtn.setOnAction(
                                 e -> {
 
-                                    if (getIndex() < 0 ||
+                                    if (
+                                            getIndex() < 0 ||
                                             getIndex() >=
                                                     getTableView()
                                                             .getItems()
-                                                            .size()) {
+                                                            .size()
+                                    ) {
                                         return;
                                     }
 
@@ -1329,8 +1521,10 @@ public class DoctorManagementView extends ScrollPane {
                                         profile.getUid()
                                 );
 
-                if (status == null ||
-                        status.trim().isEmpty()) {
+                if (
+                        status == null ||
+                        status.trim().isEmpty()
+                ) {
 
                     status = "PENDING";
                 }
@@ -1353,6 +1547,12 @@ public class DoctorManagementView extends ScrollPane {
                     filteredData
             );
 
+            /*
+             * Populate specialization dropdown
+             * AFTER Firestore data has been loaded.
+             */
+            updateSpecializationFilter();
+
             updateCountersAndChart();
 
         } catch (Exception e) {
@@ -1372,6 +1572,22 @@ public class DoctorManagementView extends ScrollPane {
                     filteredData
             );
 
+            /*
+             * Clear specialization list if loading fails.
+             */
+            if (specializationFilter != null) {
+
+                specializationFilter.getItems().clear();
+
+                specializationFilter.getItems().add(
+                        "All Specializations"
+                );
+
+                specializationFilter.setValue(
+                        "All Specializations"
+                );
+            }
+
             updateCountersAndChart();
 
             showAlert(
@@ -1382,24 +1598,125 @@ public class DoctorManagementView extends ScrollPane {
         }
     }
 
+    // ============================================================
+    // SPECIALIZATION FILTER UPDATE
+    // ============================================================
+
+    private void updateSpecializationFilter() {
+
+        if (
+                specializationFilter == null ||
+                masterDoctorData == null
+        ) {
+            return;
+        }
+
+        /*
+         * Remember current selection.
+         */
+        String currentSelection =
+                specializationFilter.getValue();
+
+        /*
+         * Get all unique non-empty specializations.
+         */
+        java.util.List<String> specializations =
+                masterDoctorData
+                        .stream()
+                        .map(
+                                DoctorModel::getSpecialization
+                        )
+                        .filter(
+                                specialization ->
+                                        specialization != null &&
+                                        !specialization
+                                                .trim()
+                                                .isEmpty()
+                        )
+                        .map(
+                                String::trim
+                        )
+                        .distinct()
+                        .sorted(
+                                String.CASE_INSENSITIVE_ORDER
+                        )
+                        .collect(
+                                Collectors.toList()
+                        );
+
+        /*
+         * Rebuild dropdown.
+         */
+        specializationFilter
+                .getItems()
+                .clear();
+
+        specializationFilter
+                .getItems()
+                .add(
+                        "All Specializations"
+                );
+
+        specializationFilter
+                .getItems()
+                .addAll(
+                        specializations
+                );
+
+        /*
+         * Keep existing selection if it still exists.
+         */
+        if (
+                currentSelection != null &&
+                specializationFilter
+                        .getItems()
+                        .contains(
+                                currentSelection
+                        )
+        ) {
+
+            specializationFilter.setValue(
+                    currentSelection
+            );
+
+        } else {
+
+            specializationFilter.setValue(
+                    "All Specializations"
+            );
+        }
+    }
+
+    // ============================================================
+    // CONVERT MODEL
+    // ============================================================
+
     private DoctorModel convertToDoctorModel(
             DoctorProfile profile,
             String verificationStatus) {
 
         String firstName =
-                safe(profile.getFirstName());
+                safe(
+                        profile.getFirstName()
+                );
 
         String lastName =
-                safe(profile.getLastName());
+                safe(
+                        profile.getLastName()
+                );
 
         String name =
-                ("Dr. "
-                        + firstName
-                        + " "
-                        + lastName)
-                        .trim();
+                (
+                        "Dr. "
+                                + firstName
+                                + " "
+                                + lastName
+                ).trim();
 
-        if (name.equals("Dr.")) {
+        if (
+                name.equals("Dr.")
+        ) {
+
             name = "Doctor";
         }
 
@@ -1423,7 +1740,9 @@ public class DoctorManagementView extends ScrollPane {
 
     private void updateCountersAndChart() {
 
-        if (masterDoctorData == null) {
+        if (
+                masterDoctorData == null
+        ) {
             return;
         }
 
@@ -1434,10 +1753,11 @@ public class DoctorManagementView extends ScrollPane {
                 masterDoctorData
                         .stream()
                         .filter(
-                                d -> "APPROVED"
-                                        .equalsIgnoreCase(
-                                                d.getVerificationStatus()
-                                        )
+                                d ->
+                                        "APPROVED"
+                                                .equalsIgnoreCase(
+                                                        d.getVerificationStatus()
+                                                )
                         )
                         .count();
 
@@ -1445,10 +1765,11 @@ public class DoctorManagementView extends ScrollPane {
                 masterDoctorData
                         .stream()
                         .filter(
-                                d -> "PENDING"
-                                        .equalsIgnoreCase(
-                                                d.getVerificationStatus()
-                                        )
+                                d ->
+                                        "PENDING"
+                                                .equalsIgnoreCase(
+                                                        d.getVerificationStatus()
+                                                )
                         )
                         .count();
 
@@ -1456,10 +1777,11 @@ public class DoctorManagementView extends ScrollPane {
                 masterDoctorData
                         .stream()
                         .filter(
-                                d -> "REJECTED"
-                                        .equalsIgnoreCase(
-                                                d.getVerificationStatus()
-                                        )
+                                d ->
+                                        "REJECTED"
+                                                .equalsIgnoreCase(
+                                                        d.getVerificationStatus()
+                                                )
                         )
                         .count();
 
@@ -1505,7 +1827,10 @@ public class DoctorManagementView extends ScrollPane {
                 new XYChart.Series<>();
 
         counts.forEach(
-                (specialization, count) ->
+                (
+                        specialization,
+                        count
+                ) ->
                         series.getData().add(
                                 new XYChart.Data<>(
                                         specialization,
@@ -1516,7 +1841,9 @@ public class DoctorManagementView extends ScrollPane {
 
         specializationBarChart
                 .getData()
-                .add(series);
+                .add(
+                        series
+                );
     }
 
     // ============================================================
@@ -1546,7 +1873,9 @@ public class DoctorManagementView extends ScrollPane {
                 new Insets(15)
         );
 
-        content.setPrefWidth(480);
+        content.setPrefWidth(
+                480
+        );
 
         Label details =
                 new Label(
@@ -1575,7 +1904,9 @@ public class DoctorManagementView extends ScrollPane {
                                 + doctor.getVerificationStatus()
                 );
 
-        details.setWrapText(true);
+        details.setWrapText(
+                true
+        );
 
         Label actionTitle =
                 new Label(
@@ -1765,7 +2096,9 @@ public class DoctorManagementView extends ScrollPane {
         );
 
         dialog.getDialogPane()
-                .setContent(content);
+                .setContent(
+                        content
+                );
 
         dialog.getDialogPane()
                 .getButtonTypes()
@@ -1832,8 +2165,10 @@ public class DoctorManagementView extends ScrollPane {
 
         String initials = "DR";
 
-        if (name != null &&
-                !name.trim().isEmpty()) {
+        if (
+                name != null &&
+                !name.trim().isEmpty()
+        ) {
 
             String cleaned =
                     name.replace(
@@ -1842,9 +2177,13 @@ public class DoctorManagementView extends ScrollPane {
                     ).trim();
 
             String[] parts =
-                    cleaned.split("\\s+");
+                    cleaned.split(
+                            "\\s+"
+                    );
 
-            if (parts.length >= 2) {
+            if (
+                    parts.length >= 2
+            ) {
 
                 initials =
                         (
@@ -1878,7 +2217,9 @@ public class DoctorManagementView extends ScrollPane {
         );
 
         Label label =
-                new Label(initials);
+                new Label(
+                        initials
+                );
 
         label.setFont(
                 Font.font(
@@ -1902,7 +2243,8 @@ public class DoctorManagementView extends ScrollPane {
     // HELPERS
     // ============================================================
 
-    private String safe(String value) {
+    private String safe(
+            String value) {
 
         return value == null
                 ? ""
@@ -1918,9 +2260,17 @@ public class DoctorManagementView extends ScrollPane {
                         Alert.AlertType.INFORMATION
                 );
 
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
+        alert.setTitle(
+                title
+        );
+
+        alert.setHeaderText(
+                null
+        );
+
+        alert.setContentText(
+                content
+        );
 
         alert.showAndWait();
     }
