@@ -1,826 +1,800 @@
 package com.healthsphere.view.Patient;
 
-import com.healthsphere.controller.patient.PatientController;
-import com.healthsphere.model.PatientProfile;
-
+import javafx.animation.FadeTransition;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.Separator;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
+import javafx.util.Duration;
+
+import com.healthsphere.controller.patient.PatientController;
+import com.healthsphere.model.PatientProfile;
 
 public class Dashboard {
 
     private final Stage stage;
     private final PatientController patientController;
 
+    private Timeline imageTimeline;
+
+    // =========================================================
+    // DASHBOARD CAROUSEL IMAGES
+    // =========================================================
+
+    private final String[] carouselImages = {
+            "/images/dashboard/dashboard1.jpg",
+            "/images/dashboard/dashboard2.jpg",
+            "/images/dashboard/dashboard3.jpg",
+            "/images/dashboard/dashboard4.jpg"
+    };
+
+    private final String[] carouselTitles = {
+            "Smart Healthcare",
+            "Connected Care",
+            "Your Health, Your Records",
+            "Healthcare Made Simple"
+    };
+
+    private final String[] carouselSubtitles = {
+            "Manage your healthcare journey with HealthSphere.",
+            "Access your healthcare services from one place.",
+            "Keep your important medical information organized.",
+            "Everything you need for better healthcare management."
+    };
+
+    // =========================================================
+    // CONSTRUCTOR
+    // =========================================================
+
     public Dashboard(Stage stage) {
-
         this.stage = stage;
-
-        this.patientController =
-                new PatientController();
+        this.patientController = new PatientController();
     }
 
     // =========================================================
-    // SCENE
+    // MAIN SCENE
     // =========================================================
 
     public Scene getScene() {
 
-        VBox content =
-                new VBox(22);
+        String patientName = loadPatientName();
 
-        content.setPadding(
-                new Insets(28)
-        );
+        VBox content = new VBox(24);
 
+        content.setPadding(new Insets(5));
         content.setFillWidth(true);
-
         content.setMinWidth(0);
+        content.setMaxWidth(Double.MAX_VALUE);
 
-        content.setMaxWidth(
-                Double.MAX_VALUE
+        // =====================================================
+        // WELCOME
+        // =====================================================
+
+        VBox welcomeBox = new VBox(6);
+
+        Label welcome = new Label(
+                "Good day, " + patientName + "!"
         );
 
-        content.setStyle(
-                "-fx-background-color: #f1f5f9;"
-        );
-
-        // =====================================================
-        // PATIENT NAME
-        // =====================================================
-
-        String patientName =
-                "Patient";
-
-        try {
-
-            PatientProfile profile =
-                    patientController
-                            .getCurrentPatientProfile();
-
-            if (profile != null
-                    && profile.getFirstName() != null
-                    && !profile.getFirstName().isBlank()) {
-
-                patientName =
-                        profile.getFirstName()
-                                .trim();
-            }
-
-        } catch (Exception e) {
-
-            System.err.println(
-                    "Unable to load patient profile: "
-                            + e.getMessage()
-            );
-        }
-
-        // =====================================================
-        // HEADING
-        // =====================================================
-
-        Label title =
-                new Label(
-                        "Good evening, "
-                                + patientName
-                );
-
-        title.setWrapText(true);
-
-        title.setStyle(
-                "-fx-font-size: 30px;" +
+        welcome.setStyle(
+                "-fx-font-size: 28px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #0f172a;"
         );
 
-        Label subtitle =
-                new Label(
-                        "Here is your health overview and today's important updates."
-                );
-
-        subtitle.setWrapText(true);
-
-        subtitle.setMaxWidth(
-                Double.MAX_VALUE
+        Label welcomeSubtitle = new Label(
+                "Welcome back to HealthSphere. " +
+                "Your healthcare journey starts here."
         );
 
-        subtitle.setStyle(
+        welcomeSubtitle.setStyle(
                 "-fx-font-size: 15px;" +
                 "-fx-text-fill: #64748b;"
         );
 
-        VBox heading =
-                new VBox(
-                        5,
-                        title,
-                        subtitle
-                );
+        welcomeSubtitle.setWrapText(true);
 
-        heading.setMinWidth(0);
-
-        heading.setMaxWidth(
-                Double.MAX_VALUE
+        welcomeBox.getChildren().addAll(
+                welcome,
+                welcomeSubtitle
         );
 
         // =====================================================
-        // IMAGE CARDS
+        // ORIGINAL IMAGE CAROUSEL
         // =====================================================
 
-        HBox imageRow =
-                new HBox(15);
-
-        imageRow.setFillHeight(true);
-
-        imageRow.setMinWidth(0);
-
-        imageRow.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        VBox card1 =
-                imageCard(
-                        createDashboardImage(
-                                "/images/dashboard/dashboard1.jpg"
-                        ),
-                        "Your Health"
-                );
-
-        VBox card2 =
-                imageCard(
-                        createDashboardImage(
-                                "/images/dashboard/dashboard2.jpg"
-                        ),
-                        "Healthy Lifestyle"
-                );
-
-        VBox card3 =
-                imageCard(
-                        createDashboardImage(
-                                "/images/dashboard/dashboard3.jpg"
-                        ),
-                        "Medical Care"
-                );
-
-        VBox card4 =
-                imageCard(
-                        createDashboardImage(
-                                "/images/dashboard/dashboard4.jpg"
-                        ),
-                        "Wellness"
-                );
-
-        HBox.setHgrow(
-                card1,
-                Priority.ALWAYS
-        );
-
-        HBox.setHgrow(
-                card2,
-                Priority.ALWAYS
-        );
-
-        HBox.setHgrow(
-                card3,
-                Priority.ALWAYS
-        );
-
-        HBox.setHgrow(
-                card4,
-                Priority.ALWAYS
-        );
-
-        imageRow.getChildren().addAll(
-                card1,
-                card2,
-                card3,
-                card4
-        );
+        StackPane carousel = createImageCarousel();
 
         // =====================================================
-        // STAT CARDS
+        // SERVICES HEADING
         // =====================================================
 
-        HBox stats =
-                new HBox(18);
+        VBox servicesHeading = new VBox(5);
 
-        stats.setFillHeight(true);
-
-        stats.setMinWidth(0);
-
-        stats.setMaxWidth(
-                Double.MAX_VALUE
+        Label servicesTitle = new Label(
+                "Your Healthcare Services"
         );
 
-        VBox heartRate =
-                statCard(
-                        "♥",
-                        "Heart Rate",
-                        "72 BPM",
-                        "Normal"
-                );
-
-        VBox bloodPressure =
-                statCard(
-                        "BP",
-                        "Blood Pressure",
-                        "118 / 76",
-                        "Healthy"
-                );
-
-        VBox appointmentStat =
-                statCard(
-                        "◷",
-                        "Next Appointment",
-                        "Tomorrow",
-                        "10:00 AM"
-                );
-
-        VBox aiInsightsStat =
-                statCard(
-                        "✦",
-                        "AI Insights",
-                        "3",
-                        "New"
-                );
-
-        HBox.setHgrow(
-                heartRate,
-                Priority.ALWAYS
-        );
-
-        HBox.setHgrow(
-                bloodPressure,
-                Priority.ALWAYS
-        );
-
-        HBox.setHgrow(
-                appointmentStat,
-                Priority.ALWAYS
-        );
-
-        HBox.setHgrow(
-                aiInsightsStat,
-                Priority.ALWAYS
-        );
-
-        stats.getChildren().addAll(
-                heartRate,
-                bloodPressure,
-                appointmentStat,
-                aiInsightsStat
-        );
-
-        // =====================================================
-        // MIDDLE SECTION
-        // =====================================================
-
-        HBox middle =
-                new HBox(18);
-
-        middle.setFillHeight(true);
-
-        middle.setMinWidth(0);
-
-        middle.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        VBox appointment =
-                card(
-                        "Upcoming Appointment"
-                );
-
-        appointment.setMinWidth(0);
-
-        appointment.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        HBox.setHgrow(
-                appointment,
-                Priority.ALWAYS
-        );
-
-        Label doctor =
-                new Label(
-                        "Dr. Sarah Jenkins"
-                );
-
-        doctor.setWrapText(true);
-
-        doctor.setStyle(
-                "-fx-font-size: 19px;" +
+        servicesTitle.setStyle(
+                "-fx-font-size: 23px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #0f172a;"
         );
 
-        Label specialty =
-                muted(
-                        "Cardiology"
-                );
-
-        Label time =
-                new Label(
-                        "Tomorrow • 10:00 AM"
-                );
-
-        time.setWrapText(true);
-
-        time.setStyle(
-                "-fx-font-size: 16px;" +
-                "-fx-text-fill: #334155;"
+        Label servicesSubtitle = new Label(
+                "Access all your healthcare services quickly and easily."
         );
 
-        Button appointmentButton =
-                button(
-                        "View Appointments",
-                        this::showAppointments
-                );
+        servicesSubtitle.setStyle(
+                "-fx-font-size: 14px;" +
+                "-fx-text-fill: #64748b;"
+        );
 
-        appointment.getChildren().addAll(
-                doctor,
-                specialty,
-                new Separator(),
-                time,
-                appointmentButton
+        servicesSubtitle.setWrapText(true);
+
+        servicesHeading.getChildren().addAll(
+                servicesTitle,
+                servicesSubtitle
         );
 
         // =====================================================
-        // AI INSIGHTS
+        // SERVICE CARDS
         // =====================================================
 
-        VBox insights =
-                card(
-                        "AI Health Insights"
-                );
-
-        insights.setMinWidth(0);
-
-        insights.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        HBox.setHgrow(
-                insights,
-                Priority.ALWAYS
-        );
-
-        insights.getChildren().addAll(
-
-                insight(
-                        "Elevated Blood Pressure Trend",
-                        "A slight upward trend has been detected in your recent readings."
-                ),
-
-                insight(
-                        "Medication Review",
-                        "Your medication list has been checked for possible interactions."
-                ),
-
-                insight(
-                        "Health Passport",
-                        "Your latest medical records are ready for review."
-                )
-        );
-
-        middle.getChildren().addAll(
-                appointment,
-                insights
-        );
+        VBox serviceCards = createServiceCards();
 
         // =====================================================
-        // QUICK ACTIONS
-        // =====================================================
-
-        VBox quickActions =
-                card(
-                        "Quick Actions"
-                );
-
-        quickActions.setMinWidth(0);
-
-        quickActions.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        HBox actions =
-                new HBox(12);
-
-        actions.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        actions.setMinWidth(0);
-
-        actions.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        Button hospitalsButton =
-                button(
-                        "Find Hospitals",
-                        this::showSearchHospitals
-                );
-
-        Button passportButton =
-                button(
-                        "Health Passport",
-                        this::showHealthPassport
-                );
-
-        Button recordsButton =
-                button(
-                        "Medical Records",
-                        this::showMedicalRecords
-                );
-
-        Button assistantButton =
-                button(
-                        "AI Assistant",
-                        this::showAIHealthAssistant
-                );
-
-        Button emergencyButton =
-                button(
-                        "Emergency",
-                        this::showEmergencyAssistance
-                );
-
-        actions.getChildren().addAll(
-                hospitalsButton,
-                passportButton,
-                recordsButton,
-                assistantButton,
-                emergencyButton
-        );
-
-        quickActions.getChildren().add(
-                actions
-        );
-
-        // =====================================================
-        // ADD EVERYTHING
+        // ADD CONTENT
         // =====================================================
 
         content.getChildren().addAll(
-                heading,
-                imageRow,
-                stats,
-                middle,
-                quickActions
+                welcomeBox,
+                carousel,
+                servicesHeading,
+                serviceCards
         );
-
-        // =====================================================
-        // PATIENT UI
-        // =====================================================
 
         return PatientUI.createScene(
                 stage,
                 "Dashboard",
                 "Dashboard",
-                "Here is your health overview and today's important updates.",
+                "Manage your healthcare journey from one place.",
                 content
         );
     }
 
     // =========================================================
-    // DASHBOARD IMAGE
+    // LOAD PATIENT NAME
     // =========================================================
 
-    private ImageView createDashboardImage(
-            String imagePath
-    ) {
-
-        Image image = null;
+    private String loadPatientName() {
 
         try {
 
-            if (getClass().getResource(
-                    imagePath
-            ) != null) {
+            PatientProfile profile =
+                    patientController.getCurrentPatientProfile();
 
-                image =
-                        new Image(
-                                getClass()
-                                        .getResourceAsStream(
-                                                imagePath
-                                        )
-                        );
+            if (profile == null) {
+                return "Patient";
             }
+
+            String firstName =
+                    profile.getFirstName() == null
+                            ? ""
+                            : profile.getFirstName().trim();
+
+            String lastName =
+                    profile.getLastName() == null
+                            ? ""
+                            : profile.getLastName().trim();
+
+            String fullName =
+                    (firstName + " " + lastName).trim();
+
+            if (fullName.isEmpty()) {
+                return "Patient";
+            }
+
+            return fullName;
 
         } catch (Exception e) {
 
             System.err.println(
-                    "Unable to load dashboard image: "
-                            + imagePath
+                    "Unable to load patient name: "
+                            + e.getMessage()
             );
+
+            return "Patient";
         }
+    }
+
+    // =========================================================
+    // IMAGE CAROUSEL - KEPT AS ORIGINAL
+    // =========================================================
+
+    private StackPane createImageCarousel() {
+
+        StackPane container = new StackPane();
+
+        container.setPrefHeight(290);
+        container.setMinHeight(290);
+        container.setMaxHeight(290);
+
+        container.setMaxWidth(Double.MAX_VALUE);
+
+        ImageView imageView = new ImageView();
+
+        imageView.setSmooth(true);
+        imageView.setPreserveRatio(false);
+
+        imageView.setFitHeight(290);
+
+        imageView.fitWidthProperty().bind(
+                container.widthProperty()
+        );
+
+        Rectangle imageClip = new Rectangle();
+
+        imageClip.setArcWidth(30);
+        imageClip.setArcHeight(30);
+
+        imageClip.widthProperty().bind(
+                container.widthProperty()
+        );
+
+        imageClip.setHeight(290);
+
+        imageView.setClip(imageClip);
+
+        Image firstImage =
+                loadImage(carouselImages[0]);
+
+        if (firstImage != null) {
+            imageView.setImage(firstImage);
+        }
+
+        container.getChildren().add(imageView);
+
+        // =====================================================
+        // DARK OVERLAY
+        // =====================================================
+
+        Rectangle overlay = new Rectangle();
+
+        overlay.setFill(
+                Color.rgb(0, 0, 0, 0.30)
+        );
+
+        overlay.setArcWidth(30);
+        overlay.setArcHeight(30);
+
+        overlay.widthProperty().bind(
+                container.widthProperty()
+        );
+
+        overlay.setHeight(290);
+
+        container.getChildren().add(overlay);
+
+        // =====================================================
+        // TEXT
+        // =====================================================
+
+        VBox textBox = new VBox(7);
+
+        textBox.setAlignment(Pos.CENTER_LEFT);
+
+        Label title = new Label(
+                carouselTitles[0]
+        );
+
+        title.setStyle(
+                "-fx-font-size: 29px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: white;"
+        );
+
+        Label subtitle = new Label(
+                carouselSubtitles[0]
+        );
+
+        subtitle.setWrapText(true);
+        subtitle.setMaxWidth(500);
+
+        subtitle.setStyle(
+                "-fx-font-size: 15px;" +
+                "-fx-text-fill: white;"
+        );
+
+        textBox.getChildren().addAll(
+                title,
+                subtitle
+        );
+
+        StackPane.setAlignment(
+                textBox,
+                Pos.CENTER_LEFT
+        );
+
+        StackPane.setMargin(
+                textBox,
+                new Insets(0, 40, 0, 42)
+        );
+
+        container.getChildren().add(textBox);
+
+        // =====================================================
+        // DOTS
+        // =====================================================
+
+        HBox dotsBox = new HBox(7);
+
+        dotsBox.setAlignment(Pos.CENTER);
+
+        Circle[] dots =
+                new Circle[carouselImages.length];
+
+        for (int i = 0;
+             i < carouselImages.length;
+             i++) {
+
+            Circle dot = new Circle(5);
+
+            if (i == 0) {
+
+                dot.setFill(Color.WHITE);
+
+            } else {
+
+                dot.setFill(
+                        Color.rgb(
+                                255,
+                                255,
+                                255,
+                                0.45
+                        )
+                );
+            }
+
+            dots[i] = dot;
+
+            dotsBox.getChildren().add(dot);
+        }
+
+        StackPane.setAlignment(
+                dotsBox,
+                Pos.BOTTOM_CENTER
+        );
+
+        StackPane.setMargin(
+                dotsBox,
+                new Insets(0, 0, 15, 0)
+        );
+
+        container.getChildren().add(dotsBox);
+
+        // =====================================================
+        // AUTO SLIDE
+        // =====================================================
+
+        final int[] index = {0};
+
+        imageTimeline =
+                new Timeline(
+                        new KeyFrame(
+                                Duration.seconds(4),
+                                event -> {
+
+                                    int next =
+                                            (index[0] + 1)
+                                                    % carouselImages.length;
+
+                                    Image nextImage =
+                                            loadImage(
+                                                    carouselImages[next]
+                                            );
+
+                                    if (nextImage == null) {
+                                        return;
+                                    }
+
+                                    FadeTransition fadeOut =
+                                            new FadeTransition(
+                                                    Duration.millis(300),
+                                                    imageView
+                                            );
+
+                                    fadeOut.setFromValue(1);
+                                    fadeOut.setToValue(0);
+
+                                    fadeOut.setOnFinished(
+                                            e -> {
+
+                                                imageView.setImage(
+                                                        nextImage
+                                                );
+
+                                                title.setText(
+                                                        carouselTitles[next]
+                                                );
+
+                                                subtitle.setText(
+                                                        carouselSubtitles[next]
+                                                );
+
+                                                for (int i = 0;
+                                                     i < dots.length;
+                                                     i++) {
+
+                                                    if (i == next) {
+
+                                                        dots[i].setFill(
+                                                                Color.WHITE
+                                                        );
+
+                                                    } else {
+
+                                                        dots[i].setFill(
+                                                                Color.rgb(
+                                                                        255,
+                                                                        255,
+                                                                        255,
+                                                                        0.45
+                                                                )
+                                                        );
+                                                    }
+                                                }
+
+                                                FadeTransition fadeIn =
+                                                        new FadeTransition(
+                                                                Duration.millis(300),
+                                                                imageView
+                                                        );
+
+                                                fadeIn.setFromValue(0);
+                                                fadeIn.setToValue(1);
+
+                                                fadeIn.play();
+                                            }
+                                    );
+
+                                    fadeOut.play();
+
+                                    index[0] = next;
+                                }
+                        )
+                );
+
+        imageTimeline.setCycleCount(
+                Timeline.INDEFINITE
+        );
+
+        imageTimeline.play();
+
+        container.sceneProperty().addListener(
+                (observable, oldScene, newScene) -> {
+
+                    if (newScene == null &&
+                            imageTimeline != null) {
+
+                        imageTimeline.stop();
+                    }
+                }
+        );
+
+        return container;
+    }
+
+    // =========================================================
+    // LOAD IMAGE SAFELY
+    // =========================================================
+
+    private Image loadImage(String path) {
+
+        try {
+
+            java.net.URL resource =
+                    getClass().getResource(path);
+
+            if (resource == null) {
+
+                System.err.println(
+                        "Image not found: " + path
+                );
+
+                return null;
+            }
+
+            return new Image(
+                    resource.toExternalForm()
+            );
+
+        } catch (Exception e) {
+
+            System.err.println(
+                    "Unable to load image: " + path
+            );
+
+            return null;
+        }
+    }
+
+    // =========================================================
+    // SERVICE CARDS - THREE CARDS PER ROW
+    // =========================================================
+
+    private VBox createServiceCards() {
+
+        VBox allRows = new VBox(22);
+
+        allRows.setFillWidth(true);
+        allRows.setAlignment(Pos.CENTER);
+
+        // =====================================================
+        // ROW 1
+        // =====================================================
+
+        HBox row1 = new HBox(20);
+
+        row1.setAlignment(Pos.CENTER);
+
+        VBox appointments =
+                createServiceCard(
+                        "Appointments",
+                        "Book and manage your doctor and hospital appointments.",
+                        "/images/appointments/appointment1.jpg",
+                        this::showAppointments
+                );
+
+        VBox medicalRecords =
+                createServiceCard(
+                        "Medical Records",
+                        "View and manage your medical reports and records.",
+                        "/images/medicalrecords/medicalrecord1.jpg",
+                        this::showMedicalRecords
+                );
+
+        VBox healthPassport =
+                createServiceCard(
+                        "Health Passport",
+                        "View your personal health information and health identity.",
+                        "/images/healthpassport/healthpassport1.jpg",
+                        this::showHealthPassport
+                );
+
+        row1.getChildren().addAll(
+                appointments,
+                medicalRecords,
+                healthPassport
+        );
+
+        // =====================================================
+        // ROW 2
+        // =====================================================
+
+        HBox row2 = new HBox(20);
+
+        row2.setAlignment(Pos.CENTER);
+
+        VBox healthMate =
+                createServiceCard(
+                        "HealthMate",
+                        "Get smart assistance for your healthcare questions and needs.",
+                        "/images/ai/ai1.jpg",
+                        this::showHealthMate
+                );
+
+        VBox emergency =
+                createServiceCard(
+                        "Emergency Assistance",
+                        "Quickly access emergency healthcare assistance.",
+                        "/images/emergency/emergency1.jpg",
+                        this::showEmergencyAssistance
+                );
+
+        VBox hospitals =
+                createServiceCard(
+                        "Search Hospitals",
+                        "Find hospitals and healthcare facilities near you.",
+                        "/images/logo/search_hospital.jpg",
+                        this::showSearchHospitals
+                );
+
+        row2.getChildren().addAll(
+                healthMate,
+                emergency,
+                hospitals
+        );
+
+        // =====================================================
+        // ROW 3
+        // =====================================================
+
+        HBox row3 = new HBox(20);
+
+        row3.setAlignment(Pos.CENTER);
+
+        VBox notifications =
+                createServiceCard(
+                        "Notifications",
+                        "View your latest healthcare notifications and updates.",
+                        "/images/logo/notification.jpg",
+                        this::showNotifications
+                );
+
+        VBox profile =
+                createServiceCard(
+                        "Profile & Settings",
+                        "Manage your personal profile and application settings.",
+                        "/images/profile/profile1.jpg",
+                        this::showProfileSettings
+                );
+
+        row3.getChildren().addAll(
+                notifications,
+                profile
+        );
+
+        allRows.getChildren().addAll(
+                row1,
+                row2,
+                row3
+        );
+
+        return allRows;
+    }
+
+    // =========================================================
+    // INDIVIDUAL SERVICE CARD
+    // =========================================================
+
+    private VBox createServiceCard(
+            String title,
+            String description,
+            String imagePath,
+            Runnable action
+    ) {
+
+        final double cardWidth = 290;
+        final double cardHeight = 300;
+
+        VBox card = new VBox(10);
+
+        card.setPrefWidth(cardWidth);
+        card.setMinWidth(cardWidth);
+        card.setMaxWidth(cardWidth);
+
+        card.setPrefHeight(cardHeight);
+        card.setMinHeight(cardHeight);
+        card.setMaxHeight(cardHeight);
+
+        card.setAlignment(Pos.TOP_CENTER);
+
+        card.setPadding(
+                new Insets(16)
+        );
+
+        setNormalCardStyle(card);
+
+        // =====================================================
+        // IMAGE CONTAINER
+        // =====================================================
+
+        StackPane imageContainer =
+                new StackPane();
+
+        imageContainer.setPrefWidth(240);
+        imageContainer.setPrefHeight(150);
+
+        imageContainer.setMinWidth(240);
+        imageContainer.setMinHeight(150);
+
+        imageContainer.setMaxWidth(240);
+        imageContainer.setMaxHeight(150);
+
+        imageContainer.setAlignment(
+                Pos.CENTER
+        );
+
+        imageContainer.setStyle(
+                "-fx-background-color: #f8fafc;" +
+                "-fx-background-radius: 16;"
+        );
+
+        // =====================================================
+        // IMAGE
+        // =====================================================
 
         ImageView imageView =
                 new ImageView();
 
+        imageView.setSmooth(true);
+
+        // IMAGE DOES NOT STRETCH
+
+        imageView.setPreserveRatio(true);
+
+        // Margin around image
+
+        imageView.setFitWidth(210);
+        imageView.setFitHeight(125);
+
+        Image image =
+                loadImage(imagePath);
+
         if (image != null) {
-
-            imageView.setImage(
-                    image
-            );
+            imageView.setImage(image);
         }
 
-        imageView.setFitWidth(200);
-        imageView.setFitHeight(140);
-
-        imageView.setPreserveRatio(false);
-
-        return imageView;
-    }
-
-    // =========================================================
-    // IMAGE CARD
-    // =========================================================
-
-    private VBox imageCard(
-            ImageView imageView,
-            String text
-    ) {
-
-        VBox box =
-                new VBox();
-
-        box.setMinWidth(0);
-
-        box.setPrefWidth(0);
-
-        box.setMaxWidth(
-                Double.MAX_VALUE
+        imageContainer.getChildren().add(
+                imageView
         );
 
-        box.setMinHeight(180);
-
-        box.setPrefHeight(180);
-
-        box.setMaxHeight(180);
-
-        box.setAlignment(
-                Pos.BOTTOM_LEFT
-        );
-
-        box.setStyle(
-                "-fx-background-color: white;" +
-                "-fx-background-radius: 14;" +
-                "-fx-border-color: #dbeafe;" +
-                "-fx-border-radius: 14;"
-        );
-
-        if (imageView.getImage() != null) {
-
-            imageView.fitWidthProperty()
-                    .bind(
-                            box.widthProperty()
-                    );
-
-            imageView.fitHeightProperty()
-                    .bind(
-                            box.heightProperty()
-                                    .subtract(40)
-                    );
-
-            box.getChildren().add(
-                    imageView
-            );
-        }
-
-        Label label =
-                new Label(text);
-
-        label.setPadding(
-                new Insets(
-                        8,
-                        12,
-                        8,
-                        12
-                )
-        );
-
-        label.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        label.setStyle(
-                "-fx-background-color: rgba(15,23,42,0.82);" +
-                "-fx-text-fill: white;" +
-                "-fx-font-size: 14px;" +
-                "-fx-font-weight: bold;"
-        );
-
-        box.getChildren().add(
-                label
-        );
-
-        return box;
-    }
-
-    // =========================================================
-    // STAT CARD
-    // =========================================================
-
-    private VBox statCard(
-            String icon,
-            String title,
-            String value,
-            String status
-    ) {
-
-        VBox box =
-                card("");
-
-        box.setMinWidth(0);
-
-        box.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        HBox.setHgrow(
-                box,
-                Priority.ALWAYS
-        );
-
-        Label iconLabel =
-                new Label(icon);
-
-        iconLabel.setStyle(
-                "-fx-font-size: 24px;" +
-                "-fx-text-fill: #2563eb;"
-        );
-
-        Label titleLabel =
-                muted(title);
-
-        titleLabel.setWrapText(true);
-
-        Label valueLabel =
-                new Label(value);
-
-        valueLabel.setStyle(
-                "-fx-font-size: 22px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: #0f172a;"
-        );
-
-        Label statusLabel =
-                green(status);
-
-        box.getChildren().addAll(
-                iconLabel,
-                titleLabel,
-                valueLabel,
-                statusLabel
-        );
-
-        return box;
-    }
-
-    // =========================================================
-    // CARD
-    // =========================================================
-
-    private VBox card(
-            String title
-    ) {
-
-        VBox box =
-                new VBox(12);
-
-        box.setPadding(
-                new Insets(20)
-        );
-
-        box.setMinWidth(0);
-
-        box.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        box.setStyle(
-                "-fx-background-color: white;" +
-                "-fx-background-radius: 14;" +
-                "-fx-border-color: #dbeafe;" +
-                "-fx-border-radius: 14;" +
-                "-fx-effect: dropshadow(gaussian, rgba(15,23,42,0.08), 10, 0, 0, 3);"
-        );
-
-        if (title != null
-                && !title.isEmpty()) {
-
-            Label label =
-                    new Label(title);
-
-            label.setWrapText(true);
-
-            label.setStyle(
-                    "-fx-font-size: 18px;" +
-                    "-fx-font-weight: bold;" +
-                    "-fx-text-fill: #0f172a;"
-            );
-
-            box.getChildren().add(
-                    label
-            );
-        }
-
-        return box;
-    }
-
-    // =========================================================
-    // INSIGHT
-    // =========================================================
-
-    private VBox insight(
-            String title,
-            String description
-    ) {
-
-        VBox box =
-                new VBox(5);
-
-        box.setMinWidth(0);
-
-        box.setMaxWidth(
-                Double.MAX_VALUE
-        );
+        // =====================================================
+        // TITLE
+        // =====================================================
 
         Label titleLabel =
                 new Label(title);
 
         titleLabel.setWrapText(true);
 
+        titleLabel.setAlignment(
+                Pos.CENTER
+        );
+
+        titleLabel.setMaxWidth(255);
+
         titleLabel.setStyle(
+                "-fx-font-size: 18px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #0f172a;"
         );
+
+        // =====================================================
+        // DESCRIPTION
+        // =====================================================
 
         Label descriptionLabel =
                 new Label(description);
 
         descriptionLabel.setWrapText(true);
 
-        descriptionLabel.setMaxWidth(
-                Double.MAX_VALUE
+        descriptionLabel.setAlignment(
+                Pos.CENTER
         );
+
+        descriptionLabel.setMaxWidth(250);
 
         descriptionLabel.setStyle(
-                "-fx-text-fill: #64748b;"
+                "-fx-font-size: 13px;" +
+                "-fx-text-fill: #64748b;" +
+                "-fx-text-alignment: center;"
         );
 
-        box.getChildren().addAll(
+        card.getChildren().addAll(
+                imageContainer,
                 titleLabel,
                 descriptionLabel
         );
 
-        return box;
-    }
+        // =====================================================
+        // CLICK
+        // =====================================================
 
-    // =========================================================
-    // BUTTON
-    // =========================================================
-
-    private Button button(
-            String text,
-            Runnable action
-    ) {
-
-        Button button =
-                new Button(text);
-
-        button.setPrefHeight(42);
-
-        button.setPadding(
-                new Insets(
-                        8,
-                        18,
-                        8,
-                        18
-                )
-        );
-
-        button.setStyle(
-                "-fx-background-color: #2563eb;" +
-                "-fx-text-fill: white;" +
-                "-fx-font-weight: bold;" +
-                "-fx-background-radius: 8;" +
-                "-fx-cursor: hand;"
-        );
-
-        button.setOnAction(
-                e -> {
+        card.setOnMouseClicked(
+                event -> {
 
                     if (action != null) {
                         action.run();
@@ -828,117 +802,193 @@ public class Dashboard {
                 }
         );
 
-        return button;
-    }
+        // =====================================================
+        // HOVER
+        // =====================================================
 
-    // =========================================================
-    // MUTED
-    // =========================================================
+        card.setOnMouseEntered(
+                event -> {
 
-    private Label muted(
-            String text
-    ) {
+                    card.setStyle(
+                            "-fx-background-color: white;" +
+                            "-fx-background-radius: 18;" +
+                            "-fx-border-color: #2563eb;" +
+                            "-fx-border-width: 2;" +
+                            "-fx-border-radius: 18;" +
+                            "-fx-cursor: hand;" +
+                            "-fx-effect: dropshadow(" +
+                            "gaussian, rgba(15,23,42,0.18), 15, 0, 0, 5);"
+                    );
 
-        Label label =
-                new Label(text);
-
-        label.setStyle(
-                "-fx-text-fill: #64748b;"
+                    card.setScaleX(1.01);
+                    card.setScaleY(1.01);
+                }
         );
 
-        return label;
-    }
+        card.setOnMouseExited(
+                event -> {
 
-    // =========================================================
-    // GREEN
-    // =========================================================
+                    setNormalCardStyle(card);
 
-    private Label green(
-            String text
-    ) {
-
-        Label label =
-                new Label(text);
-
-        label.setStyle(
-                "-fx-text-fill: #16a34a;" +
-                "-fx-font-weight: bold;"
+                    card.setScaleX(1.0);
+                    card.setScaleY(1.0);
+                }
         );
 
-        return label;
+        return card;
     }
 
     // =========================================================
-    // NAVIGATION
+    // NORMAL CARD STYLE
     // =========================================================
 
-    private void navigate(
-            Scene scene
+    private void setNormalCardStyle(
+            VBox card
     ) {
 
-        if (stage == null || scene == null) {
-            return;
-        }
-
-        /*
-         * IMPORTANT:
-         *
-         * Only replace the Scene.
-         *
-         * DO NOT:
-         * - maximize
-         * - show
-         * - sizeToScene
-         * - create another Stage
-         */
-        stage.setScene(scene);
+        card.setStyle(
+                "-fx-background-color: white;" +
+                "-fx-background-radius: 18;" +
+                "-fx-border-color: #dbe3ea;" +
+                "-fx-border-width: 1;" +
+                "-fx-border-radius: 18;" +
+                "-fx-cursor: hand;"
+        );
     }
+
+    // =========================================================
+    // NAVIGATION - APPOINTMENTS
+    // =========================================================
 
     private void showAppointments() {
 
-        navigate(
-                new Appointments(stage)
-                        .getScene()
+        if (stage == null) {
+            return;
+        }
+
+        stage.setScene(
+                new Appointments(stage).getScene()
         );
+
+        stage.show();
     }
 
-    private void showSearchHospitals() {
-
-        navigate(
-                new SearchHospitals(stage)
-                        .getScene()
-        );
-    }
-
-    private void showHealthPassport() {
-
-        navigate(
-                new HealthPassport(stage)
-                        .getScene()
-        );
-    }
+    // =========================================================
+    // NAVIGATION - MEDICAL RECORDS
+    // =========================================================
 
     private void showMedicalRecords() {
 
-        navigate(
-                new MedicalRecords(stage)
-                        .getScene()
+        if (stage == null) {
+            return;
+        }
+
+        stage.setScene(
+                new MedicalRecords(stage).getScene()
         );
+
+        stage.show();
     }
 
-    private void showAIHealthAssistant() {
+    // =========================================================
+    // NAVIGATION - HEALTH PASSPORT
+    // =========================================================
 
-        navigate(
-                new AiHealthAssistant(stage)
-                        .getScene()
+    private void showHealthPassport() {
+
+        if (stage == null) {
+            return;
+        }
+
+        stage.setScene(
+                new HealthPassport(stage).getScene()
         );
+
+        stage.show();
     }
+
+    // =========================================================
+    // NAVIGATION - HEALTHMATE
+    // =========================================================
+
+    private void showHealthMate() {
+
+        if (stage == null) {
+            return;
+        }
+
+        stage.setScene(
+                new AiHealthAssistant(stage).getScene()
+        );
+
+        stage.show();
+    }
+
+    // =========================================================
+    // NAVIGATION - EMERGENCY ASSISTANCE
+    // =========================================================
 
     private void showEmergencyAssistance() {
 
-        navigate(
-                new EmergencyAssistance(stage)
-                        .getScene()
+        if (stage == null) {
+            return;
+        }
+
+        stage.setScene(
+                new EmergencyAssistance(stage).getScene()
         );
+
+        stage.show();
+    }
+
+    // =========================================================
+    // NAVIGATION - SEARCH HOSPITALS
+    // =========================================================
+
+    private void showSearchHospitals() {
+
+        if (stage == null) {
+            return;
+        }
+
+        stage.setScene(
+                new SearchHospitals(stage).getScene()
+        );
+
+        stage.show();
+    }
+
+    // =========================================================
+    // NAVIGATION - NOTIFICATIONS
+    // =========================================================
+
+    private void showNotifications() {
+
+        if (stage == null) {
+            return;
+        }
+
+        stage.setScene(
+                new Notifications(stage).getScene()
+        );
+
+        stage.show();
+    }
+
+    // =========================================================
+    // NAVIGATION - PROFILE & SETTINGS
+    // =========================================================
+
+    private void showProfileSettings() {
+
+        if (stage == null) {
+            return;
+        }
+
+        stage.setScene(
+                new ProfileSettings(stage).getScene()
+        );
+
+        stage.show();
     }
 }
