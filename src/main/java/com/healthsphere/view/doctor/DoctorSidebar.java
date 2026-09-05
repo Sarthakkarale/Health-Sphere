@@ -91,13 +91,15 @@ public class DoctorSidebar {
 
             ImageView icon = createImageView("/images/icons/" + icons[i], 18, 18);
             Label tabLabel = new Label(tabs[i]);
+            tabLabel.setWrapText(true);
+            HBox.setHgrow(tabLabel, Priority.ALWAYS);
 
             if (i == activeIndex) {
                 navTab.setStyle("-fx-background-color: #3B82F6; -fx-background-radius: 8px; -fx-cursor: hand;");
-                tabLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;");
+                tabLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold;");
             } else {
                 navTab.setStyle("-fx-background-color: transparent; -fx-background-radius: 8px; -fx-cursor: hand;");
-                tabLabel.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 14px;");
+                tabLabel.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 13px;");
             }
 
             if (icon != null) navTab.getChildren().add(icon);

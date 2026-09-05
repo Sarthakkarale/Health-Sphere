@@ -59,33 +59,68 @@ public class HospitalPaymentsView {
 
         contentArea.getChildren().add(headerText);
 
-        // Account Balance Banner
+        // Account Balance & Revenue Banners
         String hospitalId = SessionManager.getCurrentUserId();
-        double balance = 5000.00;
+        double balance = 0.00;
         if (hospitalId != null && !hospitalId.isBlank()) {
             balance = paymentController.getHospitalAccountBalance(hospitalId);
         }
 
-        VBox balanceCard = new VBox(10);
-        balanceCard.setPadding(new Insets(20));
-        balanceCard.setStyle("-fx-background-color: #0F172A; -fx-background-radius: 12px;");
+        List<PaymentRecord> records = paymentController.getPaymentsForHospital(hospitalId);
+        double totalCompletedRevenue = 0.00;
+        double totalAmountBilled = 0.00;
+        if (records != null) {
+            for (PaymentRecord rec : records) {
+                totalAmountBilled += rec.getAmount();
+                if ("COMPLETED".equalsIgnoreCase(rec.getStatus())) {
+                    totalCompletedRevenue += rec.getAmount();
+                }
+            }
+        }
+        if (balance <= 0.00 && totalCompletedRevenue > 0.00) {
+            balance = totalCompletedRevenue;
+        }
 
-        Label balTitle = new Label("TOTAL HOSPITAL ACCOUNT BALANCE");
-        balTitle.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 11px; -fx-font-weight: bold;");
+        HBox kpiContainer = new HBox(16);
 
-        HBox balRow = new HBox(12);
-        balRow.setAlignment(Pos.BASELINE_LEFT);
+        // Total Revenue Card (Completed Payments)
+        VBox revenueCard = new VBox(10);
+        revenueCard.setPadding(new Insets(20));
+        revenueCard.setStyle("-fx-background-color: #0F172A; -fx-background-radius: 12px;");
+        HBox.setHgrow(revenueCard, Priority.ALWAYS);
 
-        Label balAmt = new Label(String.format("₹%.2f", balance));
-        balAmt.setStyle("-fx-text-fill: #FFFFFF; -fx-font-size: 32px; -fx-font-weight: bold;");
+        Label revTitle = new Label("TOTAL REVENUE (RECEIVED)");
+        revTitle.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 11px; -fx-font-weight: bold;");
 
+        HBox revRow = new HBox(12);
+        revRow.setAlignment(Pos.BASELINE_LEFT);
+        Label revAmt = new Label(String.format("₹%.2f", totalCompletedRevenue));
+        revAmt.setStyle("-fx-text-fill: #FFFFFF; -fx-font-size: 28px; -fx-font-weight: bold;");
         Label growthBadge = new Label("+18.2% ↑");
         growthBadge.setStyle("-fx-background-color: #D1FAE5; -fx-text-fill: #059669; -fx-font-weight: bold; -fx-font-size: 11px; -fx-padding: 3 10; -fx-background-radius: 12;");
+        revRow.getChildren().addAll(revAmt, growthBadge);
+        revenueCard.getChildren().addAll(revTitle, revRow);
 
-        balRow.getChildren().addAll(balAmt, growthBadge);
-        balanceCard.getChildren().addAll(balTitle, balRow);
+        // Total Amount Billed Card (Overall Total)
+        VBox amountCard = new VBox(10);
+        amountCard.setPadding(new Insets(20));
+        amountCard.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 12px; -fx-border-color: #E2E8F0; -fx-border-radius: 12px;");
+        HBox.setHgrow(amountCard, Priority.ALWAYS);
 
-        contentArea.getChildren().add(balanceCard);
+        Label amtTitle = new Label("TOTAL AMOUNT (BILLED & RECORDED)");
+        amtTitle.setStyle("-fx-text-fill: #64748B; -fx-font-size: 11px; -fx-font-weight: bold;");
+
+        HBox amtRow = new HBox(12);
+        amtRow.setAlignment(Pos.BASELINE_LEFT);
+        Label amtVal = new Label(String.format("₹%.2f", totalAmountBilled));
+        amtVal.setStyle("-fx-text-fill: #0F172A; -fx-font-size: 28px; -fx-font-weight: bold;");
+        Label statusBadge = new Label(records != null ? records.size() + " Transactions" : "0 Transactions");
+        statusBadge.setStyle("-fx-background-color: #EFF6FF; -fx-text-fill: #2563EB; -fx-font-weight: bold; -fx-font-size: 11px; -fx-padding: 3 10; -fx-background-radius: 12;");
+        amtRow.getChildren().addAll(amtVal, statusBadge);
+        amountCard.getChildren().addAll(amtTitle, amtRow);
+
+        kpiContainer.getChildren().addAll(revenueCard, amountCard);
+        contentArea.getChildren().add(kpiContainer);
 
         // Payments Table/List
         VBox listCard = new VBox(15);
@@ -96,7 +131,6 @@ public class HospitalPaymentsView {
         listHeader.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #0F172A;");
         listCard.getChildren().add(listHeader);
 
-        List<PaymentRecord> records = paymentController.getPaymentsForHospital(hospitalId);
         if (records == null || records.isEmpty()) {
             Label empty = new Label("No payment records found for this hospital yet.");
             empty.setStyle("-fx-text-fill: #64748B; -fx-font-size: 14px; -fx-padding: 10 0;");

@@ -262,45 +262,8 @@ public class AdminDashboardView {
         // SYSTEM STATUS
         // ========================================================
 
-        HBox statusBox =
-                new HBox(8);
-
-        statusBox.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        Circle liveDot =
-                new Circle(
-                        5,
-                        Color.web("#059669")
-                );
-
-        Label statusText =
-                new Label(
-                        "SYSTEM STATUS: ONLINE • "
-                                + "NODE AP-SOUTH-1 (MUMBAI)"
-                );
-
-        statusText.setFont(
-                Font.font(
-                        "Segoe UI",
-                        FontWeight.BOLD,
-                        12
-                )
-        );
-
-        statusText.setTextFill(
-                Color.web("#059669")
-        );
-
-        statusBox.getChildren().addAll(
-                liveDot,
-                statusText
-        );
-
-        titleBox.getChildren().addAll(
-                title,
-                statusBox
+        titleBox.getChildren().add(
+                title
         );
 
         // ========================================================

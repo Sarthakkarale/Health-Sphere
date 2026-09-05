@@ -237,7 +237,16 @@ public class BookAppointment {
                 Double.MAX_VALUE
         );
 
-        specialty.setDisable(true);
+        java.util.Set<String> uniqueSpecs = new java.util.TreeSet<>();
+        for (DoctorProfile d : doctors) {
+            if (d.getSpecialization() != null && !d.getSpecialization().isBlank()) {
+                uniqueSpecs.add(d.getSpecialization().trim());
+            }
+        }
+        if (uniqueSpecs.isEmpty()) {
+            uniqueSpecs.addAll(java.util.List.of("Cardiology", "Dermatology", "General Medicine", "Neurology", "Orthopedics", "Pediatrics"));
+        }
+        specialty.getItems().addAll(uniqueSpecs);
 
         // =====================================================
         // HOSPITAL
@@ -423,45 +432,29 @@ public class BookAppointment {
         // DOCTOR SELECTION
         // =====================================================
 
+        specialty.setOnAction(event -> {
+            String selectedSpec = specialty.getValue();
+            if (selectedSpec != null && !selectedSpec.isBlank()) {
+                doctor.getItems().clear();
+                for (DoctorProfile d : doctors) {
+                    if (selectedSpec.equalsIgnoreCase(d.getSpecialization())) {
+                        String docName = getDoctorFullName(d);
+                        if (!docName.isBlank()) {
+                            doctor.getItems().add(docName);
+                        }
+                    }
+                }
+            }
+        });
+
         doctor.setOnAction(
                 event -> {
+                    String selectedDoctorName = doctor.getValue();
+                    if (selectedDoctorName == null) return;
 
-                    String selectedDoctorName =
-                            doctor.getValue();
-
-                    specialty.getItems().clear();
-
-                    specialty.setValue(
-                            null
-                    );
-
-                    if (selectedDoctorName == null) {
-
-                        return;
-                    }
-
-                    DoctorProfile selectedDoctor =
-                            findDoctorByName(
-                                    selectedDoctorName
-                            );
-
-                    if (selectedDoctor != null) {
-
-                        String specialization =
-                                selectedDoctor
-                                        .getSpecialization();
-
-                        if (specialization != null &&
-                                !specialization.isBlank()) {
-
-                            specialty.getItems().add(
-                                    specialization
-                            );
-
-                            specialty.setValue(
-                                    specialization
-                            );
-                        }
+                    DoctorProfile selectedDoctor = findDoctorByName(selectedDoctorName);
+                    if (selectedDoctor != null && selectedDoctor.getSpecialization() != null && !selectedDoctor.getSpecialization().isBlank()) {
+                        specialty.setValue(selectedDoctor.getSpecialization().trim());
                     }
                 }
         );
@@ -832,6 +825,11 @@ public class BookAppointment {
                         selectedDoctor
                                 .getSpecialization();
 
+                if (appointmentController.isSlotBooked(doctorUid, date.getValue().toString(), time.getValue())) {
+                    showError("This time slot is already booked. Please choose another time or date.");
+                    return;
+                }
+
                 appointmentController
                         .createDoctorAppointment(
 
@@ -897,6 +895,11 @@ public class BookAppointment {
                 String hospitalName =
                         selectedHospital
                                 .getHospitalName();
+
+                if (appointmentController.isSlotBooked(hospitalId, date.getValue().toString(), time.getValue())) {
+                    showError("This time slot is already booked. Please choose another time or date.");
+                    return;
+                }
 
                 appointmentController
                         .createHospitalAppointment(

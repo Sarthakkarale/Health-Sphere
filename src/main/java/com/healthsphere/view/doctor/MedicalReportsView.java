@@ -2464,6 +2464,8 @@ public class MedicalReportsView {
                         )
                 );
 
+        name.setWrapText(true);
+
         name.setStyle(
                 "-fx-font-weight: bold;"
                         + "-fx-text-fill: #1E293B;"
@@ -2981,6 +2983,8 @@ public class MedicalReportsView {
                 new Label(
                         medication
                 );
+
+        medicationLabel.setWrapText(true);
 
         medicationLabel.setStyle(
                 "-fx-font-size: 13px;"

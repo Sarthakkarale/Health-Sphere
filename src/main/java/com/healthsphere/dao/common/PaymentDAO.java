@@ -207,17 +207,17 @@ public class PaymentDAO {
             DocumentSnapshot doc = db.collection("hospitals").document(hospitalId).get().get();
             if (doc.exists()) {
                 Double bal = doc.getDouble("accountBalance");
-                return bal != null ? bal : 5000.00;
+                return bal != null ? bal : 0.00;
             }
             DocumentSnapshot docProfile = db.collection("hospital_profiles").document(hospitalId).get().get();
             if (docProfile.exists()) {
                 Double bal = docProfile.getDouble("accountBalance");
-                return bal != null ? bal : 5000.00;
+                return bal != null ? bal : 0.00;
             }
         } catch (Exception e) {
             System.err.println("Error fetching hospital account balance: " + e.getMessage());
         }
-        return 5000.00;
+        return 0.00;
     }
 
     public void updateHospitalAccountBalance(String hospitalId, double newBalance) {

@@ -460,4 +460,9 @@ public class AppointmentController {
             );
         }
     }
+
+    public boolean isSlotBooked(String doctorUidOrHospitalId, String date, String time) {
+        if (doctorUidOrHospitalId == null || date == null || time == null) return false;
+        return appointmentDAO.isSlotBooked(doctorUidOrHospitalId, date, time);
+    }
 }

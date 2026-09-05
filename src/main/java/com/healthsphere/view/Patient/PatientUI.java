@@ -1,5 +1,6 @@
 package com.healthsphere.view.Patient;
 
+import com.healthsphere.util.SessionManager;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -1011,8 +1012,28 @@ private static HBox createHeader(
     // PROFILE
     // =====================================================
 
+    String profileButtonText = "Patient";
+    try {
+        com.healthsphere.model.PatientProfile pProfile = new com.healthsphere.controller.patient.PatientController().getCurrentPatientProfile();
+        if (pProfile != null) {
+            String fname = pProfile.getFirstName() != null ? pProfile.getFirstName().trim() : "";
+            String lname = pProfile.getLastName() != null ? pProfile.getLastName().trim() : "";
+            String full = (fname + " " + lname).trim();
+            if (!full.isEmpty()) profileButtonText = full;
+        }
+    } catch (Exception ex) {}
+    if ("Patient".equals(profileButtonText) && SessionManager.getInstance().getCurrentUser() != null) {
+        String uEmail = SessionManager.getInstance().getCurrentUser().getEmail();
+        if (uEmail != null && uEmail.contains("@")) {
+            profileButtonText = uEmail.substring(0, uEmail.indexOf('@'));
+            if (!profileButtonText.isEmpty()) {
+                profileButtonText = Character.toUpperCase(profileButtonText.charAt(0)) + profileButtonText.substring(1);
+            }
+        }
+    }
+
     Button profile =
-            new Button("Sarah");
+            new Button(profileButtonText);
 
     profile.setPrefHeight(42);
 

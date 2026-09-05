@@ -442,6 +442,7 @@ public class DoctorSessionsView {
         VBox nameBox = new VBox(3);
         Label nameLabel = new Label(apt.getPatientName() != null ? apt.getPatientName() : "Patient");
         nameLabel.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #0F172A;");
+        nameLabel.setWrapText(true);
 
         Label idLabel = new Label("ID: " + (apt.getAppointmentId() != null ? apt.getAppointmentId() : "N/A"));
         idLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #64748B; -fx-background-color: #F1F5F9; -fx-padding: 2 6; -fx-background-radius: 4px;");
@@ -463,6 +464,7 @@ public class DoctorSessionsView {
         ImageView calIcon = createImageView("/images/icons/ic_calendar.png", 14, 14);
         Label dateLabel = new Label((apt.getAppointmentDate() != null ? apt.getAppointmentDate() : "Date N/A") + "  •  " + (apt.getAppointmentTime() != null ? apt.getAppointmentTime() : "Time N/A"));
         dateLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #334155;");
+        dateLabel.setWrapText(true);
         if (calIcon != null) dateTimeRow.getChildren().add(calIcon);
         dateTimeRow.getChildren().add(dateLabel);
 
@@ -470,11 +472,13 @@ public class DoctorSessionsView {
         specRow.setAlignment(Pos.CENTER_LEFT);
         Label specLabel = new Label("Specialty: " + (apt.getSpecialty() != null ? apt.getSpecialty() : "General"));
         specLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748B;");
+        specLabel.setWrapText(true);
         specRow.getChildren().add(specLabel);
 
         if (apt.getReason() != null && !apt.getReason().isBlank()) {
             Label reasonLabel = new Label("Reason: " + apt.getReason());
             reasonLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #94A3B8; -fx-wrap-text: true;");
+            reasonLabel.setWrapText(true);
             infoBox.getChildren().addAll(dateTimeRow, specRow, reasonLabel);
         } else {
             infoBox.getChildren().addAll(dateTimeRow, specRow);

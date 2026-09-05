@@ -207,7 +207,7 @@ public class View extends Application {
                 header.setAlignment(Pos.CENTER_LEFT);
 
                 // App Branding Text
-                Text brandText = new Text("Health Sphere");
+                Text brandText = new Text("HealthSphere");
 
                 brandText.getStyleClass().add("brand-title");
 
@@ -497,7 +497,7 @@ public class View extends Application {
                                 Pos.CENTER_LEFT);
 
                 Text footerBrand = new Text(
-                                "health sphere");
+                                "HealthSphere");
 
                 footerBrand.getStyleClass().add(
                                 "footer-brand");
@@ -537,17 +537,10 @@ public class View extends Application {
                 privacyBtn.getStyleClass().add(
                                 "footer-link");
 
-                Button statusBtn = new Button(
-                                "System Status");
-
-                statusBtn.getStyleClass().add(
-                                "footer-link");
-
                 footerLinks.getChildren().addAll(
                                 versionLabel,
                                 tosBtn,
-                                privacyBtn,
-                                statusBtn);
+                                privacyBtn);
 
                 footer.getChildren().addAll(
                                 footerBrand,

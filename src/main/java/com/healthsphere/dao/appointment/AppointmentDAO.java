@@ -380,4 +380,29 @@ public java.util.List<String> getPatientUidsForDoctor(
         );
     }
 }
+
+    public boolean isSlotBooked(String doctorUidOrHospitalId, String date, String time) {
+        if (doctorUidOrHospitalId == null || date == null || time == null) {
+            return false;
+        }
+        try {
+            ApiFuture<QuerySnapshot> future = db.collection("appointments")
+                    .whereEqualTo("appointmentDate", date.trim())
+                    .get();
+            QuerySnapshot snapshot = future.get();
+            for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                Appointment apt = doc.toObject(Appointment.class);
+                if (apt != null && !"CANCELLED".equalsIgnoreCase(apt.getStatus())) {
+                    boolean sameTarget = (apt.getDoctorUid() != null && doctorUidOrHospitalId.equalsIgnoreCase(apt.getDoctorUid()))
+                                      || (apt.getHospitalId() != null && doctorUidOrHospitalId.equalsIgnoreCase(apt.getHospitalId()));
+                    if (sameTarget && time.trim().equalsIgnoreCase(apt.getAppointmentTime() != null ? apt.getAppointmentTime().trim() : "")) {
+                        return true;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error checking slot booking: " + e.getMessage());
+        }
+        return false;
+    }
 }

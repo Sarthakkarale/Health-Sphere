@@ -1683,8 +1683,8 @@ public class HospitalDashboardView {
 
         bedCapacityDetailsLabel =
                 new Label(
-                        "Total: 0  •  Occupied: 0  •  "
-                                + "Available: 0  •  Reserved: 0"
+                        "Total: 0  |  Occupied: 0  |  "
+                                + "Available: 0  |  Reserved: 0"
                 );
 
         bedCapacityDetailsLabel.setWrapText(
@@ -2717,9 +2717,9 @@ public class HospitalDashboardView {
             if (bedCapacityDetailsLabel != null) {
                 bedCapacityDetailsLabel.setText(
                         "Total: " + summary.getTotalBeds() +
-                        "  •  Occupied: " + summary.getOccupiedBeds() +
-                        "  •  Available: " + summary.getAvailableBeds() +
-                        "  •  Reserved: " + summary.getReservedBeds()
+                        "  |  Occupied: " + summary.getOccupiedBeds() +
+                        "  |  Available: " + summary.getAvailableBeds() +
+                        "  |  Reserved: " + summary.getReservedBeds()
                 );
             }
             updateBedOccupancyProgress();

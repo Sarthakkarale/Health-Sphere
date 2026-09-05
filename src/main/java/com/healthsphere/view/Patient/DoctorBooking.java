@@ -114,10 +114,6 @@ public class DoctorBooking {
                 Double.MAX_VALUE
         );
 
-        loadDoctors(
-                doctor
-        );
-
         // =====================================================
         // SPECIALTY
         // =====================================================
@@ -135,13 +131,32 @@ public class DoctorBooking {
                 Double.MAX_VALUE
         );
 
-        // Automatically change specialty
-        // when doctor is selected.
+        loadDoctors(
+                doctor,
+                specialty
+        );
+
+        specialty.setOnAction(e -> {
+            String selectedSpec = specialty.getValue();
+            if (selectedSpec != null && !selectedSpec.isBlank()) {
+                List<DoctorProfile> allDocs = appointmentController.getAllDoctors();
+                if (allDocs != null) {
+                    DoctorProfile currentSel = doctor.getValue();
+                    doctor.getItems().clear();
+                    for (DoctorProfile d : allDocs) {
+                        if (d != null && selectedSpec.equalsIgnoreCase(d.getSpecialization())) {
+                            doctor.getItems().add(d);
+                        }
+                    }
+                    if (currentSel != null && selectedSpec.equalsIgnoreCase(currentSel.getSpecialization())) {
+                        doctor.setValue(currentSel);
+                    }
+                }
+            }
+        });
+
         doctor.valueProperty().addListener(
                 (observable, oldValue, newValue) -> {
-
-                    specialty.getItems().clear();
-
                     if (newValue == null) {
                         return;
                     }
@@ -152,9 +167,9 @@ public class DoctorBooking {
                     if (specialization != null &&
                             !specialization.isBlank()) {
 
-                        specialty.getItems().add(
-                                specialization.trim()
-                        );
+                        if (!specialty.getItems().contains(specialization.trim())) {
+                            specialty.getItems().add(specialization.trim());
+                        }
 
                         specialty.setValue(
                                 specialization.trim()
@@ -377,7 +392,8 @@ public class DoctorBooking {
     // =========================================================
 
     private void loadDoctors(
-            ComboBox<DoctorProfile> doctorComboBox) {
+            ComboBox<DoctorProfile> doctorComboBox,
+            ComboBox<String> specialtyComboBox) {
 
         try {
 
@@ -386,10 +402,22 @@ public class DoctorBooking {
                             .getAllDoctors();
 
             doctorComboBox.getItems().clear();
+            specialtyComboBox.getItems().clear();
 
-            doctorComboBox
-                    .getItems()
-                    .addAll(doctors);
+            if (doctors != null) {
+                doctorComboBox.getItems().addAll(doctors);
+
+                java.util.Set<String> specs = new java.util.TreeSet<>();
+                for (DoctorProfile d : doctors) {
+                    if (d != null && d.getSpecialization() != null && !d.getSpecialization().isBlank()) {
+                        specs.add(d.getSpecialization().trim());
+                    }
+                }
+                if (specs.isEmpty()) {
+                    specs.addAll(java.util.List.of("Cardiology", "Dermatology", "General Medicine", "Neurology", "Orthopedics", "Pediatrics"));
+                }
+                specialtyComboBox.getItems().addAll(specs);
+            }
 
             if (preselectedDoctor != null && doctors != null) {
                 for (DoctorProfile d : doctors) {
@@ -648,9 +676,10 @@ public class DoctorBooking {
             return;
         }
 
-        // -----------------------------------------------------
-        // CREATE APPOINTMENT
-        // -----------------------------------------------------
+        if (appointmentController.isSlotBooked(selectedDoctor.getUid(), date.getValue().toString(), time.getValue())) {
+            showError("This time slot is already booked. Please choose another time or date.");
+            return;
+        }
 
         try {
 

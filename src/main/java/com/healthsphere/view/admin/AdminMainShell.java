@@ -532,49 +532,9 @@ public class AdminMainShell {
                 Color.web("#94A3B8")
         );
 
-        // -----------------------------------------------------
-        // STATUS
-        // -----------------------------------------------------
-
-        HBox statusRow =
-                new HBox(6);
-
-        statusRow.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        Circle dot =
-                new Circle(
-                        4,
-                        Color.web("#10B981")
-                );
-
-        Label statusLbl =
-                new Label(
-                        "Node: Asia-South1 (Active)"
-                );
-
-        statusLbl.setFont(
-                Font.font(
-                        "Segoe UI",
-                        FontWeight.NORMAL,
-                        10
-                )
-        );
-
-        statusLbl.setTextFill(
-                Color.web("#10B981")
-        );
-
-        statusRow.getChildren().addAll(
-                dot,
-                statusLbl
-        );
-
         footer.getChildren().addAll(
                 nameLbl,
-                roleLbl,
-                statusRow
+                roleLbl
         );
 
         return footer;

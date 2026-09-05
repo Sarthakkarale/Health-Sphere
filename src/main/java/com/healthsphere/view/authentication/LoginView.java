@@ -148,7 +148,7 @@ public class LoginView {
                 HBox brandRow = new HBox(10);
                 brandRow.setAlignment(Pos.CENTER_LEFT);
                 ImageView logoView = createSafeImageView("/images/icons/brand_logo.png", 32, 32);
-                Text brandTitle = new Text("Health Spere");
+                Text brandTitle = new Text("HealthSphere");
                 brandTitle.getStyleClass().add("panel-brand");
                 brandRow.getChildren().addAll(logoView, brandTitle);
 
