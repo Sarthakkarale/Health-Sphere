@@ -1,6 +1,6 @@
 /* Root Container */
 .root {
-    -fx-background-color: #FAFAFC;
+    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
     -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
 }
 

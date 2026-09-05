@@ -2,7 +2,7 @@
    ROOT & GENERAL STYLING
    ========================================================================== */
 .root-container {
-    -fx-background-color: #F3F4F6;
+    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
     -fx-font-family: 'System', 'Segoe UI', sans-serif;
 }
 

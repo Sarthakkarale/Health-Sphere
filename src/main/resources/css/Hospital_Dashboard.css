@@ -3,7 +3,7 @@
    ========================================================= */
 
 .dashboard-root {
-    -fx-background-color: #F6F8FC;
+    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
     -fx-font-family: "System";
 }
 
@@ -13,7 +13,7 @@
 }
 
 .dashboard-scroll > .viewport {
-    -fx-background-color: #F6F8FC;
+    -fx-background-color: transparent;
 }
 
 
@@ -183,7 +183,7 @@
    ========================================================= */
 
 .dashboard-content {
-    -fx-background-color: #F6F8FC;
+    -fx-background-color: transparent;
 }
 
 .breadcrumb {

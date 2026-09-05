@@ -9,7 +9,7 @@
    ========================================================= */
 
 .app-root {
-    -fx-background-color: #f8fafc;
+    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
     -fx-font-family: "Segoe UI", Arial, sans-serif;
 }
 
@@ -721,7 +721,7 @@
 
 .settings-scroll > .viewport,
 .patient-scroll > .viewport {
-    -fx-background-color: #f8fafc;
+    -fx-background-color: transparent;
 }
 
 .scroll-bar:vertical {

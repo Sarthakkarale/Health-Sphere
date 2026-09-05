@@ -1,6 +1,6 @@
 /* Main Page Background */
 .register-root {
-    -fx-background-color: #F8FAFC;
+    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
     -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
 }
 

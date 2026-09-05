@@ -1,6 +1,6 @@
 /* Health-Sphere Appointments Theme */
 .root-pane {
-    -fx-background-color: #F4F6F9;
+    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
 }
 
 /* Sidebar Styling */

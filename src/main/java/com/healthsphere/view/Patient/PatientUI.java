@@ -48,7 +48,7 @@ public static Scene createScene(
     outerRoot.setMaxHeight(Double.MAX_VALUE);
 
     outerRoot.setStyle(
-            "-fx-background-color: #f1f5f9;"
+            "-fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);"
     );
 
     // =====================================================
@@ -65,7 +65,7 @@ public static Scene createScene(
     root.setMaxHeight(Double.MAX_VALUE);
 
     root.setStyle(
-            "-fx-background-color: #f1f5f9;"
+            "-fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);"
     );
 
     // =====================================================
@@ -234,8 +234,8 @@ public static Scene createScene(
     );
 
     scroll.setStyle(
-            "-fx-background-color: #f1f5f9;" +
-            "-fx-background: #f1f5f9;" +
+            "-fx-background-color: transparent;" +
+            "-fx-background: transparent;" +
             "-fx-border-color: transparent;"
     );
 

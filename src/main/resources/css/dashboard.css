@@ -9,7 +9,7 @@
    ============================================================ */
 
 .root-pane {
-    -fx-background-color: #F8FAFC;
+    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
     -fx-font-family: "Segoe UI", Helvetica, Arial, sans-serif;
 }
 
@@ -103,7 +103,7 @@
    ============================================================ */
 
 .content-area {
-    -fx-background-color: #F8FAFC;
+    -fx-background-color: transparent;
 }
 
 
@@ -112,12 +112,12 @@
    ============================================================ */
 
 .content-scrollpane {
-    -fx-background-color: #F8FAFC;
+    -fx-background-color: transparent;
     -fx-border-color: transparent;
 }
 
 .content-scrollpane > .viewport {
-    -fx-background-color: #F8FAFC;
+    -fx-background-color: transparent;
 }
 
 .content-scrollpane .scroll-bar:vertical {

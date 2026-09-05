@@ -1,6 +1,6 @@
 /* Health-Sphere Availability & Schedule Theme */
 .root-pane {
-    -fx-background-color: #F8FAFC;
+    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
 }
 
 /* Sidebar Styling */

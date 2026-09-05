@@ -1,7 +1,7 @@
 /* Core Page Layout */
-.root-pane { -fx-background-color: #F8FAFC; }
+.root-pane { -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC); }
 .sidebar { -fx-background-color: #333D51; }
-.content-area { -fx-background-color: #F8FAFC; }
+.content-area { -fx-background-color: transparent; }
 .content-scrollpane { -fx-background-color: transparent; -fx-background: transparent; -fx-fit-to-width: true; }
 
 /* Sidebar Navigation */

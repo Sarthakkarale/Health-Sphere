@@ -79,7 +79,7 @@ public class HospitalDashboardView {
             "#64748B";
 
     private static final String LIGHT_BACKGROUND =
-            "#F8FAFC";
+            "linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC)";
 
     private static final String CARD_BG =
             "#FFFFFF";

@@ -3,7 +3,7 @@
    ========================================================= */
 
 .doctor-root {
-    -fx-background-color: #F8F9FD;
+    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
     -fx-font-family: "Segoe UI";
 }
 
@@ -13,7 +13,7 @@
 }
 
 .main-scroll > .viewport {
-    -fx-background-color: #F8F9FD;
+    -fx-background-color: transparent;
 }
 
 
@@ -242,7 +242,7 @@
    ========================================================= */
 
 .content-area {
-    -fx-background-color: #F8F9FD;
+    -fx-background-color: transparent;
 }
 
 .page-title {

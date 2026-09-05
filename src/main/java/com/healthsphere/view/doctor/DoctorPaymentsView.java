@@ -37,7 +37,7 @@ public class DoctorPaymentsView {
 
     private Scene createScene() {
         BorderPane mainRoot = new BorderPane();
-        mainRoot.setStyle("-fx-background-color: #F8FAFC;");
+        mainRoot.setStyle("-fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);");
 
         // Sidebar with Payments tab active (index 8)
         VBox sidebar = DoctorSidebar.create(stage, 8);
