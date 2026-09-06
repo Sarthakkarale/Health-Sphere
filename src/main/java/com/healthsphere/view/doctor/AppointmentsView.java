@@ -2751,6 +2751,14 @@ public class AppointmentsView {
 
     private void handleStartVideoCall(Appointment appointment) {
         if (appointment == null) return;
+
+        String status = appointment.getStatus() != null ? appointment.getStatus().trim().toUpperCase() : "";
+        if ("CANCELLED".equals(status) || "CANCELED".equals(status) || "REJECTED".equals(status)) {
+            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING, "Video consultation is not available for cancelled or rejected appointments.");
+            alert.showAndWait();
+            return;
+        }
+
         String callerEmail = SessionManager.getDoctorUid() != null ? SessionManager.getDoctorUid() : com.healthsphere.model.UserModel.getInstance().getEmail();
         String callerName = SessionManager.getDoctorDisplayName() != null ? SessionManager.getDoctorDisplayName() : "Doctor";
 
@@ -2768,8 +2776,10 @@ public class AppointmentsView {
         modalStage.setTitle("Doctor Live Video Call - " + receiverName);
 
         com.healthsphere.view.common.VideoCallScreen videoCallScreen = new com.healthsphere.view.common.VideoCallScreen(call, modalStage::close);
+        modalStage.setOnCloseRequest(e -> videoCallScreen.handleEndCall());
+
         Scene modalScene = new Scene(videoCallScreen, 680, 520);
         modalStage.setScene(modalScene);
         modalStage.show();
     }
-}
+}

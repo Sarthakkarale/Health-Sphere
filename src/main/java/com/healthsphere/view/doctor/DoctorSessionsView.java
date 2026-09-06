@@ -507,6 +507,13 @@ public class DoctorSessionsView {
             return;
         }
 
+        String status = apt.getStatus() != null ? apt.getStatus().trim().toUpperCase() : "";
+        if ("CANCELLED".equals(status) || "CANCELED".equals(status) || "REJECTED".equals(status)) {
+            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING, "Video consultation is not available for cancelled or rejected appointments.");
+            alert.showAndWait();
+            return;
+        }
+
         String callerEmail = SessionManager.getDoctorUid() != null ? SessionManager.getDoctorUid() : UserModel.getInstance().getEmail();
         String callerName = SessionManager.getDoctorDisplayName() != null ? SessionManager.getDoctorDisplayName() : "Doctor";
 
@@ -524,10 +531,13 @@ public class DoctorSessionsView {
         modalStage.setTitle("Doctor Live Video Call - " + receiverName);
 
         VideoCallScreen videoCallScreen = new VideoCallScreen(call, modalStage::close);
+        modalStage.setOnCloseRequest(e -> videoCallScreen.handleEndCall());
+
         Scene modalScene = new Scene(videoCallScreen, 680, 520);
         modalStage.setScene(modalScene);
         modalStage.show();
     }
+
 
     private String getInitials(String name) {
         if (name == null || name.isBlank()) return "P";

@@ -321,7 +321,7 @@ public class VideoCallScreen extends VBox {
         }
     }
 
-    private void handleEndCall() {
+    public void handleEndCall() {
         if (isTerminated) return;
         
         javafx.concurrent.Task<Void> endTask = new javafx.concurrent.Task<>() {

@@ -2615,8 +2615,10 @@ public class Appointments {
         modalStage.setTitle("Patient Video Call");
 
         VideoCallScreen videoCallScreen = new VideoCallScreen(call, modalStage::close);
+        modalStage.setOnCloseRequest(e -> videoCallScreen.handleEndCall());
+
         Scene modalScene = new Scene(videoCallScreen, 680, 520);
         modalStage.setScene(modalScene);
         modalStage.show();
     }
-}
+}
