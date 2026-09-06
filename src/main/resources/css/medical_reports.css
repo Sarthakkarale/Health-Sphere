@@ -1,15 +1,15 @@
 /* Health-Sphere Medical Reports & Prescription Theme */
 .root-pane {
-    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
+    -fx-background-color: linear-gradient(to bottom right, #F4F8FC, #EEF3FF);
 }
 
 /* Sidebar Styling */
 .sidebar {
-    -fx-background-color: #2D323E;
+    -fx-background-color: #12355B;
 }
 
 .logo-icon-box {
-    -fx-background-color: #1A56DB;
+    -fx-background-color: #2F80ED;
     -fx-background-radius: 6;
     -fx-min-width: 32; -fx-min-height: 32;
     -fx-alignment: center;
@@ -30,7 +30,7 @@
 .logo-subtext {
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-font-size: 11px;
-    -fx-text-fill: #9CA3AF;
+    -fx-text-fill: #D6E4F0;
 }
 
 .nav-tab {
@@ -41,19 +41,19 @@
 }
 
 .nav-tab:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-background-color: #1D4E7A;
 }
 
 .nav-tab-active {
-    -fx-background-color: rgba(255, 255, 255, 0.12);
-    -fx-border-color: #1A56DB;
+    -fx-background-color: #2F80ED;
+    -fx-border-color: #2F80ED;
     -fx-border-width: 0 0 0 3;
 }
 
 .nav-text {
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-font-size: 13px;
-    -fx-text-fill: #D1D5DB;
+    -fx-text-fill: #D6E4F0;
 }
 
 .nav-tab-active .nav-text {
@@ -75,7 +75,7 @@
 }
 
 .sidebar-profile:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-background-color: #1D4E7A;
 }
 
 .sidebar-profile-name {
@@ -88,7 +88,7 @@
 .header-title {
     -fx-font-family: "Segoe UI Bold", sans-serif;
     -fx-font-size: 20px;
-    -fx-text-fill: #1E293B;
+    -fx-text-fill: #172B4D;
 }
 
 .search-input-box {
@@ -115,7 +115,7 @@
 .patient-name-title {
     -fx-font-family: "Segoe UI Bold", sans-serif;
     -fx-font-size: 22px;
-    -fx-text-fill: #1E293B;
+    -fx-text-fill: #172B4D;
 }
 
 .patient-sub-details {
@@ -150,7 +150,7 @@
 }
 
 .btn-primary-action {
-    -fx-background-color: #1A56DB;
+    -fx-background-color: #2F80ED;
     -fx-text-fill: white;
     -fx-font-family: "Segoe UI Semibold", sans-serif;
     -fx-font-size: 12px;
@@ -160,7 +160,7 @@
 }
 
 .btn-primary-action:hover {
-    -fx-background-color: #1E40AF;
+    -fx-background-color: #1D4E7A;
 }
 
 /* Cards & Panels */
@@ -175,13 +175,13 @@
 .section-card-title {
     -fx-font-family: "Segoe UI Bold", sans-serif;
     -fx-font-size: 16px;
-    -fx-text-fill: #1E293B;
+    -fx-text-fill: #172B4D;
 }
 
 .link-add-medication {
     -fx-font-family: "Segoe UI Semibold", sans-serif;
     -fx-font-size: 12px;
-    -fx-text-fill: #1A56DB;
+    -fx-text-fill: #2F80ED;
     -fx-border-color: transparent;
 }
 
@@ -196,7 +196,7 @@
 .med-name {
     -fx-font-family: "Segoe UI Bold", sans-serif;
     -fx-font-size: 14px;
-    -fx-text-fill: #1E293B;
+    -fx-text-fill: #172B4D;
 }
 
 .med-dose {
@@ -261,7 +261,7 @@
 }
 
 .cloud-icon-bg {
-    -fx-background-color: #E0EAFF;
+    -fx-background-color: #EEF3FF;
     -fx-background-radius: 20;
     -fx-min-width: 40; -fx-min-height: 40;
     -fx-alignment: center;
@@ -270,7 +270,7 @@
 .upload-title {
     -fx-font-family: "Segoe UI Bold", sans-serif;
     -fx-font-size: 14px;
-    -fx-text-fill: #1E293B;
+    -fx-text-fill: #172B4D;
 }
 
 .upload-subtext {
@@ -284,7 +284,7 @@
     -fx-border-color: #CBD5E0;
     -fx-border-radius: 6;
     -fx-background-radius: 6;
-    -fx-text-fill: #1A56DB;
+    -fx-text-fill: #2F80ED;
     -fx-font-family: "Segoe UI Semibold", sans-serif;
     -fx-font-size: 12px;
     -fx-padding: 6 16;
@@ -293,7 +293,7 @@
 
 /* Clinical Assistant Sidebar */
 .assistant-card {
-    -fx-background-color: #F0F5FF;
+    -fx-background-color: #EEF3FF;
     -fx-border-color: #BFDBFE;
     -fx-border-radius: 10;
     -fx-background-radius: 10;
@@ -302,7 +302,7 @@
 .assistant-title {
     -fx-font-family: "Segoe UI Bold", sans-serif;
     -fx-font-size: 15px;
-    -fx-text-fill: #1E293B;
+    -fx-text-fill: #172B4D;
 }
 
 .assistant-alert-box {
@@ -320,7 +320,7 @@
 .alert-info-title {
     -fx-font-family: "Segoe UI Bold", sans-serif;
     -fx-font-size: 12px;
-    -fx-text-fill: #1D4ED8;
+    -fx-text-fill: #2F80ED;
 }
 
 .assistant-alert-desc {
@@ -339,7 +339,7 @@
 .history-item-heading {
     -fx-font-family: "Segoe UI Bold", sans-serif;
     -fx-font-size: 12px;
-    -fx-text-fill: #1E293B;
+    -fx-text-fill: #172B4D;
 }
 
 .history-item-subtext {

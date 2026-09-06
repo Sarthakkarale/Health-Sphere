@@ -23,15 +23,15 @@ import javafx.stage.Stage;
 
 public class HospitalPaymentsView {
 
-    private static final String PRIMARY_BLUE = "#102bdb";
-    private static final String DARK_TEXT = "#0F172A";
+    private static final String PRIMARY_BLUE = "#2F80ED";
+    private static final String DARK_TEXT = "#172B4D";
     private static final String SECONDARY_TEXT = "#64748B";
-    private static final String LIGHT_BACKGROUND = "linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC)";
+    private static final String LIGHT_BACKGROUND = "linear-gradient(to bottom right, #F4F8FC, #EEF3FF)";
     private static final String CARD_BG = "#FFFFFF";
     private static final String BORDER = "#E2E8F0";
-    private static final String SIDEBAR_BG = "#0F172A";
-    private static final String SIDEBAR_BORDER = "#1E293B";
-    private static final String SIDEBAR_TEXT = "#94A3B8";
+    private static final String SIDEBAR_BG = "#12355B";
+    private static final String SIDEBAR_BORDER = "#1D4E7A";
+    private static final String SIDEBAR_TEXT = "#D6E4F0";
 
     private final PaymentController paymentController;
 

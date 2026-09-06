@@ -18,23 +18,23 @@ public class HospitalProfileSettingsView {
     // COLORS
     // =========================================================
 
-    private static final String PRIMARY_BLUE = "#170eca";
-    private static final String PRIMARY_LIGHT = "#EFF6FF";
-    private static final String DARK_TEXT = "#0F172A";
+    private static final String PRIMARY_BLUE = "#2F80ED";
+    private static final String PRIMARY_LIGHT = "#EEF3FF";
+    private static final String DARK_TEXT = "#172B4D";
     private static final String SECONDARY_TEXT = "#64748B";
-    private static final String LIGHT_BACKGROUND = "linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC)";
+    private static final String LIGHT_BACKGROUND = "linear-gradient(to bottom right, #F4F8FC, #EEF3FF)";
     private static final String CARD_BACKGROUND = "#FFFFFF";
     private static final String BORDER = "#E2E8F0";
     private static final String SUCCESS_GREEN = "#10B981";
     private static final String ERROR_RED = "#EF4444";
 
     // Sidebar
-    private static final String SIDEBAR_BG = "#0F172A";
-    private static final String SIDEBAR_BORDER = "#1E293B";
-    private static final String SIDEBAR_TEXT = "#94A3B8";
-    private static final String SIDEBAR_TEXT_ACTIVE = "#F8FAFC";
-    private static final String SIDEBAR_ICON_ACTIVE = "#3B82F6";
-    private static final String SIDEBAR_HOVER_BG = "#1E293B80";
+    private static final String SIDEBAR_BG = "#12355B";
+    private static final String SIDEBAR_BORDER = "#1D4E7A";
+    private static final String SIDEBAR_TEXT = "#D6E4F0";
+    private static final String SIDEBAR_TEXT_ACTIVE = "#FFFFFF";
+    private static final String SIDEBAR_ICON_ACTIVE = "#2F80ED";
+    private static final String SIDEBAR_HOVER_BG = "#1D4E7A";
 
     private static final String SHADOW_EFFECT =
             "-fx-effect: dropshadow(three-pass-box, " +

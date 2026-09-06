@@ -48,8 +48,20 @@ public static Scene createScene(
     outerRoot.setMaxHeight(Double.MAX_VALUE);
 
     outerRoot.setStyle(
-            "-fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);"
+            "-fx-background-color: linear-gradient(to bottom right, #F4F8FC, #EEF3FF);"
     );
+
+    try {
+        if (PatientUI.class.getResource("/images/subtle_medical_bg.png") != null) {
+            ImageView bgView = new ImageView(new Image(PatientUI.class.getResourceAsStream("/images/subtle_medical_bg.png")));
+            bgView.setOpacity(0.12);
+            bgView.setPreserveRatio(false);
+            bgView.fitWidthProperty().bind(outerRoot.widthProperty());
+            bgView.fitHeightProperty().bind(outerRoot.heightProperty());
+            outerRoot.getChildren().add(bgView);
+        }
+    } catch (Exception ignored) {
+    }
 
     // =====================================================
     // MAIN APPLICATION ROOT
@@ -65,7 +77,7 @@ public static Scene createScene(
     root.setMaxHeight(Double.MAX_VALUE);
 
     root.setStyle(
-            "-fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);"
+            "-fx-background-color: transparent;"
     );
 
     // =====================================================
@@ -133,7 +145,7 @@ public static Scene createScene(
     title.setStyle(
             "-fx-font-size: 30px;" +
             "-fx-font-weight: bold;" +
-            "-fx-text-fill: #0f172a;"
+            "-fx-text-fill: #172B4D;"
     );
 
     Label subtitle =
@@ -151,7 +163,7 @@ public static Scene createScene(
 
     subtitle.setStyle(
             "-fx-font-size: 15px;" +
-            "-fx-text-fill: #64748b;"
+            "-fx-text-fill: #64748B;"
     );
 
     VBox heading =
@@ -437,7 +449,7 @@ private static Button createFloatingAIButton(
     // =====================================================
 
     aiButton.setStyle(
-            "-fx-background-color: #323238;" +
+            "-fx-background-color: #2F80ED;" +
             "-fx-text-fill: white;" +
             "-fx-font-size: 15px;" +
             "-fx-font-weight: bold;" +
@@ -458,7 +470,7 @@ private static Button createFloatingAIButton(
             e -> {
 
                 aiButton.setStyle(
-                        "-fx-background-color: #1d4ed8;" +
+                        "-fx-background-color: #1D4E7A;" +
                         "-fx-text-fill: white;" +
                         "-fx-font-size: 15px;" +
                         "-fx-font-weight: bold;" +
@@ -468,7 +480,7 @@ private static Button createFloatingAIButton(
                         "-fx-border-width: 2;" +
                         "-fx-padding: 0 20 0 20;" +
                         "-fx-cursor: hand;" +
-                        "-fx-effect: dropshadow(gaussian, rgba(37,99,235,0.55), 24, 0.45, 0, 7);"
+                        "-fx-effect: dropshadow(gaussian, rgba(47,128,237,0.55), 24, 0.45, 0, 7);"
                 );
             }
     );
@@ -477,7 +489,7 @@ private static Button createFloatingAIButton(
             e -> {
 
                 aiButton.setStyle(
-                        "-fx-background-color: #2563eb;" +
+                        "-fx-background-color: #2F80ED;" +
                         "-fx-text-fill: white;" +
                         "-fx-font-size: 15px;" +
                         "-fx-font-weight: bold;" +
@@ -539,7 +551,7 @@ private static VBox createSidebar(
     );
 
     sidebar.setStyle(
-            "-fx-background-color: #0f172a;"
+            "-fx-background-color: #12355B;"
     );
 
     // =====================================================
@@ -572,7 +584,7 @@ private static VBox createSidebar(
     );
 
     module.setStyle(
-            "-fx-text-fill: #94a3b8;" +
+            "-fx-text-fill: #D6E4F0;" +
             "-fx-font-size: 12px;" +
             "-fx-font-weight: bold;"
     );
@@ -581,7 +593,7 @@ private static VBox createSidebar(
             new Separator();
 
     separator.setStyle(
-            "-fx-background-color: #334155;"
+            "-fx-background-color: #1D4E7A;"
     );
 
     sidebar.getChildren().addAll(
@@ -734,7 +746,7 @@ private static HBox navItem(
             "-fx-background-color: " +
             (
                     selected
-                            ? "#2563eb"
+                            ? "#2F80ED"
                             : "transparent"
             ) +
             ";" +
@@ -785,7 +797,7 @@ private static HBox navItem(
 
         item.setOnMouseEntered(
                 e -> item.setStyle(
-                        "-fx-background-color: #1e293b;" +
+                        "-fx-background-color: #1D4E7A;" +
                         "-fx-background-radius: 9;" +
                         "-fx-cursor: hand;"
                 )
@@ -1085,11 +1097,12 @@ public static VBox card(
     );
 
     box.setStyle(
-            "-fx-background-color: white;" +
+            "-fx-background-color: #FFFFFF;" +
             "-fx-background-radius: 14;" +
-            "-fx-border-color: #cbd5e1;" +
+            "-fx-border-color: #E2E8F0;" +
             "-fx-border-width: 1;" +
-            "-fx-border-radius: 14;"
+            "-fx-border-radius: 14;" +
+            "-fx-effect: dropshadow(three-pass-box, rgba(18, 53, 91, 0.05), 10, 0, 0, 3);"
     );
 
     if (title != null &&
@@ -1103,7 +1116,7 @@ public static VBox card(
         label.setStyle(
                 "-fx-font-size: 18px;" +
                 "-fx-font-weight: bold;" +
-                "-fx-text-fill: #0f172a;"
+                "-fx-text-fill: #172B4D;"
         );
 
         box.getChildren().add(label);

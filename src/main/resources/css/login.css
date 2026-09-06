@@ -1,6 +1,6 @@
 /* Root Container */
 .login-root {
-    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
+    -fx-background-color: linear-gradient(to bottom right, #F4F8FC, #EEF3FF);
     -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
 }
 
@@ -8,42 +8,42 @@
 .left-panel {
     -fx-background-color: linear-gradient(
         to bottom right,
-        #163A5F,
-        #2389A8
+        #12355B,
+        #1D4E7A
     );
     -fx-padding: 48px;
 }
 
 .panel-brand {
-    -fx-font-size: 20px;
+    -fx-font-size: 22px;
     -fx-font-weight: bold;
-    -fx-fill: #0256D0;
+    -fx-fill: #FFFFFF;
 }
 
 .hero-header {
     -fx-font-size: 32px;
     -fx-font-weight: 800;
-    -fx-fill: #0F172A;
+    -fx-fill: #FFFFFF;
 }
 
 .hero-subtext {
     -fx-font-size: 14px;
-    -fx-fill: #475569;
+    -fx-fill: #D6E4F0;
     -fx-line-spacing: 4px;
 }
 
 .feature-pill {
-    -fx-background-color: rgba(255, 255, 255, 0.65);
+    -fx-background-color: rgba(255, 255, 255, 0.12);
     -fx-background-radius: 10px;
     -fx-padding: 12px 16px;
-    -fx-border-color: rgba(255, 255, 255, 0.9);
+    -fx-border-color: rgba(255, 255, 255, 0.25);
     -fx-border-radius: 10px;
 }
 
 .feature-pill-text {
     -fx-font-size: 13px;
     -fx-font-weight: 600;
-    -fx-text-fill: #1E293B;
+    -fx-text-fill: #FFFFFF;
 }
 
 /* --- RIGHT FORM CARD --- */
@@ -127,7 +127,7 @@
 
 /* Action Buttons */
 .btn-login-primary {
-    -fx-background-color: #0256D0;
+    -fx-background-color: #2F80ED;
     -fx-text-fill: #FFFFFF;
     -fx-font-weight: bold;
     -fx-font-size: 14px;
@@ -137,16 +137,16 @@
 }
 
 .btn-login-primary:hover {
-    -fx-background-color: #0143A3;
+    -fx-background-color: #1E6BDB;
 }
 
 .btn-outline {
     -fx-background-color: #FFFFFF;
-    -fx-border-color: #0256D0;
+    -fx-border-color: #2F80ED;
     -fx-border-width: 1.5px;
     -fx-border-radius: 8px;
     -fx-background-radius: 8px;
-    -fx-text-fill: #0256D0;
+    -fx-text-fill: #2F80ED;
     -fx-font-weight: bold;
     -fx-font-size: 14px;
     -fx-padding: 10px;

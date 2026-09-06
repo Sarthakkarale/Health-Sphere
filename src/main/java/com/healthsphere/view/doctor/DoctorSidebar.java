@@ -37,7 +37,7 @@ public class DoctorSidebar {
         sidebar.setMinWidth(260);
         sidebar.setPrefWidth(260);
         sidebar.setMaxWidth(260);
-        sidebar.setStyle("-fx-background-color: #0F172A;");
+        sidebar.setStyle("-fx-background-color: #12355B;");
 
         // Logo section
         HBox logoSection = new HBox(12);
@@ -45,7 +45,7 @@ public class DoctorSidebar {
         logoSection.setPadding(new Insets(0, 0, 28, 4));
 
         StackPane logoBox = new StackPane();
-        logoBox.setStyle("-fx-background-color: #3B82F6; -fx-background-radius: 8px; -fx-padding: 8px;");
+        logoBox.setStyle("-fx-background-color: #2F80ED; -fx-background-radius: 8px; -fx-padding: 8px;");
         ImageView logo = createImageView("/images/icons/ic_shield.png", 20, 20);
         if (logo != null) logoBox.getChildren().add(logo);
 
@@ -53,7 +53,7 @@ public class DoctorSidebar {
         Label appName = new Label("Health-Sphere");
         appName.setStyle("-fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold;");
         Label doctorSubtext = new Label("Doctor Dashboard");
-        doctorSubtext.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 12px;");
+        doctorSubtext.setStyle("-fx-text-fill: #D6E4F0; -fx-font-size: 12px;");
         logoText.getChildren().addAll(appName, doctorSubtext);
         logoSection.getChildren().addAll(logoBox, logoText);
 
@@ -95,11 +95,11 @@ public class DoctorSidebar {
             HBox.setHgrow(tabLabel, Priority.ALWAYS);
 
             if (i == activeIndex) {
-                navTab.setStyle("-fx-background-color: #3B82F6; -fx-background-radius: 8px; -fx-cursor: hand;");
+                navTab.setStyle("-fx-background-color: #2F80ED; -fx-background-radius: 8px; -fx-cursor: hand;");
                 tabLabel.setStyle("-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold;");
             } else {
                 navTab.setStyle("-fx-background-color: transparent; -fx-background-radius: 8px; -fx-cursor: hand;");
-                tabLabel.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 13px;");
+                tabLabel.setStyle("-fx-text-fill: #D6E4F0; -fx-font-size: 13px;");
             }
 
             if (icon != null) navTab.getChildren().add(icon);
@@ -116,7 +116,7 @@ public class DoctorSidebar {
         HBox profile = new HBox(12);
         profile.setAlignment(Pos.CENTER_LEFT);
         profile.setPadding(new Insets(10, 12, 10, 12));
-        profile.setStyle("-fx-background-color: #1E293B; -fx-background-radius: 10px; -fx-cursor: hand;");
+        profile.setStyle("-fx-background-color: #1D4E7A; -fx-background-radius: 10px; -fx-cursor: hand;");
 
         ImageView profileImage = createImageView("/images/doctor/doctor_profile.png", 34, 34);
         if (profileImage == null) {
@@ -124,7 +124,7 @@ public class DoctorSidebar {
         }
         VBox profileText = new VBox(2);
         Label doctorRole = new Label("Doctor Profile");
-        doctorRole.setStyle("-fx-text-fill: #64748B; -fx-font-size: 11px;");
+        doctorRole.setStyle("-fx-text-fill: #D6E4F0; -fx-font-size: 11px;");
         Label doctorName = new Label(SessionManager.getDoctorDisplayName());
         doctorName.setStyle("-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold;");
         profileText.getChildren().addAll(doctorRole, doctorName);
@@ -140,7 +140,7 @@ public class DoctorSidebar {
         logout.setStyle("-fx-cursor: hand;");
         ImageView logoutIcon = createImageView("/images/icons/ic_logout.png", 18, 18);
         Label logoutLabel = new Label("Logout");
-        logoutLabel.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 14px;");
+        logoutLabel.setStyle("-fx-text-fill: #D6E4F0; -fx-font-size: 14px;");
         if (logoutIcon != null) logout.getChildren().add(logoutIcon);
         logout.getChildren().add(logoutLabel);
 

@@ -2,7 +2,7 @@
    ROOT & GENERAL STYLING
    ========================================================================== */
 .root-container {
-    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
+    -fx-background-color: linear-gradient(to bottom right, #F4F8FC, #EEF3FF);
     -fx-font-family: 'System', 'Segoe UI', sans-serif;
 }
 
@@ -19,7 +19,7 @@
    LEFT MARKETING PANEL
    ========================================================================== */
 .overlay-rect {
-    -fx-fill: linear-gradient(to bottom right, rgba(15, 23, 42, 0.92), rgba(30, 58, 138, 0.88));
+    -fx-fill: linear-gradient(to bottom right, rgba(18, 53, 91, 0.92), rgba(29, 78, 122, 0.86));
 }
 
 .left-logo-text {
@@ -29,15 +29,15 @@
 }
 
 .glass-feature-card {
-    -fx-background-color: rgba(255, 255, 255, 0.08);
-    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-background-color: rgba(255, 255, 255, 0.12);
+    -fx-border-color: rgba(255, 255, 255, 0.22);
     -fx-border-radius: 12px;
     -fx-background-radius: 12px;
     -fx-padding: 16px;
 }
 
 .card-icon-circle {
-    -fx-fill: #2563EB;
+    -fx-fill: #2F80ED;
 }
 
 .feature-title {
@@ -48,12 +48,12 @@
 
 .feature-description {
     -fx-font-size: 12px;
-    -fx-text-fill: #94A3B8;
+    -fx-text-fill: #D6E4F0;
 }
 
 .bottom-caption {
     -fx-font-size: 12px;
-    -fx-fill: #64748B;
+    -fx-fill: #D6E4F0;
 }
 
 /* ==========================================================================
@@ -64,25 +64,25 @@
     -fx-background-radius: 16px;
     -fx-border-radius: 16px;
     -fx-padding: 36px 40px;
-    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.08), 20, 0, 0, 4);
+    -fx-effect: dropshadow(three-pass-box, rgba(18, 53, 91, 0.08), 20, 0, 0, 4);
 }
 
 .heading-text {
     -fx-font-size: 24px;
     -fx-font-weight: bold;
-    -fx-fill: #111827;
+    -fx-fill: #172B4D;
 }
 
 .subtitle-text {
     -fx-font-size: 14px;
-    -fx-fill: #6B7280;
+    -fx-fill: #64748B;
 }
 
 /* ==========================================================================
    STEP INDICATOR STYLING
    ========================================================================== */
 .step-circle-active {
-    -fx-fill: #2563EB;
+    -fx-fill: #2F80ED;
 }
 
 .step-circle-completed {
@@ -264,7 +264,7 @@
 }
 
 .btn-continue {
-    -fx-background-color: #2563EB;
+    -fx-background-color: #2F80ED;
     -fx-text-fill: #FFFFFF;
     -fx-font-size: 14px;
     -fx-font-weight: bold;
@@ -275,7 +275,7 @@
 }
 
 .btn-continue:hover {
-    -fx-background-color: #1D4ED8;
+    -fx-background-color: #1E6BDB;
 }
 
 .btn-back {

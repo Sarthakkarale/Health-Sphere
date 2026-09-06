@@ -46,13 +46,13 @@ public class HospitalSidebar {
     }
 
     // Modern Dark Sidebar Palette
-    private static final String SIDEBAR_BG = "#0F172A";
-    private static final String SIDEBAR_BORDER = "#1E293B";
-    private static final String SIDEBAR_TEXT_MUTED = "#94A3B8";
-    private static final String SIDEBAR_TEXT_HOVER = "#F8FAFC";
-    private static final String SIDEBAR_HOVER_BG = "#1E293B";
-    private static final String SIDEBAR_ACCENT = "#38BDF8";
-    private static final String SIDEBAR_SELECTED = "#170ECA";
+    private static final String SIDEBAR_BG = "#12355B";
+    private static final String SIDEBAR_BORDER = "#1D4E7A";
+    private static final String SIDEBAR_TEXT_MUTED = "#D6E4F0";
+    private static final String SIDEBAR_TEXT_HOVER = "#FFFFFF";
+    private static final String SIDEBAR_HOVER_BG = "#1D4E7A";
+    private static final String SIDEBAR_ACCENT = "#2F80ED";
+    private static final String SIDEBAR_SELECTED = "#2F80ED";
 
     private HospitalSidebar() {
         // Utility class

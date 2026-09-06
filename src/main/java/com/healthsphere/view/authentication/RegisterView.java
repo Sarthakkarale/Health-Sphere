@@ -138,7 +138,12 @@ public class RegisterView {
                 leftStack.setClip(clip);
 
                 try {
-                        if (getClass().getResource("/images/auth-background.jpg") != null) {
+                        if (getClass().getResource("/images/medical_tech_hero.png") != null) {
+                                bgImageView.setImage(
+                                                new Image(
+                                                                getClass().getResourceAsStream(
+                                                                                "/images/medical_tech_hero.png")));
+                        } else if (getClass().getResource("/images/auth-background.jpg") != null) {
                                 bgImageView.setImage(
                                                 new Image(
                                                                 getClass().getResourceAsStream(

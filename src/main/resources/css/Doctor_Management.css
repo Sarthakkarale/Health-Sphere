@@ -3,7 +3,7 @@
    ========================================================= */
 
 .doctor-root {
-    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
+    -fx-background-color: linear-gradient(to bottom right, #F4F8FC, #EEF3FF);
     -fx-font-family: "Segoe UI";
 }
 
@@ -22,21 +22,21 @@
    ========================================================= */
 
 .sidebar {
-    -fx-background-color: #FFFFFF;
+    -fx-background-color: #12355B;
 
-    -fx-border-color: #DDE2EB;
+    -fx-border-color: #1D4E7A;
     -fx-border-width: 0 1px 0 0;
 }
 
 .logo {
-    -fx-text-fill: #1455C7;
+    -fx-text-fill: #FFFFFF;
 
     -fx-font-size: 21px;
     -fx-font-weight: bold;
 }
 
 .logo-subtitle {
-    -fx-text-fill: #7C8492;
+    -fx-text-fill: #D6E4F0;
 
     -fx-font-size: 8px;
     -fx-font-weight: bold;
@@ -58,11 +58,11 @@
 }
 
 .navigation-button:hover {
-    -fx-background-color: #F1F5FD;
+    -fx-background-color: #1D4E7A;
 }
 
 .navigation-active {
-    -fx-background-color: #2D67E5;
+    -fx-background-color: #2F80ED;
 }
 
 .navigation-icon {
@@ -70,13 +70,13 @@
 
     -fx-font-size: 17px;
 
-    -fx-text-fill: #5D6573;
+    -fx-text-fill: #D6E4F0;
 }
 
 .navigation-text {
     -fx-font-size: 13px;
 
-    -fx-text-fill: #454C58;
+    -fx-text-fill: #D6E4F0;
 }
 
 .navigation-active .navigation-icon,
@@ -88,7 +88,7 @@
 /* Sidebar bottom */
 
 .report-button {
-    -fx-background-color: #0759D5;
+    -fx-background-color: #2F80ED;
 
     -fx-background-radius: 8px;
 
@@ -102,13 +102,13 @@
 }
 
 .report-button:hover {
-    -fx-background-color: #064DBA;
+    -fx-background-color: #1D4E7A;
 }
 
 .sidebar-bottom-button {
     -fx-background-color: transparent;
 
-    -fx-text-fill: #4D5562;
+    -fx-text-fill: #D6E4F0;
 
     -fx-font-size: 12px;
 
@@ -120,7 +120,7 @@
 }
 
 .sidebar-bottom-button:hover {
-    -fx-background-color: #F3F5F9;
+    -fx-background-color: #1D4E7A;
 
     -fx-background-radius: 8px;
 }
@@ -149,7 +149,7 @@
 }
 
 .search-container:focused-within {
-    -fx-border-color: #2866D9;
+    -fx-border-color: #2F80ED;
 }
 
 .search-icon {
@@ -179,9 +179,9 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #064CC0;
+    -fx-text-fill: #2F80ED;
 
-    -fx-border-color: #064CC0;
+    -fx-border-color: #2F80ED;
 
     -fx-border-width: 0 0 2px 0;
 
@@ -207,17 +207,17 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #252A33;
+    -fx-text-fill: #172B4D;
 }
 
 .admin-role {
     -fx-font-size: 9px;
 
-    -fx-text-fill: #707784;
+    -fx-text-fill: #64748B;
 }
 
 .admin-avatar {
-    -fx-background-color: #DCE7F5;
+    -fx-background-color: #EEF3FF;
 
     -fx-background-radius: 50%;
 
@@ -229,7 +229,7 @@
 
     -fx-alignment: CENTER;
 
-    -fx-text-fill: #20559C;
+    -fx-text-fill: #2F80ED;
 
     -fx-font-size: 10px;
 
@@ -250,13 +250,13 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #111722;
+    -fx-text-fill: #172B4D;
 }
 
 .page-description {
     -fx-font-size: 13px;
 
-    -fx-text-fill: #626A77;
+    -fx-text-fill: #64748B;
 }
 
 
@@ -289,7 +289,7 @@
 }
 
 .add-doctor-button {
-    -fx-background-color: #0759D5;
+    -fx-background-color: #2F80ED;
 
     -fx-background-radius: 8px;
 
@@ -305,7 +305,7 @@
 }
 
 .add-doctor-button:hover {
-    -fx-background-color: #064DBA;
+    -fx-background-color: #1D4E7A;
 }
 
 
@@ -341,7 +341,7 @@
 }
 
 .kpi-icon {
-    -fx-background-color: #E7F0FF;
+    -fx-background-color: #EEF3FF;
 
     -fx-background-radius: 9px;
 
@@ -349,7 +349,7 @@
 
     -fx-font-size: 17px;
 
-    -fx-text-fill: #175CC8;
+    -fx-text-fill: #2F80ED;
 }
 
 .kpi-icon-green {
@@ -373,7 +373,7 @@
 .kpi-title {
     -fx-font-size: 12px;
 
-    -fx-text-fill: #5B6370;
+    -fx-text-fill: #64748B;
 
     -fx-font-weight: bold;
 }
@@ -383,7 +383,7 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #111722;
+    -fx-text-fill: #172B4D;
 }
 
 .growth-badge {
@@ -537,7 +537,7 @@
 }
 
 .doctor-avatar {
-    -fx-background-color: #E5EDF9;
+    -fx-background-color: #EEF3FF;
 
     -fx-background-radius: 50%;
 
@@ -549,7 +549,7 @@
 
     -fx-alignment: CENTER;
 
-    -fx-text-fill: #2458A6;
+    -fx-text-fill: #2F80ED;
 
     -fx-font-size: 10px;
 
@@ -561,13 +561,13 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #1B2029;
+    -fx-text-fill: #172B4D;
 }
 
 .doctor-id {
     -fx-font-size: 10px;
 
-    -fx-text-fill: #707784;
+    -fx-text-fill: #64748B;
 }
 
 .doctor-row > .label {
@@ -581,7 +581,7 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #202630 !important;
+    -fx-text-fill: #172B4D !important;
 }
 
 
@@ -602,11 +602,11 @@
 }
 
 .status-leave {
-    -fx-background-color: #DFE9FF;
+    -fx-background-color: #EEF3FF;
 
     -fx-background-radius: 15px;
 
-    -fx-text-fill: #4163A5 !important;
+    -fx-text-fill: #2F80ED !important;
 
     -fx-font-size: 10px !important;
 
@@ -664,7 +664,7 @@
 .showing-label {
     -fx-font-size: 11px;
 
-    -fx-text-fill: #626A77;
+    -fx-text-fill: #64748B;
 }
 
 .page-button {
@@ -688,7 +688,7 @@
 }
 
 .page-active {
-    -fx-background-color: #0759D5;
+    -fx-background-color: #2F80ED;
 
     -fx-background-radius: 8px;
 
@@ -711,7 +711,7 @@
 .ai-insight {
     -fx-background-color: white;
 
-    -fx-border-color: #2648C7;
+    -fx-border-color: #2F80ED;
 
     -fx-border-radius: 12px;
 
@@ -728,7 +728,7 @@
 }
 
 .ai-icon {
-    -fx-background-color: #E5EEFF;
+    -fx-background-color: #EEF3FF;
 
     -fx-background-radius: 50%;
 
@@ -740,7 +740,7 @@
 
     -fx-alignment: CENTER;
 
-    -fx-text-fill: #1759C8;
+    -fx-text-fill: #2F80ED;
 
     -fx-font-size: 21px;
 
@@ -752,13 +752,13 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #171D27;
+    -fx-text-fill: #172B4D;
 }
 
 .ai-message {
     -fx-font-size: 11px;
 
-    -fx-text-fill: #616977;
+    -fx-text-fill: #64748B;
 
     -fx-line-spacing: 2px;
 }
@@ -766,13 +766,13 @@
 .forecast-button {
     -fx-background-color: white;
 
-    -fx-border-color: #0C48A7;
+    -fx-border-color: #2F80ED;
 
     -fx-border-radius: 8px;
 
     -fx-background-radius: 8px;
 
-    -fx-text-fill: #0C48A7;
+    -fx-text-fill: #2F80ED;
 
     -fx-font-size: 11px;
 
@@ -784,5 +784,5 @@
 }
 
 .forecast-button:hover {
-    -fx-background-color: #EFF4FF;
+    -fx-background-color: #EEF3FF;
 }

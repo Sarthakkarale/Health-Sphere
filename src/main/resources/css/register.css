@@ -1,6 +1,6 @@
 /* Main Page Background */
 .register-root {
-    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
+    -fx-background-color: linear-gradient(to bottom right, #F4F8FC, #EEF3FF);
     -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
 }
 
@@ -24,13 +24,13 @@
 .brand-text {
     -fx-font-size: 20px;
     -fx-font-weight: 800;
-    -fx-fill: #0256D0;
+    -fx-fill: #2F80ED;
 }
 
 .reg-title {
     -fx-font-size: 22px;
     -fx-font-weight: 800;
-    -fx-fill: #0F172A;
+    -fx-fill: #172B4D;
 }
 
 .reg-subtitle {
@@ -40,7 +40,7 @@
 
 /* Step Badge */
 .step-badge {
-    -fx-background-color: #EFF6FF;
+    -fx-background-color: #EEF3FF;
     -fx-background-radius: 20px;
     -fx-padding: 6px 14px;
 }
@@ -48,14 +48,14 @@
 .step-badge-text {
     -fx-font-size: 12px;
     -fx-font-weight: bold;
-    -fx-text-fill: #0256D0;
+    -fx-text-fill: #2F80ED;
 }
 
 /* Form Inputs */
 .input-label {
     -fx-font-size: 12px;
     -fx-font-weight: bold;
-    -fx-text-fill: #334155;
+    -fx-text-fill: #172B4D;
 }
 
 .text-field-custom {
@@ -68,7 +68,7 @@
 }
 
 .text-field-custom:focused {
-    -fx-border-color: #0256D0;
+    -fx-border-color: #2F80ED;
     -fx-background-color: #FFFFFF;
 }
 
@@ -91,7 +91,7 @@
 
 /* Submit Button */
 .btn-register-primary {
-    -fx-background-color: #0256D0;
+    -fx-background-color: #2F80ED;
     -fx-text-fill: #FFFFFF;
     -fx-font-weight: bold;
     -fx-font-size: 15px;
@@ -101,7 +101,7 @@
 }
 
 .btn-register-primary:hover {
-    -fx-background-color: #0143A3;
+    -fx-background-color: #1D4E7A;
 }
 
 /* Security Footer Box */

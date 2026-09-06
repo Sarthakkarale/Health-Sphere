@@ -1,19 +1,19 @@
 /* Core Page Layout */
-.root-pane { -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC); }
-.sidebar { -fx-background-color: #333D51; }
+.root-pane { -fx-background-color: linear-gradient(to bottom right, #F4F8FC, #EEF3FF); }
+.sidebar { -fx-background-color: #12355B; }
 .content-area { -fx-background-color: transparent; }
 .content-scrollpane { -fx-background-color: transparent; -fx-background: transparent; -fx-fit-to-width: true; }
 
 /* Sidebar Navigation */
-.logo-icon-box { -fx-background-color: #2563EB; -fx-background-radius: 8px; -fx-min-width: 36px; -fx-min-height: 36px; }
+.logo-icon-box { -fx-background-color: #2F80ED; -fx-background-radius: 8px; -fx-min-width: 36px; -fx-min-height: 36px; }
 .logo-icon-text { -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; }
 .logo-name { -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16px; }
-.logo-subtext { -fx-text-fill: #94A3B8; -fx-font-size: 11px; }
+.logo-subtext { -fx-text-fill: #D6E4F0; -fx-font-size: 11px; }
 
 .nav-tab { -fx-padding: 10px 14px; -fx-background-radius: 8px; -fx-cursor: hand; }
-.nav-tab:hover { -fx-background-color: #404B61; }
-.nav-tab-active { -fx-background-color: #404B61; -fx-background-radius: 8px; }
-.nav-text { -fx-text-fill: #CBD5E1; -fx-font-size: 13px; }
+.nav-tab:hover { -fx-background-color: #1D4E7A; }
+.nav-tab-active { -fx-background-color: #2F80ED; -fx-background-radius: 8px; }
+.nav-text { -fx-text-fill: #D6E4F0; -fx-font-size: 13px; }
 .nav-tab-active .nav-text { -fx-text-fill: white; -fx-font-weight: bold; }
 
 /* Card Panels */
@@ -43,21 +43,21 @@
 
 /* Other Patients Quick Switcher Bar */
 .section-mini-title { -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #64748B; }
-.patient-avatar-active { -fx-padding: 2px; -fx-border-color: #2563EB; -fx-border-radius: 22px; -fx-border-width: 2px; }
-.patient-name-active { -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #2563EB; }
+.patient-avatar-active { -fx-padding: 2px; -fx-border-color: #2F80ED; -fx-border-radius: 22px; -fx-border-width: 2px; }
+.patient-name-active { -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #2F80ED; }
 .patient-name-inactive { -fx-font-size: 11px; -fx-text-fill: #64748B; }
 .add-patient-circle { -fx-background-color: #F1F5F9; -fx-background-radius: 20px; -fx-min-width: 38px; -fx-min-height: 38px; -fx-cursor: hand; }
 .add-patient-plus { -fx-text-fill: #64748B; -fx-font-size: 16px; -fx-font-weight: bold; }
 
 /* Selected Patient Main Header */
-.patient-header-name { -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #0F172A; }
-.patient-header-meta { -fx-font-size: 13px; -fx-text-fill: #475569; }
+.patient-header-name { -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #172B4D; }
+.patient-header-meta { -fx-font-size: 13px; -fx-text-fill: #64748B; }
 .btn-edit-patient {
-    -fx-background-color: #EFF6FF;
+    -fx-background-color: #EEF3FF;
     -fx-border-color: #BFDBFE;
     -fx-border-radius: 8px;
     -fx-background-radius: 8px;
-    -fx-text-fill: #1D4ED8;
+    -fx-text-fill: #2F80ED;
     -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-padding: 8px 16px;
@@ -65,7 +65,7 @@
 }
 
 /* Summary Cards (Allergies, Chronic Diseases, Vitals) */
-.card-header-title { -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #0F172A; }
+.card-header-title { -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #172B4D; }
 .tag-pill {
     -fx-background-color: #F1F5F9;
     -fx-text-fill: #334155;
@@ -77,11 +77,11 @@
 }
 
 .vital-label { -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #64748B; }
-.vital-value { -fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1E293B; }
+.vital-value { -fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #172B4D; }
 .vital-unit { -fx-font-size: 11px; -fx-text-fill: #64748B; }
 
 /* Timeline Medical History */
-.section-card-title { -fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: #0F172A; }
+.section-card-title { -fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: #172B4D; }
 .timeline-line { -fx-background-color: #E2E8F0; -fx-min-width: 2px; -fx-max-width: 2px; }
 .timeline-badge { -fx-background-radius: 16px; -fx-min-width: 30px; -fx-min-height: 30px; -fx-alignment: center; }
 .history-item-box {
@@ -90,9 +90,9 @@
     -fx-border-radius: 8px;
     -fx-background-radius: 8px;
 }
-.history-item-title { -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #0F172A; }
+.history-item-title { -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #172B4D; }
 .history-item-date { -fx-font-size: 11px; -fx-text-fill: #64748B; }
-.history-item-desc { -fx-font-size: 12px; -fx-text-fill: #475569; }
+.history-item-desc { -fx-font-size: 12px; -fx-text-fill: #64748B; }
 
 /* Previous Appointments Table */
 .table-header-text { -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #64748B; }
@@ -100,4 +100,4 @@
 .pill-completed { -fx-background-color: #059669; -fx-text-fill: white; }
 
 /* Footer Links */
-.link-view-all { -fx-text-fill: #2563EB; -fx-font-size: 12px; -fx-font-weight: bold; -fx-underline: false; }
+.link-view-all { -fx-text-fill: #2F80ED; -fx-font-size: 12px; -fx-font-weight: bold; -fx-underline: false; }

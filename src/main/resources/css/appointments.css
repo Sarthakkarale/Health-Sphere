@@ -1,15 +1,15 @@
 /* Health-Sphere Appointments Theme */
 .root-pane {
-    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
+    -fx-background-color: linear-gradient(to bottom right, #F4F8FC, #EEF3FF);
 }
 
 /* Sidebar Styling */
 .sidebar {
-    -fx-background-color: #252A31;
+    -fx-background-color: #12355B;
 }
 
 .logo-icon-box {
-    -fx-background-color: #0052CC;
+    -fx-background-color: #2F80ED;
     -fx-background-radius: 6;
     -fx-min-width: 32; -fx-min-height: 32;
     -fx-alignment: center;
@@ -30,7 +30,7 @@
 .logo-subtext {
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-font-size: 11px;
-    -fx-text-fill: #8C9BAE;
+    -fx-text-fill: #D6E4F0;
 }
 
 .nav-tab {
@@ -41,19 +41,19 @@
 }
 
 .nav-tab:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-background-color: #1D4E7A;
 }
 
 .nav-tab-active {
-    -fx-background-color: rgba(255, 255, 255, 0.12);
-    -fx-border-color: #0052CC;
+    -fx-background-color: #2F80ED;
+    -fx-border-color: #2F80ED;
     -fx-border-width: 0 0 0 3;
 }
 
 .nav-text {
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-font-size: 13px;
-    -fx-text-fill: #A6B4C9;
+    -fx-text-fill: #D6E4F0;
 }
 
 .nav-tab-active .nav-text {
@@ -75,7 +75,7 @@
 }
 
 .sidebar-profile:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-background-color: #1D4E7A;
 }
 
 .sidebar-profile-name {
@@ -115,11 +115,11 @@
 .page-subtitle {
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-font-size: 13px;
-    -fx-text-fill: #5E6C84;
+    -fx-text-fill: #64748B;
 }
 
 .btn-primary-action {
-    -fx-background-color: #0052CC;
+    -fx-background-color: #2F80ED;
     -fx-text-fill: white;
     -fx-font-family: "Segoe UI Bold", sans-serif;
     -fx-font-size: 13px;
@@ -129,7 +129,7 @@
 }
 
 .btn-primary-action:hover {
-    -fx-background-color: #0043A8;
+    -fx-background-color: #1D4E7A;
 }
 
 /* Filter Section */
@@ -144,7 +144,7 @@
     -fx-border-color: #DFE1E6;
     -fx-border-radius: 20;
     -fx-background-radius: 20;
-    -fx-text-fill: #5E6C84;
+    -fx-text-fill: #64748B;
     -fx-font-family: "Segoe UI Semibold", sans-serif;
     -fx-font-size: 12px;
     -fx-padding: 6 18;
@@ -156,7 +156,7 @@
 }
 
 .filter-pill-active {
-    -fx-background-color: #0052CC;
+    -fx-background-color: #2F80ED;
     -fx-text-fill: white;
     -fx-font-family: "Segoe UI Bold", sans-serif;
     -fx-font-size: 12px;
@@ -197,14 +197,14 @@
 .appointment-card-active {
     -fx-background-color: white;
     -fx-background-radius: 10;
-    -fx-border-color: #0052CC;
+    -fx-border-color: #2F80ED;
     -fx-border-width: 0 0 0 4;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.06), 10, 0, 0, 3);
 }
 
 .apt-id-label {
     -fx-background-color: #F4F5F7;
-    -fx-text-fill: #5E6C84;
+    -fx-text-fill: #64748B;
     -fx-font-family: "Segoe UI Semibold", sans-serif;
     -fx-font-size: 11px;
     -fx-padding: 3 8;
@@ -220,8 +220,8 @@
 }
 
 .pill-status-confirmed {
-    -fx-background-color: #E6F0FF;
-    -fx-text-fill: #0052CC;
+    -fx-background-color: #EEF3FF;
+    -fx-text-fill: #2F80ED;
 }
 
 .pill-status-inprogress {
@@ -231,7 +231,7 @@
 
 .pill-status-pending {
     -fx-background-color: #F4F5F7;
-    -fx-text-fill: #5E6C84;
+    -fx-text-fill: #64748B;
 }
 
 /* Card Patient Info */
@@ -244,11 +244,11 @@
 .card-consult-type {
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-font-size: 12px;
-    -fx-text-fill: #5E6C84;
+    -fx-text-fill: #64748B;
 }
 
 .initials-avatar-large {
-    -fx-background-color: #B3D4FF;
+    -fx-background-color: #EEF3FF;
     -fx-background-radius: 21;
     -fx-min-width: 42; -fx-min-height: 42;
     -fx-alignment: center;
@@ -257,7 +257,7 @@
 .initials-text-large {
     -fx-font-family: "Segoe UI Bold", sans-serif;
     -fx-font-size: 14px;
-    -fx-text-fill: #0052CC;
+    -fx-text-fill: #2F80ED;
 }
 
 .card-time-text {
@@ -269,7 +269,7 @@
 .card-notes-text {
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-font-size: 12px;
-    -fx-text-fill: #5E6C84;
+    -fx-text-fill: #64748B;
 }
 
 /* Buttons inside Cards */
@@ -290,7 +290,7 @@
 }
 
 .btn-card-details {
-    -fx-background-color: #0052CC;
+    -fx-background-color: #2F80ED;
     -fx-text-fill: white;
     -fx-font-family: "Segoe UI Semibold", sans-serif;
     -fx-font-size: 12px;
@@ -300,5 +300,5 @@
 }
 
 .btn-card-details:hover {
-    -fx-background-color: #0043A8;
+    -fx-background-color: #1D4E7A;
 }

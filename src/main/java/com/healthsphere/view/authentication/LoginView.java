@@ -190,15 +190,15 @@ public class LoginView {
                 VBox.setVgrow(spacer, Priority.ALWAYS);
 
                 // Bottom Illustration Image
-                ImageView heroImg = createSafeImageView("/images/auth-background.jpg", 430, 250);
+                ImageView heroImg = createSafeImageView("/images/healthcare_ai_hero.png", 440, 240);
+                if (heroImg.getImage() == null) {
+                        heroImg = createSafeImageView("/images/auth-background.jpg", 440, 240);
+                }
                 heroImg.setPreserveRatio(false);
 
-                Rectangle clip = new Rectangle(
-                                420,
-                                220);
-
-                clip.setArcWidth(16);
-                clip.setArcHeight(16);
+                Rectangle clip = new Rectangle(430, 230);
+                clip.setArcWidth(18);
+                clip.setArcHeight(18);
 
                 heroImg.setClip(clip);
 

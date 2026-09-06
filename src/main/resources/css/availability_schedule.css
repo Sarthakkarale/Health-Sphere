@@ -1,15 +1,15 @@
 /* Health-Sphere Availability & Schedule Theme */
 .root-pane {
-    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
+    -fx-background-color: linear-gradient(to bottom right, #F4F8FC, #EEF3FF);
 }
 
 /* Sidebar Styling */
 .sidebar {
-    -fx-background-color: #2B323D;
+    -fx-background-color: #12355B;
 }
 
 .logo-icon-box {
-    -fx-background-color: #1D4ED8;
+    -fx-background-color: #2F80ED;
     -fx-background-radius: 6;
     -fx-min-width: 32; -fx-min-height: 32;
     -fx-alignment: center;
@@ -24,7 +24,7 @@
 .logo-subtext {
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-font-size: 11px;
-    -fx-text-fill: #94A3B8;
+    -fx-text-fill: #D6E4F0;
 }
 
 .nav-tab {
@@ -35,19 +35,19 @@
 }
 
 .nav-tab:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.06);
+    -fx-background-color: #1D4E7A;
 }
 
 .nav-tab-active {
-    -fx-background-color: rgba(255, 255, 255, 0.12);
-    -fx-border-color: #2563EB;
+    -fx-background-color: #2F80ED;
+    -fx-border-color: #2F80ED;
     -fx-border-width: 0 0 0 3;
 }
 
 .nav-text {
     -fx-font-family: "Segoe UI", sans-serif;
     -fx-font-size: 13px;
-    -fx-text-fill: #CBD5E1;
+    -fx-text-fill: #D6E4F0;
 }
 
 .nav-tab-active .nav-text {
@@ -77,7 +77,7 @@
 .breadcrumb-active {
     -fx-font-family: "Segoe UI Semibold", sans-serif;
     -fx-font-size: 13px;
-    -fx-text-fill: #1D4ED8;
+    -fx-text-fill: #2F80ED;
 }
 
 .search-input-box {
@@ -99,7 +99,7 @@
 .profile-name {
     -fx-font-family: "Segoe UI Bold", sans-serif;
     -fx-font-size: 12px;
-    -fx-text-fill: #1E293B;
+    -fx-text-fill: #172B4D;
 }
 
 .profile-dept {
@@ -112,7 +112,7 @@
 .page-title {
     -fx-font-family: "Segoe UI Bold", sans-serif;
     -fx-font-size: 18px;
-    -fx-text-fill: #1E293B;
+    -fx-text-fill: #172B4D;
 }
 
 .page-subtext {
@@ -134,7 +134,7 @@
 }
 
 .btn-primary-action {
-    -fx-background-color: #2563EB;
+    -fx-background-color: #2F80ED;
     -fx-text-fill: white;
     -fx-font-family: "Segoe UI Semibold", sans-serif;
     -fx-font-size: 12px;
@@ -155,7 +155,7 @@
 .card-title {
     -fx-font-family: "Segoe UI Bold", sans-serif;
     -fx-font-size: 14px;
-    -fx-text-fill: #1E293B;
+    -fx-text-fill: #172B4D;
 }
 
 /* Segmented Buttons (Week / Month) */
@@ -177,7 +177,7 @@
 
 .segmented-btn-active {
     -fx-background-color: white;
-    -fx-text-fill: #1E293B;
+    -fx-text-fill: #172B4D;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 2, 0, 0, 1);
 }
 
@@ -191,7 +191,7 @@
 .nav-date-label {
     -fx-font-family: "Segoe UI Bold", sans-serif;
     -fx-font-size: 13px;
-    -fx-text-fill: #1E293B;
+    -fx-text-fill: #172B4D;
 }
 
 .legend-text {
@@ -218,7 +218,7 @@
 }
 
 .calendar-header-active {
-    -fx-text-fill: #2563EB;
+    -fx-text-fill: #2F80ED;
     -fx-font-family: "Segoe UI Bold", sans-serif;
 }
 
@@ -243,13 +243,13 @@
 }
 
 .block-clinical {
-    -fx-background-color: #EFF6FF;
-    -fx-border-color: #3B82F6;
+    -fx-background-color: #EEF3FF;
+    -fx-border-color: #2F80ED;
     -fx-border-width: 0 0 0 3;
 }
 
 .block-clinical .calendar-block-text {
-    -fx-text-fill: #1E40AF;
+    -fx-text-fill: #172B4D;
 }
 
 .block-surgery {
@@ -355,7 +355,7 @@
 }
 
 .switch-toggle {
-    -fx-background-color: #2563EB;
+    -fx-background-color: #2F80ED;
     -fx-background-radius: 12;
     -fx-min-width: 38; -fx-min-height: 20;
     -fx-cursor: hand;

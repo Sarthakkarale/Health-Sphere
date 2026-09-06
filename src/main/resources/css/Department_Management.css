@@ -3,7 +3,7 @@
    ========================================================= */
 
 .department-root {
-    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
+    -fx-background-color: linear-gradient(to bottom right, #F4F8FC, #EEF3FF);
     -fx-font-family: "Segoe UI";
 }
 
@@ -22,14 +22,14 @@
    ========================================================= */
 
 .sidebar {
-    -fx-background-color: #FAFAFF;
+    -fx-background-color: #12355B;
 
-    -fx-border-color: #DDE0EA;
+    -fx-border-color: #1D4E7A;
     -fx-border-width: 0 1px 0 0;
 }
 
 .logo {
-    -fx-text-fill: #064CB8;
+    -fx-text-fill: #FFFFFF;
 
     -fx-font-size: 23px;
 
@@ -37,7 +37,7 @@
 }
 
 .logo-subtitle {
-    -fx-text-fill: #737987;
+    -fx-text-fill: #D6E4F0;
 
     -fx-font-size: 9px;
 }
@@ -56,11 +56,11 @@
 }
 
 .navigation-button:hover {
-    -fx-background-color: #EEF3FF;
+    -fx-background-color: #1D4E7A;
 }
 
 .navigation-active {
-    -fx-background-color: #2864DF;
+    -fx-background-color: #2F80ED;
 }
 
 .navigation-icon {
@@ -68,13 +68,13 @@
 
     -fx-font-size: 16px;
 
-    -fx-text-fill: #343B47;
+    -fx-text-fill: #D6E4F0;
 }
 
 .navigation-text {
     -fx-font-size: 12px;
 
-    -fx-text-fill: #343B47;
+    -fx-text-fill: #D6E4F0;
 }
 
 .navigation-active .navigation-icon,
@@ -86,7 +86,7 @@
 /* Bottom */
 
 .consultation-button {
-    -fx-background-color: #0759D5;
+    -fx-background-color: #2F80ED;
 
     -fx-background-radius: 7px;
 
@@ -100,13 +100,13 @@
 }
 
 .consultation-button:hover {
-    -fx-background-color: #064DBA;
+    -fx-background-color: #1D4E7A;
 }
 
 .bottom-button {
     -fx-background-color: transparent;
 
-    -fx-text-fill: #464D59;
+    -fx-text-fill: #D6E4F0;
 
     -fx-font-size: 11px;
 
@@ -118,7 +118,7 @@
 }
 
 .bottom-button:hover {
-    -fx-background-color: #EEF1F7;
+    -fx-background-color: #1D4E7A;
 
     -fx-background-radius: 7px;
 }
@@ -183,17 +183,17 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #272D38;
+    -fx-text-fill: #172B4D;
 }
 
 .admin-role {
     -fx-font-size: 8px;
 
-    -fx-text-fill: #737A87;
+    -fx-text-fill: #64748B;
 }
 
 .admin-avatar {
-    -fx-background-color: #DFE8F7;
+    -fx-background-color: #EEF3FF;
 
     -fx-background-radius: 50%;
 
@@ -209,7 +209,7 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #24559B;
+    -fx-text-fill: #2F80ED;
 }
 
 
@@ -226,13 +226,13 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #151A23;
+    -fx-text-fill: #172B4D;
 }
 
 .page-description {
     -fx-font-size: 11px;
 
-    -fx-text-fill: #69717D;
+    -fx-text-fill: #64748B;
 }
 
 
@@ -263,7 +263,7 @@
 }
 
 .add-button {
-    -fx-background-color: #0759D5;
+    -fx-background-color: #2F80ED;
 
     -fx-background-radius: 7px;
 
@@ -279,7 +279,7 @@
 }
 
 .add-button:hover {
-    -fx-background-color: #064DBA;
+    -fx-background-color: #1D4E7A;
 }
 
 
@@ -313,11 +313,11 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #353B46;
+    -fx-text-fill: #172B4D;
 }
 
 .chart-icon-blue {
-    -fx-text-fill: #2865D7;
+    -fx-text-fill: #2F80ED;
 
     -fx-font-size: 17px;
 }
@@ -336,13 +336,13 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #242B36;
+    -fx-text-fill: #172B4D;
 }
 
 .donut-total {
     -fx-font-size: 7px;
 
-    -fx-text-fill: #717985;
+    -fx-text-fill: #64748B;
 }
 
 .legend-name {
@@ -360,7 +360,7 @@
 }
 
 .legend-blue {
-    -fx-text-fill: #1859D1;
+    -fx-text-fill: #2F80ED;
 }
 
 .legend-green {
@@ -387,11 +387,11 @@
 }
 
 .default-color0.chart-bar {
-    -fx-bar-fill: #2864D5;
+    -fx-bar-fill: #2F80ED;
 }
 
 .axis {
-    -fx-tick-label-fill: #737A87;
+    -fx-tick-label-fill: #64748B;
 
     -fx-tick-label-font-size: 8px;
 }
@@ -404,7 +404,7 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #222833;
+    -fx-text-fill: #172B4D;
 }
 
 .growth-label {
@@ -424,7 +424,7 @@
 .day-label {
     -fx-font-size: 7px;
 
-    -fx-text-fill: #666E7B;
+    -fx-text-fill: #64748B;
 }
 
 
@@ -496,9 +496,9 @@
 }
 
 .department-icon-blue {
-    -fx-background-color: #EEF5FF;
+    -fx-background-color: #EEF3FF;
 
-    -fx-text-fill: #2865D7;
+    -fx-text-fill: #2F80ED;
 }
 
 .department-icon-gray {
@@ -527,7 +527,7 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #171D26;
+    -fx-text-fill: #172B4D;
 }
 
 .head-icon {
@@ -597,7 +597,7 @@
 .stat-title {
     -fx-font-size: 7px;
 
-    -fx-text-fill: #777E89;
+    -fx-text-fill: #64748B;
 }
 
 .stat-value {
@@ -605,7 +605,7 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #242A34;
+    -fx-text-fill: #172B4D;
 }
 
 
@@ -637,7 +637,7 @@
 }
 
 .ai-icon {
-    -fx-background-color: #E4ECFF;
+    -fx-background-color: #EEF3FF;
 
     -fx-background-radius: 50%;
 
@@ -649,7 +649,7 @@
 
     -fx-alignment: CENTER;
 
-    -fx-text-fill: #2864D7;
+    -fx-text-fill: #2F80ED;
 
     -fx-font-size: 16px;
 }
@@ -659,19 +659,19 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #244B9B;
+    -fx-text-fill: #2F80ED;
 }
 
 .ai-message {
     -fx-font-size: 9px;
 
-    -fx-text-fill: #4F5662;
+    -fx-text-fill: #64748B;
 
     -fx-line-spacing: 1px;
 }
 
 .recommendation-button {
-    -fx-background-color: #2864D7;
+    -fx-background-color: #2F80ED;
 
     -fx-background-radius: 6px;
 
@@ -687,5 +687,5 @@
 }
 
 .recommendation-button:hover {
-    -fx-background-color: #1854C0;
+    -fx-background-color: #1D4E7A;
 }

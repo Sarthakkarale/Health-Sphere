@@ -3,7 +3,7 @@
    ========================================================= */
 
 .appointment-root {
-    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
+    -fx-background-color: linear-gradient(to bottom right, #F4F8FC, #EEF3FF);
     -fx-font-family: "Segoe UI";
 }
 
@@ -22,9 +22,9 @@
    ========================================================= */
 
 .sidebar {
-    -fx-background-color: #FAFAFF;
+    -fx-background-color: #12355B;
 
-    -fx-border-color: #D9DDE7;
+    -fx-border-color: #1D4E7A;
     -fx-border-width: 0 1px 0 0;
 }
 
@@ -33,7 +33,7 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #0752BE;
+    -fx-text-fill: #FFFFFF;
 
     -fx-line-spacing: -5px;
 }
@@ -41,7 +41,7 @@
 .logo-subtitle {
     -fx-font-size: 9px;
 
-    -fx-text-fill: #6D7480;
+    -fx-text-fill: #D6E4F0;
 }
 
 
@@ -58,11 +58,11 @@
 }
 
 .navigation-button:hover {
-    -fx-background-color: #EEF3FF;
+    -fx-background-color: #1D4E7A;
 }
 
 .navigation-active {
-    -fx-background-color: #E9EEFC;
+    -fx-background-color: #2F80ED;
 }
 
 .navigation-icon {
@@ -70,25 +70,25 @@
 
     -fx-font-size: 16px;
 
-    -fx-text-fill: #303846;
+    -fx-text-fill: #D6E4F0;
 }
 
 .navigation-text {
     -fx-font-size: 11px;
 
-    -fx-text-fill: #303846;
+    -fx-text-fill: #D6E4F0;
 }
 
 .navigation-active .navigation-icon,
 .navigation-active .navigation-text {
-    -fx-text-fill: #15479C;
+    -fx-text-fill: #FFFFFF;
 }
 
 
 /* Sidebar buttons */
 
 .consultation-button {
-    -fx-background-color: #2864DD;
+    -fx-background-color: #2F80ED;
 
     -fx-background-radius: 7px;
 
@@ -102,13 +102,13 @@
 }
 
 .consultation-button:hover {
-    -fx-background-color: #1854C4;
+    -fx-background-color: #1D4E7A;
 }
 
 .bottom-button {
     -fx-background-color: transparent;
 
-    -fx-text-fill: #404752;
+    -fx-text-fill: #D6E4F0;
 
     -fx-font-size: 11px;
 
@@ -120,7 +120,7 @@
 }
 
 .bottom-button:hover {
-    -fx-background-color: #EFF1F6;
+    -fx-background-color: #1D4E7A;
 
     -fx-background-radius: 7px;
 }
@@ -199,17 +199,17 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #252B34;
+    -fx-text-fill: #172B4D;
 }
 
 .admin-role {
     -fx-font-size: 8px;
 
-    -fx-text-fill: #707783;
+    -fx-text-fill: #64748B;
 }
 
 .admin-avatar {
-    -fx-background-color: #E2EAF7;
+    -fx-background-color: #EEF3FF;
 
     -fx-background-radius: 50%;
 
@@ -227,7 +227,7 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #2559A6;
+    -fx-text-fill: #2F80ED;
 }
 
 
@@ -244,13 +244,13 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #151A23;
+    -fx-text-fill: #172B4D;
 }
 
 .page-description {
     -fx-font-size: 10px;
 
-    -fx-text-fill: #626A77;
+    -fx-text-fill: #64748B;
 }
 
 
@@ -259,11 +259,11 @@
    ========================================================= */
 
 .advanced-filter-button {
-    -fx-background-color: #E4ECFC;
+    -fx-background-color: #EEF3FF;
 
     -fx-background-radius: 7px;
 
-    -fx-text-fill: #214F9E;
+    -fx-text-fill: #2F80ED;
 
     -fx-font-size: 10px;
 
@@ -277,7 +277,7 @@
 }
 
 .schedule-button {
-    -fx-background-color: #0759D4;
+    -fx-background-color: #2F80ED;
 
     -fx-background-radius: 7px;
 
@@ -344,7 +344,7 @@
 .show-label {
     -fx-font-size: 9px;
 
-    -fx-text-fill: #666E7A;
+    -fx-text-fill: #64748B;
 
     -fx-font-weight: bold;
 }
@@ -363,13 +363,13 @@
 .view-button {
     -fx-background-color: transparent;
 
-    -fx-text-fill: #5D6571;
+    -fx-text-fill: #64748B;
 }
 
 .view-button-active {
-    -fx-background-color: #DCE7FC;
+    -fx-background-color: #EEF3FF;
 
-    -fx-text-fill: #1A58BE;
+    -fx-text-fill: #2F80ED;
 }
 
 
@@ -410,9 +410,9 @@
 }
 
 .kpi-icon-blue {
-    -fx-background-color: #E8F0FF;
+    -fx-background-color: #EEF3FF;
 
-    -fx-text-fill: #1854C1;
+    -fx-text-fill: #2F80ED;
 }
 
 .kpi-icon-green {
@@ -454,9 +454,9 @@
 }
 
 .change-purple {
-    -fx-background-color: #E4ECFC;
+    -fx-background-color: #EEF3FF;
 
-    -fx-text-fill: #3D5F9C;
+    -fx-text-fill: #2F80ED;
 }
 
 .change-red {
@@ -468,7 +468,7 @@
 .kpi-title {
     -fx-font-size: 11px;
 
-    -fx-text-fill: #4C5460;
+    -fx-text-fill: #64748B;
 }
 
 .kpi-value {
@@ -476,7 +476,7 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #171D27;
+    -fx-text-fill: #172B4D;
 }
 
 
@@ -508,7 +508,7 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #1B212B;
+    -fx-text-fill: #172B4D;
 }
 
 .table-action {
@@ -522,7 +522,7 @@
 }
 
 .table-header {
-    -fx-background-color: #F4F6FC;
+    -fx-background-color: #F8FAFC;
 
     -fx-border-color: #D8DCE5;
 
@@ -548,7 +548,7 @@
 }
 
 .patient-avatar {
-    -fx-background-color: #E5ECF8;
+    -fx-background-color: #EEF3FF;
 
     -fx-background-radius: 50%;
 
@@ -562,7 +562,7 @@
 
     -fx-alignment: CENTER;
 
-    -fx-text-fill: #2A5CA7;
+    -fx-text-fill: #2F80ED;
 
     -fx-font-size: 9px;
 
@@ -574,13 +574,13 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #242A34;
+    -fx-text-fill: #172B4D;
 }
 
 .patient-id {
     -fx-font-size: 7px;
 
-    -fx-text-fill: #737B87;
+    -fx-text-fill: #64748B;
 }
 
 .doctor-label {
@@ -600,7 +600,7 @@
 .time-label {
     -fx-font-size: 9px;
 
-    -fx-text-fill: #202731;
+    -fx-text-fill: #172B4D;
 
     -fx-font-weight: bold;
 }
@@ -634,9 +634,9 @@
 }
 
 .appointment-status-blue {
-    -fx-background-color: #DCE9FC;
+    -fx-background-color: #EEF3FF;
 
-    -fx-text-fill: #2457A6;
+    -fx-text-fill: #2F80ED;
 }
 
 .appointment-status-red {
@@ -698,7 +698,7 @@
 .showing-label {
     -fx-font-size: 8px;
 
-    -fx-text-fill: #626A76;
+    -fx-text-fill: #64748B;
 }
 
 .page-button,
@@ -725,7 +725,7 @@
 }
 
 .page-active {
-    -fx-background-color: #0759D4;
+    -fx-background-color: #2F80ED;
 
     -fx-text-fill: white;
 
@@ -781,7 +781,7 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #202731;
+    -fx-text-fill: #172B4D;
 }
 
 
@@ -816,7 +816,7 @@
 }
 
 .selected-date {
-    -fx-background-color: #2864DD;
+    -fx-background-color: #2F80ED;
 
     -fx-background-radius: 4px;
 
@@ -841,7 +841,7 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #1B4EAB;
+    -fx-text-fill: #2F80ED;
 }
 
 .timeline-time {
@@ -872,9 +872,9 @@
 }
 
 .timeline-event-blue {
-    -fx-background-color: #EEF4FF;
+    -fx-background-color: #EEF3FF;
 
-    -fx-border-color: #2864DD;
+    -fx-border-color: #2F80ED;
 
     -fx-border-width: 0 0 0 2px;
 }
@@ -900,13 +900,13 @@
 
     -fx-font-weight: bold;
 
-    -fx-text-fill: #28303A;
+    -fx-text-fill: #172B4D;
 }
 
 .timeline-people {
     -fx-font-size: 7px;
 
-    -fx-text-fill: #555E6B;
+    -fx-text-fill: #64748B;
 }
 
 .timeline-status {
@@ -918,7 +918,7 @@
 .full-calendar-button {
     -fx-background-color: transparent;
 
-    -fx-text-fill: #2859A4;
+    -fx-text-fill: #2F80ED;
 
     -fx-font-size: 9px;
 
@@ -933,8 +933,8 @@
 .ai-advisor {
     -fx-background-color: linear-gradient(
         to bottom right,
-        #343ED5,
-        #6422D9
+        #12355B,
+        #2F80ED
     );
 
     -fx-background-radius: 9px;
@@ -978,7 +978,7 @@
 
     -fx-background-radius: 6px;
 
-    -fx-text-fill: #3D36BE;
+    -fx-text-fill: #2F80ED;
 
     -fx-font-size: 9px;
 
@@ -988,5 +988,5 @@
 }
 
 .apply-button:hover {
-    -fx-background-color: #F0F0FF;
+    -fx-background-color: #EEF3FF;
 }

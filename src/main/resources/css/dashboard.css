@@ -9,7 +9,7 @@
    ============================================================ */
 
 .root-pane {
-    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
+    -fx-background-color: linear-gradient(to bottom right, #F4F8FC, #EEF3FF);
     -fx-font-family: "Segoe UI", Helvetica, Arial, sans-serif;
 }
 
@@ -19,8 +19,8 @@
    ============================================================ */
 
 .sidebar {
-    -fx-background-color: #0F172A;
-    -fx-border-color: #1E293B;
+    -fx-background-color: #12355B;
+    -fx-border-color: #1D4E7A;
     -fx-border-width: 0 1px 0 0;
 }
 
@@ -31,7 +31,7 @@
 }
 
 .logo-subtext {
-    -fx-text-fill: #94A3B8;
+    -fx-text-fill: #D6E4F0;
     -fx-font-size: 12px;
 }
 
@@ -48,20 +48,20 @@
 }
 
 .nav-tab:hover {
-    -fx-background-color: #1E293B;
+    -fx-background-color: #1D4E7A;
 }
 
 .nav-tab-active {
-    -fx-background-color: #2563EB;
+    -fx-background-color: #2F80ED;
     -fx-background-radius: 8px;
 }
 
 .nav-tab-active:hover {
-    -fx-background-color: #1D4ED8;
+    -fx-background-color: #1E6BDB;
 }
 
 .nav-text {
-    -fx-text-fill: #CBD5E1;
+    -fx-text-fill: #D6E4F0;
     -fx-font-size: 13px;
 }
 
@@ -76,18 +76,18 @@
    ============================================================ */
 
 .sidebar-profile {
-    -fx-background-color: #1E293B;
+    -fx-background-color: #1D4E7A;
     -fx-background-radius: 10px;
     -fx-border-radius: 10px;
     -fx-cursor: hand;
 }
 
 .sidebar-profile:hover {
-    -fx-background-color: #273449;
+    -fx-background-color: #276296;
 }
 
 .sidebar-profile-role {
-    -fx-text-fill: #94A3B8;
+    -fx-text-fill: #D6E4F0;
     -fx-font-size: 11px;
 }
 
@@ -143,7 +143,7 @@
    ============================================================ */
 
 .breadcrumb {
-    -fx-text-fill: #0F172A;
+    -fx-text-fill: #172B4D;
     -fx-font-size: 14px;
     -fx-font-weight: 600;
 }
@@ -195,7 +195,7 @@
 }
 
 .welcome-greeting {
-    -fx-text-fill: #0F172A;
+    -fx-text-fill: #172B4D;
     -fx-font-size: 20px;
     -fx-font-weight: bold;
 }
@@ -212,7 +212,7 @@
    ============================================================ */
 
 .btn-primary {
-    -fx-background-color: #2563EB;
+    -fx-background-color: #2F80ED;
     -fx-text-fill: #FFFFFF;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
@@ -223,11 +223,11 @@
 }
 
 .btn-primary:hover {
-    -fx-background-color: #1D4ED8;
+    -fx-background-color: #1D4E7A;
 }
 
 .btn-primary:pressed {
-    -fx-background-color: #1E40AF;
+    -fx-background-color: #12355B;
 }
 
 
@@ -256,17 +256,17 @@
 
 .stat-card {
     -fx-background-color: #FFFFFF;
-    -fx-background-radius: 10px;
+    -fx-background-radius: 12px;
     -fx-border-color: #E2E8F0;
     -fx-border-width: 1px;
-    -fx-border-radius: 10px;
+    -fx-border-radius: 12px;
     -fx-effect: dropshadow(
         three-pass-box,
-        rgba(15, 23, 42, 0.04),
-        8,
+        rgba(18, 53, 91, 0.05),
+        10,
         0,
         0,
-        2
+        3
     );
 }
 
@@ -281,7 +281,7 @@
 }
 
 .stat-value {
-    -fx-text-fill: #0F172A;
+    -fx-text-fill: #172B4D;
     -fx-font-size: 25px;
     -fx-font-weight: bold;
 }
@@ -307,7 +307,7 @@
 }
 
 .stat-progress > .bar {
-    -fx-background-color: #2563EB;
+    -fx-background-color: #2F80ED;
     -fx-background-radius: 5px;
 }
 
@@ -318,35 +318,35 @@
 
 .app-card {
     -fx-background-color: #FFFFFF;
-    -fx-background-radius: 10px;
+    -fx-background-radius: 12px;
     -fx-border-color: #E2E8F0;
     -fx-border-width: 1px;
-    -fx-border-radius: 10px;
+    -fx-border-radius: 12px;
     -fx-effect: dropshadow(
         three-pass-box,
-        rgba(15, 23, 42, 0.04),
-        8,
+        rgba(18, 53, 91, 0.05),
+        10,
         0,
         0,
-        2
+        3
     );
 }
 
 .app-card-title {
-    -fx-text-fill: #0F172A;
+    -fx-text-fill: #172B4D;
     -fx-font-size: 15px;
     -fx-font-weight: bold;
 }
 
 .app-card-link {
-    -fx-text-fill: #2563EB;
+    -fx-text-fill: #2F80ED;
     -fx-font-size: 12px;
     -fx-font-weight: 600;
     -fx-cursor: hand;
 }
 
 .app-card-link:hover {
-    -fx-text-fill: #1D4ED8;
+    -fx-text-fill: #1D4E7A;
 }
 
 
@@ -383,7 +383,7 @@
 }
 
 .appt-name {
-    -fx-text-fill: #0F172A;
+    -fx-text-fill: #172B4D;
     -fx-font-size: 13px;
     -fx-font-weight: 600;
 }

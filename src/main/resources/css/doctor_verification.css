@@ -12,6 +12,6 @@
 }
 
 .text-field:focused {
-    -fx-border-color: #2563EB;
+    -fx-border-color: #2F80ED;
     -fx-border-radius: 20;
 }

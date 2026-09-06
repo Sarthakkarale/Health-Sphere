@@ -1,6 +1,6 @@
 /* Root Container */
 .root {
-    -fx-background-color: linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC);
+    -fx-background-color: linear-gradient(to bottom right, #F4F8FC, #EEF3FF);
     -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
 }
 
@@ -16,12 +16,12 @@
 .brand-title {
     -fx-font-size: 20px;
     -fx-font-weight: bold;
-    -fx-fill: #0256D0;
+    -fx-fill: #2F80ED;
 }
 
 /* Primary Button (Sign Up) */
 .btn-primary {
-    -fx-background-color: #0256D0;
+    -fx-background-color: #2F80ED;
     -fx-text-fill: #FFFFFF;
     -fx-font-weight: bold;
     -fx-font-size: 15px;
@@ -31,12 +31,12 @@
 }
 
 .btn-primary:hover {
-    -fx-background-color: #0143A3;
+    -fx-background-color: #1D4E7A;
 }
 
 /* Teal / Success Button (Register) */
 .btn-teal {
-    -fx-background-color: #00695C;
+    -fx-background-color: #2F80ED;
     -fx-text-fill: #FFFFFF;
     -fx-font-weight: bold;
     -fx-font-size: 15px;
@@ -46,7 +46,7 @@
 }
 
 .btn-teal:hover {
-    -fx-background-color: #004D40;
+    -fx-background-color: #1D4E7A;
 }
 
 /* Icon Buttons */
@@ -69,13 +69,13 @@
 .hero-title-dark {
     -fx-font-size: 42px;
     -fx-font-weight: 800;
-    -fx-fill: #0F172A;
+    -fx-fill: #172B4D;
 }
 
 .hero-title-blue {
     -fx-font-size: 42px;
     -fx-font-weight: 800;
-    -fx-fill: #0256D0;
+    -fx-fill: #2F80ED;
 }
 
 .hero-description {
@@ -96,7 +96,7 @@
 .floating-card-title {
     -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-fill: #1E293B;
+    -fx-fill: #172B4D;
 }
 
 /* Footer Styles */
@@ -110,7 +110,7 @@
 .footer-brand {
     -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-fill: #0F172A;
+    -fx-fill: #172B4D;
 }
 
 .footer-text {
@@ -120,12 +120,12 @@
 
 .footer-link {
     -fx-font-size: 12px;
-    -fx-text-fill: #475569;
+    -fx-text-fill: #64748B;
     -fx-background-color: transparent;
     -fx-padding: 0 4px;
     -fx-cursor: hand;
 }
 
 .footer-link:hover {
-    -fx-text-fill: #0F172A;
+    -fx-text-fill: #172B4D;
 }

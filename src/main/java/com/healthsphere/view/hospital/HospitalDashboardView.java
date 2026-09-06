@@ -67,19 +67,19 @@ public class HospitalDashboardView {
     // =========================================================
 
     private static final String PRIMARY_BLUE =
-            "#1E62D0";
+            "#2F80ED";
 
     private static final String PRIMARY_LIGHT =
-            "#EFF5FF";
+            "#EEF3FF";
 
     private static final String DARK_TEXT =
-            "#0F172A";
+            "#172B4D";
 
     private static final String SECONDARY_TEXT =
             "#64748B";
 
     private static final String LIGHT_BACKGROUND =
-            "linear-gradient(to bottom right, #EFF6FF, #F5F3FF, #F8FAFC)";
+            "linear-gradient(to bottom right, #F4F8FC, #EEF3FF)";
 
     private static final String CARD_BG =
             "#FFFFFF";
@@ -88,22 +88,22 @@ public class HospitalDashboardView {
             "#E2E8F0";
 
     private static final String DARK_SIDEBAR_BG =
-            "#0F172A";
+            "#12355B";
 
     private static final String DARK_SIDEBAR_BORDER =
-            "#1E293B";
+            "#1D4E7A";
 
     private static final String DARK_TEXT_MUTED =
-            "#94A3B8";
+            "#D6E4F0";
 
     private static final String DARK_ACCENT =
-            "#38BDF8";
+            "#2F80ED";
 
     private static final String DARK_HOVER_BG =
-            "#1E293B";
+            "#1D4E7A";
 
     private static final String SIDEBAR_SELECTED =
-            "#170ECA";
+            "#2F80ED";
 
     private static final String SUCCESS_GREEN =
             "#059669";
