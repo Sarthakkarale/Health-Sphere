@@ -172,22 +172,39 @@ public class PaymentDAO {
         }
     }
 
+    public double getDoctorTotalEarnings(String doctorUid) {
+        if (doctorUid == null || doctorUid.isBlank()) {
+            return 0.00;
+        }
+        List<PaymentRecord> list = getPaymentsForDoctor(doctorUid);
+        double sum = 0.00;
+        for (PaymentRecord p : list) {
+            if (p != null && p.getStatus() != null) {
+                String st = p.getStatus().toUpperCase();
+                if (st.equals("COMPLETED") || st.equals("SUCCESS") || st.equals("PAID")) {
+                    sum += p.getAmount();
+                }
+            }
+        }
+        return sum;
+    }
+
     public double getDoctorAccountBalance(String doctorUid) {
         try {
             DocumentSnapshot doc = db.collection("doctors").document(doctorUid).get().get();
-            if (doc.exists()) {
+            if (doc.exists() && doc.contains("accountBalance")) {
                 Double bal = doc.getDouble("accountBalance");
-                return bal != null ? bal : 3450.00;
+                if (bal != null) return bal;
             }
             DocumentSnapshot docProfile = db.collection("doctor_profiles").document(doctorUid).get().get();
-            if (docProfile.exists()) {
+            if (docProfile.exists() && docProfile.contains("accountBalance")) {
                 Double bal = docProfile.getDouble("accountBalance");
-                return bal != null ? bal : 3450.00;
+                if (bal != null) return bal;
             }
         } catch (Exception e) {
             System.err.println("Error fetching doctor account balance: " + e.getMessage());
         }
-        return 3450.00;
+        return getDoctorTotalEarnings(doctorUid);
     }
 
     public void updateDoctorAccountBalance(String doctorUid, double newBalance) {

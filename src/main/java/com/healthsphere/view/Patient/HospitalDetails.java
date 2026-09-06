@@ -121,7 +121,7 @@ public class HospitalDetails {
 
         Label ratingLabel =
                 new Label(
-                        "⭐ " + rating
+                        (rating != null && rating.startsWith("★")) ? rating : (rating != null && !rating.isBlank() ? "⭐ " + rating : "No ratings yet")
                 );
 
         ratingLabel.setStyle(

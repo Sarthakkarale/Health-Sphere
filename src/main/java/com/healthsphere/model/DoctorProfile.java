@@ -18,7 +18,7 @@ public class DoctorProfile {
     private String rating;
 
     // Account Balance
-    private double accountBalance = 3450.00;
+    private double accountBalance = 0.0;
 
     public double getAccountBalance() {
         return accountBalance;

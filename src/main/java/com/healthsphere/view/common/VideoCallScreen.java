@@ -44,6 +44,8 @@ public class VideoCallScreen extends VBox {
     private Timeline callTimer;
     private int secondsElapsed = 0;
     private ListenerRegistration callStatusListenerReg;
+    private boolean isMicMuted = false;
+    private boolean isCamOff = false;
     private boolean isTerminated = false;
 
     public VideoCallScreen(Call call, Runnable onCallTerminated) {
@@ -68,11 +70,11 @@ public class VideoCallScreen extends VBox {
         String participantName = isCaller ? call.getReceiverName() : call.getCallerName();
         if (participantName == null || participantName.isBlank()) participantName = "Participant";
 
-        Text titleText = new Text("Direct Video Call");
+        Text titleText = new Text("Direct Video Consultation");
         titleText.setFont(Font.font("System", FontWeight.BOLD, 15));
         titleText.setFill(Color.WHITE);
 
-        statusLabel = new Label("Connecting...");
+        statusLabel = new Label("Connecting to room...");
         statusLabel.setFont(Font.font("System", 13));
         statusLabel.setTextFill(Color.web("#deb7ff"));
 
@@ -88,15 +90,15 @@ public class VideoCallScreen extends VBox {
         header.getChildren().addAll(headerDetails, timerLabel);
         getChildren().add(header);
 
-        // --- 2. Call Center (Browser Redirect Glassmorphic Card & Status Panel) ---
+        // --- 2. Call Center (Dual Preview & Glassmorphic Info Card) ---
         centerStack = new StackPane();
         VBox.setVgrow(centerStack, Priority.ALWAYS);
 
         // Glassmorphic Info/Redirect Card
         VBox redirectInfoCard = new VBox(20);
         redirectInfoCard.setAlignment(Pos.CENTER);
-        redirectInfoCard.setPadding(new Insets(30));
-        redirectInfoCard.setStyle("-fx-background-color: rgba(30, 30, 47, 0.85); -fx-background-radius: 16px; -fx-border-color: rgba(186, 84, 245, 0.25); -fx-border-width: 1.5px; -fx-max-width: 480px; -fx-max-height: 280px;");
+        redirectInfoCard.setPadding(new Insets(25));
+        redirectInfoCard.setStyle("-fx-background-color: rgba(30, 30, 47, 0.85); -fx-background-radius: 16px; -fx-border-color: rgba(186, 84, 245, 0.25); -fx-border-width: 1.5px; -fx-max-width: 520px; -fx-max-height: 320px;");
 
         DropShadow infoShadow = new DropShadow();
         infoShadow.setRadius(15);
@@ -107,13 +109,13 @@ public class VideoCallScreen extends VBox {
         cardHeader.setFont(Font.font("System", FontWeight.BOLD, 18));
         cardHeader.setFill(Color.WHITE);
 
-        cardBody = new Text("Your call is being routed to your default web browser to ensure seamless audio, video, and mic access.");
+        cardBody = new Text("Room ID: " + (call.getRoomId() != null ? call.getRoomId() : "HealthSphere_Consultation") + "\nBoth Doctor & Patient are routed to the same video consultation room.");
         cardBody.setFont(Font.font("System", 13));
         cardBody.setFill(Color.web("#a0a5c0"));
-        cardBody.setWrappingWidth(400);
+        cardBody.setWrappingWidth(440);
         cardBody.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
 
-        Button reopenBtn = new Button("Launch Browser / Reopen Call");
+        Button reopenBtn = new Button("🌐 Join Consultation Room");
         reopenBtn.setStyle(
                 "-fx-background-color: #ba54f5;" +
                 "-fx-text-fill: white;" +
@@ -139,11 +141,11 @@ public class VideoCallScreen extends VBox {
         spinner.setMaxSize(50, 50);
         spinner.setStyle("-fx-progress-color: #ba54f5;");
 
-        Text loadingText = new Text("Waiting for recipient to accept...");
+        Text loadingText = new Text("Waiting for participant to join room...");
         loadingText.setFont(Font.font("System", FontWeight.BOLD, 14));
         loadingText.setFill(Color.WHITE);
         
-        Text subText = new Text("Once accepted, the video call will open automatically in your browser.");
+        Text subText = new Text("Both Doctor and Patient enter the same room.");
         subText.setFont(Font.font("System", 12));
         subText.setFill(Color.web("#a0a5c0"));
 
@@ -153,43 +155,69 @@ public class VideoCallScreen extends VBox {
         getChildren().add(centerStack);
 
         // --- 3. Footer Control Bar ---
-        HBox footer = new HBox(20);
+        HBox footer = new HBox(15);
         footer.setAlignment(Pos.CENTER);
         footer.setPadding(new Insets(10));
         footer.setStyle("-fx-background-color: rgba(30, 30, 47, 0.8); -fx-background-radius: 12px;");
 
+        // Microphone Control Button
+        Button micBtn = new Button("🎤 Mic ON");
+        micBtn.setStyle("-fx-background-color: rgba(67, 225, 136, 0.2); -fx-text-fill: #43e188; -fx-font-weight: bold; -fx-border-color: #43e188; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 16px; -fx-cursor: hand;");
+        micBtn.setOnAction(e -> {
+            isMicMuted = !isMicMuted;
+            if (isMicMuted) {
+                micBtn.setText("🎤 Mic MUTED");
+                micBtn.setStyle("-fx-background-color: rgba(245, 54, 92, 0.2); -fx-text-fill: #f5365c; -fx-font-weight: bold; -fx-border-color: #f5365c; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 16px; -fx-cursor: hand;");
+            } else {
+                micBtn.setText("🎤 Mic ON");
+                micBtn.setStyle("-fx-background-color: rgba(67, 225, 136, 0.2); -fx-text-fill: #43e188; -fx-font-weight: bold; -fx-border-color: #43e188; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 16px; -fx-cursor: hand;");
+            }
+        });
+
+        // Camera Control Button
+        Button camBtn = new Button("📹 Cam ON");
+        camBtn.setStyle("-fx-background-color: rgba(67, 225, 136, 0.2); -fx-text-fill: #43e188; -fx-font-weight: bold; -fx-border-color: #43e188; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 16px; -fx-cursor: hand;");
+        camBtn.setOnAction(e -> {
+            isCamOff = !isCamOff;
+            if (isCamOff) {
+                camBtn.setText("📹 Cam OFF");
+                camBtn.setStyle("-fx-background-color: rgba(245, 54, 92, 0.2); -fx-text-fill: #f5365c; -fx-font-weight: bold; -fx-border-color: #f5365c; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 16px; -fx-cursor: hand;");
+            } else {
+                camBtn.setText("📹 Cam ON");
+                camBtn.setStyle("-fx-background-color: rgba(67, 225, 136, 0.2); -fx-text-fill: #43e188; -fx-font-weight: bold; -fx-border-color: #43e188; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 16px; -fx-cursor: hand;");
+            }
+        });
+
         // Open in Browser Fallback Button
-        Button openBrowserBtn = new Button("Open in Default Browser");
+        Button openBrowserBtn = new Button("🌐 Launch Browser");
         openBrowserBtn.setStyle(
-                "-fx-background-color: rgba(43, 225, 136, 0.15);" +
-                "-fx-text-fill: #43e188;" +
+                "-fx-background-color: rgba(186, 84, 245, 0.2);" +
+                "-fx-text-fill: #ba54f5;" +
                 "-fx-font-weight: bold;" +
-                "-fx-border-color: #43e188;" +
+                "-fx-border-color: #ba54f5;" +
                 "-fx-border-radius: 20px;" +
                 "-fx-background-radius: 20px;" +
-                "-fx-padding: 8px 20px;" +
+                "-fx-padding: 8px 16px;" +
                 "-fx-cursor: hand;"
         );
-        openBrowserBtn.setOnMouseEntered(e -> openBrowserBtn.setStyle("-fx-background-color: rgba(43, 225, 136, 0.3); -fx-text-fill: #43e188; -fx-font-weight: bold; -fx-border-color: #43e188; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 20px; -fx-cursor: hand;"));
-        openBrowserBtn.setOnMouseExited(e -> openBrowserBtn.setStyle("-fx-background-color: rgba(43, 225, 136, 0.15); -fx-text-fill: #43e188; -fx-font-weight: bold; -fx-border-color: #43e188; -fx-border-radius: 20px; -fx-background-radius: 20px; -fx-padding: 8px 20px; -fx-cursor: hand;"));
 
         // End Call Button
-        Button endCallBtn = new Button("End Call");
+        Button endCallBtn = new Button("📞 End Call");
         endCallBtn.setStyle(
                 "-fx-background-color: #f5365c;" +
                 "-fx-text-fill: white;" +
                 "-fx-font-weight: bold;" +
                 "-fx-background-radius: 20px;" +
-                "-fx-padding: 8px 24px;" +
+                "-fx-padding: 8px 20px;" +
                 "-fx-cursor: hand;"
         );
-        endCallBtn.setOnMouseEntered(e -> endCallBtn.setStyle("-fx-background-color: #ff5e7e; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 20px; -fx-padding: 8px 24px; -fx-cursor: hand;"));
-        endCallBtn.setOnMouseExited(e -> endCallBtn.setStyle("-fx-background-color: #f5365c; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 20px; -fx-padding: 8px 24px; -fx-cursor: hand;"));
+        endCallBtn.setOnMouseEntered(e -> endCallBtn.setStyle("-fx-background-color: #ff5e7e; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 20px; -fx-padding: 8px 20px; -fx-cursor: hand;"));
+        endCallBtn.setOnMouseExited(e -> endCallBtn.setStyle("-fx-background-color: #f5365c; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 20px; -fx-padding: 8px 20px; -fx-cursor: hand;"));
 
         openBrowserBtn.setOnAction(e -> handleOpenBrowser());
         endCallBtn.setOnAction(e -> handleEndCall());
 
-        footer.getChildren().addAll(openBrowserBtn, endCallBtn);
+        footer.getChildren().addAll(micBtn, camBtn, openBrowserBtn, endCallBtn);
         getChildren().add(footer);
 
         // Setup timer & status monitoring
@@ -230,17 +258,17 @@ public class VideoCallScreen extends VBox {
                 Platform.runLater(() -> {
                     String status = updatedCall.getStatus();
                     if ("CALLING".equals(status)) {
-                        statusLabel.setText("Calling " + targetName + "...");
+                        statusLabel.setText("Waiting for " + targetName + "...");
                         loadingOverlay.setVisible(true);
                     } else if ("ACCEPTED".equals(status)) {
-                        statusLabel.setText("Call active with " + targetName);
+                        statusLabel.setText("✓ Connected with " + targetName);
                         statusLabel.setTextFill(Color.web("#43e188"));
                         if (cardHeader != null) {
-                            cardHeader.setText("Call In Progress");
+                            cardHeader.setText("Consultation Active");
                             cardHeader.setFill(Color.web("#43e188"));
                         }
                         if (cardBody != null) {
-                            cardBody.setText("Direct Jitsi Meet call is open in your external default browser.");
+                            cardBody.setText("Room: " + call.getRoomId() + "\nBoth Doctor & Patient are in the live two-way consultation.");
                         }
                         loadingOverlay.setVisible(false);
                         checkAndOpenBrowser(status);
@@ -262,8 +290,12 @@ public class VideoCallScreen extends VBox {
         String url;
         try {
             URI baseUri = URI.create(JITSI_SERVER_URL);
-            URI finalUri = new URI(baseUri.getScheme(), baseUri.getHost(), "/" + call.getRoomId(),
-                    "config.prejoinConfig.enabled=false&userInfo.displayName=\"" + UserModel.getInstance().getName() + "\"");
+            String displayName = UserModel.getInstance() != null && UserModel.getInstance().getName() != null ? UserModel.getInstance().getName() : "User";
+            String query = "config.prejoinConfig.enabled=false" +
+                    "&config.startWithAudioMuted=" + isMicMuted +
+                    "&config.startWithVideoMuted=" + isCamOff +
+                    "&userInfo.displayName=\"" + displayName + "\"";
+            URI finalUri = new URI(baseUri.getScheme(), baseUri.getHost(), "/" + call.getRoomId(), query);
             url = finalUri.toASCIIString();
         } catch (Exception e) {
             url = JITSI_SERVER_URL + call.getRoomId();

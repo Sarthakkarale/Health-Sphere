@@ -19,11 +19,24 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import com.healthsphere.util.ShimmerPlaceholder;
+import javafx.concurrent.Task;
+
 public class DoctorPaymentsView {
 
     private final Stage stage;
     private final Scene scene;
     private final PaymentController paymentController;
+
+    private static class DoctorPaymentData {
+        final double balance;
+        final List<PaymentRecord> records;
+
+        DoctorPaymentData(double balance, List<PaymentRecord> records) {
+            this.balance = balance;
+            this.records = records;
+        }
+    }
 
     public DoctorPaymentsView(Stage stage) {
         this.stage = stage;
@@ -59,10 +72,6 @@ public class DoctorPaymentsView {
 
         // Doctor Account Balance Banner
         String doctorUid = SessionManager.getDoctorUid();
-        double doctorBal = 3450.00;
-        if (doctorUid != null && !doctorUid.isBlank()) {
-            doctorBal = paymentController.getDoctorAccountBalance(doctorUid);
-        }
 
         VBox balanceCard = new VBox(10);
         balanceCard.setPadding(new Insets(20));
@@ -74,10 +83,10 @@ public class DoctorPaymentsView {
         HBox balRow = new HBox(12);
         balRow.setAlignment(Pos.BASELINE_LEFT);
 
-        Label balAmt = new Label(String.format("₹%.2f", doctorBal));
+        Label balAmt = new Label("₹...");
         balAmt.setStyle("-fx-text-fill: #FFFFFF; -fx-font-size: 32px; -fx-font-weight: bold;");
 
-        Label growthBadge = new Label("+14.5% ↑");
+        Label growthBadge = new Label("✓ REAL EARNINGS");
         growthBadge.setStyle("-fx-background-color: #D1FAE5; -fx-text-fill: #059669; -fx-font-weight: bold; -fx-font-size: 11px; -fx-padding: 3 10; -fx-background-radius: 12;");
 
         balRow.getChildren().addAll(balAmt, growthBadge);
@@ -94,42 +103,9 @@ public class DoctorPaymentsView {
         listHeader.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #0F172A;");
         listCard.getChildren().add(listHeader);
 
-        List<PaymentRecord> records = paymentController.getPaymentsForDoctor(doctorUid);
-        if (records == null || records.isEmpty()) {
-            Label empty = new Label("No payment records found yet.");
-            empty.setStyle("-fx-text-fill: #64748B; -fx-font-size: 14px; -fx-padding: 10 0;");
-            listCard.getChildren().add(empty);
-        } else {
-            VBox rows = new VBox(10);
-            for (PaymentRecord rec : records) {
-                HBox row = new HBox(15);
-                row.setPadding(new Insets(14));
-                row.setAlignment(Pos.CENTER_LEFT);
-                row.setStyle("-fx-background-color: #F8FAFC; -fx-background-radius: 10px; -fx-border-color: #E2E8F0; -fx-border-radius: 10px;");
-
-                VBox patientInfo = new VBox(3);
-                Label pName = new Label(rec.getPatientName() != null ? rec.getPatientName() : "Patient Consultation");
-                pName.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1E293B;");
-                Label pDate = new Label(rec.getCreatedAt() != null ? rec.getCreatedAt() : "Recent");
-                pDate.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748B;");
-                patientInfo.getChildren().addAll(pName, pDate);
-
-                HBox.setHgrow(patientInfo, Priority.ALWAYS);
-
-                boolean completed = "COMPLETED".equalsIgnoreCase(rec.getStatus());
-                Label badge = new Label(completed ? "✓ RECEIVED" : "⚡ PENDING");
-                badge.setStyle(completed ?
-                        "-fx-background-color: #D1FAE5; -fx-text-fill: #059669; -fx-font-weight: bold; -fx-font-size: 11px; -fx-padding: 4 10; -fx-background-radius: 12;" :
-                        "-fx-background-color: #FEF3C7; -fx-text-fill: #D97706; -fx-font-weight: bold; -fx-font-size: 11px; -fx-padding: 4 10; -fx-background-radius: 12;");
-
-                Label amount = new Label(String.format("+₹%.2f", rec.getAmount()));
-                amount.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #10B981;");
-
-                row.getChildren().addAll(patientInfo, badge, amount);
-                rows.getChildren().add(row);
-            }
-            listCard.getChildren().add(rows);
-        }
+        // Initial Shimmer Placeholder while background Task is running
+        VBox shimmerBox = ShimmerPlaceholder.createListShimmer(3);
+        listCard.getChildren().add(shimmerBox);
 
         contentArea.getChildren().add(listCard);
 
@@ -137,6 +113,76 @@ public class DoctorPaymentsView {
         scrollPane.setFitToWidth(true);
         scrollPane.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         mainRoot.setCenter(scrollPane);
+
+        // Background Task for non-blocking Firebase loading
+        Task<DoctorPaymentData> task = new Task<>() {
+            @Override
+            protected DoctorPaymentData call() throws Exception {
+                double bal = 0.0;
+                List<PaymentRecord> recs = null;
+                if (doctorUid != null && !doctorUid.isBlank()) {
+                    bal = paymentController.getDoctorAccountBalance(doctorUid);
+                    recs = paymentController.getPaymentsForDoctor(doctorUid);
+                }
+                return new DoctorPaymentData(bal, recs);
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            DoctorPaymentData data = task.getValue();
+            balAmt.setText(String.format("₹%.2f", data.balance));
+
+            listCard.getChildren().remove(shimmerBox);
+
+            List<PaymentRecord> records = data.records;
+            if (records == null || records.isEmpty()) {
+                Label empty = new Label("No payment records found yet.");
+                empty.setStyle("-fx-text-fill: #64748B; -fx-font-size: 14px; -fx-padding: 10 0;");
+                listCard.getChildren().add(empty);
+            } else {
+                VBox rows = new VBox(10);
+                for (PaymentRecord rec : records) {
+                    HBox row = new HBox(15);
+                    row.setPadding(new Insets(14));
+                    row.setAlignment(Pos.CENTER_LEFT);
+                    row.setStyle("-fx-background-color: #F8FAFC; -fx-background-radius: 10px; -fx-border-color: #E2E8F0; -fx-border-radius: 10px;");
+
+                    VBox patientInfo = new VBox(3);
+                    Label pName = new Label(rec.getPatientName() != null ? rec.getPatientName() : "Patient Consultation");
+                    pName.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1E293B;");
+                    Label pDate = new Label(rec.getCreatedAt() != null ? rec.getCreatedAt() : "Recent");
+                    pDate.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748B;");
+                    patientInfo.getChildren().addAll(pName, pDate);
+
+                    HBox.setHgrow(patientInfo, Priority.ALWAYS);
+
+                    boolean completed = "COMPLETED".equalsIgnoreCase(rec.getStatus()) || "SUCCESS".equalsIgnoreCase(rec.getStatus()) || "PAID".equalsIgnoreCase(rec.getStatus());
+                    Label badge = new Label(completed ? "✓ RECEIVED" : "⚡ PENDING");
+                    badge.setStyle(completed ?
+                            "-fx-background-color: #D1FAE5; -fx-text-fill: #059669; -fx-font-weight: bold; -fx-font-size: 11px; -fx-padding: 4 10; -fx-background-radius: 12;" :
+                            "-fx-background-color: #FEF3C7; -fx-text-fill: #D97706; -fx-font-weight: bold; -fx-font-size: 11px; -fx-padding: 4 10; -fx-background-radius: 12;");
+
+                    Label amount = new Label(String.format("+₹%.2f", rec.getAmount()));
+                    amount.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #10B981;");
+
+                    row.getChildren().addAll(patientInfo, badge, amount);
+                    rows.getChildren().add(row);
+                }
+                listCard.getChildren().add(rows);
+            }
+        });
+
+        task.setOnFailed(event -> {
+            balAmt.setText("Unable to load account balance.");
+            listCard.getChildren().remove(shimmerBox);
+            Label errorMsg = new Label("Unable to load payment history. Please try again.");
+            errorMsg.setStyle("-fx-text-fill: #EF4444; -fx-font-size: 14px; -fx-padding: 10 0;");
+            listCard.getChildren().add(errorMsg);
+        });
+
+        Thread bgThread = new Thread(task);
+        bgThread.setDaemon(true);
+        bgThread.start();
 
         return new Scene(mainRoot, stage.getWidth(), stage.getHeight());
     }

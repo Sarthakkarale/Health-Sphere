@@ -703,7 +703,7 @@ public class PatientDetailsView {
                 new TextField();
 
         searchField.setPromptText(
-                "Search patients by name or ID..."
+                "Search patients by name, ID, email or phone..."
         );
 
         searchField
@@ -2305,72 +2305,56 @@ public class PatientDetailsView {
     // SEARCH / FILTER
     // ============================================================
 
-    private void filterPatients(
-            String query
-    ) {
+    private void filterPatients(String query) {
+        String search = query == null ? "" : query.trim().toLowerCase();
 
-        if (patientListContainer == null) {
+        List<PatientProfile> matchingPatients = new ArrayList<>();
 
-            return;
-        }
+        if (doctorPatients != null) {
+            for (PatientProfile patient : doctorPatients) {
+                if (patient == null) {
+                    continue;
+                }
 
-        String search =
-                query == null
-                        ? ""
-                        : query.trim()
-                        .toLowerCase();
+                String name = getPatientDisplayName(patient).toLowerCase();
+                String uid = safeText(patient.getUid(), "").toLowerCase();
+                String email = safeText(patient.getEmail(), "").toLowerCase();
+                String phone = safeText(patient.getPhone(), "").toLowerCase();
 
-        patientListContainer
-                .getChildren()
-                .clear();
-
-        int matches = 0;
-
-        for (PatientProfile patient :
-                doctorPatients) {
-
-            if (patient == null) {
-
-                continue;
-            }
-
-            String name =
-                    getPatientDisplayName(
-                            patient
-                    ).toLowerCase();
-
-            String uid =
-                    safeText(
-                            patient.getUid(),
-                            ""
-                    ).toLowerCase();
-
-            String email =
-                    safeText(
-                            patient.getEmail(),
-                            ""
-                    ).toLowerCase();
-
-            if (search.isEmpty()
-                    || name.contains(search)
-                    || uid.contains(search)
-                    || email.contains(search)) {
-
-                patientListContainer
-                        .getChildren()
-                        .add(
-                                createPatientSearchItem(
-                                        patient
-                                )
-                        );
-
-                matches++;
+                if (search.isEmpty() || name.contains(search) || uid.contains(search) || email.contains(search) || phone.contains(search)) {
+                    matchingPatients.add(patient);
+                }
             }
         }
 
-        updateMatchingCount(
-                matches
-        );
+        if (patientSelector != null) {
+            patientSelector.getItems().setAll(matchingPatients);
+            if (matchingPatients.isEmpty()) {
+                patientSelector.setPromptText("No patients found");
+                patientSelector.setValue(null);
+            } else {
+                patientSelector.setPromptText("Choose a patient");
+                if (selectedPatient == null || !matchingPatients.contains(selectedPatient)) {
+                    selectedPatient = matchingPatients.get(0);
+                }
+                patientSelector.setValue(selectedPatient);
+            }
+        }
+
+        if (patientListContainer != null) {
+            patientListContainer.getChildren().clear();
+            if (matchingPatients.isEmpty()) {
+                Label noResultsLabel = new Label("No patients found");
+                noResultsLabel.setStyle("-fx-text-fill: #64748B; -fx-font-size: 14px; -fx-padding: 12 0; -fx-font-weight: bold;");
+                patientListContainer.getChildren().add(noResultsLabel);
+            } else {
+                for (PatientProfile patient : matchingPatients) {
+                    patientListContainer.getChildren().add(createPatientSearchItem(patient));
+                }
+            }
+        }
+
+        updateMatchingCount(matchingPatients.size());
     }
 
     private HBox createPatientSearchItem(

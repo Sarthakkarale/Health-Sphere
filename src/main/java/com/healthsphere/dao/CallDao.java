@@ -80,6 +80,60 @@ public class CallDao {
     }
 
     /**
+     * Gets an existing active call for a room ID or creates a new one if none exists.
+     * Ensures both Patient and Doctor attach to the exact same Call document session.
+     */
+    public Call getOrCreateCallForAppointment(String callerId, String callerName, String receiverId, String receiverName, String roomId) {
+        String cleanRoomId = roomId != null ? roomId.trim() : "";
+        if (cleanRoomId.isBlank()) {
+            String callId = startCall(callerId, callerName, receiverId, receiverName, roomId);
+            Call call = new Call(callerId, callerName, receiverId, receiverName, roomId, "CALLING");
+            call.setCallId(callId);
+            return call;
+        }
+
+        if (mockMode) {
+            for (Call existing : mockCalls.values()) {
+                if (cleanRoomId.equalsIgnoreCase(existing.getRoomId()) &&
+                    ("CALLING".equals(existing.getStatus()) || "ACCEPTED".equals(existing.getStatus()))) {
+                    if ("CALLING".equals(existing.getStatus())) {
+                        existing.setStatus("ACCEPTED");
+                        triggerMockCallStatusChanged(existing.getCallId(), existing);
+                    }
+                    return existing;
+                }
+            }
+            String callId = startCall(callerId, callerName, receiverId, receiverName, roomId);
+            Call newCall = mockCalls.get(callId);
+            return newCall != null ? newCall : new Call(callerId, callerName, receiverId, receiverName, roomId, "CALLING");
+        } else {
+            try {
+                com.google.api.core.ApiFuture<com.google.cloud.firestore.QuerySnapshot> future = db.collection("calls")
+                        .whereEqualTo("roomId", cleanRoomId)
+                        .get();
+                List<QueryDocumentSnapshot> docs = future.get().getDocuments();
+                for (QueryDocumentSnapshot doc : docs) {
+                    Call call = doc.toObject(Call.class);
+                    if (call != null && ("CALLING".equals(call.getStatus()) || "ACCEPTED".equals(call.getStatus()))) {
+                        if ("CALLING".equals(call.getStatus())) {
+                            acceptCall(doc.getId());
+                            call.setStatus("ACCEPTED");
+                        }
+                        return call;
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Firestore getOrCreateCallForAppointment failed: " + e.getMessage());
+            }
+
+            String callId = startCall(callerId, callerName, receiverId, receiverName, roomId);
+            Call call = new Call(callerId, callerName, receiverId, receiverName, roomId, "CALLING");
+            call.setCallId(callId);
+            return call;
+        }
+    }
+
+    /**
      * Updates call status.
      */
     public void updateCallStatus(String callId, String newStatus) {

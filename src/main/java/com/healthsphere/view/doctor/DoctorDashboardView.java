@@ -129,6 +129,18 @@ public class DoctorDashboardView {
         return scene;
     }
 
+    private static class DoctorDashboardData {
+        final List<Appointment> appointments;
+        final double totalEarnings;
+        final int validPaymentsCount;
+
+        DoctorDashboardData(List<Appointment> appointments, double totalEarnings, int validPaymentsCount) {
+            this.appointments = appointments;
+            this.totalEarnings = totalEarnings;
+            this.validPaymentsCount = validPaymentsCount;
+        }
+    }
+
     private void loadDashboardDataAsync() {
         showShimmerLoadingState();
 
@@ -138,24 +150,47 @@ public class DoctorDashboardView {
             return;
         }
 
-        Task<List<Appointment>> loadTask = new Task<>() {
+        Task<DoctorDashboardData> loadTask = new Task<>() {
             @Override
-            protected List<Appointment> call() throws Exception {
+            protected DoctorDashboardData call() throws Exception {
                 List<Appointment> appointments = appointmentController.getDoctorAppointments(doctorUid);
-                return appointments != null ? appointments : new ArrayList<>();
+                if (appointments == null) {
+                    appointments = new ArrayList<>();
+                }
+
+                double earnings = 0.0;
+                int validCount = 0;
+                try {
+                    com.healthsphere.dao.common.PaymentDAO paymentDAO = new com.healthsphere.dao.common.PaymentDAO();
+                    earnings = paymentDAO.getDoctorTotalEarnings(doctorUid);
+                    List<com.healthsphere.model.PaymentRecord> payments = paymentDAO.getPaymentsForDoctor(doctorUid);
+                    if (payments != null) {
+                        for (com.healthsphere.model.PaymentRecord p : payments) {
+                            if (p != null && p.getStatus() != null &&
+                                (p.getStatus().equalsIgnoreCase("COMPLETED") || p.getStatus().equalsIgnoreCase("SUCCESS") || p.getStatus().equalsIgnoreCase("PAID"))) {
+                                validCount++;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Unable to load earnings in background Task: " + e.getMessage());
+                }
+
+                return new DoctorDashboardData(appointments, earnings, validCount);
             }
         };
 
         loadTask.setOnSucceeded(event -> {
-            doctorAppointments = loadTask.getValue();
+            DoctorDashboardData data = loadTask.getValue();
+            doctorAppointments = data.appointments;
             doctorAppointments.sort(Comparator.comparing(this::getAppointmentDateTimeSafe));
             System.out.println("Doctor Dashboard loaded " + doctorAppointments.size() + " appointments.");
-            updateUIWithLoadedData();
+            updateUIWithLoadedData(data);
         });
 
         loadTask.setOnFailed(event -> {
             System.err.println("Unable to load dashboard data: " + getRootMessage(loadTask.getException()));
-            updateUIWithLoadedData();
+            updateUIWithLoadedData(new DoctorDashboardData(new ArrayList<>(), 0.0, 0));
         });
 
         Thread thread = new Thread(loadTask);
@@ -180,7 +215,7 @@ public class DoctorDashboardView {
         if (revenueValue != null) revenueValue.setText("...");
     }
 
-    private void updateUIWithLoadedData() {
+    private void updateUIWithLoadedData(DoctorDashboardData data) {
         if (totalPatientsValue != null) {
             totalPatientsValue.setText(String.valueOf(getTotalPatientCount()));
         }
@@ -197,6 +232,14 @@ public class DoctorDashboardView {
         if (patientGrowthDetail != null) {
             patientGrowthDetail.setText(getPatientGrowthDetail());
         }
+
+        if (revenueValue != null) {
+            revenueValue.setText(String.format("₹%,.2f", data.totalEarnings));
+        }
+        if (revenueDetail != null) {
+            revenueDetail.setText(data.validPaymentsCount + " completed payments");
+        }
+
         if (appointmentsList != null) {
             refreshAppointmentsList();
         }

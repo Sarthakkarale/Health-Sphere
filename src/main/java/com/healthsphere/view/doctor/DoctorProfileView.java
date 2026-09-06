@@ -47,6 +47,32 @@ public class DoctorProfileView {
         private final com.healthsphere.controller.PaymentController paymentController;
         private DoctorProfile doctorProfile;
 
+        // UI Label References for Async Loading
+        private Label docNameLabel;
+        private Label docTitleLabel;
+        private Label locationTextLabel;
+        private Label ratingTextLabel;
+        private Label reviewsTextLabel;
+        private Label balAmountLabel;
+        private Label fullNameDetailLabel;
+        private Label emailDetailLabel;
+        private Label phoneDetailLabel;
+        private Label experienceDetailLabel;
+
+        private static class ProfileBundle {
+                final DoctorProfile profile;
+                final double rating;
+                final int reviews;
+                final double balance;
+
+                ProfileBundle(DoctorProfile profile, double rating, int reviews, double balance) {
+                        this.profile = profile;
+                        this.rating = rating;
+                        this.reviews = reviews;
+                        this.balance = balance;
+                }
+        }
+
         public DoctorProfileView(Stage stage) {
                 this.stage = stage;
 
@@ -54,61 +80,73 @@ public class DoctorProfileView {
                 this.doctorController = new DoctorController();
                 this.paymentController = new com.healthsphere.controller.PaymentController();
 
-                // Load current doctor's profile before creating the UI
-                loadDoctorProfile();
-
-                // Original UI creation
+                // UI creation (non-blocking)
                 this.scene = createScene();
+
+                // Load current doctor's profile & balance asynchronously
+                loadDoctorProfileAsync();
         }
 
         public Scene getScene() {
                 return this.scene;
         }
 
-        // ============================================================
-        // LOAD DOCTOR PROFILE
-        // ============================================================
-
-        /**
-         * Loads the currently authenticated doctor's profile from Firestore.
-         *
-         * The UID is obtained internally by DoctorController through
-         * SessionManager, so the View never supplies an arbitrary UID.
-         */
-        private void loadDoctorProfile() {
-
-                try {
-
-                        UserProfile currentUser = SessionManager.getInstance()
-                                        .getCurrentUser();
-
-                        if (currentUser == null) {
-
-                                throw new IllegalStateException(
-                                                "No logged-in user found.");
-                        }
-
-                        String doctorUid = currentUser.getUid();
-
-                        if (doctorUid == null ||
-                                        doctorUid.isBlank()) {
-
-                                throw new IllegalStateException(
-                                                "Logged-in doctor UID is missing.");
-                        }
-
-                        doctorProfile = doctorController.getDoctorProfile(
-                                        doctorUid);
-
-                } catch (Exception e) {
-
-                        e.printStackTrace();
-
-                        /*
-                         * Keep the UI usable if profile loading fails.
-                         */
-                        doctorProfile = null;
+        private void loadDoctorProfileAsync() {
+                String currentDocUid = SessionManager.getDoctorUid();
+                if (currentDocUid == null || currentDocUid.isBlank()) {
+                        return;
                 }
+
+                javafx.concurrent.Task<ProfileBundle> task = new javafx.concurrent.Task<>() {
+                        @Override
+                        protected ProfileBundle call() throws Exception {
+                                DoctorProfile prof = null;
+                                try {
+                                        prof = doctorController.getDoctorProfile(currentDocUid);
+                                } catch (Exception ignored) {}
+
+                                double avgRating = 0.0;
+                                int reviewCount = 0;
+                                try {
+                                        com.healthsphere.controller.patient.ReviewController revCtrl = new com.healthsphere.controller.patient.ReviewController();
+                                        reviewCount = revCtrl.getReviewCount("DOCTOR", currentDocUid);
+                                        if (reviewCount > 0) {
+                                                avgRating = revCtrl.getAverageRating("DOCTOR", currentDocUid);
+                                        }
+                                } catch (Exception ignored) {}
+
+                                double bal = 0.0;
+                                try {
+                                        bal = paymentController.getDoctorAccountBalance(currentDocUid);
+                                } catch (Exception ignored) {}
+
+                                return new ProfileBundle(prof, avgRating, reviewCount, bal);
+                        }
+                };
+
+                task.setOnSucceeded(event -> {
+                        ProfileBundle bundle = task.getValue();
+                        this.doctorProfile = bundle.profile;
+
+                        if (docNameLabel != null) docNameLabel.setText("Dr. " + getDoctorFullName());
+                        if (docTitleLabel != null) docTitleLabel.setText(getDoctorSpecialization());
+                        if (locationTextLabel != null) locationTextLabel.setText(getDoctorHospital());
+                        if (ratingTextLabel != null) ratingTextLabel.setText(bundle.reviews > 0 ? String.format("%.1f/5 ", bundle.rating) : "No reviews ");
+                        if (reviewsTextLabel != null) reviewsTextLabel.setText(String.format("(%d Reviews)", bundle.reviews));
+                        if (balAmountLabel != null) balAmountLabel.setText(String.format("₹%.2f", bundle.balance));
+                        if (fullNameDetailLabel != null) fullNameDetailLabel.setText("Dr. " + getDoctorFullName());
+                        if (emailDetailLabel != null) emailDetailLabel.setText(getDoctorEmail());
+                        if (phoneDetailLabel != null) phoneDetailLabel.setText(getDoctorPhone());
+                        if (experienceDetailLabel != null) experienceDetailLabel.setText(getDoctorExperience());
+                });
+
+                task.setOnFailed(event -> {
+                        if (balAmountLabel != null) balAmountLabel.setText("Unable to load account balance.");
+                });
+
+                Thread bgThread = new Thread(task);
+                bgThread.setDaemon(true);
+                bgThread.start();
         }
 
         // ============================================================
@@ -474,72 +512,40 @@ public class DoctorProfileView {
                 infoBox.setAlignment(
                                 Pos.CENTER_LEFT);
 
-                Label docName = new Label(
-                                "Dr. " + getDoctorFullName());
+                docNameLabel = new Label("Dr. " + getDoctorFullName());
+                docNameLabel.getStyleClass().add("banner-doc-name");
 
-                docName.getStyleClass().add(
-                                "banner-doc-name");
-
-                Label docTitle = new Label(
-                                getDoctorSpecialization());
-
-                docTitle.getStyleClass().add(
-                                "banner-doc-title");
+                docTitleLabel = new Label(getDoctorSpecialization());
+                docTitleLabel.getStyleClass().add("banner-doc-title");
 
                 HBox locationBox = new HBox(6);
+                locationBox.setAlignment(Pos.CENTER_LEFT);
 
-                locationBox.setAlignment(
-                                Pos.CENTER_LEFT);
-
-                ImageView locIcon = new ImageView(
-                                ResourceImage.load(
-                                                "/images/icons/ic_location.png"));
-
+                ImageView locIcon = new ImageView(ResourceImage.load("/images/icons/ic_location.png"));
                 locIcon.setFitWidth(14);
                 locIcon.setFitHeight(14);
 
-                Label locationText = new Label(
-                                getDoctorHospital());
+                locationTextLabel = new Label(getDoctorHospital());
+                locationTextLabel.getStyleClass().add("banner-subtext");
 
-                locationText.getStyleClass().add(
-                                "banner-subtext");
-
-                locationBox.getChildren().addAll(
-                                locIcon,
-                                locationText);
+                locationBox.getChildren().addAll(locIcon, locationTextLabel);
 
                 HBox ratingBox = new HBox(6);
+                ratingBox.setAlignment(Pos.CENTER_LEFT);
 
-                ratingBox.setAlignment(
-                                Pos.CENTER_LEFT);
-
-                ImageView starIcon = new ImageView(
-                                ResourceImage.load(
-                                                "/images/icons/ic_star.png"));
-
+                ImageView starIcon = new ImageView(ResourceImage.load("/images/icons/ic_star.png"));
                 starIcon.setFitWidth(14);
                 starIcon.setFitHeight(14);
 
-                Label ratingText = new Label("4.9/5 ");
+                ratingTextLabel = new Label("... ");
+                ratingTextLabel.getStyleClass().add("banner-rating-bold");
 
-                ratingText.getStyleClass().add(
-                                "banner-rating-bold");
+                reviewsTextLabel = new Label("(...)");
+                reviewsTextLabel.getStyleClass().add("banner-subtext");
 
-                Label reviewsText = new Label("(120 Reviews)");
+                ratingBox.getChildren().addAll(starIcon, ratingTextLabel, reviewsTextLabel);
 
-                reviewsText.getStyleClass().add(
-                                "banner-subtext");
-
-                ratingBox.getChildren().addAll(
-                                starIcon,
-                                ratingText,
-                                reviewsText);
-
-                infoBox.getChildren().addAll(
-                                docName,
-                                docTitle,
-                                locationBox,
-                                ratingBox);
+                infoBox.getChildren().addAll(docNameLabel, docTitleLabel, locationBox, ratingBox);
 
                 Region spacer = new Region();
 
@@ -703,20 +709,13 @@ public class DoctorProfileView {
                 amountGrowthBox.setAlignment(
                                 Pos.BASELINE_LEFT);
 
-                Label balAmount;
-                String docUid = SessionManager.getDoctorUid();
-                double liveBal = 3450.00;
-                if (docUid != null && !docUid.isBlank()) {
-                        liveBal = paymentController.getDoctorAccountBalance(docUid);
-                }
-                balAmount = new Label(String.format("₹%.2f", liveBal));
-
-                balAmount.setStyle(
+                balAmountLabel = new Label("₹...");
+                balAmountLabel.setStyle(
                                 "-fx-text-fill: #1E293B; " +
                                                 "-fx-font-size: 24px; " +
                                                 "-fx-font-weight: bold;");
 
-                Label growthBadge = new Label("+14.5% ↑");
+                Label growthBadge = new Label("✓ REAL EARNINGS");
 
                 growthBadge.setStyle(
                                 "-fx-background-color: #D1FAE5; " +
@@ -727,7 +726,7 @@ public class DoctorProfileView {
                                                 "-fx-background-radius: 12px;");
 
                 amountGrowthBox.getChildren().addAll(
-                                balAmount,
+                                balAmountLabel,
                                 growthBadge);
 
                 balanceBox.getChildren().addAll(

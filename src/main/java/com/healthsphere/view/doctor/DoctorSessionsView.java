@@ -503,19 +503,20 @@ public class DoctorSessionsView {
      * Opens an interactive Video Call Room Modal for starting a session with the patient.
      */
     private void openVideoCallModal(Appointment apt) {
-        String callerEmail = UserModel.getInstance().getEmail();
-        String callerName = SessionManager.getDoctorDisplayName();
+        if (apt == null) {
+            return;
+        }
+
+        String callerEmail = SessionManager.getDoctorUid() != null ? SessionManager.getDoctorUid() : UserModel.getInstance().getEmail();
+        String callerName = SessionManager.getDoctorDisplayName() != null ? SessionManager.getDoctorDisplayName() : "Doctor";
 
         String receiverEmail = apt.getPatientUid() != null ? apt.getPatientUid() : "patient@healthsphere.com";
         String receiverName = apt.getPatientName() != null ? apt.getPatientName() : "Patient";
 
-        String roomId = RoomGenerator.generateRoomId(callerEmail, receiverEmail);
+        String roomId = RoomGenerator.generateRoomIdForAppointment(apt.getAppointmentId());
         CallDao callDao = new CallDao();
 
-        String callId = callDao.startCall(callerEmail, callerName, receiverEmail, receiverName, roomId);
-
-        Call call = new Call(callerEmail, callerName, receiverEmail, receiverName, roomId, "CALLING");
-        call.setCallId(callId);
+        Call call = callDao.getOrCreateCallForAppointment(callerEmail, callerName, receiverEmail, receiverName, roomId);
 
         Stage modalStage = new Stage();
         modalStage.initModality(Modality.APPLICATION_MODAL);

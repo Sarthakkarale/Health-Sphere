@@ -1842,11 +1842,17 @@ public class AppointmentsView {
 
         if (status.equals(
                 "ACCEPTED"
+        )
+                || status.equals(
+                "CONFIRMED"
         )) {
+            Button videoCallBtn = createActionButton("📹 Join Video Call", "#BA54F5");
+            videoCallBtn.setOnAction(e -> handleStartVideoCall(appointment));
 
             actions
                     .getChildren()
                     .addAll(
+                            videoCallBtn,
                             completeButton,
                             cancelButton,
                             viewButton
@@ -2741,5 +2747,29 @@ public class AppointmentsView {
         );
 
         alert.showAndWait();
+    }
+
+    private void handleStartVideoCall(Appointment appointment) {
+        if (appointment == null) return;
+        String callerEmail = SessionManager.getDoctorUid() != null ? SessionManager.getDoctorUid() : com.healthsphere.model.UserModel.getInstance().getEmail();
+        String callerName = SessionManager.getDoctorDisplayName() != null ? SessionManager.getDoctorDisplayName() : "Doctor";
+
+        String receiverEmail = appointment.getPatientUid() != null ? appointment.getPatientUid() : "patient@healthsphere.com";
+        String receiverName = appointment.getPatientName() != null ? appointment.getPatientName() : "Patient";
+
+        String roomId = com.healthsphere.config.RoomGenerator.generateRoomIdForAppointment(appointment.getAppointmentId());
+        com.healthsphere.dao.CallDao callDao = new com.healthsphere.dao.CallDao();
+
+        com.healthsphere.model.Call call = callDao.getOrCreateCallForAppointment(callerEmail, callerName, receiverEmail, receiverName, roomId);
+
+        Stage modalStage = new Stage();
+        modalStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        modalStage.initOwner(stage);
+        modalStage.setTitle("Doctor Live Video Call - " + receiverName);
+
+        com.healthsphere.view.common.VideoCallScreen videoCallScreen = new com.healthsphere.view.common.VideoCallScreen(call, modalStage::close);
+        Scene modalScene = new Scene(videoCallScreen, 680, 520);
+        modalStage.setScene(modalScene);
+        modalStage.show();
     }
 }

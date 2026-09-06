@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.healthsphere.controller.patient.HospitalController;
+import com.healthsphere.controller.patient.ReviewController;
 import com.healthsphere.dao.authentication.DoctorDAO;
 import com.healthsphere.model.DoctorProfile;
 import com.healthsphere.model.HospitalProfile;
@@ -27,6 +28,7 @@ public class SearchHospitals {
     private final Stage stage;
     private final HospitalController hospitalController;
     private final DoctorDAO doctorDAO;
+    private final ReviewController reviewController;
 
     private List<HospitalProfile> allHospitals =
             new ArrayList<>();
@@ -53,6 +55,9 @@ public class SearchHospitals {
 
         this.doctorDAO =
                 new DoctorDAO();
+
+        this.reviewController =
+                new ReviewController();
     }
 
     // =========================================================
@@ -976,10 +981,6 @@ public class SearchHospitals {
                 "-fx-font-weight: bold;"
         );
 
-        // =====================================================
-        // CONTACT
-        // =====================================================
-
         Label contactLabel =
                 new Label(
                         "☎ "
@@ -995,10 +996,31 @@ public class SearchHospitals {
                 "-fx-text-fill: #64748b;"
         );
 
+        // =====================================================
+        // RATING
+        // =====================================================
+
+        String hospRatingText = reviewController.getFormattedRatingText("HOSPITAL", hospital.getUid());
+
+        Label hospRatingLabel =
+                new Label(
+                        hospRatingText
+                );
+
+        hospRatingLabel.setWrapText(true);
+
+        hospRatingLabel.setStyle(
+                "-fx-font-size: 14px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #d97706;" +
+                "-fx-padding: 2 0 2 0;"
+        );
+
         information.getChildren().addAll(
                 nameLabel,
                 addressLabel,
                 typeLabel,
+                hospRatingLabel,
                 contactLabel
         );
 
@@ -1176,10 +1198,6 @@ public class SearchHospitals {
                 "-fx-text-fill: #64748b;"
         );
 
-        // =====================================================
-        // HOSPITAL
-        // =====================================================
-
         Label hospitalLabel =
                 new Label(
                         "🏥 "
@@ -1195,9 +1213,30 @@ public class SearchHospitals {
                 "-fx-text-fill: #64748b;"
         );
 
+        // =====================================================
+        // RATING
+        // =====================================================
+
+        String docRatingText = reviewController.getFormattedRatingText("DOCTOR", doctor.getUid());
+
+        Label docRatingLabel =
+                new Label(
+                        docRatingText
+                );
+
+        docRatingLabel.setWrapText(true);
+
+        docRatingLabel.setStyle(
+                "-fx-font-size: 14px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #d97706;" +
+                "-fx-padding: 2 0 2 0;"
+        );
+
         information.getChildren().addAll(
                 nameLabel,
                 specializationLabel,
+                docRatingLabel,
                 experienceLabel,
                 hospitalLabel
         );
@@ -1273,8 +1312,9 @@ public class SearchHospitals {
         // =====================================================
 
         String rating =
-                safeRating(
-                        hospital.getRating()
+                reviewController.getFormattedRatingText(
+                        "HOSPITAL",
+                        hospital.getUid()
                 );
 
         stage.setScene(
@@ -1314,10 +1354,10 @@ public class SearchHospitals {
         }
 
         VBox details =
-                new VBox(10);
+                new VBox(12);
 
         details.setPadding(
-                new Insets(15)
+                new Insets(20)
         );
 
         details.setMaxWidth(
@@ -1325,10 +1365,11 @@ public class SearchHospitals {
         );
 
         details.setStyle(
-                "-fx-background-color: #eff6ff;" +
+                "-fx-background-color: #ffffff;" +
                 "-fx-background-radius: 12;" +
-                "-fx-border-color: #93c5fd;" +
-                "-fx-border-radius: 12;"
+                "-fx-border-color: #e2e8f0;" +
+                "-fx-border-radius: 12;" +
+                "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.06), 8, 0, 0, 2);"
         );
 
         // =====================================================
@@ -1343,21 +1384,20 @@ public class SearchHospitals {
         title.setWrapText(true);
 
         title.setStyle(
-                "-fx-font-size: 19px;" +
+                "-fx-font-size: 22px;" +
                 "-fx-font-weight: bold;" +
-                "-fx-text-fill: #0f172a;"
+                "-fx-text-fill: #172b4d;"
         );
 
         // =====================================================
         // RATING
         // =====================================================
 
+        String ratingStr = reviewController.getFormattedRatingText("DOCTOR", doctor.getUid());
+
         Label rating =
                 new Label(
-                        "⭐ Rating: "
-                                + safeRating(
-                                        doctor.getRating()
-                                )
+                        ratingStr
                 );
 
         rating.setWrapText(true);
@@ -1366,113 +1406,20 @@ public class SearchHospitals {
                 "-fx-font-size: 15px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #d97706;" +
-                "-fx-padding: 4 0 6 0;"
+                "-fx-padding: 2 0 6 0;"
         );
 
         // =====================================================
-        // SPECIALIZATION
+        // DETAIL FIELDS WITH HIGH CONTRAST DARK TEXT (#172B4D / #475569)
         // =====================================================
 
-        Label specialization =
-                new Label(
-                        "Specialization: "
-                                + safeDisplay(
-                                        doctor.getSpecialization(),
-                                        "Not available"
-                                )
-                );
-
-        specialization.setWrapText(true);
-
-        // =====================================================
-        // EXPERIENCE
-        // =====================================================
-
-        Label experience =
-                new Label(
-                        "Experience: "
-                                + safeDisplay(
-                                        doctor.getExperience(),
-                                        "Not available"
-                                )
-                );
-
-        experience.setWrapText(true);
-
-        // =====================================================
-        // HOSPITAL
-        // =====================================================
-
-        Label hospital =
-                new Label(
-                        "Hospital: "
-                                + safeDisplay(
-                                        doctor.getHospitalAffiliation(),
-                                        "Not available"
-                                )
-                );
-
-        hospital.setWrapText(true);
-
-        // =====================================================
-        // REGISTRATION
-        // =====================================================
-
-        Label registration =
-                new Label(
-                        "Registration No: "
-                                + safeDisplay(
-                                        doctor.getRegistrationNumber(),
-                                        "Not available"
-                                )
-                );
-
-        registration.setWrapText(true);
-
-        // =====================================================
-        // MEDICAL COUNCIL
-        // =====================================================
-
-        Label council =
-                new Label(
-                        "Medical Council: "
-                                + safeDisplay(
-                                        doctor.getMedicalCouncil(),
-                                        "Not available"
-                                )
-                );
-
-        council.setWrapText(true);
-
-        // =====================================================
-        // EMAIL
-        // =====================================================
-
-        Label email =
-                new Label(
-                        "Email: "
-                                + safeDisplay(
-                                        doctor.getEmail(),
-                                        "Not available"
-                                )
-                );
-
-        email.setWrapText(true);
-
-        // =====================================================
-        // PHONE
-        // =====================================================
-
-        Label phone =
-                new Label(
-                        "Phone: "
-                                + safeDisplay(
-                                        doctor.getPhone(),
-                                        "Not available"
-                                )
-                );
-
-        phone.setWrapText(true);
+        Label specialization = createDetailLabel("Specialization", doctor.getSpecialization(), "General Medicine");
+        Label experience = createDetailLabel("Experience", doctor.getExperience(), "Not available");
+        Label hospital = createDetailLabel("Hospital Affiliation", doctor.getHospitalAffiliation(), "Not specified");
+        Label registration = createDetailLabel("Registration No", doctor.getRegistrationNumber(), "Not available");
+        Label council = createDetailLabel("Medical Council", doctor.getMedicalCouncil(), "Not available");
+        Label email = createDetailLabel("Email", doctor.getEmail(), "Not available");
+        Label phone = createDetailLabel("Phone", doctor.getPhone(), "Not available");
 
         // =====================================================
         // BOOK BUTTON
@@ -1783,6 +1730,14 @@ public class SearchHospitals {
         if (!stage.isMaximized()) {
             stage.setMaximized(true);
         }
+    }
+
+    private Label createDetailLabel(String title, String val, String fallback) {
+        String displayVal = safeDisplay(val, fallback);
+        Label label = new Label(title + ": " + displayVal);
+        label.setWrapText(true);
+        label.setStyle("-fx-font-size: 14px; -fx-text-fill: #172b4d; -fx-padding: 2 0 2 0;");
+        return label;
     }
 }
 

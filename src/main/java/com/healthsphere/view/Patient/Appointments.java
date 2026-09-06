@@ -296,7 +296,7 @@ public class Appointments {
         filterBar.setPadding(new Insets(10, 0, 10, 0));
         filterBar.setAlignment(Pos.CENTER_LEFT);
 
-        String[] filterTabs = { "Pending Payments", "All Appointments", "Completed Payments", "Payment History" };
+        String[] filterTabs = { "All Appointments", "Completed Appointments", "Pending Payments", "Payment History" };
         Button[] filterBtns = new Button[filterTabs.length];
 
         for (int i = 0; i < filterTabs.length; i++) {
@@ -317,7 +317,7 @@ public class Appointments {
             filterBar.getChildren().add(btn);
         }
 
-        // Set default filter: Pending Payments (index 0)
+        // Set default filter: All Appointments (index 0)
         filterBtns[0].setStyle("-fx-background-color: #2563eb; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 20; -fx-padding: 8 18; -fx-cursor: hand;");
         for (int j = 1; j < filterBtns.length; j++) {
             filterBtns[j].setStyle("-fx-background-color: #e2e8f0; -fx-text-fill: #475569; -fx-font-weight: bold; -fx-background-radius: 20; -fx-padding: 8 18; -fx-cursor: hand;");
@@ -727,7 +727,49 @@ public class Appointments {
         }
 
         if (tabIndex == 0) {
-            // Pending Payments Tab (Default)
+            // All Appointments Tab (Upcoming & Previous)
+            VBox upcoming = PatientUI.card("Upcoming Appointments");
+            List<Appointment> upcomingList = getUpcomingAppointments(appointments);
+            if (upcomingList.isEmpty()) {
+                upcoming.getChildren().add(emptyLabel("You have no upcoming appointments."));
+            } else {
+                for (Appointment app : upcomingList) {
+                    HBox card = appointmentCard(app);
+                    card.setMaxWidth(Double.MAX_VALUE);
+                    upcoming.getChildren().add(card);
+                }
+            }
+
+            VBox previous = PatientUI.card("Previous / Completed Appointments");
+            List<Appointment> previousList = getPreviousAppointments(appointments);
+            if (previousList.isEmpty()) {
+                previous.getChildren().add(emptyLabel("No completed appointments yet"));
+            } else {
+                for (Appointment app : previousList) {
+                    HBox card = previousAppointment(app);
+                    card.setMaxWidth(Double.MAX_VALUE);
+                    previous.getChildren().add(card);
+                }
+            }
+            container.getChildren().addAll(upcoming, previous);
+
+        } else if (tabIndex == 1) {
+            // Completed Appointments Tab (ONLY COMPLETED APPOINTMENTS)
+            VBox completedCard = PatientUI.card("Completed Appointments");
+            List<Appointment> previousList = getPreviousAppointments(appointments);
+            if (previousList.isEmpty()) {
+                completedCard.getChildren().add(emptyLabel("No completed appointments yet"));
+            } else {
+                for (Appointment app : previousList) {
+                    HBox card = previousAppointment(app);
+                    card.setMaxWidth(Double.MAX_VALUE);
+                    completedCard.getChildren().add(card);
+                }
+            }
+            container.getChildren().add(completedCard);
+
+        } else if (tabIndex == 2) {
+            // Pending Payments Tab
             VBox pendingCard = PatientUI.card("Pending Payments Appointments");
             List<Appointment> pendingList = new ArrayList<>();
             for (Appointment app : appointments) {
@@ -746,53 +788,6 @@ public class Appointments {
             }
             container.getChildren().add(pendingCard);
 
-        } else if (tabIndex == 1) {
-            // All Appointments Tab (Upcoming & Previous)
-            VBox upcoming = PatientUI.card("Upcoming Appointments");
-            List<Appointment> upcomingList = getUpcomingAppointments(appointments);
-            if (upcomingList.isEmpty()) {
-                upcoming.getChildren().add(emptyLabel("You have no upcoming appointments."));
-            } else {
-                for (Appointment app : upcomingList) {
-                    HBox card = appointmentCard(app);
-                    card.setMaxWidth(Double.MAX_VALUE);
-                    upcoming.getChildren().add(card);
-                }
-            }
-
-            VBox previous = PatientUI.card("Previous Appointments");
-            List<Appointment> previousList = getPreviousAppointments(appointments);
-            if (previousList.isEmpty()) {
-                previous.getChildren().add(emptyLabel("You have no completed appointments."));
-            } else {
-                for (Appointment app : previousList) {
-                    HBox card = previousAppointment(app);
-                    card.setMaxWidth(Double.MAX_VALUE);
-                    previous.getChildren().add(card);
-                }
-            }
-            container.getChildren().addAll(upcoming, previous);
-
-        } else if (tabIndex == 2) {
-            // Completed Payments Tab
-            VBox paidCard = PatientUI.card("Completed Payments Appointments");
-            List<Appointment> paidList = new ArrayList<>();
-            for (Appointment app : appointments) {
-                if (app != null && "PAID".equalsIgnoreCase(app.getPaymentStatus())) {
-                    paidList.add(app);
-                }
-            }
-            if (paidList.isEmpty()) {
-                paidCard.getChildren().add(emptyLabel("No completed payment appointments yet."));
-            } else {
-                for (Appointment app : paidList) {
-                    HBox card = appointmentCard(app);
-                    card.setMaxWidth(Double.MAX_VALUE);
-                    paidCard.getChildren().add(card);
-                }
-            }
-            container.getChildren().add(paidCard);
-
         } else if (tabIndex == 3) {
             // Payment History Tab
             renderPaymentHistory(container);
@@ -807,7 +802,7 @@ public class Appointments {
         VBox card = PatientUI.card("Payment History & Account Balance");
 
         // Account Balance Banner
-        double currentBal = 1000.00;
+        double currentBal = 0.00;
         String patientUid = SessionManager.getPatientUid();
         if (patientUid != null && !patientUid.isBlank()) {
             currentBal = paymentController.getPatientAccountBalance(patientUid);
@@ -1199,7 +1194,7 @@ public class Appointments {
 
             Button reviewed =
                     new Button(
-                            "Reviewed ✓"
+                            "Reviewed ★★★★★"
                     );
 
             reviewed.setDisable(true);
@@ -2587,19 +2582,29 @@ public class Appointments {
     }
 
     private void handleJoinVideoCall(Appointment appointment) {
-        String patientEmail = UserModel.getInstance().getEmail();
-        String patientName = UserModel.getInstance().getName();
+        if (appointment == null) {
+            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR, "Invalid appointment details.");
+            alert.showAndWait();
+            return;
+        }
+
+        String status = appointment.getStatus() != null ? appointment.getStatus().trim().toUpperCase() : "";
+        if ("CANCELLED".equals(status) || "CANCELED".equals(status) || "REJECTED".equals(status)) {
+            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING, "Video consultation is not available for cancelled or rejected appointments.");
+            alert.showAndWait();
+            return;
+        }
+
+        String patientEmail = SessionManager.getInstance() != null && SessionManager.getInstance().getCurrentUser() != null ? SessionManager.getInstance().getCurrentUser().getEmail() : UserModel.getInstance().getEmail();
+        String patientName = UserModel.getInstance() != null && UserModel.getInstance().getName() != null ? UserModel.getInstance().getName() : "Patient";
 
         String doctorEmail = appointment.getDoctorUid() != null ? appointment.getDoctorUid() : "doctor@healthsphere.com";
         String doctorName = appointment.getDoctorName() != null ? appointment.getDoctorName() : "Doctor";
 
-        String roomId = RoomGenerator.generateRoomId(doctorEmail, patientEmail);
+        String roomId = RoomGenerator.generateRoomIdForAppointment(appointment.getAppointmentId());
         CallDao callDao = new CallDao();
 
-        String callId = callDao.startCall(patientEmail, patientName, doctorEmail, doctorName, roomId);
-        Call call = new Call(patientEmail, patientName, doctorEmail, doctorName, roomId, "CALLING");
-        call.setCallId(callId);
-
+        Call call = callDao.getOrCreateCallForAppointment(patientEmail, patientName, doctorEmail, doctorName, roomId);
         openVideoCallStage(call);
     }
 

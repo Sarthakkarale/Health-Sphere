@@ -251,6 +251,44 @@ public class ReviewController {
     }
 
     // =========================================================
+    // GET AVERAGE RATING & REVIEW COUNT
+    // =========================================================
+
+    public double getAverageRating(String targetType, String targetId) {
+        if (targetType == null || targetType.isBlank() || targetId == null || targetId.isBlank()) {
+            return 0.0;
+        }
+        return reviewDAO.getAverageRating(targetType.trim().toUpperCase(), targetId.trim());
+    }
+
+    public int getReviewCount(String targetType, String targetId) {
+        if (targetType == null || targetType.isBlank() || targetId == null || targetId.isBlank()) {
+            return 0;
+        }
+        List<Review> reviews = reviewDAO.getReviewsByTarget(targetType.trim().toUpperCase(), targetId.trim());
+        return reviews != null ? reviews.size() : 0;
+    }
+
+    public String getFormattedRatingText(String targetType, String targetId) {
+        if (targetType == null || targetType.isBlank() || targetId == null || targetId.isBlank()) {
+            return "No ratings yet";
+        }
+        try {
+            int count = getReviewCount(targetType, targetId);
+            if (count == 0) {
+                return "No ratings yet";
+            }
+            double avg = getAverageRating(targetType, targetId);
+            if (avg <= 0.0) {
+                return "No ratings yet";
+            }
+            return String.format("★ %.1f  (%d %s)", avg, count, count == 1 ? "Review" : "Reviews");
+        } catch (Exception e) {
+            return "No ratings yet";
+        }
+    }
+
+    // =========================================================
     // GET CURRENT PATIENT REVIEWS
     // =========================================================
 
