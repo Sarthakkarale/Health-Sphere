@@ -1,6 +1,12 @@
 package com.healthsphere.view.hospital;
 
+import com.healthsphere.controller.patient.ReviewController;
+import com.healthsphere.model.Review;
 import com.healthsphere.util.Navigation;
+import com.healthsphere.util.SessionManager;
+import com.healthsphere.util.ShimmerPlaceholder;
+
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -13,7 +19,6 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -23,12 +28,15 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class HospitalReviewView {
 
     // =========================================================
-    // COLOR PALETTE (Light Content with Dark Sidebar)
+    // COLOR PALETTE
     // =========================================================
 
     private static final String PRIMARY_BLUE = "#2F80ED";
@@ -39,32 +47,44 @@ public class HospitalReviewView {
     private static final String CARD_BG = "#FFFFFF";
     private static final String BORDER = "#E2E8F0";
 
-    // DARK SIDEBAR THEME
-    private static final String SIDEBAR_BG = "#12355B";
-    private static final String SIDEBAR_BORDER = "#1D4E7A";
     private static final String SIDEBAR_TEXT = "#D6E4F0";
     private static final String SIDEBAR_TEXT_HOVER = "#FFFFFF";
     private static final String SIDEBAR_HOVER_BG = "#1D4E7A";
 
     private static final String SUCCESS_GREEN = "#059669";
     private static final String SUCCESS_LIGHT = "#ECFDF5";
-
     private static final String WARNING_ORANGE = "#D97706";
-    private static final String WARNING_LIGHT = "#FFFBEB";
-
     private static final String ERROR_RED = "#DC2626";
-
     private static final String GOLDEN_YELLOW = "#F59E0B";
 
-    // Dynamic Container for Review Items
+    private final ReviewController reviewController = new ReviewController();
+
+    // Loaded Real Reviews from Firebase
+    private List<Review> allHospitalReviews = new ArrayList<>();
+
+    // Dynamic UI References
     private VBox reviewListContainer;
+    private VBox shimmerBox;
+
+    private Label overallScoreLabel;
+    private Label starsLabel;
+    private Label countTextLabel;
+
+    private Label recRateValLabel;
+    private Label avgRespTimeValLabel;
+    private Label openCompValLabel;
+
+    private final Label[] starPercentLabels = new Label[5];
+    private final Region[] starProgressBars = new Region[5];
+
+    private ComboBox<String> ratingFilter;
+    private TextField searchField;
 
     // =========================================================
     // CREATE SCENE
     // =========================================================
 
     public Scene createScene(Stage stage) {
-
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: " + LIGHT_BACKGROUND + ";");
 
@@ -77,56 +97,10 @@ public class HospitalReviewView {
 
         root.setCenter(scrollPane);
 
+        // Load Real Firebase Reviews Asynchronously
+        loadHospitalReviewsAsync();
+
         return new Scene(root, stage.getWidth(), stage.getHeight());
-    }
-
-    // =========================================================
-    // SIDEBAR (DARK THEME)
-    // =========================================================
-
-    private VBox createSidebar(Stage stage) {
-        return HospitalSidebar.createSidebar(stage, HospitalSidebar.HospitalTab.REVIEWS);
-    }
-
-    private Button createNavigationButton(String icon, String text, boolean selected) {
-
-        Button button = new Button();
-
-        Label iconLabel = new Label(icon);
-        iconLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: " + (selected ? "#FFFFFF" : SIDEBAR_TEXT) + ";");
-
-        Label textLabel = new Label(text);
-        textLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: " + (selected ? "bold" : "500") + "; -fx-text-fill: " + (selected ? "#FFFFFF" : SIDEBAR_TEXT) + ";");
-
-        HBox content = new HBox(12);
-        content.setAlignment(Pos.CENTER_LEFT);
-        content.getChildren().addAll(iconLabel, textLabel);
-
-        button.setGraphic(content);
-        button.setMaxWidth(Double.MAX_VALUE);
-        button.setPrefHeight(42);
-        button.setAlignment(Pos.CENTER_LEFT);
-        button.setPadding(new Insets(0, 12, 0, 12));
-
-        String baseStyle = "-fx-background-radius: 8; -fx-cursor: hand;";
-
-        if (selected) {
-            button.setStyle(baseStyle + "-fx-background-color: " + PRIMARY_BLUE + ";");
-        } else {
-            button.setStyle(baseStyle + "-fx-background-color: transparent;");
-            button.setOnMouseEntered(e -> {
-                button.setStyle(baseStyle + "-fx-background-color: " + SIDEBAR_HOVER_BG + ";");
-                iconLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: " + SIDEBAR_TEXT_HOVER + ";");
-                textLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: " + SIDEBAR_TEXT_HOVER + ";");
-            });
-            button.setOnMouseExited(e -> {
-                button.setStyle(baseStyle + "-fx-background-color: transparent;");
-                iconLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: " + SIDEBAR_TEXT + ";");
-                textLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: 500; -fx-text-fill: " + SIDEBAR_TEXT + ";");
-            });
-        }
-
-        return button;
     }
 
     // =========================================================
@@ -134,11 +108,9 @@ public class HospitalReviewView {
     // =========================================================
 
     private HBox createTopBar(Stage stage) {
-
         HBox topBar = new HBox(16);
         topBar.setAlignment(Pos.CENTER_LEFT);
         topBar.setPadding(new Insets(12, 28, 12, 28));
-
         topBar.setStyle(
                 "-fx-background-color: " + CARD_BG + ";" +
                 "-fx-border-color: " + BORDER + ";" +
@@ -148,10 +120,12 @@ public class HospitalReviewView {
         Label searchIcon = new Label("⌕");
         searchIcon.setStyle("-fx-font-size: 18px; -fx-text-fill: " + SECONDARY_TEXT + ";");
 
-        TextField searchField = new TextField();
+        searchField = new TextField();
         searchField.setPromptText("Search patient feedback or doctor name...");
         searchField.setStyle("-fx-background-color: transparent; -fx-prompt-text-fill: #94A3B8; -fx-font-size: 13px; -fx-text-inner-color: " + DARK_TEXT + ";");
         HBox.setHgrow(searchField, Priority.ALWAYS);
+
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> applyFiltersAndRender());
 
         HBox searchBox = new HBox(8);
         searchBox.setAlignment(Pos.CENTER_LEFT);
@@ -186,10 +160,9 @@ public class HospitalReviewView {
         Label avatarText = new Label("HA");
         avatarText.setStyle("-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: " + PRIMARY_BLUE + ";");
 
-        StackPane avatarBox = new StackPane(avatar, avatarText);
+        StackPane avatarPane = new StackPane(avatar, avatarText);
 
-        topBar.getChildren().addAll(searchBox, spacer, userInfo, avatarBox);
-
+        topBar.getChildren().addAll(searchBox, spacer, userInfo, avatarPane);
         return topBar;
     }
 
@@ -198,7 +171,6 @@ public class HospitalReviewView {
     // =========================================================
 
     private VBox createMainContent(Stage stage) {
-
         VBox content = new VBox(24);
         content.setPadding(new Insets(28));
         content.setStyle("-fx-background-color: " + LIGHT_BACKGROUND + ";");
@@ -213,22 +185,16 @@ public class HospitalReviewView {
         return content;
     }
 
-    // =========================================================
-    // HEADER
-    // =========================================================
-
     private VBox createHeader() {
-
         VBox header = new VBox(4);
 
         Label title = new Label("Patient Reviews & Feedback");
         title.setStyle("-fx-font-size: 26px; -fx-font-weight: 800; -fx-text-fill: " + DARK_TEXT + ";");
 
-        Label subtitle = new Label("Monitor patient experiences, respond to testimonials, and resolve care issues");
+        Label subtitle = new Label("Monitor real patient experiences, respond to testimonials, and resolve care issues");
         subtitle.setStyle("-fx-font-size: 13px; -fx-text-fill: " + SECONDARY_TEXT + ";");
 
         header.getChildren().addAll(title, subtitle);
-
         return header;
     }
 
@@ -237,7 +203,6 @@ public class HospitalReviewView {
     // =========================================================
 
     private HBox createRatingOverview() {
-
         HBox overviewBox = new HBox(20);
 
         // Overall Score Card
@@ -245,16 +210,16 @@ public class HospitalReviewView {
         scoreCard.setPrefWidth(280);
         scoreCard.setAlignment(Pos.CENTER);
 
-        Label overallScore = new Label("4.8");
-        overallScore.setStyle("-fx-font-size: 48px; -fx-font-weight: 900; -fx-text-fill: " + DARK_TEXT + ";");
+        overallScoreLabel = new Label("—");
+        overallScoreLabel.setStyle("-fx-font-size: 44px; -fx-font-weight: 900; -fx-text-fill: " + DARK_TEXT + ";");
 
-        Label stars = new Label("★ ★ ★ ★ ★");
-        stars.setStyle("-fx-font-size: 18px; -fx-text-fill: " + GOLDEN_YELLOW + ";");
+        starsLabel = new Label("☆ ☆ ☆ ☆ ☆");
+        starsLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: " + GOLDEN_YELLOW + ";");
 
-        Label countText = new Label("Based on 1,248 verified reviews");
-        countText.setStyle("-fx-font-size: 12px; -fx-text-fill: " + SECONDARY_TEXT + ";");
+        countTextLabel = new Label("Loading Firebase reviews...");
+        countTextLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: " + SECONDARY_TEXT + ";");
 
-        scoreCard.getChildren().addAll(overallScore, stars, countText);
+        scoreCard.getChildren().addAll(overallScoreLabel, starsLabel, countTextLabel);
 
         // Star Rating Distribution Breakdown Card
         VBox breakdownCard = createCard();
@@ -264,13 +229,10 @@ public class HospitalReviewView {
         title.setStyle("-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: " + DARK_TEXT + ";");
 
         VBox barList = new VBox(8);
-        barList.getChildren().addAll(
-                createRatingProgressBar("5 Stars", 0.78, "78%"),
-                createRatingProgressBar("4 Stars", 0.14, "14%"),
-                createRatingProgressBar("3 Stars", 0.05, "5%"),
-                createRatingProgressBar("2 Stars", 0.02, "2%"),
-                createRatingProgressBar("1 Star", 0.01, "1%")
-        );
+        for (int i = 0; i < 5; i++) {
+            int starNum = 5 - i;
+            barList.getChildren().add(createRatingProgressBar(starNum + (starNum == 1 ? " Star" : " Stars"), i));
+        }
 
         breakdownCard.getChildren().addAll(title, barList);
 
@@ -281,9 +243,18 @@ public class HospitalReviewView {
         Label metricsTitle = new Label("Feedback Metrics");
         metricsTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: 700; -fx-text-fill: " + DARK_TEXT + ";");
 
-        VBox recBox = createMetricRow("Recommendation Rate", "94%", SUCCESS_GREEN);
-        VBox respBox = createMetricRow("Avg Response Time", "2.4 Hours", PRIMARY_BLUE);
-        VBox compBox = createMetricRow("Open Complaints", "3 Pending", WARNING_ORANGE);
+        recRateValLabel = new Label("N/A");
+        recRateValLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: 800; -fx-text-fill: " + SUCCESS_GREEN + ";");
+
+        avgRespTimeValLabel = new Label("N/A");
+        avgRespTimeValLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: 800; -fx-text-fill: " + PRIMARY_BLUE + ";");
+
+        openCompValLabel = new Label("0 Pending");
+        openCompValLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: 800; -fx-text-fill: " + WARNING_ORANGE + ";");
+
+        VBox recBox = createMetricRow("Recommendation Rate", recRateValLabel);
+        VBox respBox = createMetricRow("Avg Response Time", avgRespTimeValLabel);
+        VBox compBox = createMetricRow("Open Complaints", openCompValLabel);
 
         metricsCard.getChildren().addAll(metricsTitle, recBox, respBox, compBox);
 
@@ -292,8 +263,7 @@ public class HospitalReviewView {
         return overviewBox;
     }
 
-    private HBox createRatingProgressBar(String labelText, double fillPercent, String percentageText) {
-
+    private HBox createRatingProgressBar(String labelText, int index) {
         HBox row = new HBox(12);
         row.setAlignment(Pos.CENTER_LEFT);
 
@@ -313,24 +283,24 @@ public class HospitalReviewView {
         Region bar = new Region();
         bar.setPrefHeight(8);
         bar.setStyle("-fx-background-color: " + GOLDEN_YELLOW + "; -fx-background-radius: 6;");
-
         StackPane.setAlignment(bar, Pos.CENTER_LEFT);
-        bar.prefWidthProperty().bind(progressContainer.widthProperty().multiply(fillPercent));
+
+        starProgressBars[index] = bar;
 
         progressContainer.getChildren().addAll(background, bar);
 
-        Label percentLabel = new Label(percentageText);
-        percentLabel.setPrefWidth(35);
+        Label percentLabel = new Label("0%");
+        percentLabel.setPrefWidth(40);
         percentLabel.setAlignment(Pos.CENTER_RIGHT);
         percentLabel.setStyle("-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: " + SECONDARY_TEXT + ";");
 
-        row.getChildren().addAll(label, progressContainer, percentLabel);
+        starPercentLabels[index] = percentLabel;
 
+        row.getChildren().addAll(label, progressContainer, percentLabel);
         return row;
     }
 
-    private VBox createMetricRow(String label, String value, String color) {
-
+    private VBox createMetricRow(String label, Label valueLabel) {
         VBox box = new VBox(2);
         box.setPadding(new Insets(6, 10, 6, 10));
         box.setStyle("-fx-background-color: " + LIGHT_BACKGROUND + "; -fx-background-radius: 8;");
@@ -338,11 +308,7 @@ public class HospitalReviewView {
         Label title = new Label(label);
         title.setStyle("-fx-font-size: 11px; -fx-text-fill: " + SECONDARY_TEXT + ";");
 
-        Label val = new Label(value);
-        val.setStyle("-fx-font-size: 14px; -fx-font-weight: 800; -fx-text-fill: " + color + ";");
-
-        box.getChildren().addAll(title, val);
-
+        box.getChildren().addAll(title, valueLabel);
         return box;
     }
 
@@ -351,19 +317,15 @@ public class HospitalReviewView {
     // =========================================================
 
     private HBox createFilterAndSearchSection() {
-
         HBox filterBox = new HBox(12);
         filterBox.setAlignment(Pos.CENTER_LEFT);
 
-        ComboBox<String> departmentFilter = new ComboBox<>();
-        departmentFilter.getItems().addAll("All Departments", "Cardiology", "Neurology", "Orthopedics", "Pediatrics", "Emergency");
-        departmentFilter.setValue("All Departments");
-        departmentFilter.setStyle("-fx-background-color: " + CARD_BG + "; -fx-border-color: " + BORDER + "; -fx-border-radius: 6;");
-
-        ComboBox<String> ratingFilter = new ComboBox<>();
-        ratingFilter.getItems().addAll("All Ratings", "5 Stars Only", "4 Stars & Above", "Critical (1-2 Stars)");
+        ratingFilter = new ComboBox<>();
+        ratingFilter.getItems().addAll("All Ratings", "5 Stars Only", "4 Stars & Above", "3 Stars & Below", "Critical (1-2 Stars)");
         ratingFilter.setValue("All Ratings");
         ratingFilter.setStyle("-fx-background-color: " + CARD_BG + "; -fx-border-color: " + BORDER + "; -fx-border-radius: 6;");
+
+        ratingFilter.setOnAction(e -> applyFiltersAndRender());
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -380,8 +342,7 @@ public class HospitalReviewView {
 
         exportBtn.setOnAction(e -> showInformationDialog("Export Data", "Exporting feedback records to CSV file..."));
 
-        filterBox.getChildren().addAll(departmentFilter, ratingFilter, spacer, exportBtn);
-
+        filterBox.getChildren().addAll(ratingFilter, spacer, exportBtn);
         return filterBox;
     }
 
@@ -390,44 +351,200 @@ public class HospitalReviewView {
     // =========================================================
 
     private VBox createReviewListSection() {
-
         reviewListContainer = new VBox(16);
 
-        reviewListContainer.getChildren().addAll(
-                createReviewCard(
-                        "Ananya Roy",
-                        "2 hours ago",
-                        "Cardiology • Dr. R. K. Sharma",
-                        5,
-                        "Excellent Care & Swift Support",
-                        "The medical team at Cardiology was exceptionally attentive during my treatment. Doctor Sharma explained the procedure thoroughly and put my mind at ease.",
-                        true
-                ),
-                createReviewCard(
-                        "Vikram Mehta",
-                        "Yesterday",
-                        "Emergency Dept",
-                        2,
-                        "Long Waiting Time in Emergency ER",
-                        "The doctors were professional, but we had to wait over 45 minutes in the emergency admission room before being seen. System needs streamlining.",
-                        false
-                ),
-                createReviewCard(
-                        "Siddharth Patel",
-                        "3 days ago",
-                        "Orthopedics • Dr. Priya Verma",
-                        5,
-                        "Great facility and hygienic environment",
-                        "Clean rooms, modern equipment, and highly supportive nursing staff during my knee rehabilitation.",
-                        true
-                )
-        );
+        shimmerBox = ShimmerPlaceholder.createListShimmer(3);
+        reviewListContainer.getChildren().add(shimmerBox);
 
         return reviewListContainer;
     }
 
-    private VBox createReviewCard(String patientName, String dateText, String category, int rating, String titleText, String reviewBody, boolean verified) {
+    // =========================================================
+    // ASYNC FIREBASE DATA LOADING
+    // =========================================================
 
+    private void loadHospitalReviewsAsync() {
+        String hospitalId = SessionManager.getHospitalUid();
+        if (hospitalId == null || hospitalId.isBlank()) {
+            if (SessionManager.getCurrentUser() != null) {
+                hospitalId = SessionManager.getCurrentUser().getUid();
+            }
+        }
+
+        final String finalHospitalId = hospitalId != null ? hospitalId : "";
+
+        Task<List<Review>> task = new Task<>() {
+            @Override
+            protected List<Review> call() throws Exception {
+                if (finalHospitalId.isBlank()) {
+                    return new ArrayList<>();
+                }
+                return reviewController.getReviewsByTarget("HOSPITAL", finalHospitalId);
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            reviewListContainer.getChildren().remove(shimmerBox);
+            allHospitalReviews = task.getValue();
+            if (allHospitalReviews == null) {
+                allHospitalReviews = new ArrayList<>();
+            }
+            updateAnalyticsSummary(allHospitalReviews);
+            applyFiltersAndRender();
+        });
+
+        task.setOnFailed(e -> {
+            reviewListContainer.getChildren().remove(shimmerBox);
+            allHospitalReviews = new ArrayList<>();
+            updateAnalyticsSummary(allHospitalReviews);
+            applyFiltersAndRender();
+        });
+
+        Thread bgThread = new Thread(task);
+        bgThread.setDaemon(true);
+        bgThread.start();
+    }
+
+    // =========================================================
+    // ANALYTICS & DISTRIBUTION CALCULATION
+    // =========================================================
+
+    private void updateAnalyticsSummary(List<Review> reviews) {
+        int total = reviews.size();
+        if (total == 0) {
+            overallScoreLabel.setText("No Ratings");
+            overallScoreLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: 800; -fx-text-fill: " + SECONDARY_TEXT + ";");
+            starsLabel.setText("☆ ☆ ☆ ☆ ☆");
+            countTextLabel.setText("No verified reviews yet");
+            recRateValLabel.setText("N/A");
+
+            for (int i = 0; i < 5; i++) {
+                starPercentLabels[i].setText("0%");
+                starProgressBars[i].prefWidthProperty().unbind();
+                starProgressBars[i].setPrefWidth(0);
+            }
+            return;
+        }
+
+        int[] starCounts = new int[6]; // 1-indexed for ratings 1..5
+        int totalRating = 0;
+        int positiveCount = 0; // 4 or 5 stars
+
+        for (Review r : reviews) {
+            if (r == null) continue;
+            int rating = r.getRating();
+            if (rating >= 1 && rating <= 5) {
+                starCounts[rating]++;
+                totalRating += rating;
+                if (rating >= 4) {
+                    positiveCount++;
+                }
+            }
+        }
+
+        double avg = (double) totalRating / total;
+        overallScoreLabel.setText(String.format("%.1f", avg));
+        overallScoreLabel.setStyle("-fx-font-size: 44px; -fx-font-weight: 900; -fx-text-fill: " + DARK_TEXT + ";");
+
+        // Format stars
+        StringBuilder sb = new StringBuilder();
+        int roundedStar = (int) Math.round(avg);
+        for (int i = 1; i <= 5; i++) {
+            sb.append(i <= roundedStar ? "★ " : "☆ ");
+        }
+        starsLabel.setText(sb.toString().trim());
+        countTextLabel.setText(String.format("Based on %d verified %s", total, total == 1 ? "review" : "reviews"));
+
+        // Update 5-star down to 1-star breakdown
+        for (int i = 0; i < 5; i++) {
+            int starNum = 5 - i;
+            int count = starCounts[starNum];
+            double pct = ((double) count / total) * 100.0;
+            starPercentLabels[i].setText(String.format("%.0f%%", pct));
+            double ratio = (double) count / total;
+            starProgressBars[i].setStyle("-fx-background-color: " + GOLDEN_YELLOW + "; -fx-background-radius: 6;");
+            // Set static width ratio relative to container
+            starProgressBars[i].setPrefWidth(160 * ratio);
+        }
+
+        // Recommendation Rate
+        double recRate = ((double) positiveCount / total) * 100.0;
+        recRateValLabel.setText(String.format("%.0f%%", recRate));
+    }
+
+    // =========================================================
+    // FILTERING AND RENDERING
+    // =========================================================
+
+    private void applyFiltersAndRender() {
+        reviewListContainer.getChildren().clear();
+
+        if (allHospitalReviews == null || allHospitalReviews.isEmpty()) {
+            VBox emptyCard = createEmptyStateCard(
+                    "⭐",
+                    "No Reviews Yet",
+                    "There are no patient reviews submitted for this hospital yet.",
+                    null,
+                    null
+            );
+            reviewListContainer.getChildren().add(emptyCard);
+            return;
+        }
+
+        String searchText = searchField != null && searchField.getText() != null ? searchField.getText().trim().toLowerCase() : "";
+        String rFilter = ratingFilter != null && ratingFilter.getValue() != null ? ratingFilter.getValue() : "All Ratings";
+
+        List<Review> filtered = allHospitalReviews.stream().filter(r -> {
+            if (r == null) return false;
+
+            // Rating Filter
+            if ("5 Stars Only".equals(rFilter) && r.getRating() != 5) return false;
+            if ("4 Stars & Above".equals(rFilter) && r.getRating() < 4) return false;
+            if ("3 Stars & Below".equals(rFilter) && r.getRating() > 3) return false;
+            if ("Critical (1-2 Stars)".equals(rFilter) && (r.getRating() < 1 || r.getRating() > 2)) return false;
+
+            // Search Text Filter
+            if (!searchText.isEmpty()) {
+                String pName = r.getPatientName() != null ? r.getPatientName().toLowerCase() : "";
+                String comment = r.getComment() != null ? r.getComment().toLowerCase() : "";
+                String tName = r.getTargetName() != null ? r.getTargetName().toLowerCase() : "";
+                return pName.contains(searchText) || comment.contains(searchText) || tName.contains(searchText);
+            }
+
+            return true;
+        }).collect(Collectors.toList());
+
+        if (filtered.isEmpty()) {
+            VBox emptyCard = createEmptyStateCard(
+                    "⌕",
+                    "No Matching Reviews",
+                    "No reviews match your search or filter criteria.",
+                    "Clear Filters",
+                    () -> {
+                        if (searchField != null) searchField.clear();
+                        if (ratingFilter != null) ratingFilter.setValue("All Ratings");
+                    }
+            );
+            reviewListContainer.getChildren().add(emptyCard);
+            return;
+        }
+
+        for (Review r : filtered) {
+            reviewListContainer.getChildren().add(createReviewCardFromRecord(r));
+        }
+    }
+
+    private VBox createReviewCardFromRecord(Review r) {
+        String patientName = r.getPatientName() != null && !r.getPatientName().isBlank() ? r.getPatientName() : "Anonymous Patient";
+        String dateText = r.getCreatedAt() != null ? r.getCreatedAt() : "Recent";
+        String category = r.getTargetName() != null && !r.getTargetName().isBlank() ? r.getTargetName() : "General Consultation";
+        int rating = r.getRating();
+        String commentText = r.getComment() != null ? r.getComment() : "";
+
+        return createReviewCard(patientName, dateText, category, rating, "Patient Feedback", commentText, true);
+    }
+
+    private VBox createReviewCard(String patientName, String dateText, String category, int rating, String titleText, String reviewBody, boolean verified) {
         VBox card = createCard();
 
         HBox topRow = new HBox(12);
@@ -436,7 +553,8 @@ public class HospitalReviewView {
         Circle avatar = new Circle(18);
         avatar.setFill(Color.web(PRIMARY_LIGHT));
 
-        Label avatarLabel = new Label(patientName.substring(0, 1));
+        String initial = patientName.length() > 0 ? patientName.substring(0, 1).toUpperCase() : "P";
+        Label avatarLabel = new Label(initial);
         avatarLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: " + PRIMARY_BLUE + ";");
 
         StackPane avatarPane = new StackPane(avatar, avatarLabel);
@@ -448,7 +566,6 @@ public class HospitalReviewView {
 
         Label name = new Label(patientName);
         name.setStyle("-fx-font-size: 13px; -fx-font-weight: 700; -fx-text-fill: " + DARK_TEXT + ";");
-
         nameLine.getChildren().add(name);
 
         if (verified) {
@@ -502,12 +619,47 @@ public class HospitalReviewView {
 
         card.getChildren().addAll(topRow, ratingStars, reviewTitle, body, actionRow);
 
+        card.setOnMouseEntered(e -> card.setStyle(
+                "-fx-background-color: " + CARD_BG + ";" +
+                "-fx-background-radius: 12;" +
+                "-fx-border-color: " + PRIMARY_BLUE + ";" +
+                "-fx-border-radius: 12;"
+        ));
+        card.setOnMouseExited(e -> card.setStyle(
+                "-fx-background-color: " + CARD_BG + ";" +
+                "-fx-background-radius: 12;" +
+                "-fx-border-color: " + BORDER + ";" +
+                "-fx-border-radius: 12;"
+        ));
         return card;
     }
 
-    // =========================================================
-    // HELPER UTILITIES & DIALOGS
-    // =========================================================
+    private VBox createEmptyStateCard(String icon, String title, String description, String buttonText, Runnable buttonAction) {
+        VBox box = new VBox(12);
+        box.setAlignment(Pos.CENTER);
+        box.setPadding(new Insets(40));
+        box.setStyle("-fx-background-color: " + CARD_BG + "; -fx-background-radius: 12; -fx-border-color: " + BORDER + "; -fx-border-radius: 12;");
+
+        Label iconLbl = new Label(icon);
+        iconLbl.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: " + PRIMARY_BLUE + ";");
+
+        Label titleLbl = new Label(title);
+        titleLbl.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: " + DARK_TEXT + ";");
+
+        Label descLbl = new Label(description);
+        descLbl.setWrapText(true);
+        descLbl.setStyle("-fx-font-size: 13px; -fx-text-fill: " + SECONDARY_TEXT + "; -fx-text-alignment: center;");
+
+        box.getChildren().addAll(iconLbl, titleLbl, descLbl);
+
+        if (buttonText != null && buttonAction != null) {
+            Button btn = new Button(buttonText);
+            btn.setStyle("-fx-background-color: " + PRIMARY_BLUE + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 16; -fx-cursor: hand;");
+            btn.setOnAction(e -> buttonAction.run());
+            box.getChildren().add(btn);
+        }
+        return box;
+    }
 
     private VBox createCard() {
         VBox card = new VBox(12);

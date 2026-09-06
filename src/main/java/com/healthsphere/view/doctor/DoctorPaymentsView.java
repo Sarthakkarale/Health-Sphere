@@ -156,7 +156,7 @@ public class DoctorPaymentsView {
 
                     HBox.setHgrow(patientInfo, Priority.ALWAYS);
 
-                    boolean completed = "COMPLETED".equalsIgnoreCase(rec.getStatus()) || "SUCCESS".equalsIgnoreCase(rec.getStatus()) || "PAID".equalsIgnoreCase(rec.getStatus());
+                    boolean completed = "COMPLETED".equalsIgnoreCase(rec.getStatus()) || "SUCCESS".equalsIgnoreCase(rec.getStatus()) || "PAID".equalsIgnoreCase(rec.getStatus()) || "RECEIVED".equalsIgnoreCase(rec.getStatus());
                     Label badge = new Label(completed ? "✓ RECEIVED" : "⚡ PENDING");
                     badge.setStyle(completed ?
                             "-fx-background-color: #D1FAE5; -fx-text-fill: #059669; -fx-font-weight: bold; -fx-font-size: 11px; -fx-padding: 4 10; -fx-background-radius: 12;" :

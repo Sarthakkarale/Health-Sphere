@@ -180,8 +180,8 @@ public class PaymentDAO {
         double sum = 0.00;
         for (PaymentRecord p : list) {
             if (p != null && p.getStatus() != null) {
-                String st = p.getStatus().toUpperCase();
-                if (st.equals("COMPLETED") || st.equals("SUCCESS") || st.equals("PAID")) {
+                String st = p.getStatus().trim().toUpperCase();
+                if (st.equals("COMPLETED") || st.equals("SUCCESS") || st.equals("PAID") || st.equals("RECEIVED")) {
                     sum += p.getAmount();
                 }
             }
@@ -190,22 +190,9 @@ public class PaymentDAO {
     }
 
     public double getDoctorAccountBalance(String doctorUid) {
-        try {
-            DocumentSnapshot doc = db.collection("doctors").document(doctorUid).get().get();
-            if (doc.exists() && doc.contains("accountBalance")) {
-                Double bal = doc.getDouble("accountBalance");
-                if (bal != null) return bal;
-            }
-            DocumentSnapshot docProfile = db.collection("doctor_profiles").document(doctorUid).get().get();
-            if (docProfile.exists() && docProfile.contains("accountBalance")) {
-                Double bal = docProfile.getDouble("accountBalance");
-                if (bal != null) return bal;
-            }
-        } catch (Exception e) {
-            System.err.println("Error fetching doctor account balance: " + e.getMessage());
-        }
         return getDoctorTotalEarnings(doctorUid);
     }
+
 
     public void updateDoctorAccountBalance(String doctorUid, double newBalance) {
         try {

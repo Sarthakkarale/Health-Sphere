@@ -167,7 +167,7 @@ public class DoctorDashboardView {
                     if (payments != null) {
                         for (com.healthsphere.model.PaymentRecord p : payments) {
                             if (p != null && p.getStatus() != null &&
-                                (p.getStatus().equalsIgnoreCase("COMPLETED") || p.getStatus().equalsIgnoreCase("SUCCESS") || p.getStatus().equalsIgnoreCase("PAID"))) {
+                                (p.getStatus().equalsIgnoreCase("COMPLETED") || p.getStatus().equalsIgnoreCase("SUCCESS") || p.getStatus().equalsIgnoreCase("PAID") || p.getStatus().equalsIgnoreCase("RECEIVED"))) {
                                 validCount++;
                             }
                         }
