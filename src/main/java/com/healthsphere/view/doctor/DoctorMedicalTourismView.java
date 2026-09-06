@@ -9,6 +9,7 @@ import com.healthsphere.model.MedicalTourismRequest;
 import com.healthsphere.model.TravelSupportRequest;
 import com.healthsphere.util.SessionManager;
 import com.healthsphere.util.ShimmerPlaceholder;
+import com.healthsphere.util.SummaryCard;
 
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -58,9 +59,9 @@ public class DoctorMedicalTourismView {
         centerContent.setFillWidth(true);
 
         // Header Card
-        VBox headerCard = new VBox(8);
+        VBox headerCard = new VBox(12);
         headerCard.setPadding(new Insets(20));
-        headerCard.setStyle("-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #E2E8F0; -fx-border-radius: 12;");
+        headerCard.setStyle("-fx-background-color: white; -fx-background-radius: 14; -fx-border-color: #E2E8F0; -fx-border-radius: 14; -fx-effect: dropshadow(three-pass-box, rgba(15,23,42,0.04), 8, 0, 0, 2);");
 
         HBox headTop = new HBox(12);
         headTop.setAlignment(Pos.CENTER_LEFT);
@@ -82,7 +83,7 @@ public class DoctorMedicalTourismView {
         String ratingText = docRating > 0 ? String.format("%.1f ★", docRating) : "4.8 ★";
 
         Label docRatingBadge = new Label("My Rating: " + ratingText);
-        docRatingBadge.setStyle("-fx-background-color: #FEF3C7; -fx-text-fill: #D97706; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 6 14; -fx-background-radius: 16;");
+        docRatingBadge.setStyle("-fx-background-color: #FEF3C7; -fx-text-fill: #D97706; -fx-font-weight: bold; -fx-font-size: 13px; -fx-padding: 6 14; -fx-background-radius: 16;");
 
         headTop.getChildren().addAll(headTitleBox, docRatingBadge);
         headerCard.getChildren().add(headTop);
@@ -93,7 +94,7 @@ public class DoctorMedicalTourismView {
         renderMetricsBar(new ArrayList<>());
 
         // Main Request List
-        requestsContainer = new VBox(15);
+        requestsContainer = new VBox(16);
         requestsContainer.setFillWidth(true);
 
         ScrollPane scrollPane = new ScrollPane(centerContent);
@@ -105,7 +106,7 @@ public class DoctorMedicalTourismView {
 
         loadDoctorRequestsAsync();
 
-        return new Scene(root, 1200, 750);
+        return new Scene(root, stage.getWidth() > 0 ? stage.getWidth() : 1200, stage.getHeight() > 0 ? stage.getHeight() : 750);
     }
 
     private void renderMetricsBar(List<MedicalTourismRequest> requests) {
@@ -116,28 +117,12 @@ public class DoctorMedicalTourismView {
         long acceptedCount = requests.stream().filter(r -> "ACCEPTED".equalsIgnoreCase(r.getStatus())).count();
         long scheduledCount = requests.stream().filter(r -> "APPOINTMENT_SCHEDULED".equalsIgnoreCase(r.getStatus())).count();
 
-        Object[][] metrics = {
-                {"Assigned Cases", String.valueOf(totalCount), "#EFF6FF", "#2563EB"},
-                {"Pending Consultations", String.valueOf(pendingCount), "#FEF3C7", "#D97706"},
-                {"Accepted Cases", String.valueOf(acceptedCount), "#ECFDF5", "#059669"},
-                {"Scheduled Appointments", String.valueOf(scheduledCount), "#F3E8FF", "#7E22CE"}
-        };
+        VBox assignedCard = SummaryCard.create("Assigned Cases", String.valueOf(totalCount), "All assigned patient cases", "📋", SummaryCard.CardType.BLUE);
+        VBox pendingCard = SummaryCard.create("Pending Consultations", String.valueOf(pendingCount), "Consultations awaiting review", "⏳", SummaryCard.CardType.ORANGE);
+        VBox acceptedCard = SummaryCard.create("Accepted Cases", String.valueOf(acceptedCount), "Confirmed treatment cases", "✓", SummaryCard.CardType.GREEN);
+        VBox scheduledCard = SummaryCard.create("Scheduled Appointments", String.valueOf(scheduledCount), "Confirmed appointment slots", "📅", SummaryCard.CardType.PURPLE);
 
-        for (Object[] m : metrics) {
-            VBox card = new VBox(6);
-            card.setPadding(new Insets(14, 18, 14, 18));
-            HBox.setHgrow(card, Priority.ALWAYS);
-            card.setStyle("-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #E2E8F0; -fx-border-radius: 12;");
-
-            Label title = new Label((String) m[0]);
-            title.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #64748B;");
-
-            Label num = new Label((String) m[1]);
-            num.setStyle("-fx-font-size: 22px; -fx-font-weight: 800; -fx-text-fill: " + m[3] + ";");
-
-            card.getChildren().addAll(title, num);
-            metricsBar.getChildren().add(card);
-        }
+        metricsBar.getChildren().addAll(assignedCard, pendingCard, acceptedCard, scheduledCard);
     }
 
     private void loadDoctorRequestsAsync() {
@@ -145,16 +130,11 @@ public class DoctorMedicalTourismView {
         VBox shimmerBox = ShimmerPlaceholder.createListShimmer(2);
         requestsContainer.getChildren().add(shimmerBox);
 
-        String doctorUid = SessionManager.getDoctorUid();
-        String doctorName = SessionManager.getDoctorDisplayName();
-
         Task<List<MedicalTourismRequest>> task = new Task<>() {
             @Override
             protected List<MedicalTourismRequest> call() throws Exception {
-                // Fetch requests assigned to this doctor or doctor's name
-                List<MedicalTourismRequest> allReqs = medicalTourismDAO.getPatientRequests(null); // or fetch all
+                List<MedicalTourismRequest> allReqs = medicalTourismDAO.getPatientRequests(null);
                 if (allReqs == null || allReqs.isEmpty()) {
-                    // Fallback to hospital requests
                     allReqs = medicalTourismDAO.getHospitalRequests("hosp_default");
                 }
                 return allReqs.stream().filter(r -> r != null).collect(Collectors.toList());
@@ -176,7 +156,7 @@ public class DoctorMedicalTourismView {
                 iconLbl.setStyle("-fx-font-size: 32px; -fx-text-fill: #2F80ED;");
 
                 Label titleLbl = new Label("No International Cases Assigned");
-                titleLbl.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #172B4D;");
+                titleLbl.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #12355B;");
 
                 Label descLbl = new Label("You currently have no international or outstation patient cases assigned.");
                 descLbl.setStyle("-fx-font-size: 13px; -fx-text-fill: #64748B;");
@@ -204,7 +184,7 @@ public class DoctorMedicalTourismView {
     private VBox createDoctorRequestCard(MedicalTourismRequest req) {
         VBox card = new VBox(14);
         card.setPadding(new Insets(18));
-        card.setStyle("-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #CBD5E1; -fx-border-radius: 12;");
+        card.setStyle("-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #CBD5E1; -fx-border-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(15,23,42,0.03), 6, 0, 0, 2);");
 
         // Header Row
         HBox topRow = new HBox(12);
@@ -214,7 +194,7 @@ public class DoctorMedicalTourismView {
         HBox.setHgrow(titleBox, Priority.ALWAYS);
 
         Label patientName = new Label("Patient: " + (req.getPatientName() != null ? req.getPatientName() : "International Patient") + " (" + (req.getPatientType() != null ? req.getPatientType() : "International") + ")");
-        patientName.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1E3A8A;");
+        patientName.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #12355B;");
 
         Label treatLbl = new Label("Treatment: " + req.getTreatmentName() + " | Hospital: " + req.getHospitalName());
         treatLbl.setStyle("-fx-font-size: 13px; -fx-text-fill: #475569;");
@@ -223,8 +203,7 @@ public class DoctorMedicalTourismView {
 
         // Status Badge
         Label statusBadge = new Label(req.getStatus());
-        String bg = "#E2E8F0";
-        String fg = "#1E293B";
+        String bg = "#E2E8F0"; String fg = "#1E293B";
         if ("ACCEPTED".equalsIgnoreCase(req.getStatus())) { bg = "#ECFDF5"; fg = "#059669"; }
         else if ("REJECTED".equalsIgnoreCase(req.getStatus())) { bg = "#FEF2F2"; fg = "#DC2626"; }
         else if ("PENDING".equalsIgnoreCase(req.getStatus())) { bg = "#FEF3C7"; fg = "#D97706"; }
@@ -235,7 +214,7 @@ public class DoctorMedicalTourismView {
 
         // Details & Availability Row
         GridPane grid = new GridPane();
-        grid.setHgap(15);
+        grid.setHgap(16);
         grid.setVgap(8);
         grid.setPadding(new Insets(8, 0, 8, 0));
 
@@ -270,7 +249,7 @@ public class DoctorMedicalTourismView {
 
         HBox travelBadgeBox = new HBox(8);
         travelBadgeBox.setAlignment(Pos.CENTER_LEFT);
-        travelBadgeBox.setPadding(new Insets(6, 12, 6, 12));
+        travelBadgeBox.setPadding(new Insets(8, 12, 8, 12));
 
         if (patientTravelReqs.isEmpty()) {
             travelBadgeBox.setStyle("-fx-background-color: #F1F5F9; -fx-background-radius: 8;");
@@ -337,4 +316,3 @@ public class DoctorMedicalTourismView {
         return card;
     }
 }
-

@@ -5,6 +5,7 @@ import com.healthsphere.model.Appointment;
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.SessionManager;
 import com.healthsphere.util.ShimmerPlaceholder;
+import com.healthsphere.util.SummaryCard;
 import com.healthsphere.view.authentication.LoginView;
 
 import javafx.concurrent.Task;
@@ -385,8 +386,8 @@ public class DoctorDashboardView {
         Scene dashboardScene =
                 new Scene(
                         mainRoot,
-                        stage.getWidth(),
-                        stage.getHeight()
+                        stage.getWidth() > 0 ? stage.getWidth() : 1200,
+                        stage.getHeight() > 0 ? stage.getHeight() : 750
                 );
 
 
@@ -901,114 +902,59 @@ public class DoctorDashboardView {
     // ============================================================
 
     private HBox createStatCardsRow() {
+        HBox row = new HBox(16);
 
-        HBox row =
-                new HBox(16);
+        int totalPatients = getTotalPatientCount();
+        int todayAppointments = getTodayAppointments().size();
+        int patientGrowth = calculatePatientGrowth();
 
+        String growthText = patientGrowth >= 0 ? "+" + patientGrowth : String.valueOf(patientGrowth);
 
-        int totalPatients =
-                getTotalPatientCount();
+        SummaryCard.CardNode totalPatientsCard = SummaryCard.createCardNode(
+                "TOTAL PATIENTS",
+                String.valueOf(totalPatients),
+                getPatientGrowthDetail(),
+                "👥",
+                SummaryCard.CardType.PURPLE
+        );
+        totalPatientsValue = totalPatientsCard.getValueLabel();
 
+        SummaryCard.CardNode todayApptsCard = SummaryCard.createCardNode(
+                "TODAY'S APPTS",
+                String.valueOf(todayAppointments),
+                getTodayAppointmentDetail(),
+                "📅",
+                SummaryCard.CardType.ORANGE
+        );
+        todayAppointmentsValue = todayApptsCard.getValueLabel();
+        todayAppointmentsDetail = todayApptsCard.getSubtitleLabel();
 
-        int todayAppointments =
-                getTodayAppointments()
-                        .size();
+        SummaryCard.CardNode growthCard = SummaryCard.createCardNode(
+                "PATIENT GROWTH",
+                growthText,
+                getPatientGrowthDetail(),
+                "📈",
+                SummaryCard.CardType.GREEN
+        );
+        patientGrowthValue = growthCard.getValueLabel();
+        patientGrowthDetail = growthCard.getSubtitleLabel();
 
+        SummaryCard.CardNode revenueCard = SummaryCard.createCardNode(
+                "REVENUE (MTD)",
+                "—",
+                "Billing data not available",
+                "💳",
+                SummaryCard.CardType.BLUE
+        );
+        revenueValue = revenueCard.getValueLabel();
+        revenueDetail = revenueCard.getSubtitleLabel();
 
-        int patientGrowth =
-                calculatePatientGrowth();
-
-
-        String growthText =
-                patientGrowth >= 0
-                        ? "+" + patientGrowth
-                        : String.valueOf(
-                                patientGrowth
-                        );
-
-
-        totalPatientsValue =
-                new Label(
-                        String.valueOf(
-                                totalPatients
-                        )
-                );
-
-
-        todayAppointmentsValue =
-                new Label(
-                        String.valueOf(
-                                todayAppointments
-                        )
-                );
-
-
-        patientGrowthValue =
-                new Label(
-                        growthText
-                );
-
-
-        revenueValue =
-                new Label(
-                        "—"
-                );
-
-
-        todayAppointmentsDetail =
-                new Label(
-                        getTodayAppointmentDetail()
-                );
-
-
-        patientGrowthDetail =
-                new Label(
-                        getPatientGrowthDetail()
-                );
-
-
-        revenueDetail =
-                new Label(
-                        "Billing data not available"
-                );
-
-
-        row.getChildren()
-                .addAll(
-
-                        createDynamicStatCard(
-                                "TOTAL PATIENTS",
-                                totalPatientsValue,
-                                "ic_total_patients",
-                                patientGrowthDetail,
-                                false
-                        ),
-
-                        createDynamicStatCard(
-                                "TODAY'S APPTS",
-                                todayAppointmentsValue,
-                                "ic_today_appts",
-                                todayAppointmentsDetail,
-                                true
-                        ),
-
-                        createDynamicStatCard(
-                                "PATIENT GROWTH",
-                                patientGrowthValue,
-                                "ic_growth",
-                                patientGrowthDetail,
-                                false
-                        ),
-
-                        createDynamicStatCard(
-                                "REVENUE (MTD)",
-                                revenueValue,
-                                "ic_revenue",
-                                revenueDetail,
-                                false
-                        )
-                );
-
+        row.getChildren().addAll(
+                totalPatientsCard.getContainer(),
+                todayApptsCard.getContainer(),
+                growthCard.getContainer(),
+                revenueCard.getContainer()
+        );
 
         return row;
     }

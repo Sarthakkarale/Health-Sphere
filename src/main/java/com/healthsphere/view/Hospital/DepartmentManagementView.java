@@ -5,6 +5,7 @@ import com.healthsphere.model.HospitalDepartment;
 import com.healthsphere.util.SessionManager;
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ShimmerPlaceholder;
+import com.healthsphere.util.SummaryCard;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -958,71 +959,52 @@ public class DepartmentManagementView {
         HBox statistics =
                 new HBox(18);
 
-        VBox totalCard =
-                createStatisticCard(
+        SummaryCard.CardNode totalDeptCardNode =
+                SummaryCard.createCardNode(
                         "Total Departments",
                         "0",
                         "Active hospital departments",
                         "✚",
-                        PRIMARY_BLUE,
-                        PRIMARY_LIGHT
+                        SummaryCard.CardType.BLUE
                 );
 
-        VBox docsCard =
-                createStatisticCard(
+        SummaryCard.CardNode docsCardNode =
+                SummaryCard.createCardNode(
                         "Total Doctors",
                         "0",
                         "Across all departments",
                         "♙",
-                        PURPLE,
-                        PURPLE_LIGHT
+                        SummaryCard.CardType.PURPLE
                 );
 
-        VBox activeCard =
-                createStatisticCard(
+        SummaryCard.CardNode activeDeptCardNode =
+                SummaryCard.createCardNode(
                         "Active Departments",
                         "0",
                         "Currently operational",
                         "✓",
-                        SUCCESS_GREEN,
-                        SUCCESS_LIGHT
+                        SummaryCard.CardType.GREEN
                 );
 
-        VBox emergencyCard =
-                createStatisticCard(
+        SummaryCard.CardNode emergencyDeptCardNode =
+                SummaryCard.createCardNode(
                         "24/7 Departments",
                         "0",
                         "Emergency services",
                         "◷",
-                        WARNING_ORANGE,
-                        WARNING_LIGHT
+                        SummaryCard.CardType.ORANGE
                 );
 
-        totalDeptValLabel =
-                (Label) totalCard
-                        .getChildren()
-                        .get(1);
-
-        totalDocsValLabel =
-                (Label) docsCard
-                        .getChildren()
-                        .get(1);
-
-        activeDeptValLabel =
-                (Label) activeCard
-                        .getChildren()
-                        .get(1);
-
-        emergencyDeptValLabel =
-                (Label) emergencyCard
-                        .getChildren()
-                        .get(1);
+        totalDeptValLabel = totalDeptCardNode.getValueLabel();
+        totalDocsValLabel = docsCardNode.getValueLabel();
+        activeDeptValLabel = activeDeptCardNode.getValueLabel();
+        emergencyDeptValLabel = emergencyDeptCardNode.getValueLabel();
 
         statistics.getChildren().addAll(
-                totalCard,
-                docsCard,
-                activeCard,
-                emergencyCard
+                totalDeptCardNode.getContainer(),
+                docsCardNode.getContainer(),
+                activeDeptCardNode.getContainer(),
+                emergencyDeptCardNode.getContainer()
         );
 
         for (javafx.scene.Node node :

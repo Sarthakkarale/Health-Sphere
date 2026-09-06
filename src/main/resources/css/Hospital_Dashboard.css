@@ -258,24 +258,49 @@
     -fx-max-height: 38;
 }
 
+.kpi-blue {
+    -fx-background-color: #DBEAFE;
+    -fx-border-color: #93C5FD;
+}
+
 .kpi-blue .kpi-icon {
-    -fx-background-color: #EEF3FF;
+    -fx-background-color: #FFFFFF;
+}
+
+.kpi-green {
+    -fx-background-color: #D1FAE5;
+    -fx-border-color: #6EE7B7;
 }
 
 .kpi-green .kpi-icon {
-    -fx-background-color: #E1F6ED;
+    -fx-background-color: #FFFFFF;
+}
+
+.kpi-purple {
+    -fx-background-color: #EDE9FE;
+    -fx-border-color: #C4B5FD;
 }
 
 .kpi-purple .kpi-icon {
-    -fx-background-color: #EFE6FF;
+    -fx-background-color: #FFFFFF;
+}
+
+.kpi-red {
+    -fx-background-color: #FEE2E2;
+    -fx-border-color: #FCA5A5;
 }
 
 .kpi-red .kpi-icon {
-    -fx-background-color: #FDE8E8;
+    -fx-background-color: #FFFFFF;
+}
+
+.kpi-orange {
+    -fx-background-color: #FEF3C7;
+    -fx-border-color: #FDE68A;
 }
 
 .kpi-orange .kpi-icon {
-    -fx-background-color: #FFF0DB;
+    -fx-background-color: #FFFFFF;
 }
 
 .kpi-icon-text {

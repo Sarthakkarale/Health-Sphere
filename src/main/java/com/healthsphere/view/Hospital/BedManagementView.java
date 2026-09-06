@@ -6,6 +6,7 @@ import com.healthsphere.model.HospitalBed;
 import com.healthsphere.model.HospitalWard;
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ShimmerPlaceholder;
+import com.healthsphere.util.SummaryCard;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -748,102 +749,30 @@ public class BedManagementView {
     // =========================================================
 
     private HBox createKpiCards() {
+        HBox cards = new HBox(16);
 
-        HBox cards =
-                new HBox(16);
+        SummaryCard.CardNode totalCardNode = SummaryCard.createCardNode("Total Beds", "0", "Hospital beds", "🛏", SummaryCard.CardType.BLUE);
+        SummaryCard.CardNode occupiedCardNode = SummaryCard.createCardNode("Occupied", "0", "Currently occupied", "●", SummaryCard.CardType.ORANGE);
+        SummaryCard.CardNode availableCardNode = SummaryCard.createCardNode("Available", "0", "Beds ready for patients", "✓", SummaryCard.CardType.GREEN);
+        SummaryCard.CardNode reservedCardNode = SummaryCard.createCardNode("Reserved", "0", "Reserved beds", "🔒", SummaryCard.CardType.PURPLE);
+        SummaryCard.CardNode maintenanceCardNode = SummaryCard.createCardNode("Maintenance", "0", "Under maintenance", "⚙", SummaryCard.CardType.RED);
 
-        VBox total =
-                createKpiCard(
-                        "Total Beds",
-                        "0",
-                        "Hospital beds",
-                        "=",
-                        PRIMARY_BLUE,
-                        PRIMARY_LIGHT
-                );
-
-        VBox occupied =
-                createKpiCard(
-                        "Occupied",
-                        "0",
-                        "Currently occupied",
-                        "●",
-                        ERROR_RED,
-                        ERROR_LIGHT
-                );
-
-        VBox available =
-                createKpiCard(
-                        "Available",
-                        "0",
-                        "Beds ready for patients",
-                        "✓",
-                        SUCCESS_GREEN,
-                        SUCCESS_LIGHT
-                );
-
-        VBox reserved =
-                createKpiCard(
-                        "Reserved",
-                        "0",
-                        "Reserved beds",
-                        "●",
-                        WARNING_ORANGE,
-                        WARNING_LIGHT
-                );
-
-        VBox maintenance =
-                createKpiCard(
-                        "Maintenance",
-                        "0",
-                        "Under maintenance",
-                        "⚙",
-                        MAINTENANCE_GRAY,
-                        MAINTENANCE_LIGHT
-                );
-
-        totalBedsKpiLabel =
-                getKpiValue(
-                        total
-                );
-
-        occupiedKpiLabel =
-                getKpiValue(
-                        occupied
-                );
-
-        availableKpiLabel =
-                getKpiValue(
-                        available
-                );
-
-        reservedKpiLabel =
-                getKpiValue(
-                        reserved
-                );
-
-        maintenanceKpiLabel =
-                getKpiValue(
-                        maintenance
-                );
+        totalBedsKpiLabel = totalCardNode.getValueLabel();
+        occupiedKpiLabel = occupiedCardNode.getValueLabel();
+        availableKpiLabel = availableCardNode.getValueLabel();
+        reservedKpiLabel = reservedCardNode.getValueLabel();
+        maintenanceKpiLabel = maintenanceCardNode.getValueLabel();
 
         cards.getChildren().addAll(
-                total,
-                occupied,
-                available,
-                reserved,
-                maintenance
+                totalCardNode.getContainer(),
+                occupiedCardNode.getContainer(),
+                availableCardNode.getContainer(),
+                reservedCardNode.getContainer(),
+                maintenanceCardNode.getContainer()
         );
 
-        for (
-                javafx.scene.Node node :
-                cards.getChildren()
-        ) {
-
-            HBox.setHgrow(
-                    node,
-                    Priority.ALWAYS
-            );
+        for (javafx.scene.Node node : cards.getChildren()) {
+            HBox.setHgrow(node, Priority.ALWAYS);
         }
 
         return cards;

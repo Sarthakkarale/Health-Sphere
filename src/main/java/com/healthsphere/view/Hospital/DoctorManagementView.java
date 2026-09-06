@@ -5,6 +5,7 @@ import com.healthsphere.model.DoctorProfile;
 import com.healthsphere.model.HospitalDoctorDetails;
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ShimmerPlaceholder;
+import com.healthsphere.util.SummaryCard;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -322,8 +323,8 @@ public class DoctorManagementView {
 
         return new Scene(
                 root,
-                stage.getWidth(),
-                stage.getHeight()
+                stage.getWidth() > 0 ? stage.getWidth() : 1200,
+                stage.getHeight() > 0 ? stage.getHeight() : 750
         );
     }
 
@@ -905,84 +906,27 @@ public class DoctorManagementView {
     // =========================================================
 
     private HBox createStatistics() {
+        HBox statistics = new HBox(18);
 
-        HBox statistics =
-                new HBox(18);
+        SummaryCard.CardNode totalCardNode = SummaryCard.createCardNode("Total Doctors", "0", "Across all departments", "👨‍⚕️", SummaryCard.CardType.BLUE);
+        SummaryCard.CardNode activeCardNode = SummaryCard.createCardNode("Active Doctors", "0", "Currently available", "✓", SummaryCard.CardType.GREEN);
+        SummaryCard.CardNode leaveCardNode = SummaryCard.createCardNode("On Leave", "0", "Currently unavailable", "◷", SummaryCard.CardType.ORANGE);
+        SummaryCard.CardNode deptCardNode = SummaryCard.createCardNode("Departments", "0", "Medical departments", "🏥", SummaryCard.CardType.PURPLE);
 
-        VBox totalCard =
-                createStatisticCard(
-                        "Total Doctors",
-                        "0",
-                        "Across all departments",
-                        "♙",
-                        PRIMARY_BLUE,
-                        PRIMARY_LIGHT
-                );
-
-        VBox activeCard =
-                createStatisticCard(
-                        "Active Doctors",
-                        "0",
-                        "Currently available",
-                        "✓",
-                        SUCCESS_GREEN,
-                        SUCCESS_LIGHT
-                );
-
-        VBox leaveCard =
-                createStatisticCard(
-                        "On Leave",
-                        "0",
-                        "Currently unavailable",
-                        "◷",
-                        WARNING_ORANGE,
-                        WARNING_LIGHT
-                );
-
-        VBox deptCard =
-                createStatisticCard(
-                        "Departments",
-                        "0",
-                        "Medical departments",
-                        "✚",
-                        PURPLE,
-                        PURPLE_LIGHT
-                );
-
-        totalDocsValLabel =
-                (Label) totalCard
-                        .getChildren()
-                        .get(1);
-
-        activeDocsValLabel =
-                (Label) activeCard
-                        .getChildren()
-                        .get(1);
-
-        onLeaveDocsValLabel =
-                (Label) leaveCard
-                        .getChildren()
-                        .get(1);
-
-        totalDeptValLabel =
-                (Label) deptCard
-                        .getChildren()
-                        .get(1);
+        totalDocsValLabel = totalCardNode.getValueLabel();
+        activeDocsValLabel = activeCardNode.getValueLabel();
+        onLeaveDocsValLabel = leaveCardNode.getValueLabel();
+        totalDeptValLabel = deptCardNode.getValueLabel();
 
         statistics.getChildren().addAll(
-                totalCard,
-                activeCard,
-                leaveCard,
-                deptCard
+                totalCardNode.getContainer(),
+                activeCardNode.getContainer(),
+                leaveCardNode.getContainer(),
+                deptCardNode.getContainer()
         );
 
-        for (javafx.scene.Node node :
-                statistics.getChildren()) {
-
-            HBox.setHgrow(
-                    node,
-                    Priority.ALWAYS
-            );
+        for (javafx.scene.Node node : statistics.getChildren()) {
+            HBox.setHgrow(node, Priority.ALWAYS);
         }
 
         return statistics;

@@ -184,6 +184,6 @@ public class DoctorPaymentsView {
         bgThread.setDaemon(true);
         bgThread.start();
 
-        return new Scene(mainRoot, stage.getWidth(), stage.getHeight());
+        return new Scene(mainRoot, stage.getWidth() > 0 ? stage.getWidth() : 1200, stage.getHeight() > 0 ? stage.getHeight() : 750);
     }
 }

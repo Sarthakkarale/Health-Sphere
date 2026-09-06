@@ -625,25 +625,16 @@ public class Dashboard {
 
         row3.setAlignment(Pos.CENTER);
 
-        VBox notifications =
+        VBox medicalTourism =
                 createServiceCard(
-                        "Notifications",
-                        "View your latest healthcare notifications and updates.",
-                        "/images/logo/notification.jpg",
-                        this::showNotifications
-                );
-
-        VBox profile =
-                createServiceCard(
-                        "Profile & Settings",
-                        "Manage your personal profile and application settings.",
-                        "/images/profile/profile1.jpg",
-                        this::showProfileSettings
+                        "Medical Tourism",
+                        "Plan your medical travel with accredited hospitals & specialists.",
+                        "/images/hospital_care.jpg",
+                        this::showMedicalTourism
                 );
 
         row3.getChildren().addAll(
-                notifications,
-                profile
+                medicalTourism
         );
 
         allRows.getChildren().addAll(
@@ -987,6 +978,19 @@ public class Dashboard {
 
         stage.setScene(
                 new ProfileSettings(stage).getScene()
+        );
+
+        stage.show();
+    }
+
+    private void showMedicalTourism() {
+
+        if (stage == null) {
+            return;
+        }
+
+        stage.setScene(
+                new MedicalTourism(stage).getScene()
         );
 
         stage.show();

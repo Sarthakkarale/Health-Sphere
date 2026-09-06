@@ -364,8 +364,8 @@ public class AppointmentsView {
         Scene result =
                 new Scene(
                         root,
-                        stage.getWidth(),
-                        stage.getHeight()
+                        stage.getWidth() > 0 ? stage.getWidth() : 1200,
+                        stage.getHeight() > 0 ? stage.getHeight() : 750
                 );
 
         try {

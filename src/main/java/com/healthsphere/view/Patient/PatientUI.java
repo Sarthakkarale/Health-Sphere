@@ -344,7 +344,9 @@ public static Scene createScene(
 
     Scene scene =
             new Scene(
-                    outerRoot
+                    outerRoot,
+                    stage.getWidth() > 0 ? stage.getWidth() : 1200,
+                    stage.getHeight() > 0 ? stage.getHeight() : 750
             );
 
     // =====================================================

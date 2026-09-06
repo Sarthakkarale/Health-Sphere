@@ -6,6 +6,7 @@ import com.healthsphere.model.HospitalDepartment;
 import com.healthsphere.util.SessionManager;
 import com.healthsphere.util.ShimmerPlaceholder;
 import com.healthsphere.util.Navigation;
+import com.healthsphere.util.SummaryCard;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -1072,84 +1073,27 @@ public class HospitalDashboardView {
     // =========================================================
 
     private HBox createKpiCards() {
+        HBox cards = new HBox(18);
 
-        HBox cards =
-                new HBox(18);
+        SummaryCard.CardNode doctorsCardNode = SummaryCard.createCardNode("Total Doctors", "0", "From hospital doctor roster", "👨‍⚕️", SummaryCard.CardType.BLUE);
+        SummaryCard.CardNode appointmentsCardNode = SummaryCard.createCardNode("Total Appointments", "0", "All hospital appointments", "📅", SummaryCard.CardType.PURPLE);
+        SummaryCard.CardNode bedsCardNode = SummaryCard.createCardNode("Available Beds", "0", "From hospital bed roster", "🛏", SummaryCard.CardType.GREEN);
+        SummaryCard.CardNode emergencyCardNode = SummaryCard.createCardNode("Emergency Cases", "0", "Current hospital emergency cases", "🚨", SummaryCard.CardType.RED);
 
-        VBox doctorsCard =
-                createKpiCard(
-                        "Total Doctors",
-                        "0",
-                        "From hospital doctor roster",
-                        "♙",
-                        PRIMARY_BLUE,
-                        PRIMARY_LIGHT
-                );
-
-        VBox appointmentsCard =
-                createKpiCard(
-                        "Total Appointments",
-                        "0",
-                        "All hospital appointments",
-                        "▣",
-                        PURPLE,
-                        PURPLE_LIGHT
-                );
-
-        VBox bedsCard =
-                createKpiCard(
-                        "Available Beds",
-                        "0",
-                        "From hospital bed roster",
-                        "▥",
-                        SUCCESS_GREEN,
-                        SUCCESS_LIGHT
-                );
-
-        VBox emergencyCard =
-                createKpiCard(
-                        "Emergency Cases",
-                        "0",
-                        "Current hospital emergency cases",
-                        "!",
-                        ERROR_RED,
-                        ERROR_LIGHT
-                );
-
-        totalDoctorsValue =
-                getCardValueLabel(
-                        doctorsCard
-                );
-
-        totalAppointmentsValue =
-                getCardValueLabel(
-                        appointmentsCard
-                );
-
-        availableBedsValue =
-                getCardValueLabel(
-                        bedsCard
-                );
-
-        emergencyCasesValue =
-                getCardValueLabel(
-                        emergencyCard
-                );
+        totalDoctorsValue = doctorsCardNode.getValueLabel();
+        totalAppointmentsValue = appointmentsCardNode.getValueLabel();
+        availableBedsValue = bedsCardNode.getValueLabel();
+        emergencyCasesValue = emergencyCardNode.getValueLabel();
 
         cards.getChildren().addAll(
-                doctorsCard,
-                appointmentsCard,
-                bedsCard,
-                emergencyCard
+                doctorsCardNode.getContainer(),
+                appointmentsCardNode.getContainer(),
+                bedsCardNode.getContainer(),
+                emergencyCardNode.getContainer()
         );
 
-        for (javafx.scene.Node node :
-                cards.getChildren()) {
-
-            HBox.setHgrow(
-                    node,
-                    Priority.ALWAYS
-            );
+        for (javafx.scene.Node node : cards.getChildren()) {
+            HBox.setHgrow(node, Priority.ALWAYS);
         }
 
         return cards;

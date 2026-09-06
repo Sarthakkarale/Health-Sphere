@@ -26,7 +26,18 @@ public class MedicalTourismRequest {
     private String additionalRequirements;
     private boolean accommodationRequired;
     private boolean airportAssistanceRequired;
+    private boolean localTransportRequired;
+    private boolean languageAssistanceRequired;
     private List<String> medicalDocuments = new ArrayList<>();
+
+    private double estimatedTreatmentCost;
+    private double estimatedTravelCost;
+    private double estimatedAccommodationCost;
+    private double estimatedTransportCost;
+    private double estimatedTotalCost;
+
+    private String createdAt;
+    private String updatedAt;
 
     private String requestDate;
     private String status = "PENDING"; // PENDING, UNDER_REVIEW, ACCEPTED, REJECTED, MORE_INFORMATION_REQUIRED, APPOINTMENT_SCHEDULED, TREATMENT_COMPLETED
@@ -221,6 +232,22 @@ public class MedicalTourismRequest {
         this.airportAssistanceRequired = airportAssistanceRequired;
     }
 
+    public boolean isLocalTransportRequired() {
+        return localTransportRequired;
+    }
+
+    public void setLocalTransportRequired(boolean localTransportRequired) {
+        this.localTransportRequired = localTransportRequired;
+    }
+
+    public boolean isLanguageAssistanceRequired() {
+        return languageAssistanceRequired;
+    }
+
+    public void setLanguageAssistanceRequired(boolean languageAssistanceRequired) {
+        this.languageAssistanceRequired = languageAssistanceRequired;
+    }
+
     public List<String> getMedicalDocuments() {
         return medicalDocuments;
     }
@@ -259,5 +286,61 @@ public class MedicalTourismRequest {
 
     public void setAppointmentId(String appointmentId) {
         this.appointmentId = appointmentId;
+    }
+
+    public double getEstimatedTreatmentCost() {
+        return estimatedTreatmentCost;
+    }
+
+    public void setEstimatedTreatmentCost(double estimatedTreatmentCost) {
+        this.estimatedTreatmentCost = estimatedTreatmentCost;
+    }
+
+    public double getEstimatedTravelCost() {
+        return estimatedTravelCost;
+    }
+
+    public void setEstimatedTravelCost(double estimatedTravelCost) {
+        this.estimatedTravelCost = estimatedTravelCost;
+    }
+
+    public double getEstimatedAccommodationCost() {
+        return estimatedAccommodationCost;
+    }
+
+    public void setEstimatedAccommodationCost(double estimatedAccommodationCost) {
+        this.estimatedAccommodationCost = estimatedAccommodationCost;
+    }
+
+    public double getEstimatedTransportCost() {
+        return estimatedTransportCost;
+    }
+
+    public void setEstimatedTransportCost(double estimatedTransportCost) {
+        this.estimatedTransportCost = estimatedTransportCost;
+    }
+
+    public double getEstimatedTotalCost() {
+        return estimatedTotalCost;
+    }
+
+    public void setEstimatedTotalCost(double estimatedTotalCost) {
+        this.estimatedTotalCost = estimatedTotalCost;
+    }
+
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public String getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(String updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

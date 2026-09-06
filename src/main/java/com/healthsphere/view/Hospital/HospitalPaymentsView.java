@@ -6,6 +6,7 @@ import com.healthsphere.controller.PaymentController;
 import com.healthsphere.model.PaymentRecord;
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.SessionManager;
+import com.healthsphere.util.SummaryCard;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -83,41 +84,8 @@ public class HospitalPaymentsView {
 
         HBox kpiContainer = new HBox(16);
 
-        // Total Revenue Card (Completed Payments)
-        VBox revenueCard = new VBox(10);
-        revenueCard.setPadding(new Insets(20));
-        revenueCard.setStyle("-fx-background-color: #0F172A; -fx-background-radius: 12px;");
-        HBox.setHgrow(revenueCard, Priority.ALWAYS);
-
-        Label revTitle = new Label("TOTAL REVENUE (RECEIVED)");
-        revTitle.setStyle("-fx-text-fill: #94A3B8; -fx-font-size: 11px; -fx-font-weight: bold;");
-
-        HBox revRow = new HBox(12);
-        revRow.setAlignment(Pos.BASELINE_LEFT);
-        Label revAmt = new Label(String.format("₹%.2f", totalCompletedRevenue));
-        revAmt.setStyle("-fx-text-fill: #FFFFFF; -fx-font-size: 28px; -fx-font-weight: bold;");
-        Label growthBadge = new Label("+18.2% ↑");
-        growthBadge.setStyle("-fx-background-color: #D1FAE5; -fx-text-fill: #059669; -fx-font-weight: bold; -fx-font-size: 11px; -fx-padding: 3 10; -fx-background-radius: 12;");
-        revRow.getChildren().addAll(revAmt, growthBadge);
-        revenueCard.getChildren().addAll(revTitle, revRow);
-
-        // Total Amount Billed Card (Overall Total)
-        VBox amountCard = new VBox(10);
-        amountCard.setPadding(new Insets(20));
-        amountCard.setStyle("-fx-background-color: #FFFFFF; -fx-background-radius: 12px; -fx-border-color: #E2E8F0; -fx-border-radius: 12px;");
-        HBox.setHgrow(amountCard, Priority.ALWAYS);
-
-        Label amtTitle = new Label("TOTAL AMOUNT (BILLED & RECORDED)");
-        amtTitle.setStyle("-fx-text-fill: #64748B; -fx-font-size: 11px; -fx-font-weight: bold;");
-
-        HBox amtRow = new HBox(12);
-        amtRow.setAlignment(Pos.BASELINE_LEFT);
-        Label amtVal = new Label(String.format("₹%.2f", totalAmountBilled));
-        amtVal.setStyle("-fx-text-fill: #0F172A; -fx-font-size: 28px; -fx-font-weight: bold;");
-        Label statusBadge = new Label(records != null ? records.size() + " Transactions" : "0 Transactions");
-        statusBadge.setStyle("-fx-background-color: #EFF6FF; -fx-text-fill: #2563EB; -fx-font-weight: bold; -fx-font-size: 11px; -fx-padding: 3 10; -fx-background-radius: 12;");
-        amtRow.getChildren().addAll(amtVal, statusBadge);
-        amountCard.getChildren().addAll(amtTitle, amtRow);
+        VBox revenueCard = SummaryCard.create("Total Revenue (Received)", String.format("₹%.2f", totalCompletedRevenue), "Received hospital revenue", "💰", SummaryCard.CardType.BLUE);
+        VBox amountCard = SummaryCard.create("Total Amount Billed", String.format("₹%.2f", totalAmountBilled), (records != null ? records.size() : 0) + " Recorded Transactions", "💳", SummaryCard.CardType.GREEN);
 
         kpiContainer.getChildren().addAll(revenueCard, amountCard);
         contentArea.getChildren().add(kpiContainer);
@@ -174,7 +142,7 @@ public class HospitalPaymentsView {
         scrollPane.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         root.setCenter(scrollPane);
 
-        return new Scene(root, stage.getWidth(), stage.getHeight());
+        return new Scene(root, stage.getWidth() > 0 ? stage.getWidth() : 1200, stage.getHeight() > 0 ? stage.getHeight() : 750);
     }
 
     private VBox createSidebar(Stage stage) {

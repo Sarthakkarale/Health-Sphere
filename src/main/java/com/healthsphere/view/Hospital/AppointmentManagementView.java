@@ -6,6 +6,7 @@ import com.healthsphere.model.Appointment;
 import com.healthsphere.model.HospitalDoctorDetails;
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ShimmerPlaceholder;
+import com.healthsphere.util.SummaryCard;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -735,71 +736,52 @@ public class AppointmentManagementView {
         HBox statistics =
                 new HBox(18);
 
-        VBox todayCard =
-                createStatisticCard(
+        SummaryCard.CardNode todayCardNode =
+                SummaryCard.createCardNode(
                         "Today's Appointments",
                         "0",
                         "Scheduled for today",
                         "▣",
-                        PRIMARY_BLUE,
-                        PRIMARY_LIGHT
+                        SummaryCard.CardType.BLUE
                 );
 
-        VBox completedCard =
-                createStatisticCard(
+        SummaryCard.CardNode completedCardNode =
+                SummaryCard.createCardNode(
                         "Completed",
                         "0",
                         "Appointments finished",
                         "✓",
-                        SUCCESS_GREEN,
-                        SUCCESS_LIGHT
+                        SummaryCard.CardType.GREEN
                 );
 
-        VBox upcomingCard =
-                createStatisticCard(
+        SummaryCard.CardNode upcomingCardNode =
+                SummaryCard.createCardNode(
                         "Upcoming",
                         "0",
                         "Waiting for consultation",
                         "◷",
-                        PURPLE,
-                        PURPLE_LIGHT
+                        SummaryCard.CardType.PURPLE
                 );
 
-        VBox cancelledCard =
-                createStatisticCard(
+        SummaryCard.CardNode cancelledCardNode =
+                SummaryCard.createCardNode(
                         "Cancelled",
                         "0",
                         "Cancelled appointments",
                         "×",
-                        ERROR_RED,
-                        ERROR_LIGHT
+                        SummaryCard.CardType.RED
                 );
 
-        todayCountVal =
-                (Label) todayCard
-                        .getChildren()
-                        .get(1);
-
-        completedCountVal =
-                (Label) completedCard
-                        .getChildren()
-                        .get(1);
-
-        upcomingCountVal =
-                (Label) upcomingCard
-                        .getChildren()
-                        .get(1);
-
-        cancelledCountVal =
-                (Label) cancelledCard
-                        .getChildren()
-                        .get(1);
+        todayCountVal = todayCardNode.getValueLabel();
+        completedCountVal = completedCardNode.getValueLabel();
+        upcomingCountVal = upcomingCardNode.getValueLabel();
+        cancelledCountVal = cancelledCardNode.getValueLabel();
 
         statistics.getChildren().addAll(
-                todayCard,
-                completedCard,
-                upcomingCard,
-                cancelledCard
+                todayCardNode.getContainer(),
+                completedCardNode.getContainer(),
+                upcomingCardNode.getContainer(),
+                cancelledCardNode.getContainer()
         );
 
         for (javafx.scene.Node node :
