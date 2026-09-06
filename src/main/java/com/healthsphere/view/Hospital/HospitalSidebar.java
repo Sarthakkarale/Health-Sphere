@@ -26,6 +26,7 @@ public class HospitalSidebar {
         PAYMENTS("💳", "Payment History"),
         REVIEWS("★", "Patient Reviews"),
         ANALYTICS("◈", "Analytics"),
+        MEDICAL_TOURISM("✈", "Medical Tourism"),
         SETTINGS("⚙", "Hospital Settings");
 
         private final String icon;
@@ -163,6 +164,9 @@ public class HospitalSidebar {
                     break;
                 case ANALYTICS:
                     stage.setScene(new HospitalAnalyticsView().createScene(stage));
+                    break;
+                case MEDICAL_TOURISM:
+                    stage.setScene(new HospitalMedicalTourismView().createScene(stage));
                     break;
                 case SETTINGS:
                     stage.setScene(new HospitalProfileSettingsView().createScene(stage));

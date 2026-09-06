@@ -662,6 +662,14 @@ private static VBox createSidebar(
                     "Emergency Assistance",
                     activePage,
                     "Emergency Assistance"
+            ),
+
+            navItem(
+                    stage,
+                    "✈",
+                    "Medical Tourism",
+                    activePage,
+                    "Medical Tourism"
             )
     );
 
@@ -895,6 +903,14 @@ private static void navigate(
 
             scene =
                     new EmergencyAssistance(stage)
+                            .getScene();
+
+            break;
+
+        case "Medical Tourism":
+
+            scene =
+                    new MedicalTourism(stage)
                             .getScene();
 
             break;

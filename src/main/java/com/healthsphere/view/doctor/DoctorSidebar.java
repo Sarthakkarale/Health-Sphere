@@ -68,7 +68,8 @@ public class DoctorSidebar {
                 "Medical Reports & Prescription",
                 "Availability & Schedule",
                 "Doctor Profile",
-                "Payment History"
+                "Payment History",
+                "Medical Tourism"
         };
 
         String[] icons = {
@@ -80,7 +81,8 @@ public class DoctorSidebar {
                 "ic_reports.png",
                 "ic_availability.png",
                 "ic_profile.png",
-                "ic_card_white.png"
+                "ic_card_white.png",
+                "ic_patient.png"
         };
 
         for (int i = 0; i < tabs.length; i++) {
@@ -189,6 +191,9 @@ public class DoctorSidebar {
                 break;
             case 8:
                 Navigation.goTo(stage, () -> new DoctorPaymentsView(stage).getScene());
+                break;
+            case 9:
+                Navigation.goTo(stage, () -> new DoctorMedicalTourismView(stage).getScene());
                 break;
             default:
                 break;
