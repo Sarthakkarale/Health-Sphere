@@ -117,7 +117,7 @@ public class AdminSettingsView {
         saveAllBtn.setStyle("-fx-background-color: #4F46E5; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 18; -fx-background-radius: 8px; -fx-cursor: hand;");
         saveAllBtn.setOnAction(e -> {
             updateStatus("Configuration saved successfully at " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")), "#059669", "#ECFDF5");
-            addAuditLog("GLOBAL_CONFIG_UPDATE", "Admin updated neural & security thresholds", "Prajwal Patil");
+            addAuditLog("GLOBAL_CONFIG_UPDATE", "Admin updated neural & security thresholds", "Sarthak Patil");
         });
 
         HBox buttonGroup = new HBox(12, exportLogsBtn, saveAllBtn);
@@ -310,7 +310,7 @@ public class AdminSettingsView {
             storageProgressBar.setProgress(0.29);
             storageUsageLabel.setText("143.1 GB / 500 GB (29% used)");
             updateStatus("Manual snapshot backup created successfully.", "#15803D", "#DCFCE7");
-            addAuditLog("MANUAL_BACKUP", "Admin triggered manual snapshot", "Prajwal Patil");
+            addAuditLog("MANUAL_BACKUP", "Admin triggered manual snapshot", "Sarthak Patil");
         });
 
         actionsBox.getChildren().addAll(autoBackupCb, sp2, runBackupBtn);
@@ -347,8 +347,8 @@ public class AdminSettingsView {
 
         // Load Initial Audit Log Sample Data
         auditLogData = FXCollections.observableArrayList(
-                new AuditLogModel(LocalDateTime.now().minusMinutes(12).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")), "SECURITY_POLICY", "Updated Super Admin MFA rules", "Prajwal Patil"),
-                new AuditLogModel(LocalDateTime.now().minusHours(2).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")), "API_ENDPOINT", "Changed diagnostic model to MedGemma-7B", "Prajwal Patil"),
+                new AuditLogModel(LocalDateTime.now().minusMinutes(12).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")), "SECURITY_POLICY", "Updated Super Admin MFA rules", "Sarthak Patil"),
+                new AuditLogModel(LocalDateTime.now().minusHours(2).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")), "API_ENDPOINT", "Changed diagnostic model to MedGemma-7B", "Sarthak Patil"),
                 new AuditLogModel(LocalDateTime.now().minusHours(18).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")), "AUTO_BACKUP", "System executed daily cloud snapshot", "SYSTEM_CRON"),
                 new AuditLogModel(LocalDateTime.now().minusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")), "THRESHOLD_UPDATE", "Confidence threshold adjusted to 85%", "Dr. Rajesh Sharma")
         );

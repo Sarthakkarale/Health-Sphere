@@ -151,7 +151,7 @@ public class DoctorSessionsView {
     private boolean isAcceptedAppointment(Appointment apt) {
         if (apt == null || apt.getStatus() == null) return false;
         String status = apt.getStatus().trim().toUpperCase();
-        return status.equals("ACCEPTED") || status.equals("CONFIRMED") || status.equals("APPROVED");
+        return status.equals("ACCEPTED") || status.equals("CONFIRMED") || status.equals("APPROVED") || status.equals("COMPLETED");
     }
 
     private String getSortableDateTime(Appointment apt) {
@@ -331,11 +331,12 @@ public class DoctorSessionsView {
         // Filter Pills
         HBox pillsBox = new HBox(8);
 
-        Button btnAll = createFilterPill("All Accepted", "ALL");
+        Button btnAll = createFilterPill("All Sessions", "ALL");
         Button btnToday = createFilterPill("Today's Sessions", "TODAY");
         Button btnUpcoming = createFilterPill("Upcoming", "UPCOMING");
+        Button btnPrevious = createFilterPill("Previous Sessions", "PREVIOUS");
 
-        pillsBox.getChildren().addAll(btnAll, btnToday, btnUpcoming);
+        pillsBox.getChildren().addAll(btnAll, btnToday, btnUpcoming, btnPrevious);
         filterBar.getChildren().addAll(searchBox, spacer, pillsBox);
         return filterBar;
     }
@@ -395,6 +396,9 @@ public class DoctorSessionsView {
                     } else if ("UPCOMING".equals(currentFilter)) {
                         String aptDate = apt.getAppointmentDate();
                         return aptDate != null && aptDate.compareTo(todayStr) >= 0;
+                    } else if ("PREVIOUS".equals(currentFilter)) {
+                        String aptDate = apt.getAppointmentDate();
+                        return aptDate != null && aptDate.compareTo(todayStr) < 0;
                     }
                     return true;
                 })

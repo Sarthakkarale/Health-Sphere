@@ -145,9 +145,9 @@ public class LoginView {
                                 Pos.TOP_LEFT);
 
                 // Brand Header Row
-                HBox brandRow = new HBox(10);
+                HBox brandRow = new HBox(14);
                 brandRow.setAlignment(Pos.CENTER_LEFT);
-                ImageView logoView = createSafeImageView("/images/icons/brand_logo.png", 32, 32);
+                ImageView logoView = createSafeImageView("/images/icons/brand_logo.png", 64, 64);
                 Text brandTitle = new Text("HealthSphere");
                 brandTitle.getStyleClass().add("panel-brand");
                 brandRow.getChildren().addAll(logoView, brandTitle);
@@ -273,8 +273,8 @@ public class LoginView {
 
                 ImageView cardLogo = createSafeImageView(
                                 "/images/icons/brand_logo.png",
-                                44,
-                                44);
+                                72,
+                                72);
 
                 VBox titleBox = new VBox(4);
 

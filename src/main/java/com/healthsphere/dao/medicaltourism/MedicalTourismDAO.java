@@ -137,6 +137,31 @@ public class MedicalTourismDAO {
         }
     }
 
+    public List<MedicalTourismRequest> getDoctorRequests(String doctorId) {
+        if (doctorId == null || doctorId.isBlank()) {
+            return new ArrayList<>();
+        }
+        try {
+            Query query = db.collection("medical_tourism_requests")
+                    .whereEqualTo("doctorId", doctorId);
+
+            QuerySnapshot snapshot = query.get().get();
+            List<MedicalTourismRequest> requests = new ArrayList<>();
+            for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                MedicalTourismRequest req = doc.toObject(MedicalTourismRequest.class);
+                if (req != null) {
+                    if (req.getRequestId() == null || req.getRequestId().isBlank()) {
+                        req.setRequestId(doc.getId());
+                    }
+                    requests.add(req);
+                }
+            }
+            return requests;
+        } catch (Exception e) {
+            throw new DatabaseException("Unable to fetch doctor Medical Tourism Requests.", e);
+        }
+    }
+
     public MedicalTourismRequest getRequestById(String requestId) {
         if (requestId == null || requestId.isBlank()) {
             return null;

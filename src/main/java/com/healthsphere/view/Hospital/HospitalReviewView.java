@@ -162,7 +162,7 @@ public class HospitalReviewView {
 
         StackPane avatarPane = new StackPane(avatar, avatarText);
 
-        topBar.getChildren().addAll(searchBox, spacer, userInfo, avatarPane);
+        topBar.getChildren().addAll(spacer, userInfo, avatarPane);
         return topBar;
     }
 

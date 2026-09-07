@@ -179,11 +179,6 @@ public class AdminMainShell {
                         "🩺  Doctor Credentialing"
                 );
 
-        Button reportsBtn =
-                createNavButton(
-                        "📋  Reports & Moderation"
-                );
-
         Button analyticsBtn =
                 createNavButton(
                         "⭐  AppReviews"
@@ -200,7 +195,6 @@ public class AdminMainShell {
                         userDirBtn,
                         hospitalBtn,
                         doctorBtn,
-                        reportsBtn,
                         analyticsBtn,
                         settingsBtn
                 );
@@ -276,30 +270,6 @@ public class AdminMainShell {
 
             rootLayout.setCenter(
                     doctorManagementView.getView()
-            );
-        });
-
-        // =====================================================
-        // REPORTS & MODERATION
-        // =====================================================
-
-        reportsBtn.setOnAction(e -> {
-
-            setActiveButton(
-                    reportsBtn
-            );
-
-            // -------------------------------------------------
-            // OPEN COMPLAINTS MANAGEMENT
-            // -------------------------------------------------
-
-            ComplaintsManagementView complaintsView =
-                    new ComplaintsManagementView(
-                            primaryStage
-                    );
-
-            rootLayout.setCenter(
-                    complaintsView.getView()
             );
         });
 
@@ -380,8 +350,6 @@ public class AdminMainShell {
                 hospitalBtn,
 
                 doctorBtn,
-
-                reportsBtn,
 
                 analyticsBtn,
 
@@ -496,7 +464,7 @@ public class AdminMainShell {
 
         Label nameLbl =
                 new Label(
-                        "Prajwal Patil"
+                        "Sarthak"
                 );
 
         nameLbl.setFont(

@@ -374,40 +374,13 @@ public class DoctorProfileView {
         // TOP HEADER
         // ============================================================
 
-        /** Top Search and User Profile Header */
+        /** Top Navigation Header */
         private HBox createTopHeader() {
 
                 HBox topBar = new HBox();
 
                 topBar.setAlignment(
                                 Pos.CENTER_LEFT);
-
-                HBox searchField = new HBox(10);
-
-                searchField.getStyleClass().add(
-                                "search-input-box");
-
-                searchField.setAlignment(
-                                Pos.CENTER_LEFT);
-
-                ImageView searchIcon = new ImageView(
-                                ResourceImage.load(
-                                                "/images/icons/ic_search.png"));
-
-                searchIcon.setFitWidth(16);
-                searchIcon.setFitHeight(16);
-
-                TextField searchInput = new TextField();
-
-                searchInput.setPromptText(
-                                "Search...");
-
-                searchInput.getStyleClass().add(
-                                "search-text-field");
-
-                searchField.getChildren().addAll(
-                                searchIcon,
-                                searchInput);
 
                 Region spacer = new Region();
 
@@ -466,7 +439,6 @@ public class DoctorProfileView {
                                 topAvatar);
 
                 topBar.getChildren().addAll(
-                                searchField,
                                 spacer,
                                 rightIcons);
 

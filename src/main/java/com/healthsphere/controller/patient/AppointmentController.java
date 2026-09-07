@@ -104,6 +104,12 @@ public class AppointmentController {
                 appointmentTime
         );
 
+        validateDoctorAvailabilityAndConflict(
+                doctorUid,
+                appointmentDate,
+                appointmentTime
+        );
+
         // -----------------------------------------------------
         // CURRENT PATIENT
         // -----------------------------------------------------
@@ -464,5 +470,103 @@ public class AppointmentController {
     public boolean isSlotBooked(String doctorUidOrHospitalId, String date, String time) {
         if (doctorUidOrHospitalId == null || date == null || time == null) return false;
         return appointmentDAO.isSlotBooked(doctorUidOrHospitalId, date, time);
+    }
+
+    public void validateDoctorAvailabilityAndConflict(String doctorUid, String dateStr, String timeStr) {
+        if (doctorUid == null || doctorUid.isBlank() || dateStr == null || timeStr == null) {
+            return;
+        }
+
+        if (isSlotBooked(doctorUid, dateStr, timeStr)) {
+            throw new IllegalArgumentException("This time slot is already booked.");
+        }
+
+        try {
+            com.healthsphere.dao.doctor.DoctorAvailabilityDAO availabilityDAO = new com.healthsphere.dao.doctor.DoctorAvailabilityDAO();
+            com.healthsphere.model.DoctorAvailability availability = availabilityDAO.getAvailability(doctorUid);
+
+            if (availability != null) {
+                java.time.LocalDate localDate = java.time.LocalDate.parse(dateStr.trim());
+                java.time.DayOfWeek dayOfWeek = localDate.getDayOfWeek();
+
+                boolean dayEnabled = false;
+                String startTime = null;
+                String endTime = null;
+
+                switch (dayOfWeek) {
+                    case MONDAY:
+                        dayEnabled = availability.isMondayEnabled();
+                        startTime = availability.getMondayStartTime();
+                        endTime = availability.getMondayEndTime();
+                        break;
+                    case TUESDAY:
+                        dayEnabled = availability.isTuesdayEnabled();
+                        startTime = availability.getTuesdayStartTime();
+                        endTime = availability.getTuesdayEndTime();
+                        break;
+                    case WEDNESDAY:
+                        dayEnabled = availability.isWednesdayEnabled();
+                        startTime = availability.getWednesdayStartTime();
+                        endTime = availability.getWednesdayEndTime();
+                        break;
+                    case THURSDAY:
+                        dayEnabled = availability.isThursdayEnabled();
+                        startTime = availability.getThursdayStartTime();
+                        endTime = availability.getThursdayEndTime();
+                        break;
+                    case FRIDAY:
+                        dayEnabled = availability.isFridayEnabled();
+                        startTime = availability.getFridayStartTime();
+                        endTime = availability.getFridayEndTime();
+                        break;
+                    case SATURDAY:
+                        dayEnabled = availability.isSaturdayEnabled();
+                        startTime = availability.getSaturdayStartTime();
+                        endTime = availability.getSaturdayEndTime();
+                        break;
+                    case SUNDAY:
+                        dayEnabled = availability.isSundayEnabled();
+                        startTime = availability.getSundayStartTime();
+                        endTime = availability.getSundayEndTime();
+                        break;
+                }
+
+                if (!dayEnabled) {
+                    throw new IllegalArgumentException("This time slot is not available for the selected doctor.");
+                }
+
+                if (startTime != null && !startTime.isBlank() && endTime != null && !endTime.isBlank()) {
+                    int slotMin = parseTimeToMinutes(timeStr);
+                    int startMin = parseTimeToMinutes(startTime);
+                    int endMin = parseTimeToMinutes(endTime);
+
+                    if (slotMin < startMin || slotMin >= endMin) {
+                        throw new IllegalArgumentException("This time slot is not available for the selected doctor.");
+                    }
+                }
+            }
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception ignored) {
+        }
+    }
+
+    private int parseTimeToMinutes(String value) {
+        if (value == null || value.trim().isEmpty()) return 0;
+        String normalized = value.trim().toUpperCase();
+        String[] parts = normalized.split(" ");
+        if (parts.length != 2) return 0;
+        String[] hm = parts[0].split(":");
+        if (hm.length != 2) return 0;
+        try {
+            int hour = Integer.parseInt(hm[0]);
+            int minute = Integer.parseInt(hm[1]);
+            String meridiem = parts[1];
+            if (hour == 12) hour = 0;
+            if ("PM".equals(meridiem)) hour += 12;
+            return hour * 60 + minute;
+        } catch (Exception e) {
+            return 0;
+        }
     }
 }

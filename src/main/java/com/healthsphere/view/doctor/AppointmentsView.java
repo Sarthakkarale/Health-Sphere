@@ -273,7 +273,7 @@ public class AppointmentsView {
         // Filter section
         content.getChildren()
                 .add(
-                        createFilterBar()
+                        createHeaderActionsBar()
                 );
 
         // Cards
@@ -775,73 +775,24 @@ public class AppointmentsView {
                         totalAppointmentsLabel
                 );
 
-        // --------------------------------------------------------
-        // NEW APPOINTMENT
-        // --------------------------------------------------------
-
-        Button newAppointment =
-                new Button(
-                        "+ New Appointment"
-                );
-
-        newAppointment.setStyle(
-                "-fx-background-color: #0B57D0;"
-                        + "-fx-text-fill: white;"
-                        + "-fx-font-weight: bold;"
-                        + "-fx-background-radius: 6px;"
-                        + "-fx-padding: 10px 18px;"
-                        + "-fx-cursor: hand;"
-        );
-
-        newAppointment.setOnAction(
-                e ->
-                        Navigation.goTo(
-                                stage,
-                                () ->
-                                        new NewAppointmentView(
-                                                stage
-                                        ).getScene()
-                        )
-        );
-
         section.setLeft(
                 titleBox
-        );
-
-        section.setRight(
-                newAppointment
         );
 
         return section;
     }
 
     // ============================================================
-    // FILTER BAR
+    // HEADER ACTIONS
     // ============================================================
 
-    private HBox createFilterBar() {
+    private HBox createHeaderActionsBar() {
 
         HBox bar =
                 new HBox(12);
 
         bar.setAlignment(
                 Pos.CENTER_LEFT
-        );
-
-        bar.setPadding(
-                new Insets(
-                        12,
-                        16,
-                        12,
-                        16
-                )
-        );
-
-        bar.setStyle(
-                "-fx-background-color: white;"
-                        + "-fx-background-radius: 10px;"
-                        + "-fx-border-color: #E2E8F0;"
-                        + "-fx-border-radius: 10px;"
         );
 
         // --------------------------------------------------------
@@ -853,7 +804,9 @@ public class AppointmentsView {
 
         String[] filters = {
                 "All",
+                "Today",
                 "Upcoming",
+                "Past / Previous",
                 "Completed",
                 "Cancelled"
         };
@@ -867,7 +820,7 @@ public class AppointmentsView {
                     );
 
             button.setMinWidth(
-                    90
+                    85
             );
 
             updateFilterButtonStyle(
@@ -935,13 +888,6 @@ public class AppointmentsView {
         datePicker =
                 new DatePicker();
 
-        /*
-         * IMPORTANT:
-         *
-         * Do NOT initialize this with 10/26/2023.
-         *
-         * Empty means "show all real appointments".
-         */
         datePicker.setPromptText(
                 "Select date"
         );
@@ -1049,12 +995,7 @@ public class AppointmentsView {
                 .getChildren()
                 .clear();
 
-        // --------------------------------------------------------
-        // REAL TOTAL
-        // --------------------------------------------------------
-
-        if (totalAppointmentsLabel != null) {
-
+        if (totalAppointmentsLabel != null && appointmentList != null) {
             totalAppointmentsLabel.setText(
                     appointmentList.size()
                             + " Total Appointments"
@@ -1202,13 +1143,33 @@ public class AppointmentsView {
     // FILTER MATCH
     // ============================================================
 
+    private java.time.LocalDate parseAppointmentDate(String dateStr) {
+        if (dateStr == null || dateStr.isBlank()) return null;
+        String s = dateStr.trim();
+        try {
+            return java.time.LocalDate.parse(s, java.time.format.DateTimeFormatter.ISO_LOCAL_DATE);
+        } catch (Exception ignored) {}
+        try {
+            return java.time.LocalDate.parse(s, java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        } catch (Exception ignored) {}
+        try {
+            return java.time.LocalDate.parse(s, java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+        } catch (Exception ignored) {}
+        try {
+            return java.time.LocalDate.parse(s, java.time.format.DateTimeFormatter.ofPattern("d MMMM yyyy", java.util.Locale.ENGLISH));
+        } catch (Exception ignored) {}
+        try {
+            return java.time.LocalDate.parse(s, java.time.format.DateTimeFormatter.ofPattern("dd MMMM yyyy", java.util.Locale.ENGLISH));
+        } catch (Exception ignored) {}
+        return null;
+    }
+
     private boolean matchesFilter(
             Appointment appointment) {
 
         if ("All".equalsIgnoreCase(
                 selectedFilter
         )) {
-
             return true;
         }
 
@@ -1217,52 +1178,32 @@ public class AppointmentsView {
                         appointment.getStatus()
                 );
 
-        // --------------------------------------------------------
-        // UPCOMING
-        // --------------------------------------------------------
+        java.time.LocalDate now = java.time.LocalDate.now();
+        java.time.LocalDate aptDate = parseAppointmentDate(appointment.getAppointmentDate());
 
-        if ("Upcoming".equalsIgnoreCase(
-                selectedFilter
-        )) {
-
-            return status.equals(
-                    "PENDING"
-            )
-                    || status.equals(
-                    "CONFIRMED"
-            )
-                    || status.equals(
-                    "ACCEPTED"
-            );
+        if ("Today".equalsIgnoreCase(selectedFilter)) {
+            return aptDate != null && aptDate.isEqual(now);
         }
 
-        // --------------------------------------------------------
-        // COMPLETED
-        // --------------------------------------------------------
-
-        if ("Completed".equalsIgnoreCase(
-                selectedFilter
-        )) {
-
-            return status.equals(
-                    "COMPLETED"
-            );
+        if ("Upcoming".equalsIgnoreCase(selectedFilter)) {
+            boolean isActive = status.equals("PENDING") || status.equals("CONFIRMED") || status.equals("ACCEPTED") || status.equals("APPROVED");
+            if (!isActive) return false;
+            return aptDate == null || !aptDate.isBefore(now);
         }
 
-        // --------------------------------------------------------
-        // CANCELLED
-        // --------------------------------------------------------
+        if ("Past / Previous".equalsIgnoreCase(selectedFilter) || "Past".equalsIgnoreCase(selectedFilter)) {
+            if (aptDate != null && aptDate.isBefore(now)) {
+                return true;
+            }
+            return status.equals("COMPLETED") || status.equals("CANCELLED") || status.equals("REJECTED") || status.equals("MISSED");
+        }
 
-        if ("Cancelled".equalsIgnoreCase(
-                selectedFilter
-        )) {
+        if ("Completed".equalsIgnoreCase(selectedFilter)) {
+            return status.equals("COMPLETED");
+        }
 
-            return status.equals(
-                    "CANCELLED"
-            )
-                    || status.equals(
-                    "REJECTED"
-            );
+        if ("Cancelled".equalsIgnoreCase(selectedFilter)) {
+            return status.equals("CANCELLED") || status.equals("REJECTED");
         }
 
         return true;

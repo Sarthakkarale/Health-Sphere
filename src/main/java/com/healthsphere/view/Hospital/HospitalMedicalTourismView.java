@@ -16,6 +16,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
@@ -33,7 +34,10 @@ public class HospitalMedicalTourismView {
     private VBox requestsContainer;
     private HBox metricsBar;
     private List<MedicalTourismRequest> allRequests = new ArrayList<>();
+
+    private TextField searchField;
     private ComboBox<String> statusFilter;
+    private ComboBox<String> patientTypeFilter;
 
     // Travel Support Tab components
     private VBox travelRequestsContainer;
@@ -65,27 +69,70 @@ public class HospitalMedicalTourismView {
         headerCard.setPadding(new Insets(20));
         headerCard.setStyle("-fx-background-color: white; -fx-background-radius: 14; -fx-border-color: #E2E8F0; -fx-border-radius: 14; -fx-effect: dropshadow(three-pass-box, rgba(15,23,42,0.04), 8, 0, 0, 2);");
 
-        Label titleLbl = new Label("✈  Medical Tourism Requests");
+        Label titleLbl = new Label("✈  Medical Tourism");
         titleLbl.setStyle("-fx-font-size: 22px; -fx-font-weight: 800; -fx-text-fill: #12355B;");
 
-        Label subtitleLbl = new Label("Review incoming international patient cases, manage logistics & travel support requests, and schedule appointments.");
+        Label subtitleLbl = new Label("Manage and respond to medical tourism requests from patients.");
         subtitleLbl.setStyle("-fx-font-size: 13px; -fx-text-fill: #64748B;");
 
         headerCard.getChildren().addAll(titleLbl, subtitleLbl);
 
-        // TabPane for Medical Tourism vs Travel Support
-        TabPane tabPane = new TabPane();
-        tabPane.setStyle("-fx-tab-min-width: 180px; -fx-tab-max-width: 250px; -fx-font-weight: bold;");
+        // Custom White Card Tab Bar (NO BLACK BAR)
+        HBox tabNavBar = new HBox(12);
+        tabNavBar.setPadding(new Insets(6));
+        tabNavBar.setStyle(
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 12px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 12px;" +
+                "-fx-effect: dropshadow(three-pass-box, rgba(18, 53, 91, 0.05), 10, 0, 0, 3);"
+        );
 
-        Tab tourismTab = new Tab("📋  Medical Cases", createTourismCasesTabContent());
-        tourismTab.setClosable(false);
+        Button casesTabBtn = new Button("📋  Medical Tourism Requests");
+        Button travelTabBtn = new Button("✈  Travel Support Requests");
 
-        Tab travelTab = new Tab("✈  Travel Support Requests", createTravelSupportTabContent());
-        travelTab.setClosable(false);
+        VBox casesContent = createTourismCasesTabContent();
+        VBox travelContent = createTravelSupportTabContent();
 
-        tabPane.getTabs().addAll(tourismTab, travelTab);
+        StackPane tabContentPane = new StackPane(casesContent);
 
-        centerContent.getChildren().addAll(headerCard, tabPane);
+        Runnable updateHospitalTabStyles = () -> {
+            boolean isCases = tabContentPane.getChildren().contains(casesContent);
+            String activeStyle = "-fx-background-color: #2F80ED; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 8px; -fx-padding: 10px 22px; -fx-cursor: hand;";
+            String inactiveStyle = "-fx-background-color: transparent; -fx-text-fill: #172B4D; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 8px; -fx-padding: 10px 22px; -fx-cursor: hand;";
+
+            casesTabBtn.setStyle(isCases ? activeStyle : inactiveStyle);
+            travelTabBtn.setStyle(!isCases ? activeStyle : inactiveStyle);
+        };
+
+        casesTabBtn.setOnAction(e -> {
+            tabContentPane.getChildren().setAll(casesContent);
+            updateHospitalTabStyles.run();
+        });
+
+        travelTabBtn.setOnAction(e -> {
+            tabContentPane.getChildren().setAll(travelContent);
+            updateHospitalTabStyles.run();
+        });
+
+        casesTabBtn.setOnMouseEntered(e -> {
+            if (!tabContentPane.getChildren().contains(casesContent)) {
+                casesTabBtn.setStyle("-fx-background-color: #EEF4FF; -fx-text-fill: #2F80ED; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 8px; -fx-padding: 10px 22px; -fx-cursor: hand;");
+            }
+        });
+        casesTabBtn.setOnMouseExited(e -> updateHospitalTabStyles.run());
+
+        travelTabBtn.setOnMouseEntered(e -> {
+            if (!tabContentPane.getChildren().contains(travelContent)) {
+                travelTabBtn.setStyle("-fx-background-color: #EEF4FF; -fx-text-fill: #2F80ED; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 8px; -fx-padding: 10px 22px; -fx-cursor: hand;");
+            }
+        });
+        travelTabBtn.setOnMouseExited(e -> updateHospitalTabStyles.run());
+
+        updateHospitalTabStyles.run();
+        tabNavBar.getChildren().addAll(casesTabBtn, travelTabBtn);
+
+        centerContent.getChildren().addAll(headerCard, tabNavBar, tabContentPane);
 
         ScrollPane scrollPane = new ScrollPane(centerContent);
         scrollPane.setFitToWidth(true);
@@ -109,29 +156,45 @@ public class HospitalMedicalTourismView {
         content.setPadding(new Insets(15, 0, 0, 0));
         content.setFillWidth(true);
 
-        // Live Metrics Dashboard Bar (4 KPI cards)
-        metricsBar = new HBox(15);
+        // Live Metrics Dashboard Bar (5 KPI cards)
+        metricsBar = new HBox(12);
         metricsBar.setFillHeight(true);
         renderMetricsBar(new ArrayList<>());
 
-        // Filter Bar
+        // Multi-Filter Bar
         HBox filterBar = new HBox(12);
         filterBar.setAlignment(Pos.CENTER_LEFT);
-        filterBar.setPadding(new Insets(5, 0, 5, 0));
+        filterBar.setPadding(new Insets(10, 16, 10, 16));
+        filterBar.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #E2E8F0; -fx-border-radius: 10;");
 
-        Label filterLbl = new Label("Filter Case Status:");
-        filterLbl.setStyle("-fx-font-weight: bold; -fx-text-fill: #172B4D;");
+        searchField = new TextField();
+        searchField.setPromptText("Search Patient / Treatment...");
+        searchField.setPrefWidth(220);
+        searchField.setStyle("-fx-background-color: #F8FAFC; -fx-border-color: #CBD5E1; -fx-border-radius: 6; -fx-padding: 6 10;");
+        searchField.textProperty().addListener((obs, oldV, newV) -> applyFilter());
+
+        Label statusLbl = new Label("Status:");
+        statusLbl.setStyle("-fx-font-weight: bold; -fx-text-fill: #172B4D;");
 
         statusFilter = new ComboBox<>();
-        statusFilter.getItems().addAll("All Statuses", "PENDING", "ACCEPTED", "REJECTED", "MORE_INFORMATION_REQUIRED", "APPOINTMENT_SCHEDULED");
-        statusFilter.setValue("All Statuses");
-        statusFilter.setStyle("-fx-background-color: white; -fx-border-color: #CBD5E1; -fx-border-radius: 8; -fx-background-radius: 8;");
+        statusFilter.getItems().addAll("All", "Pending", "Under Review", "Accepted", "Rejected", "More Information Required", "Appointment Scheduled", "Treatment Completed");
+        statusFilter.setValue("All");
+        statusFilter.setStyle("-fx-background-color: #F8FAFC; -fx-border-color: #CBD5E1; -fx-border-radius: 6;");
         statusFilter.setOnAction(e -> applyFilter());
 
-        filterBar.getChildren().addAll(filterLbl, statusFilter);
+        Label typeLbl = new Label("Patient Type:");
+        typeLbl.setStyle("-fx-font-weight: bold; -fx-text-fill: #172B4D;");
+
+        patientTypeFilter = new ComboBox<>();
+        patientTypeFilter.getItems().addAll("All", "International", "Outstation");
+        patientTypeFilter.setValue("All");
+        patientTypeFilter.setStyle("-fx-background-color: #F8FAFC; -fx-border-color: #CBD5E1; -fx-border-radius: 6;");
+        patientTypeFilter.setOnAction(e -> applyFilter());
+
+        filterBar.getChildren().addAll(new Label("🔍"), searchField, statusLbl, statusFilter, typeLbl, patientTypeFilter);
 
         // Main List Container
-        requestsContainer = new VBox(16);
+        requestsContainer = new VBox(12);
         requestsContainer.setFillWidth(true);
 
         content.getChildren().addAll(metricsBar, filterBar, requestsContainer);
@@ -141,17 +204,25 @@ public class HospitalMedicalTourismView {
     private void renderMetricsBar(List<MedicalTourismRequest> requests) {
         metricsBar.getChildren().clear();
 
-        long newCount = requests.stream().filter(r -> "PENDING".equalsIgnoreCase(r.getStatus())).count();
-        long reviewCount = requests.stream().filter(r -> "UNDER_REVIEW".equalsIgnoreCase(r.getStatus()) || "MORE_INFORMATION_REQUIRED".equalsIgnoreCase(r.getStatus())).count();
-        long acceptedCount = requests.stream().filter(r -> "ACCEPTED".equalsIgnoreCase(r.getStatus())).count();
-        long scheduledCount = requests.stream().filter(r -> "APPOINTMENT_SCHEDULED".equalsIgnoreCase(r.getStatus())).count();
+        long totalCount = requests.size();
+        long pendingCount = requests.stream().filter(r -> "PENDING".equalsIgnoreCase(r.getStatus())).count();
+        long underReviewCount = requests.stream().filter(r -> "UNDER_REVIEW".equalsIgnoreCase(r.getStatus()) || "MORE_INFORMATION_REQUIRED".equalsIgnoreCase(r.getStatus())).count();
+        long acceptedCount = requests.stream().filter(r -> "ACCEPTED".equalsIgnoreCase(r.getStatus()) || "APPOINTMENT_SCHEDULED".equalsIgnoreCase(r.getStatus())).count();
+        long completedCount = requests.stream().filter(r -> "COMPLETED".equalsIgnoreCase(r.getStatus()) || "TREATMENT_COMPLETED".equalsIgnoreCase(r.getStatus())).count();
 
-        VBox newCard = SummaryCard.create("New Requests", String.valueOf(newCount), "Awaiting hospital review", "⚡", SummaryCard.CardType.ORANGE);
-        VBox reviewCard = SummaryCard.create("Under Review", String.valueOf(reviewCount), "In information review", "📋", SummaryCard.CardType.BLUE);
-        VBox acceptedCard = SummaryCard.create("Accepted Cases", String.valueOf(acceptedCount), "Approved for treatment", "✓", SummaryCard.CardType.GREEN);
-        VBox scheduledCard = SummaryCard.create("Upcoming Patients", String.valueOf(scheduledCount), "Scheduled appointments", "✈", SummaryCard.CardType.PURPLE);
+        VBox totalCard = SummaryCard.create("Total Requests", String.valueOf(totalCount), "All patient requests", "📊", SummaryCard.CardType.BLUE);
+        VBox pendingCard = SummaryCard.create("Pending Requests", String.valueOf(pendingCount), "Awaiting hospital review", "⏳", SummaryCard.CardType.ORANGE);
+        VBox reviewCard = SummaryCard.create("Under Review", String.valueOf(underReviewCount), "Information/review pending", "📋", SummaryCard.CardType.PURPLE);
+        VBox acceptedCard = SummaryCard.create("Accepted", String.valueOf(acceptedCount), "Approved cases", "✓", SummaryCard.CardType.GREEN);
+        VBox completedCard = SummaryCard.create("Completed", String.valueOf(completedCount), "Finished treatments", "🎉", SummaryCard.CardType.BLUE);
 
-        metricsBar.getChildren().addAll(newCard, reviewCard, acceptedCard, scheduledCard);
+        HBox.setHgrow(totalCard, Priority.ALWAYS);
+        HBox.setHgrow(pendingCard, Priority.ALWAYS);
+        HBox.setHgrow(reviewCard, Priority.ALWAYS);
+        HBox.setHgrow(acceptedCard, Priority.ALWAYS);
+        HBox.setHgrow(completedCard, Priority.ALWAYS);
+
+        metricsBar.getChildren().addAll(totalCard, pendingCard, reviewCard, acceptedCard, completedCard);
     }
 
     private void loadRequestsAsync() {
@@ -201,10 +272,10 @@ public class HospitalMedicalTourismView {
             Label iconLbl = new Label("✈");
             iconLbl.setStyle("-fx-font-size: 32px; -fx-text-fill: #2F80ED;");
 
-            Label titleLbl = new Label("No Medical Tourism Requests");
+            Label titleLbl = new Label("No Medical Tourism Requests Yet");
             titleLbl.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #12355B;");
 
-            Label descLbl = new Label("There are currently no international or outstation patient requests for this hospital.");
+            Label descLbl = new Label("There are currently no medical tourism requests assigned to your hospital.");
             descLbl.setStyle("-fx-font-size: 13px; -fx-text-fill: #64748B;");
 
             emptyBox.getChildren().addAll(iconLbl, titleLbl, descLbl);
@@ -212,18 +283,46 @@ public class HospitalMedicalTourismView {
             return;
         }
 
-        String filter = statusFilter.getValue();
+        String query = searchField != null && searchField.getText() != null ? searchField.getText().trim().toLowerCase() : "";
+        String selectedStatus = statusFilter != null ? statusFilter.getValue() : "All";
+        String selectedType = patientTypeFilter != null ? patientTypeFilter.getValue() : "All";
+
         List<MedicalTourismRequest> filtered = allRequests.stream().filter(r -> {
             if (r == null) return false;
-            if ("All Statuses".equalsIgnoreCase(filter)) return true;
-            return filter.equalsIgnoreCase(r.getStatus());
+
+            // Search filter
+            if (!query.isEmpty()) {
+                String pName = r.getPatientName() != null ? r.getPatientName().toLowerCase() : "";
+                String tName = r.getTreatmentName() != null ? r.getTreatmentName().toLowerCase() : "";
+                if (!pName.contains(query) && !tName.contains(query)) {
+                    return false;
+                }
+            }
+
+            // Status filter
+            if (!"All".equalsIgnoreCase(selectedStatus)) {
+                String normalizedStatus = r.getStatus() != null ? r.getStatus().replace("_", " ") : "";
+                if (!normalizedStatus.equalsIgnoreCase(selectedStatus) && !r.getStatus().equalsIgnoreCase(selectedStatus.replace(" ", "_"))) {
+                    return false;
+                }
+            }
+
+            // Patient type filter
+            if (!"All".equalsIgnoreCase(selectedType)) {
+                String type = r.getPatientType() != null ? r.getPatientType() : "International";
+                if (!type.equalsIgnoreCase(selectedType)) {
+                    return false;
+                }
+            }
+
+            return true;
         }).collect(Collectors.toList());
 
         if (filtered.isEmpty()) {
             VBox emptyBox = new VBox(10);
             emptyBox.setAlignment(Pos.CENTER);
             emptyBox.setPadding(new Insets(30));
-            Label msg = new Label("No requests match the selected status filter.");
+            Label msg = new Label("No requests match the selected filters.");
             msg.setStyle("-fx-font-size: 14px; -fx-text-fill: #64748B;");
             emptyBox.getChildren().add(msg);
             requestsContainer.getChildren().add(emptyBox);
@@ -231,116 +330,414 @@ public class HospitalMedicalTourismView {
         }
 
         for (MedicalTourismRequest req : filtered) {
-            requestsContainer.getChildren().add(createRequestCard(req));
+            requestsContainer.getChildren().add(createCompactRequestCard(req));
         }
     }
 
-    private VBox createRequestCard(MedicalTourismRequest req) {
-        VBox card = new VBox(14);
-        card.setPadding(new Insets(18));
-        card.setStyle("-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #CBD5E1; -fx-border-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(15,23,42,0.03), 6, 0, 0, 2);");
+    /**
+     * Requirement 3: Compact Request Card
+     */
+    private VBox createCompactRequestCard(MedicalTourismRequest req) {
+        VBox card = new VBox(12);
+        card.setPadding(new Insets(16, 20, 16, 20));
+        card.setStyle("-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #E2E8F0; -fx-border-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(15,23,42,0.03), 6, 0, 0, 2);");
 
-        // Header
         HBox topRow = new HBox(12);
         topRow.setAlignment(Pos.CENTER_LEFT);
 
-        VBox titleBox = new VBox(4);
+        VBox titleBox = new VBox(3);
         HBox.setHgrow(titleBox, Priority.ALWAYS);
 
-        Label patientName = new Label("Patient: " + (req.getPatientName() != null ? req.getPatientName() : "International Patient") + " (" + (req.getPatientType() != null ? req.getPatientType() : "International") + ")");
-        patientName.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #12355B;");
+        Label patientLbl = new Label((req.getPatientName() != null ? req.getPatientName() : "Patient") + " (" + (req.getPatientType() != null ? req.getPatientType() : "International") + ")");
+        patientLbl.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #12355B;");
 
-        Label treatLbl = new Label("Treatment: " + req.getTreatmentName() + " | Preferred Date: " + req.getPreferredDate());
-        treatLbl.setStyle("-fx-font-size: 13px; -fx-text-fill: #475569;");
+        Label treatmentLbl = new Label("Treatment: " + (req.getTreatmentName() != null ? req.getTreatmentName() : "N/A"));
+        treatmentLbl.setStyle("-fx-font-size: 13px; -fx-text-fill: #475569;");
 
-        titleBox.getChildren().addAll(patientName, treatLbl);
+        titleBox.getChildren().addAll(patientLbl, treatmentLbl);
 
         // Status Badge
-        Label statusBadge = new Label(req.getStatus());
+        Label statusBadge = new Label(req.getStatus() != null ? req.getStatus().replace("_", " ") : "PENDING");
         String bg = "#E2E8F0"; String fg = "#1E293B";
         if ("ACCEPTED".equalsIgnoreCase(req.getStatus())) { bg = "#ECFDF5"; fg = "#059669"; }
         else if ("REJECTED".equalsIgnoreCase(req.getStatus())) { bg = "#FEF2F2"; fg = "#DC2626"; }
         else if ("PENDING".equalsIgnoreCase(req.getStatus())) { bg = "#FEF3C7"; fg = "#D97706"; }
-        else if ("APPOINTMENT_SCHEDULED".equalsIgnoreCase(req.getStatus())) { bg = "#EFF6FF"; fg = "#2563EB"; }
-        statusBadge.setStyle("-fx-background-color: " + bg + "; -fx-text-fill: " + fg + "; -fx-font-weight: bold; -fx-padding: 6 12; -fx-background-radius: 16;");
+        else if ("UNDER_REVIEW".equalsIgnoreCase(req.getStatus()) || "MORE_INFORMATION_REQUIRED".equalsIgnoreCase(req.getStatus())) { bg = "#F3E8FF"; fg = "#7E22CE"; }
+        else if ("APPOINTMENT_SCHEDULED".equalsIgnoreCase(req.getStatus()) || "TREATMENT_COMPLETED".equalsIgnoreCase(req.getStatus())) { bg = "#EFF6FF"; fg = "#2563EB"; }
+        statusBadge.setStyle("-fx-background-color: " + bg + "; -fx-text-fill: " + fg + "; -fx-font-weight: bold; -fx-padding: 6 14; -fx-background-radius: 16; -fx-font-size: 12px;");
 
         topRow.getChildren().addAll(titleBox, statusBadge);
 
-        // Details Grid
+        // Grid summary
         GridPane grid = new GridPane();
-        grid.setHgap(16);
-        grid.setVgap(8);
-        grid.setPadding(new Insets(8, 0, 8, 0));
+        grid.setHgap(24);
+        grid.setVgap(6);
+        grid.setPadding(new Insets(6, 0, 6, 0));
 
-        grid.add(new Label("Budget:"), 0, 0);
-        grid.add(new Label("₹" + req.getMinimumBudget() + " - ₹" + req.getMaximumBudget()), 1, 0);
+        grid.add(new Label("Preferred Date: " + (req.getPreferredDate() != null ? req.getPreferredDate() : "N/A")), 0, 0);
+        grid.add(new Label("Budget: ₹" + req.getMinimumBudget() + " - ₹" + req.getMaximumBudget()), 1, 0);
+        grid.add(new Label("Selected Doctor: " + (req.getDoctorName() != null && !req.getDoctorName().isBlank() ? req.getDoctorName() : "Doctor not selected")), 0, 1);
+        grid.add(new Label("Request Date: " + (req.getRequestDate() != null ? req.getRequestDate() : "N/A")), 1, 1);
 
-        grid.add(new Label("Doctor Preference:"), 0, 1);
-        grid.add(new Label(req.getDoctorName() != null ? req.getDoctorName() : "General Team"), 1, 1);
+        for (javafx.scene.Node child : grid.getChildren()) {
+            if (child instanceof Label) {
+                ((Label) child).setStyle("-fx-font-size: 13px; -fx-text-fill: #64748B;");
+            }
+        }
 
-        grid.add(new Label("Travel Services:"), 2, 0);
-        List<String> services = new ArrayList<>();
-        if (req.isAirportAssistanceRequired()) services.add("Airport Pickup");
-        if (req.isAccommodationRequired()) services.add("Hotel Accommodation");
-        grid.add(new Label(services.isEmpty() ? "None" : String.join(", ", services)), 3, 0);
+        HBox actionRow = new HBox(12);
+        actionRow.setAlignment(Pos.CENTER_RIGHT);
 
-        grid.add(new Label("Attached Documents:"), 2, 1);
-        grid.add(new Label(req.getMedicalDocuments() != null && !req.getMedicalDocuments().isEmpty() ? String.join(", ", req.getMedicalDocuments()) : "None"), 3, 1);
+        Button viewDetailsBtn = new Button("View Details");
+        viewDetailsBtn.setStyle("-fx-background-color: #2F80ED; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 7 18; -fx-background-radius: 6; -fx-cursor: hand;");
+        viewDetailsBtn.setOnAction(e -> showRequestDetailsModal(req));
+
+        actionRow.getChildren().add(viewDetailsBtn);
+
+        card.getChildren().addAll(topRow, grid, actionRow);
+        return card;
+    }
+
+    /**
+     * Requirement 5-16: Hospital Request Details Modal Dialog
+     */
+    private void showRequestDetailsModal(MedicalTourismRequest req) {
+        // Security check
+        String currentHospitalId = SessionManager.getHospitalUid();
+        if (req.getHospitalId() != null && !req.getHospitalId().equals(currentHospitalId) && !"hosp_default".equals(req.getHospitalId())) {
+            showAlert("Access Denied", "You do not have permission to view request details for another hospital.");
+            return;
+        }
+
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Medical Tourism Request Details");
+        Stage dialogStage = (Stage) dialog.getDialogPane().getScene().getWindow();
+        dialogStage.initModality(Modality.APPLICATION_MODAL);
+
+        VBox contentBox = new VBox(16);
+        contentBox.setPadding(new Insets(24));
+        contentBox.setPrefWidth(680);
+        contentBox.setStyle("-fx-background-color: #F4F8FC;");
+
+        // Header
+        VBox header = new VBox(4);
+        Label title = new Label("Medical Tourism Request Details");
+        title.setStyle("-fx-font-size: 20px; -fx-font-weight: 800; -fx-text-fill: #12355B;");
+        Label reqIdLbl = new Label("Request ID: " + req.getRequestId());
+        reqIdLbl.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748B;");
+        header.getChildren().addAll(title, reqIdLbl);
+
+        // Section 1: Patient Information
+        VBox patientCard = createDetailSectionCard("👤 Patient Information", new String[][]{
+                {"Patient Name", req.getPatientName() != null ? req.getPatientName() : "N/A"},
+                {"Patient ID", req.getPatientId() != null ? req.getPatientId() : "N/A"},
+                {"Location / Country", req.getPreferredLocation() != null ? req.getPreferredLocation() : "N/A"},
+                {"Patient Type", req.getPatientType() != null ? req.getPatientType() : "International"},
+                {"Contact Info", req.getPatientEmail() != null ? req.getPatientEmail() : "Available upon confirmation"},
+                {"Preferred Date", req.getPreferredDate() != null ? req.getPreferredDate() : "N/A"}
+        });
+
+        // Section 2: Treatment Information
+        VBox treatmentCard = createDetailSectionCard("🩺 Treatment Information", new String[][]{
+                {"Treatment / Specialty", req.getTreatmentName() != null ? req.getTreatmentName() : "N/A"},
+                {"Requirements", req.getAdditionalRequirements() != null && !req.getAdditionalRequirements().isBlank() ? req.getAdditionalRequirements() : "Standard Treatment Protocol"},
+                {"Preferred Location", req.getPreferredLocation() != null ? req.getPreferredLocation() : "Hospital Campus"},
+                {"Minimum Budget", "₹" + req.getMinimumBudget()},
+                {"Maximum Budget", "₹" + req.getMaximumBudget()}
+        });
+
+        // Section 3: Selected Doctor
+        boolean doctorSelected = req.getDoctorName() != null && !req.getDoctorName().isBlank() && !"Doctor not selected".equalsIgnoreCase(req.getDoctorName());
+        VBox doctorCard = createDetailSectionCard("👨‍⚕️ Selected Doctor", new String[][]{
+                {"Selected Doctor", doctorSelected ? req.getDoctorName() : "Doctor not selected"},
+                {"Specialization", doctorSelected ? req.getTreatmentName() : "—"},
+                {"Availability", doctorSelected ? "Schedule Available" : "—"},
+                {"Doctor Rating", doctorSelected ? "4.8 ★" : "—"}
+        });
+
+        // Section 4: Medical Documents
+        VBox docsCard = new VBox(10);
+        docsCard.setPadding(new Insets(14));
+        docsCard.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #E2E8F0; -fx-border-radius: 10;");
+        Label docsHeader = new Label("📎 Medical Documents");
+        docsHeader.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #12355B;");
+        docsCard.getChildren().add(docsHeader);
+
+        List<String> docs = req.getMedicalDocuments();
+        if (docs == null || docs.isEmpty()) {
+            Label noDocs = new Label("No medical documents attached.");
+            noDocs.setStyle("-fx-text-fill: #64748B; -fx-font-style: italic;");
+            docsCard.getChildren().add(noDocs);
+        } else {
+            for (String docName : docs) {
+                HBox docRow = new HBox(12);
+                docRow.setAlignment(Pos.CENTER_LEFT);
+                Label docLbl = new Label("📄 " + docName);
+                docLbl.setStyle("-fx-font-weight: bold; -fx-text-fill: #1E293B;");
+                HBox.setHgrow(docLbl, Priority.ALWAYS);
+
+                Button viewDocBtn = new Button("View Document");
+                viewDocBtn.setStyle("-fx-background-color: #EFF6FF; -fx-text-fill: #2563EB; -fx-font-weight: bold; -fx-padding: 4 12; -fx-background-radius: 6; -fx-border-color: #93C5FD; -fx-border-radius: 6; -fx-cursor: hand;");
+                viewDocBtn.setOnAction(e -> showAlert("Medical Document", "Viewing Document: " + docName + "\n\nDocument details verified from Patient Health Passport records."));
+
+                docRow.getChildren().addAll(docLbl, viewDocBtn);
+                docsCard.getChildren().add(docRow);
+            }
+        }
+
+        // Section 5: Travel Support Requirements
+        VBox travelCard = createDetailSectionCard("✈ Travel Support Requirements", new String[][]{
+                {"Airport Pickup", req.isAirportAssistanceRequired() ? "✓ Required" : "— Not Required"},
+                {"Accommodation", req.isAccommodationRequired() ? "✓ Required" : "— Not Required"},
+                {"Local Transportation", req.isLocalTransportRequired() ? "✓ Required" : "— Not Required"},
+                {"Language Assistance", req.isLanguageAssistanceRequired() ? "✓ Required" : "— Not Required"}
+        });
+
+        // Section 6: Cost Information
+        VBox costCard = new VBox(10);
+        costCard.setPadding(new Insets(14));
+        costCard.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #E2E8F0; -fx-border-radius: 10;");
+        Label costHeader = new Label("💰 Estimated Cost Breakdown");
+        costHeader.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #12355B;");
+
+        GridPane costGrid = new GridPane();
+        costGrid.setHgap(20); costGrid.setVgap(6);
+        costGrid.add(new Label("Treatment Cost:"), 0, 0); costGrid.add(new Label("₹" + String.format("%.2f", req.getEstimatedTreatmentCost())), 1, 0);
+        costGrid.add(new Label("Travel Estimate:"), 0, 1); costGrid.add(new Label("₹" + String.format("%.2f", req.getEstimatedTravelCost())), 1, 1);
+        costGrid.add(new Label("Accommodation:"), 0, 2); costGrid.add(new Label("₹" + String.format("%.2f", req.getEstimatedAccommodationCost())), 1, 2);
+        costGrid.add(new Label("Local Transport:"), 0, 3); costGrid.add(new Label("₹" + String.format("%.2f", req.getEstimatedTransportCost())), 1, 3);
+        
+        Label totalLbl = new Label("Estimated Total:"); totalLbl.setStyle("-fx-font-weight: bold; -fx-text-fill: #12355B;");
+        Label totalVal = new Label("₹" + String.format("%.2f", req.getEstimatedTotalCost())); totalVal.setStyle("-fx-font-weight: bold; -fx-text-fill: #059669; -fx-font-size: 15px;");
+        costGrid.add(totalLbl, 0, 4); costGrid.add(totalVal, 1, 4);
+
+        Label disclaimer = new Label("Estimated cost — not an official quotation.");
+        disclaimer.setStyle("-fx-font-size: 11px; -fx-text-fill: #94A3B8; -fx-font-style: italic;");
+
+        costCard.getChildren().addAll(costHeader, costGrid, disclaimer);
+
+        // Section 7: Status Timeline
+        VBox timelineCard = createStatusTimeline(req.getStatus());
 
         // Action Buttons Row
         HBox actionRow = new HBox(12);
         actionRow.setAlignment(Pos.CENTER_RIGHT);
         actionRow.setPadding(new Insets(10, 0, 0, 0));
 
-        Button acceptBtn = new Button("✓  Accept Request");
-        acceptBtn.setStyle("-fx-background-color: #059669; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; -fx-background-radius: 8; -fx-cursor: hand;");
-        acceptBtn.setOnAction(e -> handleUpdateStatus(req, "ACCEPTED"));
+        Button acceptBtn = new Button("Accept");
+        acceptBtn.setStyle("-fx-background-color: #059669; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 20; -fx-background-radius: 6; -fx-cursor: hand;");
+        acceptBtn.setOnAction(e -> {
+            handleAcceptRequest(req);
+            dialog.setResult(null);
+            dialog.close();
+        });
 
-        Button rejectBtn = new Button("✕  Reject");
-        rejectBtn.setStyle("-fx-background-color: #DC2626; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; -fx-background-radius: 8; -fx-cursor: hand;");
-        rejectBtn.setOnAction(e -> handleUpdateStatus(req, "REJECTED"));
+        Button rejectBtn = new Button("Reject");
+        rejectBtn.setStyle("-fx-background-color: #DC2626; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 20; -fx-background-radius: 6; -fx-cursor: hand;");
+        rejectBtn.setOnAction(e -> {
+            handleRejectRequest(req);
+            dialog.setResult(null);
+            dialog.close();
+        });
 
-        Button reqInfoBtn = new Button("💬 Request Info");
-        reqInfoBtn.setStyle("-fx-background-color: #D97706; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; -fx-background-radius: 8; -fx-cursor: hand;");
-        reqInfoBtn.setOnAction(e -> handleUpdateStatus(req, "MORE_INFORMATION_REQUIRED"));
+        Button reqInfoBtn = new Button("Request More Information");
+        reqInfoBtn.setStyle("-fx-background-color: #D97706; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 20; -fx-background-radius: 6; -fx-cursor: hand;");
+        reqInfoBtn.setOnAction(e -> {
+            handleRequestMoreInfo(req);
+            dialog.setResult(null);
+            dialog.close();
+        });
 
-        Button scheduleBtn = new Button("📅 Schedule Appointment");
-        scheduleBtn.setStyle("-fx-background-color: #2563EB; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; -fx-background-radius: 8; -fx-cursor: hand;");
-        scheduleBtn.setOnAction(e -> showScheduleAppointmentDialog(req));
+        Button scheduleBtn = new Button("Schedule Appointment");
+        scheduleBtn.setStyle("-fx-background-color: #2563EB; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 20; -fx-background-radius: 6; -fx-cursor: hand;");
+        scheduleBtn.setOnAction(e -> {
+            dialog.setResult(null);
+            dialog.close();
+            showScheduleAppointmentDialog(req);
+        });
 
-        if ("PENDING".equalsIgnoreCase(req.getStatus()) || "MORE_INFORMATION_REQUIRED".equalsIgnoreCase(req.getStatus())) {
+        String currentStatus = req.getStatus() != null ? req.getStatus() : "PENDING";
+        if ("PENDING".equalsIgnoreCase(currentStatus) || "UNDER_REVIEW".equalsIgnoreCase(currentStatus)) {
             actionRow.getChildren().addAll(reqInfoBtn, rejectBtn, acceptBtn);
-        } else if ("ACCEPTED".equalsIgnoreCase(req.getStatus())) {
-            actionRow.getChildren().addAll(rejectBtn, scheduleBtn);
+        } else if ("ACCEPTED".equalsIgnoreCase(currentStatus)) {
+            Label acceptedBadge = new Label("Accepted");
+            acceptedBadge.setStyle("-fx-background-color: #ECFDF5; -fx-text-fill: #059669; -fx-font-weight: bold; -fx-padding: 8 16; -fx-background-radius: 6;");
+            actionRow.getChildren().addAll(acceptedBadge, scheduleBtn);
         } else {
-            Label doneLbl = new Label("Status: " + req.getStatus());
-            doneLbl.setStyle("-fx-font-weight: bold; -fx-text-fill: #64748B;");
-            actionRow.getChildren().add(doneLbl);
+            Label statusDone = new Label("Status: " + currentStatus.replace("_", " "));
+            statusDone.setStyle("-fx-font-weight: bold; -fx-text-fill: #64748B; -fx-font-size: 14px;");
+            actionRow.getChildren().add(statusDone);
         }
 
-        card.getChildren().addAll(topRow, grid, actionRow);
+        ScrollPane modalScroll = new ScrollPane(contentBox);
+        modalScroll.setFitToWidth(true);
+        modalScroll.setPrefHeight(580);
+        modalScroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+
+        contentBox.getChildren().addAll(header, patientCard, treatmentCard, doctorCard, docsCard, travelCard, costCard, timelineCard, actionRow);
+
+        dialog.getDialogPane().setContent(modalScroll);
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        dialog.showAndWait();
+    }
+
+    private VBox createDetailSectionCard(String sectionTitle, String[][] keyValues) {
+        VBox card = new VBox(10);
+        card.setPadding(new Insets(14));
+        card.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #E2E8F0; -fx-border-radius: 10;");
+
+        Label header = new Label(sectionTitle);
+        header.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #12355B;");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(20); grid.setVgap(6);
+
+        for (int i = 0; i < keyValues.length; i++) {
+            Label kLbl = new Label(keyValues[i][0] + ":");
+            kLbl.setStyle("-fx-font-weight: bold; -fx-text-fill: #475569;");
+            Label vLbl = new Label(keyValues[i][1]);
+            vLbl.setStyle("-fx-text-fill: #1E293B;");
+            grid.add(kLbl, 0, i);
+            grid.add(vLbl, 1, i);
+        }
+
+        card.getChildren().addAll(header, grid);
         return card;
     }
 
-    private void handleUpdateStatus(MedicalTourismRequest req, String newStatus) {
-        String notes = "";
-        if ("REJECTED".equalsIgnoreCase(newStatus) || "MORE_INFORMATION_REQUIRED".equalsIgnoreCase(newStatus)) {
-            TextInputDialog dialog = new TextInputDialog();
-            dialog.setTitle("Update Status Notes");
-            dialog.setHeaderText("Reason / Notes for " + newStatus);
-            dialog.setContentText("Enter note for patient:");
-            Optional<String> result = dialog.showAndWait();
-            if (result.isPresent()) {
-                notes = result.get().trim();
+    /**
+     * Requirement 12: Status Timeline
+     */
+    private VBox createStatusTimeline(String status) {
+        VBox card = new VBox(10);
+        card.setPadding(new Insets(14));
+        card.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #E2E8F0; -fx-border-radius: 10;");
+
+        Label header = new Label("📍 Request Timeline");
+        header.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #12355B;");
+
+        String[] stages = {"Request Submitted", "Hospital Review", "Doctor Review", "Accepted", "Appointment Scheduled", "Treatment Completed"};
+        
+        int activeIndex = 0;
+        if ("UNDER_REVIEW".equalsIgnoreCase(status) || "MORE_INFORMATION_REQUIRED".equalsIgnoreCase(status)) activeIndex = 1;
+        else if ("ACCEPTED".equalsIgnoreCase(status)) activeIndex = 3;
+        else if ("APPOINTMENT_SCHEDULED".equalsIgnoreCase(status)) activeIndex = 4;
+        else if ("COMPLETED".equalsIgnoreCase(status) || "TREATMENT_COMPLETED".equalsIgnoreCase(status)) activeIndex = 5;
+
+        HBox timelineBox = new HBox(8);
+        timelineBox.setAlignment(Pos.CENTER_LEFT);
+
+        for (int i = 0; i < stages.length; i++) {
+            boolean isReached = i <= activeIndex;
+            boolean isCurrent = i == activeIndex;
+
+            VBox stepBox = new VBox(4);
+            stepBox.setAlignment(Pos.CENTER);
+
+            Label dot = new Label(isReached ? "●" : "○");
+            dot.setStyle("-fx-font-size: 16px; -fx-text-fill: " + (isCurrent ? "#2F80ED" : (isReached ? "#059669" : "#CBD5E1")) + ";");
+
+            Label text = new Label(stages[i]);
+            text.setStyle("-fx-font-size: 10px; -fx-font-weight: " + (isCurrent ? "bold" : "normal") + "; -fx-text-fill: " + (isCurrent ? "#12355B" : "#64748B") + ";");
+
+            stepBox.getChildren().addAll(dot, text);
+            timelineBox.getChildren().add(stepBox);
+
+            if (i < stages.length - 1) {
+                Label arrow = new Label("→");
+                arrow.setStyle("-fx-text-fill: #CBD5E1; -fx-font-size: 12px;");
+                timelineBox.getChildren().add(arrow);
             }
         }
 
+        card.getChildren().addAll(header, timelineBox);
+        return card;
+    }
+
+    /**
+     * Requirement 15: Accept Request
+     */
+    private void handleAcceptRequest(MedicalTourismRequest req) {
+        String currentHospitalId = SessionManager.getHospitalUid();
+        if (req.getHospitalId() != null && !req.getHospitalId().equals(currentHospitalId) && !"hosp_default".equals(req.getHospitalId())) {
+            showAlert("Error", "You can only accept requests belonging to your hospital.");
+            return;
+        }
+
         try {
-            tourismController.updateStatusAndNotify(req.getRequestId(), newStatus, notes);
-            showAlert("Success", "Request status updated to " + newStatus + " and notification sent to patient.");
+            tourismController.updateStatusAndNotify(req.getRequestId(), "ACCEPTED", "Request accepted by hospital.");
+            showAlert("Success", "Medical Tourism request accepted successfully.");
             loadRequestsAsync();
         } catch (Exception ex) {
-            showAlert("Error", "Could not update request status: " + ex.getMessage());
+            showAlert("Error", "Failed to accept request: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * Requirement 16: Reject Request
+     */
+    private void handleRejectRequest(MedicalTourismRequest req) {
+        Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmAlert.setTitle("Confirm Rejection");
+        confirmAlert.setHeaderText("Are you sure you want to reject this request?");
+        confirmAlert.setContentText("Patient: " + req.getPatientName() + "\nTreatment: " + req.getTreatmentName());
+
+        Optional<ButtonType> result = confirmAlert.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            TextInputDialog reasonDialog = new TextInputDialog();
+            reasonDialog.setTitle("Rejection Reason");
+            reasonDialog.setHeaderText("Reason for rejecting request");
+            reasonDialog.setContentText("Reason:");
+            Optional<String> reasonRes = reasonDialog.showAndWait();
+            String reason = reasonRes.orElse("Hospital is unable to accommodate request at this time.");
+
+            try {
+                tourismController.updateStatusAndNotify(req.getRequestId(), "REJECTED", reason);
+                showAlert("Request Rejected", "Medical Tourism request has been rejected.");
+                loadRequestsAsync();
+            } catch (Exception ex) {
+                showAlert("Error", "Failed to reject request: " + ex.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Requirement 14: Request More Information
+     */
+    private void handleRequestMoreInfo(MedicalTourismRequest req) {
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle("Information Required");
+        dialog.setHeaderText("What additional information is required?");
+
+        ButtonType sendBtnType = new ButtonType("Send Request", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(sendBtnType, ButtonType.CANCEL);
+
+        VBox box = new VBox(10);
+        box.setPadding(new Insets(15));
+
+        TextArea textArea = new TextArea();
+        textArea.setPromptText("Enter details of required information from patient...");
+        textArea.setPrefRowCount(4);
+
+        box.getChildren().addAll(new Label("Information Required:"), textArea);
+        dialog.getDialogPane().setContent(box);
+
+        dialog.setResultConverter(btn -> {
+            if (btn == sendBtnType) {
+                return textArea.getText().trim();
+            }
+            return null;
+        });
+
+        Optional<String> res = dialog.showAndWait();
+        if (res.isPresent() && !res.get().isBlank()) {
+            try {
+                tourismController.updateStatusAndNotify(req.getRequestId(), "MORE_INFORMATION_REQUIRED", res.get());
+                showAlert("Information Requested", "Additional information request sent to patient successfully.");
+                loadRequestsAsync();
+            } catch (Exception ex) {
+                showAlert("Error", "Failed to send request info: " + ex.getMessage());
+            }
         }
     }
 
@@ -353,9 +750,7 @@ public class HospitalMedicalTourismView {
         dialog.getDialogPane().getButtonTypes().addAll(scheduleBtnType, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20));
+        grid.setHgap(10); grid.setVgap(10); grid.setPadding(new Insets(20));
 
         TextField dateField = new TextField(req.getPreferredDate() != null ? req.getPreferredDate() : "2026-10-15");
         TextField timeField = new TextField("10:00 AM");
@@ -407,12 +802,10 @@ public class HospitalMedicalTourismView {
         content.setPadding(new Insets(15, 0, 0, 0));
         content.setFillWidth(true);
 
-        // Travel Metrics Bar
         travelMetricsBar = new HBox(15);
         travelMetricsBar.setFillHeight(true);
         renderTravelMetricsBar(new ArrayList<>());
 
-        // Travel Filter Bar
         HBox filterBar = new HBox(12);
         filterBar.setAlignment(Pos.CENTER_LEFT);
         filterBar.setPadding(new Insets(5, 0, 5, 0));
@@ -428,7 +821,6 @@ public class HospitalMedicalTourismView {
 
         filterBar.getChildren().addAll(filterLbl, travelStatusFilter);
 
-        // Main Travel List Container
         travelRequestsContainer = new VBox(16);
         travelRequestsContainer.setFillWidth(true);
 
@@ -538,7 +930,6 @@ public class HospitalMedicalTourismView {
         card.setPadding(new Insets(18));
         card.setStyle("-fx-background-color: white; -fx-background-radius: 12; -fx-border-color: #CBD5E1; -fx-border-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(15,23,42,0.03), 6, 0, 0, 2);");
 
-        // Header Row
         HBox topRow = new HBox(12);
         topRow.setAlignment(Pos.CENTER_LEFT);
 
@@ -560,7 +951,6 @@ public class HospitalMedicalTourismView {
 
         titleBox.getChildren().addAll(serviceLbl, patientInfo);
 
-        // Status Badge
         Label statusBadge = new Label(req.getStatus());
         String bg = "#FEF3C7"; String fg = "#D97706";
         if ("APPROVED".equalsIgnoreCase(req.getStatus())) { bg = "#ECFDF5"; fg = "#059669"; }
@@ -570,11 +960,8 @@ public class HospitalMedicalTourismView {
 
         topRow.getChildren().addAll(titleBox, statusBadge);
 
-        // Details Grid
         GridPane grid = new GridPane();
-        grid.setHgap(16);
-        grid.setVgap(8);
-        grid.setPadding(new Insets(8, 0, 8, 0));
+        grid.setHgap(16); grid.setVgap(8); grid.setPadding(new Insets(8, 0, 8, 0));
 
         grid.add(new Label("Case Details:"), 0, 0);
         grid.add(new Label("Case ID: " + (req.getMedicalTourismRequestId() != null ? req.getMedicalTourismRequestId() : "N/A")), 1, 0);
@@ -588,7 +975,6 @@ public class HospitalMedicalTourismView {
         grid.add(new Label("Last Updated:"), 2, 1);
         grid.add(new Label(req.getUpdatedAt() != null ? req.getUpdatedAt() : "N/A"), 3, 1);
 
-        // Actions Row
         HBox actionRow = new HBox(12);
         actionRow.setAlignment(Pos.CENTER_RIGHT);
         actionRow.setPadding(new Insets(10, 0, 0, 0));

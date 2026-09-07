@@ -18,6 +18,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -40,6 +42,23 @@ public class View extends Application {
          * =========================================================
          */
         public static Stage stage;
+        private MediaPlayer mediaPlayer;
+
+        public void stopAndDisposeVideo() {
+                try {
+                        if (mediaPlayer != null) {
+                                mediaPlayer.setOnEndOfMedia(null);
+                                mediaPlayer.setOnReady(null);
+                                mediaPlayer.setOnError(null);
+                                mediaPlayer.stop();
+                                mediaPlayer.dispose();
+                                mediaPlayer = null;
+                                System.out.println("✅ View MediaPlayer stopped and disposed successfully.");
+                        }
+                } catch (Exception e) {
+                        System.err.println("Error disposing View MediaPlayer: " + e.getMessage());
+                }
+        }
 
         /*
          * =========================================================
@@ -155,6 +174,8 @@ public class View extends Application {
 
         public Scene getScene() {
 
+                stopAndDisposeVideo();
+
                 BorderPane root = new BorderPane();
 
                 /*
@@ -177,10 +198,13 @@ public class View extends Application {
                 root.setCenter(createMainContent());
                 root.setBottom(createFooter());
 
+                double sceneWidth = stage != null && stage.getWidth() > 0 ? stage.getWidth() : 1200;
+                double sceneHeight = stage != null && stage.getHeight() > 0 ? stage.getHeight() : 750;
+
                 Scene scene = new Scene(
                                 root,
-                                stage.getWidth(),
-                                stage.getHeight());
+                                sceneWidth,
+                                sceneHeight);
 
                 // Attach Stylesheet safely
                 String cssPath = getClass().getResource("/css/view.css") != null
@@ -189,6 +213,26 @@ public class View extends Application {
 
                 if (cssPath != null) {
                         scene.getStylesheets().add(cssPath);
+                }
+
+                // Automatic video cleanup when root is un-scened
+                root.sceneProperty().addListener((obs, oldScene, newScene) -> {
+                        if (newScene == null) {
+                                stopAndDisposeVideo();
+                        }
+                });
+
+                if (stage != null) {
+                        javafx.beans.value.ChangeListener<Scene> sceneChangeListener = new javafx.beans.value.ChangeListener<>() {
+                                @Override
+                                public void changed(javafx.beans.value.ObservableValue<? extends Scene> observable, Scene oldVal, Scene newVal) {
+                                        if (oldVal == scene && newVal != scene) {
+                                                stopAndDisposeVideo();
+                                                stage.sceneProperty().removeListener(this);
+                                        }
+                                }
+                        };
+                        stage.sceneProperty().addListener(sceneChangeListener);
                 }
 
                 return scene;
@@ -200,16 +244,22 @@ public class View extends Application {
 
         private HBox createHeader() {
 
-                HBox header = new HBox();
+                HBox header = new HBox(12);
 
                 header.getStyleClass().add("header-bar");
 
                 header.setAlignment(Pos.CENTER_LEFT);
 
+                // Header Logo Icon
+                ImageView headerLogo = createSafeImageView("/images/icons/brand_logo.png", 32, 32);
+
                 // App Branding Text
                 Text brandText = new Text("HealthSphere");
 
                 brandText.getStyleClass().add("brand-title");
+
+                HBox brandBox = new HBox(10, headerLogo, brandText);
+                brandBox.setAlignment(Pos.CENTER_LEFT);
 
                 // Spacer pushes controls to the right
                 Region spacer = new Region();
@@ -237,6 +287,13 @@ public class View extends Application {
                 newSessionBtn.getStyleClass().add(
                                 "btn-primary");
 
+                newSessionBtn.setOnAction(e -> {
+                        stopAndDisposeVideo();
+                        if (stage != null) {
+                                stage.setScene(new LoginView(stage).getScene());
+                        }
+                });
+
                 // User Avatar Circle
                 StackPane avatar = new StackPane();
 
@@ -258,7 +315,7 @@ public class View extends Application {
                                 avatar);
 
                 header.getChildren().addAll(
-                                brandText,
+                                brandBox,
                                 spacer,
                                 utilityBox);
 
@@ -269,22 +326,34 @@ public class View extends Application {
         // MAIN CONTENT
         // =========================================================
 
-        private HBox createMainContent() {
+        private StackPane createMainContent() {
+
+                StackPane wrapper = new StackPane();
+                wrapper.setAlignment(Pos.CENTER);
+
+                // Subtle ambient healthcare background graphics (very low opacity)
+                Circle ambientBg1 = new Circle(280, Color.web("#2F80ED", 0.04));
+                ambientBg1.setTranslateX(-350);
+                ambientBg1.setTranslateY(-120);
+
+                Circle ambientBg2 = new Circle(200, Color.web("#12355B", 0.03));
+                ambientBg2.setTranslateX(400);
+                ambientBg2.setTranslateY(150);
 
                 HBox mainContainer = new HBox(40);
 
                 mainContainer.setPadding(
                                 new Insets(
-                                                40,
+                                                30,
                                                 60,
-                                                40,
+                                                30,
                                                 60));
 
                 mainContainer.setAlignment(
                                 Pos.CENTER);
 
                 // --- LEFT COLUMN: CTA Content ---
-                VBox leftContent = new VBox(24);
+                VBox leftContent = new VBox(20);
 
                 leftContent.setAlignment(
                                 Pos.CENTER_LEFT);
@@ -293,29 +362,32 @@ public class View extends Application {
                                 leftContent,
                                 Priority.ALWAYS);
 
-                leftContent.setMaxWidth(520);
+                leftContent.setMaxWidth(560);
 
+                // Prominent HealthSphere Logo (Increased size, aspect ratio preserved)
                 ImageView logoView = createSafeImageView(
                                 "/images/icons/brand_logo.png",
-                                110,
-                                110);
+                                160,
+                                160);
 
-                // Headline Text
-                Text titleLine1 = new Text(
-                                "The Future of\n");
+                // Brand Headline
+                Text titleLine1 = new Text("The Future of\n");
+                titleLine1.getStyleClass().add("hero-title-dark");
 
-                titleLine1.getStyleClass().add(
-                                "hero-title-dark");
-
-                Text titleLine2 = new Text(
-                                "Connected Healthcare.");
-
-                titleLine2.getStyleClass().add(
-                                "hero-title-blue");
+                Text titleLine2 = new Text("Connected Healthcare.");
+                titleLine2.getStyleClass().add("hero-title-blue");
 
                 TextFlow headline = new TextFlow(
                                 titleLine1,
                                 titleLine2);
+
+                // Platform Subtitle
+                Label platformSub = new Label("AI Powered Healthcare Management System");
+                platformSub.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2F80ED;");
+
+                // Tagline Quote
+                Label tagline = new Label("\"Connecting Patients, Doctors and Hospitals\"");
+                tagline.getStyleClass().add("hero-subtitle-tagline");
 
                 // Subtitle Description
                 Label description = new Label(
@@ -334,17 +406,17 @@ public class View extends Application {
 
                 buttonRow.setPadding(
                                 new Insets(
-                                                8,
+                                                12,
                                                 0,
                                                 0,
                                                 0));
 
-                Button signUpBtn = new Button("Log In");
+                Button signUpBtn = new Button("Get Started / Log In");
 
                 signUpBtn.getStyleClass().add(
                                 "btn-primary");
                 signUpBtn.setOnAction(e -> {
-
+                        stopAndDisposeVideo();
                         // Direct stage scene switching using shared static stage
                         View.stage.setScene(
                                         new LoginView(
@@ -357,7 +429,7 @@ public class View extends Application {
                                 "btn-teal");
 
                 registerBtn.setOnAction(e -> {
-
+                        stopAndDisposeVideo();
                         // Direct stage scene switching using shared static stage
                         View.stage.setScene(
                                         new RegisterView(
@@ -371,6 +443,8 @@ public class View extends Application {
                 leftContent.getChildren().addAll(
                                 logoView,
                                 headline,
+                                platformSub,
+                                tagline,
                                 description,
                                 buttonRow);
 
@@ -479,7 +553,12 @@ public class View extends Application {
                                 leftContent,
                                 rightVisual);
 
-                return mainContainer;
+                wrapper.getChildren().addAll(
+                                ambientBg1,
+                                ambientBg2,
+                                mainContainer);
+
+                return wrapper;
         }
 
         // =========================================================
@@ -557,6 +636,7 @@ public class View extends Application {
         private MediaView createHeroVideoView() {
 
                 MediaView mediaView = new MediaView();
+                stopAndDisposeVideo();
 
                 try {
 
@@ -593,18 +673,19 @@ public class View extends Application {
                                 }
                         });
 
-                        MediaPlayer mediaPlayer = new MediaPlayer(media);
+                        mediaPlayer = new MediaPlayer(media);
 
                         mediaPlayer.setOnReady(() -> {
+                                if (mediaPlayer != null) {
+                                        System.out.println(
+                                                        "✅ VIDEO READY");
 
-                                System.out.println(
-                                                "✅ VIDEO READY");
+                                        System.out.println(
+                                                        "Video duration: "
+                                                                        + media.getDuration());
 
-                                System.out.println(
-                                                "Video duration: "
-                                                                + media.getDuration());
-
-                                mediaPlayer.play();
+                                        mediaPlayer.play();
+                                }
                         });
 
                         mediaPlayer.setOnError(() -> {
@@ -612,20 +693,21 @@ public class View extends Application {
                                 System.out.println(
                                                 "❌ MEDIAPLAYER ERROR:");
 
-                                if (mediaPlayer.getError() != null) {
+                                if (mediaPlayer != null && mediaPlayer.getError() != null) {
                                         mediaPlayer.getError().printStackTrace();
                                 }
                         });
 
                         mediaPlayer.setOnEndOfMedia(() -> {
+                                if (mediaPlayer != null) {
+                                        System.out.println(
+                                                        "🔄 Video restarting...");
 
-                                System.out.println(
-                                                "🔄 Video restarting...");
+                                        mediaPlayer.seek(
+                                                        javafx.util.Duration.ZERO);
 
-                                mediaPlayer.seek(
-                                                javafx.util.Duration.ZERO);
-
-                                mediaPlayer.play();
+                                        mediaPlayer.play();
+                                }
                         });
 
                         mediaPlayer.setMute(true);

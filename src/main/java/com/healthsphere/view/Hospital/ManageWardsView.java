@@ -382,8 +382,6 @@ public class ManageWardsView {
         );
 
         topBar.getChildren().addAll(
-                searchIcon,
-                searchField,
                 spacer,
                 notification,
                 settings,

@@ -1,25 +1,25 @@
 /* Root Container */
 .root {
-    -fx-background-color: linear-gradient(to bottom right, #F4F8FC, #EEF3FF);
+    -fx-background-color: linear-gradient(to bottom right, #F4F8FC 0%, #EAF2FF 50%, #EEF0FF 100%);
     -fx-font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
 }
 
 /* Header Bar */
 .header-bar {
-    -fx-background-color: #FFFFFF;
-    -fx-padding: 16px 32px;
+    -fx-background-color: rgba(255, 255, 255, 0.85);
+    -fx-padding: 16px 36px;
     -fx-border-color: #E2E8F0;
     -fx-border-width: 0 0 1 0;
     -fx-alignment: center-left;
 }
 
 .brand-title {
-    -fx-font-size: 20px;
-    -fx-font-weight: bold;
-    -fx-fill: #2F80ED;
+    -fx-font-size: 22px;
+    -fx-font-weight: 800;
+    -fx-fill: #12355B;
 }
 
-/* Primary Button (Sign Up) */
+/* Primary Button (Log In) */
 .btn-primary {
     -fx-background-color: #2F80ED;
     -fx-text-fill: #FFFFFF;
@@ -28,25 +28,51 @@
     -fx-background-radius: 8px;
     -fx-padding: 12px 32px;
     -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(47, 128, 237, 0.25), 10, 0, 0, 4);
 }
 
 .btn-primary:hover {
-    -fx-background-color: #1D4E7A;
+    -fx-background-color: #1E6BDB;
+    -fx-effect: dropshadow(three-pass-box, rgba(47, 128, 237, 0.35), 14, 0, 0, 6);
 }
 
-/* Teal / Success Button (Register) */
+.btn-primary:pressed {
+    -fx-background-color: #1557B0;
+}
+
+.btn-primary:focused {
+    -fx-border-color: #93C5FD;
+    -fx-border-width: 2px;
+    -fx-border-radius: 8px;
+}
+
+/* Secondary Button (Register) */
 .btn-teal {
-    -fx-background-color: #2F80ED;
-    -fx-text-fill: #FFFFFF;
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: #2F80ED;
+    -fx-border-width: 2px;
+    -fx-text-fill: #2F80ED;
     -fx-font-weight: bold;
     -fx-font-size: 15px;
     -fx-background-radius: 8px;
-    -fx-padding: 12px 32px;
+    -fx-border-radius: 8px;
+    -fx-padding: 11px 30px;
     -fx-cursor: hand;
 }
 
 .btn-teal:hover {
-    -fx-background-color: #1D4E7A;
+    -fx-background-color: #EAF2FF;
+    -fx-text-fill: #1E6BDB;
+    -fx-border-color: #1E6BDB;
+}
+
+.btn-teal:pressed {
+    -fx-background-color: #D6E4F0;
+}
+
+.btn-teal:focused {
+    -fx-border-color: #12355B;
+    -fx-border-width: 2px;
 }
 
 /* Icon Buttons */
@@ -56,12 +82,17 @@
     -fx-cursor: hand;
 }
 
+.icon-btn:hover {
+    -fx-background-color: rgba(47, 128, 237, 0.08);
+    -fx-background-radius: 6px;
+}
+
 /* Profile Avatar */
 .avatar-circle {
-    -fx-background-color: #CBD5E1;
+    -fx-background-color: #E2E8F0;
     -fx-background-radius: 50%;
-    -fx-min-width: 32px;
-    -fx-min-height: 32px;
+    -fx-min-width: 34px;
+    -fx-min-height: 34px;
     -fx-alignment: center;
 }
 
@@ -78,19 +109,31 @@
     -fx-fill: #2F80ED;
 }
 
+.hero-subtitle-tagline {
+    -fx-font-size: 16px;
+    -fx-font-weight: 600;
+    -fx-fill: #12355B;
+}
+
 .hero-description {
     -fx-font-size: 15px;
     -fx-text-fill: #64748B;
+    -fx-line-spacing: 3px;
+}
+
+/* Logo Presentation Box */
+.welcome-logo-box {
+    -fx-padding: 8px 0px;
 }
 
 /* Floating Card Component */
 .floating-card {
-    -fx-background-color: rgba(255, 255, 255, 0.92);
-    -fx-background-radius: 12px;
+    -fx-background-color: rgba(255, 255, 255, 0.95);
+    -fx-background-radius: 14px;
     -fx-padding: 16px;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.12), 16, 0, 0, 8);
-    -fx-border-color: rgba(255, 255, 255, 0.6);
-    -fx-border-radius: 12px;
+    -fx-effect: dropshadow(three-pass-box, rgba(18, 53, 91, 0.12), 20, 0, 0, 8);
+    -fx-border-color: rgba(255, 255, 255, 0.8);
+    -fx-border-radius: 14px;
 }
 
 .floating-card-title {
@@ -101,8 +144,8 @@
 
 /* Footer Styles */
 .footer-bar {
-    -fx-background-color: #F8FAFC;
-    -fx-padding: 16px 32px;
+    -fx-background-color: rgba(248, 250, 252, 0.9);
+    -fx-padding: 16px 36px;
     -fx-border-color: #E2E8F0;
     -fx-border-width: 1 0 0 0;
 }
@@ -127,5 +170,5 @@
 }
 
 .footer-link:hover {
-    -fx-text-fill: #172B4D;
-}
+    -fx-text-fill: #2F80ED;
+}

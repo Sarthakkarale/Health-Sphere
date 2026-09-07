@@ -248,49 +248,18 @@ public class Appointments {
 
 
         // =====================================================
-        // LOAD APPOINTMENTS
-        // =====================================================
-
-        List<Appointment> appointments =
-                new ArrayList<>();
-
-        String errorMessage =
-                null;
-
-        try {
-
-            List<Appointment> loadedAppointments =
-                    appointmentController
-                            .getCurrentPatientAppointments();
-
-            if (loadedAppointments != null) {
-
-                appointments =
-                        loadedAppointments;
-            }
-
-        } catch (Exception e) {
-
-            errorMessage =
-                    e.getMessage();
-
-            System.err.println(
-                    "Unable to load appointments: "
-                            + errorMessage
-            );
-        }
-
-
-        final List<Appointment> finalApps = appointments;
-        final String finalErr = errorMessage;
-
-        // =====================================================
         // FILTER BAR & DYNAMIC VIEWS CONTAINER
         // =====================================================
 
         VBox dynamicContainer = new VBox(15);
         dynamicContainer.setMinWidth(0);
         dynamicContainer.setMaxWidth(Double.MAX_VALUE);
+
+        // Show Shimmer Immediately
+        dynamicContainer.getChildren().add(com.healthsphere.util.ShimmerPlaceholder.createListShimmer(3));
+
+        final List<Appointment> appointmentsList = new ArrayList<>();
+        final int[] activeTabIndex = new int[]{0};
 
         HBox filterBar = new HBox(12);
         filterBar.setPadding(new Insets(10, 0, 10, 0));
@@ -305,6 +274,7 @@ public class Appointments {
             filterBtns[i] = btn;
 
             btn.setOnAction(e -> {
+                activeTabIndex[0] = tabIndex;
                 for (int j = 0; j < filterBtns.length; j++) {
                     if (j == tabIndex) {
                         filterBtns[j].setStyle("-fx-background-color: #2563eb; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 20; -fx-padding: 8 18; -fx-cursor: hand;");
@@ -312,18 +282,42 @@ public class Appointments {
                         filterBtns[j].setStyle("-fx-background-color: #e2e8f0; -fx-text-fill: #475569; -fx-font-weight: bold; -fx-background-radius: 20; -fx-padding: 8 18; -fx-cursor: hand;");
                     }
                 }
-                renderFilterView(dynamicContainer, tabIndex, finalApps, finalErr);
+                renderFilterView(dynamicContainer, tabIndex, appointmentsList, null);
             });
             filterBar.getChildren().add(btn);
         }
 
-        // Set default filter: All Appointments (index 0)
         filterBtns[0].setStyle("-fx-background-color: #2563eb; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 20; -fx-padding: 8 18; -fx-cursor: hand;");
         for (int j = 1; j < filterBtns.length; j++) {
             filterBtns[j].setStyle("-fx-background-color: #e2e8f0; -fx-text-fill: #475569; -fx-font-weight: bold; -fx-background-radius: 20; -fx-padding: 8 18; -fx-cursor: hand;");
         }
 
-        renderFilterView(dynamicContainer, 0, finalApps, finalErr);
+        // Asynchronous Firebase Data Load
+        javafx.concurrent.Task<List<Appointment>> loadTask = new javafx.concurrent.Task<>() {
+            @Override
+            protected List<Appointment> call() throws Exception {
+                List<Appointment> loaded = appointmentController.getCurrentPatientAppointments();
+                return loaded != null ? loaded : new ArrayList<>();
+            }
+        };
+
+        loadTask.setOnSucceeded(e -> {
+            dynamicContainer.getChildren().clear();
+            appointmentsList.clear();
+            appointmentsList.addAll(loadTask.getValue());
+            renderFilterView(dynamicContainer, activeTabIndex[0], appointmentsList, null);
+        });
+
+        loadTask.setOnFailed(e -> {
+            dynamicContainer.getChildren().clear();
+            Throwable ex = loadTask.getException();
+            String err = ex != null ? ex.getMessage() : "Unable to load appointments.";
+            renderFilterView(dynamicContainer, activeTabIndex[0], new ArrayList<>(), err);
+        });
+
+        Thread bgThread = new Thread(loadTask);
+        bgThread.setDaemon(true);
+        bgThread.start();
 
         setupIncomingCallListener();
 
@@ -799,36 +793,16 @@ public class Appointments {
     // =========================================================
 
     private void renderPaymentHistory(VBox container) {
-        VBox card = PatientUI.card("Payment History & Account Balance");
+        VBox card = PatientUI.card("Payment History");
 
-        // Account Balance Banner
-        double currentBal = 0.00;
         String patientUid = SessionManager.getPatientUid();
-        if (patientUid != null && !patientUid.isBlank()) {
-            currentBal = paymentController.getPatientAccountBalance(patientUid);
-        }
-
-        HBox balBox = new HBox(15);
-        balBox.setPadding(new Insets(16));
-        balBox.setStyle("-fx-background-color: #0f172a; -fx-background-radius: 12;");
-        balBox.setAlignment(Pos.CENTER_LEFT);
-
-        VBox balTexts = new VBox(4);
-        Label balTitle = new Label("PATIENT ACCOUNT BALANCE");
-        balTitle.setStyle("-fx-text-fill: #94a3b8; -fx-font-size: 11px; -fx-font-weight: bold;");
-        Label balVal = new Label(String.format("₹%.2f", currentBal));
-        balVal.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 24px; -fx-font-weight: bold;");
-        balTexts.getChildren().addAll(balTitle, balVal);
-
-        balBox.getChildren().add(balTexts);
-        card.getChildren().add(balBox);
 
         List<PaymentRecord> records = paymentController.getPaymentsForPatient(patientUid);
         if (records == null || records.isEmpty()) {
             card.getChildren().add(emptyLabel("No payment transactions recorded yet."));
         } else {
             VBox list = new VBox(10);
-            list.setPadding(new Insets(10, 0, 0, 0));
+            list.setPadding(new Insets(6, 0, 0, 0));
 
             for (PaymentRecord record : records) {
                 HBox row = new HBox(15);

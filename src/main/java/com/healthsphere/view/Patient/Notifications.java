@@ -1,5 +1,6 @@
 package com.healthsphere.view.Patient;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -151,124 +152,71 @@ public class Notifications {
     // LOAD NOTIFICATIONS FROM FIRESTORE
     // =========================================================
 
-    private void loadNotifications(
-            VBox notificationsCard) {
+    private void loadNotifications(VBox notificationsCard) {
+        if (notificationsCard == null) return;
+        notificationsCard.getChildren().clear();
+        notificationsCard.getChildren().add(com.healthsphere.util.ShimmerPlaceholder.createListShimmer(3));
 
-        try {
-
-            List<Notification> notificationList =
-                    notificationController
-                            .getCurrentPatientNotifications();
-
-            // -------------------------------------------------
-            // SORT NEWEST FIRST
-            // -------------------------------------------------
-
-            notificationList.sort(
-                    Comparator.comparing(
+        javafx.concurrent.Task<List<Notification>> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected List<Notification> call() throws Exception {
+                List<Notification> list = notificationController.getCurrentPatientNotifications();
+                if (list != null) {
+                    list.sort(Comparator.comparing(
                             Notification::getCreatedAt,
-                            Comparator.nullsLast(
-                                    Comparator.reverseOrder()
-                            )
-                    )
-            );
+                            Comparator.nullsLast(Comparator.reverseOrder())
+                    ));
+                }
+                return list != null ? list : new ArrayList<>();
+            }
+        };
 
-            // -------------------------------------------------
-            // UNREAD COUNT
-            // -------------------------------------------------
-
-            int unreadCount =
-                    notificationController
-                            .getUnreadCount();
-
-            // -------------------------------------------------
-            // ADD UNREAD COUNT LABEL
-            // -------------------------------------------------
-
-            Label countLabel =
-                    new Label();
-
-            if (unreadCount > 0) {
-
-                countLabel.setText(
-                        unreadCount
-                                + " unread notification"
-                                + (unreadCount == 1 ? "" : "s")
-                );
-
-                countLabel.setStyle(
-                        "-fx-text-fill: #1d4ed8;" +
-                        "-fx-font-size: 13px;" +
-                        "-fx-font-weight: bold;"
-                );
-
-            } else {
-
-                countLabel.setText(
-                        "All notifications are read"
-                );
-
-                countLabel.setStyle(
-                        "-fx-text-fill: #64748b;" +
-                        "-fx-font-size: 13px;"
-                );
+        task.setOnSucceeded(e -> {
+            notificationsCard.getChildren().clear();
+            List<Notification> notificationList = task.getValue();
+            int unreadCount = 0;
+            for (Notification n : notificationList) {
+                if (n != null && !n.isRead()) unreadCount++;
             }
 
-            notificationsCard
-                    .getChildren()
-                    .add(countLabel);
-
-            // -------------------------------------------------
-            // NO NOTIFICATIONS
-            // -------------------------------------------------
+            Label countLabel = new Label();
+            if (unreadCount > 0) {
+                countLabel.setText(unreadCount + " unread notification" + (unreadCount == 1 ? "" : "s"));
+                countLabel.setStyle("-fx-text-fill: #1d4ed8; -fx-font-weight: bold; -fx-font-size: 13px;");
+            } else {
+                countLabel.setText("All notifications read");
+                countLabel.setStyle("-fx-text-fill: #64748b; -fx-font-size: 13px;");
+            }
+            notificationsCard.getChildren().add(countLabel);
 
             if (notificationList.isEmpty()) {
-
-                VBox emptyBox =
-                        createEmptyNotificationBox();
-
-                notificationsCard
-                        .getChildren()
-                        .add(emptyBox);
-
+                VBox emptyBox = new VBox(10);
+                emptyBox.setAlignment(Pos.CENTER);
+                emptyBox.setPadding(new Insets(20));
+                Label emptyLabel = new Label("No notifications found.");
+                emptyLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #64748b;");
+                emptyBox.getChildren().add(emptyLabel);
+                notificationsCard.getChildren().add(emptyBox);
                 return;
             }
 
-            // -------------------------------------------------
-            // DISPLAY NOTIFICATIONS
-            // -------------------------------------------------
-
-            for (Notification notification :
-                    notificationList) {
-
-                VBox notificationCard =
-                        createNotificationCard(
-                                notification,
-                                notificationsCard
-                        );
-
-                notificationsCard
-                        .getChildren()
-                        .add(
-                                notificationCard
-                        );
+            for (Notification notification : notificationList) {
+                if (notification != null) {
+                    notificationsCard.getChildren().add(createNotificationCard(notification, notificationsCard));
+                }
             }
+        });
 
-        } catch (Exception e) {
+        task.setOnFailed(e -> {
+            notificationsCard.getChildren().clear();
+            Label errLbl = new Label("Unable to load notifications. Please try again.");
+            errLbl.setStyle("-fx-text-fill: #dc2626; -fx-font-weight: bold;");
+            notificationsCard.getChildren().add(errLbl);
+        });
 
-            e.printStackTrace();
-
-            VBox errorBox =
-                    createErrorNotificationBox(
-                            e.getMessage()
-                    );
-
-            notificationsCard
-                    .getChildren()
-                    .add(
-                            errorBox
-                    );
-        }
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();
     }
 
     // =========================================================

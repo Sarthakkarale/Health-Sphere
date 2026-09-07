@@ -722,108 +722,56 @@ public class UserManagementView {
     // ============================================================
 
     private void loadUsers() {
-
         if (userTableContainer == null) {
             return;
         }
 
-        try {
+        userTableContainer.getChildren().clear();
+        userTableContainer.getChildren().add(com.healthsphere.util.ShimmerPlaceholder.createListShimmer(3));
 
-            List<UserProfile> users =
-                    userDirectoryController
-                            .getAllUsers();
+        javafx.concurrent.Task<List<UserProfile>> loadTask = new javafx.concurrent.Task<>() {
+            @Override
+            protected List<UserProfile> call() throws Exception {
+                List<UserProfile> users = userDirectoryController.getAllUsers();
+                return users != null ? users : new ArrayList<>();
+            }
+        };
 
+        loadTask.setOnSucceeded(e -> {
+            userTableContainer.getChildren().clear();
             userData.clear();
+            List<UserProfile> users = loadTask.getValue();
 
-            if (users != null) {
+            for (UserProfile profile : users) {
+                if (profile == null) continue;
+                String email = safe(profile.getEmail());
+                String role = safe(profile.getRole());
+                String status = normalizeStatus(profile.getStatus());
 
-                for (
-                        UserProfile profile :
-                        users
-                ) {
+                if (!"ACTIVE".equals(status)) continue;
+                if (email.isEmpty()) email = "N/A";
+                if (role.isEmpty()) continue;
+                if (!"PATIENT".equals(role) && !"DOCTOR".equals(role) && !"HOSPITAL".equals(role)) continue;
 
-                    if (profile == null) {
-                        continue;
-                    }
-
-                    String email =
-                            safe(
-                                    profile.getEmail()
-                            );
-
-                    String role =
-                            safe(
-                                    profile.getRole()
-                            );
-
-                    String status =
-                            normalizeStatus(
-                                    profile.getStatus()
-                            );
-
-                    /*
-                     * IMPORTANT:
-                     *
-                     * Only ACTIVE accounts are displayed.
-                     *
-                     * This means:
-                     * ACTIVE  = Approved
-                     * PENDING = Not shown
-                     * INACTIVE = Not shown
-                     * SUSPENDED = Not shown
-                     */
-
-                    if (!"ACTIVE".equals(status)) {
-                        continue;
-                    }
-
-                    if (email.isEmpty()) {
-                        email = "N/A";
-                    }
-
-                    if (role.isEmpty()) {
-                        continue;
-                    }
-
-                    // Only these three roles are required.
-                    if (
-                            !"PATIENT".equals(role) &&
-                            !"DOCTOR".equals(role) &&
-                            !"HOSPITAL".equals(role)
-                    ) {
-                        continue;
-                    }
-
-                    userData.add(
-                            new UserRecord(
-                                    email,
-                                    role,
-                                    status
-                            )
-                    );
-                }
+                userData.add(new UserRecord(email, role, status));
             }
 
             updateUserCount();
-
             renderUserRows();
+        });
 
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
+        loadTask.setOnFailed(e -> {
+            userTableContainer.getChildren().clear();
             userData.clear();
-
             updateUserCount();
-
             renderUserRows();
+            Throwable ex = loadTask.getException();
+            showErrorAlert("Unable to Load Users", "The approved user directory could not be loaded from Firestore.\n\n" + (ex != null ? ex.getMessage() : ""));
+        });
 
-            showErrorAlert(
-                    "Unable to Load Users",
-                    "The approved user directory could not be loaded from Firestore.\n\n"
-                            + e.getMessage()
-            );
-        }
+        Thread bgThread = new Thread(loadTask);
+        bgThread.setDaemon(true);
+        bgThread.start();
     }
 
     // ============================================================

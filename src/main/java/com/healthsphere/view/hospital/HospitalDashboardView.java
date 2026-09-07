@@ -641,7 +641,6 @@ public class HospitalDashboardView {
         );
 
         topBar.getChildren().addAll(
-                searchBox,
                 spacer,
                 notification,
                 settings,
@@ -2324,13 +2323,6 @@ public class HospitalDashboardView {
                         SUCCESS_LIGHT
                 );
 
-        Button analytics =
-                createActionButton(
-                        "◈  View Analytics",
-                        WARNING_ORANGE,
-                        WARNING_LIGHT
-                );
-
         addDoctor.setOnAction(
                 event ->
                         navigateSafely(
@@ -2361,21 +2353,10 @@ public class HospitalDashboardView {
                         )
         );
 
-        analytics.setOnAction(
-                event ->
-                        navigateSafely(
-                                stage,
-                                () ->
-                                        new HospitalAnalyticsView()
-                                                .createScene(stage)
-                        )
-        );
-
         buttons.getChildren().addAll(
                 addDoctor,
                 appointments,
-                beds,
-                analytics
+                beds
         );
 
         card.getChildren().add(

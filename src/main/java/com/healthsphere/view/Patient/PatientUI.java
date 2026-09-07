@@ -568,27 +568,8 @@ private static VBox createSidebar(
     logo.setStyle(
             "-fx-text-fill: white;" +
             "-fx-font-size: 21px;" +
-            "-fx-font-weight: bold;"
-    );
-
-    Label module =
-            new Label(
-                    "Patient Module"
-            );
-
-    module.setPadding(
-            new Insets(
-                    8,
-                    10,
-                    4,
-                    10
-            )
-    );
-
-    module.setStyle(
-            "-fx-text-fill: #D6E4F0;" +
-            "-fx-font-size: 12px;" +
-            "-fx-font-weight: bold;"
+            "-fx-font-weight: bold;" +
+            "-fx-padding: 4 0 8 0;"
     );
 
     Separator separator =
@@ -600,7 +581,6 @@ private static VBox createSidebar(
 
     sidebar.getChildren().addAll(
             logo,
-            module,
             separator
     );
 

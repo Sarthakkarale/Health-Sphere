@@ -443,6 +443,22 @@ public class ProfileSettings {
                 )
         );
 
+        /*
+         * About Us
+         */
+
+        preferences.getChildren().add(
+                setting(
+                        "About Us",
+                        "Learn more about HealthSphere digital healthcare ecosystem.",
+                        "About Us",
+                        () -> stage.setScene(
+                                new AboutUs(stage)
+                                        .getScene()
+                        )
+                )
+        );
+
         // =====================================================
         // SAVE BUTTON
         // =====================================================
@@ -1063,6 +1079,15 @@ public class ProfileSettings {
             String description,
             Runnable action
     ) {
+        return setting(title, description, "Manage", action);
+    }
+
+    private HBox setting(
+            String title,
+            String description,
+            String buttonText,
+            Runnable action
+    ) {
 
         HBox row =
                 new HBox(15);
@@ -1126,7 +1151,7 @@ public class ProfileSettings {
 
         Button configure =
                 new Button(
-                        "Manage"
+                        buttonText != null ? buttonText : "Manage"
                 );
 
         configure.setStyle(

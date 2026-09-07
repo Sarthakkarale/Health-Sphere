@@ -35,6 +35,10 @@ public class MedicalTourismController {
         return medicalTourismDAO.getHospitalRequests(hospitalId);
     }
 
+    public List<MedicalTourismRequest> getDoctorRequests(String doctorId) {
+        return medicalTourismDAO.getDoctorRequests(doctorId);
+    }
+
     public MedicalTourismRequest getRequestById(String requestId) {
         return medicalTourismDAO.getRequestById(requestId);
     }

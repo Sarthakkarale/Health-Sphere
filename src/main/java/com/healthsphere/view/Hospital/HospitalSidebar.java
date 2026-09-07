@@ -25,7 +25,6 @@ public class HospitalSidebar {
         APPOINTMENTS("▣", "Appointments"),
         PAYMENTS("💳", "Payment History"),
         REVIEWS("★", "Patient Reviews"),
-        ANALYTICS("◈", "Analytics"),
         MEDICAL_TOURISM("✈", "Medical Tourism"),
         SETTINGS("⚙", "Hospital Settings");
 
@@ -69,6 +68,8 @@ public class HospitalSidebar {
     public static VBox createSidebar(Stage stage, HospitalTab activeTab) {
         VBox sidebar = new VBox(6);
         sidebar.setPrefWidth(240);
+        sidebar.setMinWidth(240);
+        sidebar.setMaxWidth(240);
         sidebar.setPadding(new Insets(24, 16, 20, 16));
 
         sidebar.setStyle(
@@ -81,7 +82,7 @@ public class HospitalSidebar {
         // LOGO BRANDING
         // =====================================================
         VBox logoBox = new VBox(2);
-        logoBox.setPadding(new Insets(0, 8, 24, 8));
+        logoBox.setPadding(new Insets(0, 8, 12, 8));
 
         Label logo = new Label("Health-Sphere");
         logo.setStyle(
@@ -101,6 +102,13 @@ public class HospitalSidebar {
         logoBox.getChildren().addAll(logo, subtitle);
         sidebar.getChildren().add(logoBox);
 
+        // Separator below logo
+        Region logoSeparator = new Region();
+        logoSeparator.setPrefHeight(1);
+        logoSeparator.setStyle("-fx-background-color: " + SIDEBAR_BORDER + ";");
+        VBox.setMargin(logoSeparator, new Insets(0, 4, 8, 4));
+        sidebar.getChildren().add(logoSeparator);
+
         // =====================================================
         // NAVIGATION BUTTONS
         // =====================================================
@@ -118,6 +126,13 @@ public class HospitalSidebar {
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
         sidebar.getChildren().add(spacer);
+
+        // Separator above footer
+        Region footerSeparator = new Region();
+        footerSeparator.setPrefHeight(1);
+        footerSeparator.setStyle("-fx-background-color: " + SIDEBAR_BORDER + ";");
+        VBox.setMargin(footerSeparator, new Insets(8, 4, 8, 4));
+        sidebar.getChildren().add(footerSeparator);
 
         // =====================================================
         // FOOTER ACTIONS
@@ -161,9 +176,6 @@ public class HospitalSidebar {
                     break;
                 case REVIEWS:
                     stage.setScene(new HospitalReviewView().createScene(stage));
-                    break;
-                case ANALYTICS:
-                    stage.setScene(new HospitalAnalyticsView().createScene(stage));
                     break;
                 case MEDICAL_TOURISM:
                     stage.setScene(new HospitalMedicalTourismView().createScene(stage));

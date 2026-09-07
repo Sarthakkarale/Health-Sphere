@@ -791,7 +791,6 @@ public class DepartmentManagementView {
                 );
 
         topBar.getChildren().addAll(
-                searchBox,
                 spacer,
                 notification,
                 settings,

@@ -468,7 +468,6 @@ public class HospitalProfileSettingsView {
 
         topBar.getChildren()
                 .addAll(
-                        searchBox,
                         topSpacer,
                         notification,
                         settings,

@@ -126,7 +126,7 @@ public class HospitalAnalyticsView {
         BorderPane root = new BorderPane();
         root.setStyle("-fx-background-color: " + LIGHT_BACKGROUND + ";");
 
-        root.setLeft(HospitalSidebar.createSidebar(stage, HospitalSidebar.HospitalTab.ANALYTICS));
+        root.setLeft(HospitalSidebar.createSidebar(stage, null));
         root.setTop(createTopBar());
 
         // Smooth scroll wrapper
@@ -145,7 +145,7 @@ public class HospitalAnalyticsView {
     // =========================================================
 
     private VBox createSidebar(Stage stage) {
-        return HospitalSidebar.createSidebar(stage, HospitalSidebar.HospitalTab.ANALYTICS);
+        return HospitalSidebar.createSidebar(stage, null);
     }
 
     // =========================================================

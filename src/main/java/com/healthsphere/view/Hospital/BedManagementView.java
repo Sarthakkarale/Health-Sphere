@@ -439,8 +439,6 @@ public class BedManagementView {
         );
 
         topBar.getChildren().addAll(
-                searchIcon,
-                globalSearch,
                 spacer,
                 notification,
                 settings,
@@ -718,10 +716,7 @@ public class BedManagementView {
         );
 
         addBed.setOnAction(
-                e -> stage.setScene(
-                        new AddBedView()
-                                .createScene(stage)
-                )
+                e -> showAddBedDialog(stage)
         );
 
         HBox actions =
@@ -2871,6 +2866,166 @@ public class BedManagementView {
         );
 
         alert.showAndWait();
+    }
+
+    // =========================================================
+    // ADD BED MODAL DIALOG
+    // =========================================================
+
+    private void showAddBedDialog(Stage owner) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(owner);
+        dialog.setTitle("Add New Bed");
+
+        VBox layout = new VBox(12);
+        layout.setPadding(new Insets(20));
+        layout.setStyle("-fx-background-color: white;");
+
+        Label dialogTitle = new Label("Register New Bed");
+        dialogTitle.setStyle(
+                "-fx-font-size: 16px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: " + DARK_TEXT + ";"
+        );
+
+        TextField bedNumberInput = new TextField();
+        bedNumberInput.setPromptText("Bed Number / ID (e.g. ICU-104)");
+
+        ComboBox<HospitalWard> wardCombo = new ComboBox<>();
+        wardCombo.setPromptText("Select Ward");
+        wardCombo.setMaxWidth(Double.MAX_VALUE);
+        wardCombo.setConverter(new javafx.util.StringConverter<HospitalWard>() {
+            @Override
+            public String toString(HospitalWard ward) {
+                return ward == null ? "" : ward.getName();
+            }
+
+            @Override
+            public HospitalWard fromString(String string) {
+                return null;
+            }
+        });
+
+        if (wardList != null && !wardList.isEmpty()) {
+            wardCombo.getItems().addAll(wardList);
+        } else {
+            try {
+                List<HospitalWard> fetchedWards = wardController.getAllWards();
+                if (fetchedWards != null) {
+                    wardCombo.getItems().addAll(fetchedWards);
+                }
+            } catch (Exception ex) {
+                // Ignore fallback
+            }
+        }
+
+        ComboBox<String> typeCombo = new ComboBox<>();
+        typeCombo.getItems().addAll("Standard", "ICU / Ventilator", "Bariatric", "Pediatric");
+        typeCombo.setValue("Standard");
+        typeCombo.setMaxWidth(Double.MAX_VALUE);
+
+        ComboBox<String> statusCombo = new ComboBox<>();
+        statusCombo.getItems().addAll("Available", "Occupied", "Maintenance", "Reserved");
+        statusCombo.setValue("Available");
+        statusCombo.setMaxWidth(Double.MAX_VALUE);
+
+        HBox buttonBox = new HBox(10);
+        buttonBox.setAlignment(Pos.CENTER_RIGHT);
+        buttonBox.setPadding(new Insets(10, 0, 0, 0));
+
+        Button cancelBtn = new Button("Cancel");
+        cancelBtn.setStyle(
+                "-fx-background-color: transparent;" +
+                "-fx-border-color: " + BORDER + ";" +
+                "-fx-border-radius: 6;" +
+                "-fx-padding: 8 16;" +
+                "-fx-cursor: hand;"
+        );
+        cancelBtn.setOnAction(e -> dialog.close());
+
+        Button saveButton = new Button("Add Bed");
+        saveButton.setStyle(
+                "-fx-background-color: " + PRIMARY_BLUE + ";" +
+                "-fx-text-fill: white;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-radius: 6;" +
+                "-fx-cursor: hand;" +
+                "-fx-padding: 8 16;"
+        );
+
+        saveButton.setOnAction(event -> {
+            String bedNum = bedNumberInput.getText() == null ? "" : bedNumberInput.getText().trim();
+            HospitalWard selectedWard = wardCombo.getValue();
+            String bedType = typeCombo.getValue();
+            String status = statusCombo.getValue();
+
+            if (bedNum.isEmpty() || selectedWard == null || bedType == null || status == null) {
+                showAlert(Alert.AlertType.WARNING, "Validation Error", "Please complete all required fields.");
+                return;
+            }
+
+            if (status.equalsIgnoreCase("Occupied")) {
+                showAlert(
+                        Alert.AlertType.WARNING,
+                        "Invalid Initial Status",
+                        "A new bed cannot be marked Occupied here. Create the bed as Available or Reserved."
+                );
+                return;
+            }
+
+            // Duplicate Bed Number check
+            boolean isDuplicate = bedList.stream().anyMatch(b -> b.getBedNumber() != null && b.getBedNumber().equalsIgnoreCase(bedNum));
+            if (isDuplicate) {
+                showAlert(
+                        Alert.AlertType.WARNING,
+                        "Duplicate Bed Number",
+                        "A bed with number '" + bedNum + "' already exists in this hospital."
+                );
+                return;
+            }
+
+            saveButton.setDisable(true);
+            javafx.concurrent.Task<Void> saveTask = new javafx.concurrent.Task<>() {
+                @Override
+                protected Void call() throws Exception {
+                    bedController.createBed(selectedWard.getWardId(), bedNum, bedType, status);
+                    return null;
+                }
+
+                @Override
+                protected void succeeded() {
+                    dialog.close();
+                    showAlert(Alert.AlertType.INFORMATION, "Success", "Bed added successfully.");
+                    loadData();
+                }
+
+                @Override
+                protected void failed() {
+                    saveButton.setDisable(false);
+                    showAlert(Alert.AlertType.ERROR, "Unable to Add Bed", getErrorMessage(getException()));
+                }
+            };
+            new Thread(saveTask).start();
+        });
+
+        buttonBox.getChildren().addAll(cancelBtn, saveButton);
+
+        layout.getChildren().addAll(
+                dialogTitle,
+                new Label("Bed Number / ID:"),
+                bedNumberInput,
+                new Label("Assign Ward:"),
+                wardCombo,
+                new Label("Bed Type:"),
+                typeCombo,
+                new Label("Initial Status:"),
+                statusCombo,
+                buttonBox
+        );
+
+        dialog.setScene(new Scene(layout, 400, 430));
+        dialog.showAndWait();
     }
 
     // =========================================================

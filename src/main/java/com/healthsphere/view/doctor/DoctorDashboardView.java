@@ -2824,31 +2824,6 @@ public class DoctorDashboardView {
     // ============================================================
 
     private String getDoctorDisplayName() {
-        for (Appointment appointment :
-                doctorAppointments) {
-
-            if (appointment == null) {
-                continue;
-            }
-
-            String doctorName =
-                    appointment.getDoctorName();
-
-            if (doctorName != null
-                    && !doctorName.isBlank()) {
-
-                String name =
-                        doctorName.trim();
-
-                if (!name.startsWith("Dr.")) {
-                    name = "Dr. " + name;
-                }
-
-                SessionManager.setDoctorDisplayName(name);
-                return name;
-            }
-        }
-
         return SessionManager.getDoctorDisplayName();
     }
 

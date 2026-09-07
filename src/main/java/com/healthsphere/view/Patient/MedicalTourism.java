@@ -122,38 +122,58 @@ public class MedicalTourism {
         recalculateTotal.run();
     }
 
+    private Button tab1Btn;
+    private Button tab2Btn;
+    private StackPane contentPane;
+    private VBox tab1Content;
+    private VBox tab2Content;
+
     public Scene getScene() {
         VBox mainContent = new VBox(20);
         mainContent.setPadding(new Insets(10));
         mainContent.setFillWidth(true);
 
-        mainTabPane = new TabPane();
-        mainTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-        mainTabPane.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        // Custom White Card Tab Bar (NO BLACK BAR)
+        HBox tabNavBar = new HBox(12);
+        tabNavBar.setPadding(new Insets(6));
+        tabNavBar.setStyle(
+                "-fx-background-color: #FFFFFF;" +
+                "-fx-background-radius: 12px;" +
+                "-fx-border-color: #E2E8F0;" +
+                "-fx-border-radius: 12px;" +
+                "-fx-effect: dropshadow(three-pass-box, rgba(18, 53, 91, 0.05), 10, 0, 0, 3);"
+        );
 
-        VBox tab1Content = buildFindTreatmentWizard();
-        Tab findTreatmentTab = new Tab("✈  Find Treatment & Request");
-        findTreatmentTab.setContent(tab1Content);
+        tab1Btn = new Button("✈  Find Treatment & Request");
+        tab2Btn = new Button("📋  My Medical Tourism Requests");
 
-        VBox tab2Content = buildMyRequestsHistoryView();
-        Tab myRequestsTab = new Tab("📋  My Medical Tourism Requests");
-        myRequestsTab.setContent(tab2Content);
+        tab1Content = buildFindTreatmentWizard();
+        tab2Content = buildMyRequestsHistoryView();
 
-        mainTabPane.getTabs().addAll(findTreatmentTab, myRequestsTab);
+        contentPane = new StackPane();
+        contentPane.getChildren().add(tab1Content);
 
-        // Dynamically bind TabPane height to the active tab's content height so outer ScrollPane can scroll everything
-        mainTabPane.prefHeightProperty().bind(tab1Content.heightProperty().add(80));
+        tab1Btn.setOnAction(e -> switchToTab(0));
+        tab2Btn.setOnAction(e -> switchToTab(1));
 
-        mainTabPane.getSelectionModel().selectedIndexProperty().addListener((obs, oldIdx, newIdx) -> {
-            mainTabPane.prefHeightProperty().unbind();
-            if (newIdx != null && newIdx.intValue() == 1) {
-                mainTabPane.prefHeightProperty().bind(tab2Content.heightProperty().add(80));
-            } else {
-                mainTabPane.prefHeightProperty().bind(tab1Content.heightProperty().add(80));
+        tab1Btn.setOnMouseEntered(e -> {
+            if (!contentPane.getChildren().contains(tab1Content)) {
+                tab1Btn.setStyle("-fx-background-color: #EEF4FF; -fx-text-fill: #2F80ED; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 8px; -fx-padding: 10px 22px; -fx-cursor: hand;");
             }
         });
+        tab1Btn.setOnMouseExited(e -> updateTabStyles());
 
-        mainContent.getChildren().add(mainTabPane);
+        tab2Btn.setOnMouseEntered(e -> {
+            if (!contentPane.getChildren().contains(tab2Content)) {
+                tab2Btn.setStyle("-fx-background-color: #EEF4FF; -fx-text-fill: #2F80ED; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 8px; -fx-padding: 10px 22px; -fx-cursor: hand;");
+            }
+        });
+        tab2Btn.setOnMouseExited(e -> updateTabStyles());
+
+        updateTabStyles();
+        tabNavBar.getChildren().addAll(tab1Btn, tab2Btn);
+
+        mainContent.getChildren().addAll(tabNavBar, contentPane);
 
         return PatientUI.createScene(
                 stage,
@@ -162,6 +182,25 @@ public class MedicalTourism {
                 "Discover accredited hospitals and top specialists for world-class treatment, location and budget.",
                 mainContent
         );
+    }
+
+    private void switchToTab(int index) {
+        contentPane.getChildren().clear();
+        if (index == 1) {
+            contentPane.getChildren().add(tab2Content);
+        } else {
+            contentPane.getChildren().add(tab1Content);
+        }
+        updateTabStyles();
+    }
+
+    private void updateTabStyles() {
+        boolean isTab1 = contentPane.getChildren().contains(tab1Content);
+        String activeStyle = "-fx-background-color: #2F80ED; -fx-text-fill: #FFFFFF; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 8px; -fx-padding: 10px 22px; -fx-cursor: hand;";
+        String inactiveStyle = "-fx-background-color: transparent; -fx-text-fill: #172B4D; -fx-font-weight: bold; -fx-font-size: 14px; -fx-background-radius: 8px; -fx-padding: 10px 22px; -fx-cursor: hand;";
+
+        if (tab1Btn != null) tab1Btn.setStyle(isTab1 ? activeStyle : inactiveStyle);
+        if (tab2Btn != null) tab2Btn.setStyle(!isTab1 ? activeStyle : inactiveStyle);
     }
 
     // =========================================================================
@@ -227,9 +266,6 @@ public class MedicalTourism {
 
         wizardContainer.applyCss();
         wizardContainer.layout();
-        if (mainTabPane != null) {
-            mainTabPane.requestLayout();
-        }
     }
 
     // =========================================================================
@@ -1171,9 +1207,7 @@ public class MedicalTourism {
             currentStep = 1;
             renderCurrentStep();
 
-            if (mainTabPane != null) {
-                mainTabPane.getSelectionModel().select(1); // Switch to My Requests tab
-            }
+            switchToTab(1); // Switch to My Requests tab
         } catch (Exception ex) {
             showAlert("Error", "Could not submit Medical Tourism Request: " + ex.getMessage());
         }
@@ -1225,9 +1259,7 @@ public class MedicalTourism {
                 Button startBtn = new Button("Start Medical Tourism");
                 startBtn.setStyle("-fx-background-color: #2F80ED; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 18; -fx-background-radius: 8; -fx-cursor: hand;");
                 startBtn.setOnAction(evt -> {
-                    if (mainTabPane != null) {
-                        mainTabPane.getSelectionModel().select(0);
-                    }
+                    switchToTab(0);
                 });
 
                 emptyBox.getChildren().addAll(icon, title, desc, startBtn);

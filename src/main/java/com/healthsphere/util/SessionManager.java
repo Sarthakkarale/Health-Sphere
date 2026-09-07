@@ -98,6 +98,20 @@ public final class SessionManager {
             return cachedDoctorName;
         }
 
+        String docUid = getDoctorUid();
+        if (docUid != null && !docUid.isBlank()) {
+            try {
+                com.healthsphere.dao.authentication.DoctorDAO dao = new com.healthsphere.dao.authentication.DoctorDAO();
+                com.healthsphere.model.DoctorProfile prof = dao.getDoctorProfile(docUid);
+                if (prof != null) {
+                    setDoctorProfile(prof);
+                    if (cachedDoctorName != null && !cachedDoctorName.isBlank()) {
+                        return cachedDoctorName;
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
         try {
             UserProfile user = getCurrentUser();
             if (user != null && user.getEmail() != null) {
@@ -127,7 +141,22 @@ public final class SessionManager {
 
     public static void setDoctorDisplayName(String name) {
         if (name != null && !name.isBlank()) {
-            cachedDoctorName = name;
+            if (!name.trim().startsWith("Dr.")) {
+                name = "Dr. " + name.trim();
+            }
+            cachedDoctorName = name.trim();
+        }
+    }
+
+    public static void setDoctorProfile(com.healthsphere.model.DoctorProfile profile) {
+        if (profile != null) {
+            String firstName = profile.getFirstName() != null ? profile.getFirstName().trim() : "";
+            String lastName = profile.getLastName() != null ? profile.getLastName().trim() : "";
+            String name = (firstName + " " + lastName).trim();
+            if (name.isBlank()) {
+                name = "Medical Practitioner";
+            }
+            setDoctorDisplayName(name);
         }
     }
 

@@ -441,40 +441,33 @@ public class SearchHospitals {
     // =========================================================
 
     private void loadHospitals() {
-
-        try {
-
-            System.out.println(
-                    "Loading hospitals..."
-            );
-
-            allHospitals =
-                    hospitalController
-                            .getAllHospitals();
-
-            if (allHospitals == null) {
-
-                allHospitals =
-                        new ArrayList<>();
-            }
-
-            System.out.println(
-                    "Hospitals loaded: "
-                            + allHospitals.size()
-            );
-
-            displayHospitals(
-                    allHospitals
-            );
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            showHospitalError(
-                    "Unable to load hospitals."
-            );
+        if (hospitalResults != null) {
+            hospitalResults.getChildren().clear();
+            hospitalResults.getChildren().add(com.healthsphere.util.ShimmerPlaceholder.createListShimmer(2));
         }
+
+        javafx.concurrent.Task<List<HospitalProfile>> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected List<HospitalProfile> call() throws Exception {
+                List<HospitalProfile> list = hospitalController.getAllHospitals();
+                return list != null ? list : new ArrayList<>();
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            allHospitals = task.getValue();
+            displayHospitals(allHospitals);
+        });
+
+        task.setOnFailed(e -> {
+            Throwable ex = task.getException();
+            if (ex != null) ex.printStackTrace();
+            showHospitalError("Unable to load hospitals.");
+        });
+
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();
     }
 
     // =========================================================
@@ -482,54 +475,33 @@ public class SearchHospitals {
     // =========================================================
 
     private void loadDoctors() {
-
-        try {
-
-            System.out.println(
-                    "Loading doctors from Firestore..."
-            );
-
-            allDoctors =
-                    doctorDAO.getAllDoctors();
-
-            if (allDoctors == null) {
-
-                allDoctors =
-                        new ArrayList<>();
-            }
-
-            System.out.println(
-                    "Doctors loaded: "
-                            + allDoctors.size()
-            );
-
-            for (DoctorProfile doctor :
-                    allDoctors) {
-
-                if (doctor == null) {
-                    continue;
-                }
-
-                System.out.println(
-                        "Doctor: "
-                                + getDoctorFullName(
-                                        doctor
-                                )
-                );
-            }
-
-            displayDoctors(
-                    allDoctors
-            );
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            showDoctorError(
-                    "Unable to load doctors from Firestore."
-            );
+        if (doctorResults != null) {
+            doctorResults.getChildren().clear();
+            doctorResults.getChildren().add(com.healthsphere.util.ShimmerPlaceholder.createListShimmer(2));
         }
+
+        javafx.concurrent.Task<List<DoctorProfile>> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected List<DoctorProfile> call() throws Exception {
+                List<DoctorProfile> list = doctorDAO.getAllDoctors();
+                return list != null ? list : new ArrayList<>();
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            allDoctors = task.getValue();
+            displayDoctors(allDoctors);
+        });
+
+        task.setOnFailed(e -> {
+            Throwable ex = task.getException();
+            if (ex != null) ex.printStackTrace();
+            showDoctorError("Unable to load doctors.");
+        });
+
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();
     }
 
     // =========================================================

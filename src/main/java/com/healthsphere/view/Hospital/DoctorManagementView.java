@@ -746,7 +746,6 @@ public class DoctorManagementView {
                 );
 
         topBar.getChildren().addAll(
-                searchBox,
                 spacer,
                 notification,
                 settings,
