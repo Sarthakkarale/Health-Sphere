@@ -52,12 +52,11 @@ public static Scene createScene(
     );
 
     try {
-        if (PatientUI.class.getResource("/images/subtle_medical_bg.png") != null) {
-            ImageView bgView = new ImageView(new Image(PatientUI.class.getResourceAsStream("/images/subtle_medical_bg.png")));
+        Image bgImg = com.healthsphere.util.ResourceImage.load("/images/subtle_medical_bg.png");
+        if (bgImg != null) {
+            ImageView bgView = new ImageView(bgImg);
             bgView.setOpacity(0.12);
             bgView.setPreserveRatio(false);
-            bgView.fitWidthProperty().bind(outerRoot.widthProperty());
-            bgView.fitHeightProperty().bind(outerRoot.heightProperty());
             outerRoot.getChildren().add(bgView);
         }
     } catch (Exception ignored) {
@@ -252,32 +251,6 @@ public static Scene createScene(
     );
 
     // =====================================================
-    // FORCE PAGE TO FOLLOW VIEWPORT WIDTH
-    // =====================================================
-
-    scroll.viewportBoundsProperty().addListener(
-            (obs, oldBounds, newBounds) -> {
-
-                if (newBounds != null) {
-
-                    double width =
-                            newBounds.getWidth();
-
-                    if (width > 0) {
-
-                        page.setPrefWidth(
-                                width
-                        );
-
-                        page.setMinWidth(
-                                width
-                        );
-                    }
-                }
-            }
-    );
-
-    // =====================================================
     // CENTER
     // =====================================================
 
@@ -308,17 +281,6 @@ public static Scene createScene(
     Button floatingAI =
             createFloatingAIButton(stage);
 
-    /*
-     * HealthMate is added directly to outerRoot.
-     *
-     * Therefore:
-     *
-     * 1. It stays fixed.
-     * 2. It does NOT scroll.
-     * 3. It remains above the page.
-     * 4. It remains in the bottom-right corner.
-     */
-
     StackPane.setAlignment(
             floatingAI,
             Pos.BOTTOM_RIGHT
@@ -348,26 +310,6 @@ public static Scene createScene(
                     stage.getWidth() > 0 ? stage.getWidth() : 1200,
                     stage.getHeight() > 0 ? stage.getHeight() : 750
             );
-
-    // =====================================================
-    // ROOT FOLLOWS SCENE SIZE
-    // =====================================================
-
-    outerRoot.prefWidthProperty().bind(
-            scene.widthProperty()
-    );
-
-    outerRoot.prefHeightProperty().bind(
-            scene.heightProperty()
-    );
-
-    root.prefWidthProperty().bind(
-            outerRoot.widthProperty()
-    );
-
-    root.prefHeightProperty().bind(
-            outerRoot.heightProperty()
-    );
 
     // =====================================================
     // INITIAL LAYOUT
@@ -1024,16 +966,18 @@ private static HBox createHeader(
 
     String profileButtonText = "Patient";
     try {
-        com.healthsphere.model.PatientProfile pProfile = new com.healthsphere.controller.patient.PatientController().getCurrentPatientProfile();
-        if (pProfile != null) {
-            String fname = pProfile.getFirstName() != null ? pProfile.getFirstName().trim() : "";
-            String lname = pProfile.getLastName() != null ? pProfile.getLastName().trim() : "";
-            String full = (fname + " " + lname).trim();
-            if (!full.isEmpty()) profileButtonText = full;
+        if (SessionManager.isLoggedIn()) {
+            com.healthsphere.model.PatientProfile pProfile = new com.healthsphere.controller.patient.PatientController().getCurrentPatientProfile();
+            if (pProfile != null) {
+                String fname = pProfile.getFirstName() != null ? pProfile.getFirstName().trim() : "";
+                String lname = pProfile.getLastName() != null ? pProfile.getLastName().trim() : "";
+                String full = (fname + " " + lname).trim();
+                if (!full.isEmpty()) profileButtonText = full;
+            }
         }
     } catch (Exception ex) {}
-    if ("Patient".equals(profileButtonText) && SessionManager.getInstance().getCurrentUser() != null) {
-        String uEmail = SessionManager.getInstance().getCurrentUser().getEmail();
+    if ("Patient".equals(profileButtonText) && SessionManager.isLoggedIn() && SessionManager.getCurrentUser() != null) {
+        String uEmail = SessionManager.getCurrentUser().getEmail();
         if (uEmail != null && uEmail.contains("@")) {
             profileButtonText = uEmail.substring(0, uEmail.indexOf('@'));
             if (!profileButtonText.isEmpty()) {

@@ -486,61 +486,41 @@ public class MedicalRecords {
     private void loadMedicalReports(
             VBox reportsCard) {
 
-        try {
+        VBox shimmer = com.healthsphere.util.ShimmerPlaceholder.createListShimmer(2);
+        reportsCard.getChildren().add(shimmer);
 
-            List<MedicalReport> reports =
-                    medicalReportController
-                            .getCurrentPatientReports();
+        javafx.concurrent.Task<List<MedicalReport>> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected List<MedicalReport> call() throws Exception {
+                return medicalReportController.getCurrentPatientReports();
+            }
+        };
 
-
-            if (reports.isEmpty()) {
-
-                Label empty =
-                        new Label(
-                                "No uploaded medical reports available."
-                        );
-
-                empty.setStyle(
-                        "-fx-text-fill: #64748b;" +
-                        "-fx-font-size: 14px;"
-                );
-
-                reportsCard.getChildren().add(
-                        empty
-                );
-
+        task.setOnSucceeded(e -> {
+            reportsCard.getChildren().remove(shimmer);
+            List<MedicalReport> reports = task.getValue();
+            if (reports == null || reports.isEmpty()) {
+                Label empty = new Label("No uploaded medical reports available.");
+                empty.setStyle("-fx-text-fill: #64748b; -fx-font-size: 14px;");
+                reportsCard.getChildren().add(empty);
                 return;
             }
 
-
-            for (MedicalReport report :
-                    reports) {
-
-                reportsCard.getChildren().add(
-                        medicalReportCard(
-                                report
-                        )
-                );
+            for (MedicalReport report : reports) {
+                reportsCard.getChildren().add(medicalReportCard(report));
             }
+        });
 
-        } catch (Exception e) {
+        task.setOnFailed(e -> {
+            reportsCard.getChildren().remove(shimmer);
+            Throwable ex = task.getException();
+            if (ex != null) ex.printStackTrace();
+            Label error = new Label("Unable to load uploaded medical reports.");
+            error.setStyle("-fx-text-fill: #dc2626; -fx-font-weight: bold;");
+            reportsCard.getChildren().add(error);
+        });
 
-            e.printStackTrace();
-
-            Label error =
-                    new Label(
-                            "Unable to load uploaded medical reports."
-                    );
-
-            error.setStyle(
-                    "-fx-text-fill: #dc2626;" +
-                    "-fx-font-weight: bold;"
-            );
-
-            reportsCard.getChildren().add(
-                    error
-            );
-        }
+        com.healthsphere.util.PatientBackgroundExecutor.execute(task);
     }
 
 
@@ -808,61 +788,41 @@ public class MedicalRecords {
     private void loadPrescriptions(
             VBox prescriptionsCard) {
 
-        try {
+        VBox shimmer = com.healthsphere.util.ShimmerPlaceholder.createListShimmer(2);
+        prescriptionsCard.getChildren().add(shimmer);
 
-            List<Prescription> prescriptions =
-                    prescriptionController
-                            .getCurrentPatientPrescriptions();
+        javafx.concurrent.Task<List<Prescription>> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected List<Prescription> call() throws Exception {
+                return prescriptionController.getCurrentPatientPrescriptions();
+            }
+        };
 
-
-            if (prescriptions.isEmpty()) {
-
-                Label empty =
-                        new Label(
-                                "No prescriptions available."
-                        );
-
-                empty.setStyle(
-                        "-fx-text-fill: #64748b;" +
-                        "-fx-font-size: 14px;"
-                );
-
-                prescriptionsCard.getChildren().add(
-                        empty
-                );
-
+        task.setOnSucceeded(e -> {
+            prescriptionsCard.getChildren().remove(shimmer);
+            List<Prescription> prescriptions = task.getValue();
+            if (prescriptions == null || prescriptions.isEmpty()) {
+                Label empty = new Label("No prescriptions available.");
+                empty.setStyle("-fx-text-fill: #64748b; -fx-font-size: 14px;");
+                prescriptionsCard.getChildren().add(empty);
                 return;
             }
 
-
-            for (Prescription prescription :
-                    prescriptions) {
-
-                prescriptionsCard.getChildren().add(
-                        prescriptionCard(
-                                prescription
-                        )
-                );
+            for (Prescription prescription : prescriptions) {
+                prescriptionsCard.getChildren().add(prescriptionCard(prescription));
             }
+        });
 
-        } catch (Exception e) {
+        task.setOnFailed(e -> {
+            prescriptionsCard.getChildren().remove(shimmer);
+            Throwable ex = task.getException();
+            if (ex != null) ex.printStackTrace();
+            Label error = new Label("Unable to load prescriptions.");
+            error.setStyle("-fx-text-fill: #dc2626; -fx-font-weight: bold;");
+            prescriptionsCard.getChildren().add(error);
+        });
 
-            e.printStackTrace();
-
-            Label error =
-                    new Label(
-                            "Unable to load prescriptions."
-                    );
-
-            error.setStyle(
-                    "-fx-text-fill: #dc2626;" +
-                    "-fx-font-weight: bold;"
-            );
-
-            prescriptionsCard.getChildren().add(
-                    error
-            );
-        }
+        com.healthsphere.util.PatientBackgroundExecutor.execute(task);
     }
 
 
@@ -1963,7 +1923,11 @@ public class MedicalRecords {
 
         Image image =
                 new Image(
-                        resource.toExternalForm()
+                        resource.toExternalForm(),
+                        260,
+                        145,
+                        true,
+                        true
                 );
 
 

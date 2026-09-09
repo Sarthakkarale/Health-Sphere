@@ -246,6 +246,15 @@ public class HospitalDashboardController {
             List<HospitalDoctorDetails> doctors =
                     getDoctors();
 
+            String departmentName = null;
+            try {
+                com.healthsphere.model.HospitalDepartment dept = departmentDAO.getDepartmentById(targetDepartmentId);
+                if (dept != null && dept.getName() != null) {
+                    departmentName = dept.getName().trim();
+                }
+            } catch (Exception ignore) {
+            }
+
             int count = 0;
 
             for (
@@ -253,24 +262,25 @@ public class HospitalDashboardController {
                     doctors
             ) {
 
-                if (doctor == null) {
+                if (doctor == null || !doctor.isActive()) {
+                    continue;
+                }
+
+                if ("Inactive".equalsIgnoreCase(doctor.getStatus())) {
                     continue;
                 }
 
                 String doctorDepartmentId =
                         doctor.getDepartmentId();
 
-                if (
-                        doctorDepartmentId != null
-                        &&
-                        doctorDepartmentId
-                                .trim()
-                                .equals(
-                                        targetDepartmentId
-                                )
-                ) {
+                if (doctorDepartmentId != null && !doctorDepartmentId.trim().isEmpty()) {
+                    String doctorDept = doctorDepartmentId.trim();
+                    boolean matchesId = doctorDept.equalsIgnoreCase(targetDepartmentId);
+                    boolean matchesName = (departmentName != null && doctorDept.equalsIgnoreCase(departmentName));
 
-                    count++;
+                    if (matchesId || matchesName) {
+                        count++;
+                    }
                 }
             }
 

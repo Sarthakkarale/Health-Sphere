@@ -1,7 +1,9 @@
 package com.healthsphere.view.hospital;
 
+import com.healthsphere.controller.hospital.DepartmentController;
 import com.healthsphere.controller.hospital.DoctorController;
 import com.healthsphere.model.DoctorProfile;
+import com.healthsphere.model.HospitalDepartment;
 import com.healthsphere.model.HospitalDoctorDetails;
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ShimmerPlaceholder;
@@ -275,6 +277,36 @@ public class DoctorManagementView {
 
         this.doctorController =
                 new DoctorController();
+    }
+
+    private List<String> getHospitalDepartmentNames() {
+        List<String> departmentOptions = new java.util.ArrayList<>();
+        try {
+            DepartmentController deptCtrl = new DepartmentController();
+            List<HospitalDepartment> depts = deptCtrl.getAllDepartments();
+            if (depts != null && !depts.isEmpty()) {
+                for (HospitalDepartment d : depts) {
+                    if (d != null && d.isActive() && d.getName() != null && !d.getName().trim().isEmpty()) {
+                        String name = d.getName().trim();
+                        if (!departmentOptions.contains(name)) {
+                            departmentOptions.add(name);
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            // Fallback
+        }
+        if (departmentOptions.isEmpty()) {
+            departmentOptions.addAll(List.of(
+                    "Cardiology",
+                    "Neurology",
+                    "Orthopedics",
+                    "Pediatrics",
+                    "General Medicine"
+            ));
+        }
+        return departmentOptions;
     }
 
     // =========================================================
@@ -2097,15 +2129,10 @@ public class DoctorManagementView {
         // DEPARTMENT
         // =====================================================
 
+        List<String> addDeptNames = getHospitalDepartmentNames();
         ComboBox<String> deptInput =
                 new ComboBox<>(
-                        FXCollections.observableArrayList(
-                                "Cardiology",
-                                "Neurology",
-                                "Orthopedics",
-                                "Pediatrics",
-                                "General Medicine"
-                        )
+                        FXCollections.observableArrayList(addDeptNames)
                 );
 
         deptInput.setPromptText(
@@ -2415,15 +2442,14 @@ public class DoctorManagementView {
                         + ";"
         );
 
+        List<String> editDeptNames = getHospitalDepartmentNames();
+        if (doctor.getDepartment() != null && !doctor.getDepartment().trim().isEmpty()
+                && !editDeptNames.contains(doctor.getDepartment().trim())) {
+            editDeptNames.add(doctor.getDepartment().trim());
+        }
         ComboBox<String> deptInput =
                 new ComboBox<>(
-                        FXCollections.observableArrayList(
-                                "Cardiology",
-                                "Neurology",
-                                "Orthopedics",
-                                "Pediatrics",
-                                "General Medicine"
-                        )
+                        FXCollections.observableArrayList(editDeptNames)
                 );
 
         deptInput.setValue(

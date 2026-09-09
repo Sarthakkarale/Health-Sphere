@@ -632,58 +632,6 @@ public class TodaysScheduleView {
         }
 
 
-        StackPane notificationBox =
-                new StackPane();
-
-
-        ImageView bellIcon =
-                createImageView(
-                        "/images/icons/ic_bell.png",
-                        18,
-                        18
-                );
-
-
-        Circle badge =
-                new Circle(
-                        4,
-                        Color.RED
-                );
-
-
-        StackPane.setAlignment(
-                badge,
-                Pos.TOP_RIGHT
-        );
-
-
-        if (bellIcon != null) {
-
-            notificationBox.getChildren()
-                    .add(
-                            bellIcon
-                    );
-        }
-
-
-        notificationBox.getChildren()
-                .add(
-                        badge
-                );
-
-
-        notificationBox.getStyleClass()
-                .add(
-                        "clickable-icon"
-                );
-
-
-        notificationBox.setOnMouseClicked(
-                e ->
-                        showNotificationDialog()
-        );
-
-
         ImageView userAvatar =
                 createImageView(
                         "/images/mocks/dr_sarah_avatar.png",
@@ -733,12 +681,6 @@ public class TodaysScheduleView {
                             searchBtn
                     );
         }
-
-
-        rightControls.getChildren()
-                .add(
-                        notificationBox
-                );
 
 
         if (userAvatar != null) {

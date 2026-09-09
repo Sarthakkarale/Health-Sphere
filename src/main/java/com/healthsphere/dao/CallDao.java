@@ -176,16 +176,19 @@ public class CallDao {
                     listener.onIncomingCall(call);
                 }
             }
-            return () -> {
+            ListenerRegistration mockReg = () -> {
                 List<IncomingCallListener> list = mockIncomingListeners.get(searchEmail);
                 if (list != null) list.remove(listener);
             };
+            com.healthsphere.util.SessionManager.registerListener(mockReg);
+            return mockReg;
         } else {
             try {
-                return db.collection("calls")
+                ListenerRegistration reg = db.collection("calls")
                         .whereEqualTo("receiverId", searchEmail)
                         .whereEqualTo("status", "CALLING")
                         .addSnapshotListener((snapshots, error) -> {
+                            if (!com.healthsphere.util.SessionManager.isLoggedIn()) return;
                             if (error != null) {
                                 System.err.println("Listen to incoming calls failed: " + error);
                                 return;
@@ -197,13 +200,20 @@ public class CallDao {
                                 }
                             }
                         });
+                com.healthsphere.util.SessionManager.registerListener(reg);
+                return () -> {
+                    reg.remove();
+                    com.healthsphere.util.SessionManager.unregisterListener(reg);
+                };
             } catch (Exception e) {
                 System.err.println("Firestore listenToIncomingCalls error, setting up mock: " + e.getMessage());
                 mockIncomingListeners.computeIfAbsent(searchEmail, k -> new CopyOnWriteArrayList<>()).add(listener);
-                return () -> {
+                ListenerRegistration mockReg = () -> {
                     List<IncomingCallListener> list = mockIncomingListeners.get(searchEmail);
                     if (list != null) list.remove(listener);
                 };
+                com.healthsphere.util.SessionManager.registerListener(mockReg);
+                return mockReg;
             }
         }
     }
@@ -218,14 +228,17 @@ public class CallDao {
             mockStatusListeners.computeIfAbsent(callId, k -> new CopyOnWriteArrayList<>()).add(listener);
             Call current = mockCalls.get(callId);
             if (current != null) listener.onCallStatusChanged(current);
-            return () -> {
+            ListenerRegistration mockReg = () -> {
                 List<CallStatusListener> list = mockStatusListeners.get(callId);
                 if (list != null) list.remove(listener);
             };
+            com.healthsphere.util.SessionManager.registerListener(mockReg);
+            return mockReg;
         } else {
             try {
-                return db.collection("calls").document(callId)
+                ListenerRegistration reg = db.collection("calls").document(callId)
                         .addSnapshotListener((snapshot, error) -> {
+                            if (!com.healthsphere.util.SessionManager.isLoggedIn()) return;
                             if (error != null) {
                                 System.err.println("Listen to call status failed: " + error);
                                 return;
@@ -235,13 +248,20 @@ public class CallDao {
                                 listener.onCallStatusChanged(call);
                             }
                         });
+                com.healthsphere.util.SessionManager.registerListener(reg);
+                return () -> {
+                    reg.remove();
+                    com.healthsphere.util.SessionManager.unregisterListener(reg);
+                };
             } catch (Exception e) {
                 System.err.println("Firestore listenToCallStatus error, setting up mock: " + e.getMessage());
                 mockStatusListeners.computeIfAbsent(callId, k -> new CopyOnWriteArrayList<>()).add(listener);
-                return () -> {
+                ListenerRegistration mockReg = () -> {
                     List<CallStatusListener> list = mockStatusListeners.get(callId);
                     if (list != null) list.remove(listener);
                 };
+                com.healthsphere.util.SessionManager.registerListener(mockReg);
+                return mockReg;
             }
         }
     }

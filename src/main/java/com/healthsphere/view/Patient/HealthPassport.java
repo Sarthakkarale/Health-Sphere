@@ -43,436 +43,138 @@ public class HealthPassport {
 
     public Scene getScene() {
 
-        PatientProfile patientProfile;
-
-        try {
-
-            patientProfile =
-                    patientController
-                            .getCurrentPatientProfile();
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            return createErrorScene(
-                    "Unable to load your health profile."
-            );
-        }
-
-        VBox content =
-                new VBox(20);
-
-        content.setPadding(
-                new Insets(5)
-        );
-
+        VBox content = new VBox(20);
+        content.setPadding(new Insets(5));
         content.setFillWidth(true);
 
-        // =========================================================
-        // IMAGE GALLERY
-        // =========================================================
-
-        HBox images =
-                createImageGallery();
-
-        // =========================================================
-        // PERSONAL INFORMATION
-        // =========================================================
-
-        VBox personalCard =
-                PatientUI.coloredCard(
-                        "👤  Personal Information",
-                        "#dbeafe"
-                );
-
-        personalCard.getChildren().addAll(
-
-                information(
-                        "Full Name",
-                        getFullName(patientProfile)
-                ),
-
-                information(
-                        "Date of Birth",
-                        safeValue(
-                                patientProfile.getDateOfBirth(),
-                                "Not provided"
-                        )
-                ),
-
-                information(
-                        "Blood Group",
-                        safeValue(
-                                patientProfile.getBloodGroup(),
-                                "Not provided"
-                        )
-                ),
-
-                information(
-                        "Gender",
-                        safeValue(
-                                patientProfile.getGender(),
-                                "Not provided"
-                        )
-                ),
-
-                PatientUI.button(
-                        "✏ Edit Personal Information",
-                        () -> showPersonalEditDialog(
-                                patientProfile
-                        )
-                )
-        );
-
-        // =========================================================
-        // CONTACT INFORMATION
-        // =========================================================
-
-        VBox contactCard =
-                PatientUI.coloredCard(
-                        "📞  Contact Information",
-                        "#e0f2fe"
-                );
-
-        contactCard.getChildren().addAll(
-
-                information(
-                        "Email",
-                        safeValue(
-                                patientProfile.getEmail(),
-                                "Not provided"
-                        )
-                ),
-
-                information(
-                        "Phone",
-                        safeValue(
-                                patientProfile.getPhone(),
-                                "Not provided"
-                        )
-                ),
-
-                information(
-                        "Address",
-                        safeValue(
-                                patientProfile.getAddress(),
-                                "Not provided"
-                        )
-                ),
-
-                information(
-                        "Emergency Contact",
-                        safeValue(
-                                patientProfile.getEmergencyContact(),
-                                "Not provided"
-                        )
-                ),
-
-                PatientUI.button(
-                        "✏ Edit Contact Information",
-                        () -> showContactEditDialog(
-                                patientProfile
-                        )
-                )
-        );
-
-        // =========================================================
-        // PERSONAL + CONTACT ROW
-        // =========================================================
-
-        HBox informationRow =
-                new HBox(18);
-
-        informationRow.setFillHeight(true);
-
-        personalCard.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        contactCard.setMaxWidth(
-                Double.MAX_VALUE
-        );
-
-        HBox.setHgrow(
-                personalCard,
-                Priority.ALWAYS
-        );
-
-        HBox.setHgrow(
-                contactCard,
-                Priority.ALWAYS
-        );
-
-        informationRow.getChildren().addAll(
-                personalCard,
-                contactCard
-        );
-
-        // =========================================================
-        // MEDICAL INFORMATION
-        // =========================================================
-
-        VBox medicalCard =
-                PatientUI.coloredCard(
-                        "🏥  Medical Information",
-                        "#dcfce7"
-                );
-
-        medicalCard.getChildren().addAll(
-
-                information(
-                        "Blood Group",
-                        safeValue(
-                                patientProfile.getBloodGroup(),
-                                "Not provided"
-                        )
-                ),
-
-                information(
-                        "Gender",
-                        safeValue(
-                                patientProfile.getGender(),
-                                "Not provided"
-                        )
-                ),
-
-                information(
-                        "Emergency Contact",
-                        safeValue(
-                                patientProfile.getEmergencyContact(),
-                                "Not provided"
-                        )
-                ),
-
-                information(
-                        "Patient ID",
-                        safeValue(
-                                patientProfile.getUid(),
-                                "Not available"
-                        )
-                ),
-
-                PatientUI.button(
-                        "✏ Edit Medical Information",
-                        () -> showMedicalEditDialog(
-                                patientProfile
-                        )
-                )
-        );
-
-        // =========================================================
-        // HEALTH SUMMARY
-        // =========================================================
-
-        VBox recordsCard =
-                PatientUI.coloredCard(
-                        "📋  Health Summary",
-                        "#fef3c7"
-                );
-
-        recordsCard.getChildren().addAll(
-
-                summary(
-                        "Medical Records",
-                        "12 records available"
-                ),
-
-                summary(
-                        "Prescriptions",
-                        "5 active prescriptions"
-                ),
-
-                summary(
-                        "Appointments",
-                        "3 upcoming appointments"
-                ),
-
-                summary(
-                        "Lab Reports",
-                        "8 reports available"
-                )
-        );
-
-        Button recordsButton =
-                PatientUI.button(
-                        "View Medical Records",
-                        () -> stage.setScene(
-                                new MedicalRecords(stage)
-                                        .getScene()
-                        )
-                );
-
-        recordsCard.getChildren().add(
-                recordsButton
-        );
-
-        // =========================================================
-        // HEALTH STATUS
-        // =========================================================
-
-        VBox statusCard =
-                PatientUI.coloredCard(
-                        "💚  Health Status",
-                        "#ccfbf1"
-                );
-
-        statusCard.getChildren().addAll(
-
-                status(
-                        "Heart Rate",
-                        safeValue(
-                                patientProfile.getHeartRate(),
-                                "Not provided"
-                        ),
-                        "Normal"
-                ),
-
-                status(
-                        "Blood Pressure",
-                        safeValue(
-                                patientProfile.getBloodPressure(),
-                                "Not provided"
-                        ),
-                        "Healthy"
-                ),
-
-                status(
-                        "Oxygen Level",
-                        safeValue(
-                                patientProfile.getOxygenLevel(),
-                                "Not provided"
-                        ),
-                        "Normal"
-                ),
-
-                status(
-                        "Last Health Check",
-                        safeValue(
-                                patientProfile.getLastHealthCheck(),
-                                "Not provided"
-                        ),
-                        "Up to date"
-                ),
-
-                PatientUI.button(
-                        "✏ Edit Health Status",
-                        () -> showHealthStatusEditDialog(
-                                patientProfile
-                        )
-                )
-        );
-
-        // =========================================================
-        // QUICK ACTIONS
-        // =========================================================
-
-        VBox actionsCard =
-                PatientUI.coloredCard(
-                        "⚡  Quick Actions",
-                        "#ede9fe"
-                );
-
-        HBox actions =
-                new HBox(12);
-
-        actions.setAlignment(
-                Pos.CENTER_LEFT
-        );
-
-        Button appointments =
-                PatientUI.button(
-                        "Appointments",
-                        () -> stage.setScene(
-                                new Appointments(stage)
-                                        .getScene()
-                        )
-                );
-
-        Button records =
-                PatientUI.button(
-                        "Medical Records",
-                        () -> stage.setScene(
-                                new MedicalRecords(stage)
-                                        .getScene()
-                        )
-                );
-
-        Button aiAssistant =
-                PatientUI.button(
-                        "AI Assistant",
-                        () -> stage.setScene(
-                                new AiHealthAssistant(stage)
-                                        .getScene()
-                        )
-                );
-
-        Button emergency =
-                createEmergencyButton();
-
-        Button profile =
-                PatientUI.button(
-                        "Profile & Settings",
-                        () -> stage.setScene(
-                                new ProfileSettings(stage)
-                                        .getScene()
-                        )
-                );
-
-        actions.getChildren().addAll(
-                appointments,
-                records,
-                aiAssistant,
-                emergency,
-                profile
-        );
-
-        actionsCard.getChildren().add(
-                actions
-        );
-
-        // =========================================================
-        // ADD CONTENT
-        // =========================================================
-
-        content.getChildren().addAll(
-                images,
-                informationRow,
-                medicalCard,
-                recordsCard,
-                statusCard,
-                actionsCard
-        );
-
-        // =========================================================
-        // SCROLL
-        // =========================================================
-
-        ScrollPane scroll =
-                new ScrollPane(content);
-
+        HBox images = createImageGallery();
+        VBox dynamicContainer = new VBox(20);
+        dynamicContainer.setMinWidth(0);
+        dynamicContainer.setMaxWidth(Double.MAX_VALUE);
+
+        // Show Shimmer Skeleton Initially
+        VBox shimmer = com.healthsphere.util.ShimmerPlaceholder.createListShimmer(3);
+        dynamicContainer.getChildren().add(shimmer);
+
+        content.getChildren().addAll(images, dynamicContainer);
+
+        javafx.concurrent.Task<PatientProfile> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected PatientProfile call() throws Exception {
+                return patientController.getCurrentPatientProfile();
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            dynamicContainer.getChildren().clear();
+            PatientProfile patientProfile = task.getValue();
+            if (patientProfile == null) {
+                patientProfile = new PatientProfile();
+            }
+
+            final PatientProfile profileRef = patientProfile;
+
+            // Personal Info Card
+            VBox personalCard = PatientUI.coloredCard("👤  Personal Information", "#dbeafe");
+            personalCard.getChildren().addAll(
+                    information("Full Name", getFullName(profileRef)),
+                    information("Date of Birth", safeValue(profileRef.getDateOfBirth(), "Not provided")),
+                    information("Blood Group", safeValue(profileRef.getBloodGroup(), "Not provided")),
+                    information("Gender", safeValue(profileRef.getGender(), "Not provided")),
+                    PatientUI.button("✏ Edit Personal Information", () -> showPersonalEditDialog(profileRef))
+            );
+
+            // Contact Info Card
+            VBox contactCard = PatientUI.coloredCard("📞  Contact Information", "#e0f2fe");
+            contactCard.getChildren().addAll(
+                    information("Email", safeValue(profileRef.getEmail(), "Not provided")),
+                    information("Phone", safeValue(profileRef.getPhone(), "Not provided")),
+                    information("Address", safeValue(profileRef.getAddress(), "Not provided")),
+                    information("Emergency Contact", safeValue(profileRef.getEmergencyContact(), "Not provided")),
+                    PatientUI.button("✏ Edit Contact Information", () -> showContactEditDialog(profileRef))
+            );
+
+            HBox informationRow = new HBox(18);
+            informationRow.setFillHeight(true);
+            personalCard.setMaxWidth(Double.MAX_VALUE);
+            contactCard.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(personalCard, Priority.ALWAYS);
+            HBox.setHgrow(contactCard, Priority.ALWAYS);
+            informationRow.getChildren().addAll(personalCard, contactCard);
+
+            // Medical Card
+            VBox medicalCard = PatientUI.coloredCard("🏥  Medical Information", "#dcfce7");
+            medicalCard.getChildren().addAll(
+                    information("Blood Group", safeValue(profileRef.getBloodGroup(), "Not provided")),
+                    information("Gender", safeValue(profileRef.getGender(), "Not provided")),
+                    information("Emergency Contact", safeValue(profileRef.getEmergencyContact(), "Not provided")),
+                    information("Patient ID", safeValue(profileRef.getUid(), "Not available")),
+                    PatientUI.button("✏ Edit Medical Information", () -> showMedicalEditDialog(profileRef))
+            );
+
+            // Records Card
+            VBox recordsCard = PatientUI.coloredCard("📋  Health Summary", "#fef3c7");
+            recordsCard.getChildren().addAll(
+                    summary("Medical Records", "12 records available"),
+                    summary("Prescriptions", "5 active prescriptions"),
+                    summary("Appointments", "3 upcoming appointments"),
+                    summary("Lab Reports", "8 reports available"),
+                    PatientUI.button("View Medical Records", () -> stage.setScene(new MedicalRecords(stage).getScene()))
+            );
+
+            // Status Card
+            VBox statusCard = PatientUI.coloredCard("💚  Health Status", "#ccfbf1");
+            statusCard.getChildren().addAll(
+                    status("Heart Rate", safeValue(profileRef.getHeartRate(), "Not provided"), "Normal"),
+                    status("Blood Pressure", safeValue(profileRef.getBloodPressure(), "Not provided"), "Healthy"),
+                    status("Oxygen Level", safeValue(profileRef.getOxygenLevel(), "Not provided"), "Normal"),
+                    status("Last Health Check", safeValue(profileRef.getLastHealthCheck(), "Not provided"), "Up to date"),
+                    PatientUI.button("✏ Edit Health Status", () -> showHealthStatusEditDialog(profileRef))
+            );
+
+            // Quick Actions Card
+            VBox actionsCard = PatientUI.coloredCard("⚡  Quick Actions", "#ede9fe");
+            HBox actions = new HBox(12);
+            actions.setAlignment(Pos.CENTER_LEFT);
+            actions.getChildren().addAll(
+                    PatientUI.button("Appointments", () -> stage.setScene(new Appointments(stage).getScene())),
+                    PatientUI.button("Medical Records", () -> stage.setScene(new MedicalRecords(stage).getScene())),
+                    PatientUI.button("AI Assistant", () -> stage.setScene(new AiHealthAssistant(stage).getScene())),
+                    createEmergencyButton(),
+                    PatientUI.button("Profile & Settings", () -> stage.setScene(new ProfileSettings(stage).getScene()))
+            );
+            actionsCard.getChildren().add(actions);
+
+            dynamicContainer.getChildren().addAll(
+                    informationRow,
+                    medicalCard,
+                    recordsCard,
+                    statusCard,
+                    actionsCard
+            );
+        });
+
+        task.setOnFailed(e -> {
+            dynamicContainer.getChildren().clear();
+            Throwable ex = task.getException();
+            Label errLabel = new Label("Unable to load your health profile. Please try again.");
+            errLabel.setStyle("-fx-text-fill: #dc2626; -fx-font-weight: bold; -fx-font-size: 15px;");
+            dynamicContainer.getChildren().add(errLabel);
+        });
+
+        com.healthsphere.util.PatientBackgroundExecutor.execute(task);
+
+        ScrollPane scroll = new ScrollPane(content);
         scroll.setFitToWidth(true);
-
-        scroll.setHbarPolicy(
-                ScrollPane.ScrollBarPolicy.NEVER
-        );
-
-        scroll.setVbarPolicy(
-                ScrollPane.ScrollBarPolicy.AS_NEEDED
-        );
-
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scroll.setPannable(true);
-
-        scroll.setStyle(
-                "-fx-background-color: transparent;" +
-                "-fx-background: transparent;"
-        );
 
         return PatientUI.createScene(
                 stage,
                 "Health Passport",
-                "My Health Passport",
-                "Your complete digital health identity and important medical information.",
+                "Health Passport",
+                "Your complete personal health identity and records.",
                 scroll
         );
     }

@@ -465,9 +465,9 @@ public class SearchHospitals {
             showHospitalError("Unable to load hospitals.");
         });
 
-        Thread t = new Thread(task);
-        t.setDaemon(true);
-        t.start();
+        com.healthsphere.util.SessionManager.registerTask(task);
+
+        com.healthsphere.util.PatientBackgroundExecutor.execute(task);
     }
 
     // =========================================================
@@ -499,9 +499,9 @@ public class SearchHospitals {
             showDoctorError("Unable to load doctors.");
         });
 
-        Thread t = new Thread(task);
-        t.setDaemon(true);
-        t.start();
+        com.healthsphere.util.SessionManager.registerTask(task);
+
+        com.healthsphere.util.PatientBackgroundExecutor.execute(task);
     }
 
     // =========================================================

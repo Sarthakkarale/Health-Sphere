@@ -393,31 +393,6 @@ public class DoctorProfileView {
                 rightIcons.setAlignment(
                                 Pos.CENTER_RIGHT);
 
-                ImageView bellIcon = new ImageView(
-                                ResourceImage.load(
-                                                "/images/icons/ic_bell.png"));
-
-                bellIcon.setFitWidth(18);
-                bellIcon.setFitHeight(18);
-
-                bellIcon.getStyleClass().add(
-                                "clickable-icon");
-
-                ImageView settingsIcon = new ImageView(
-                                ResourceImage.load(
-                                                "/images/icons/ic_settings.png"));
-
-                settingsIcon.setFitWidth(18);
-                settingsIcon.setFitHeight(18);
-
-                settingsIcon.getStyleClass().add(
-                                "clickable-icon");
-
-                Separator sep = new Separator(
-                                javafx.geometry.Orientation.VERTICAL);
-
-                sep.setPrefHeight(20);
-
                 ImageView topAvatar = new ImageView(
                                 ResourceImage.load(
                                                 "/images/mocks/dr_julian_avatar.png"));
@@ -432,10 +407,7 @@ public class DoctorProfileView {
 
                 topAvatar.setClip(clip);
 
-                rightIcons.getChildren().addAll(
-                                bellIcon,
-                                settingsIcon,
-                                sep,
+                rightIcons.getChildren().add(
                                 topAvatar);
 
                 topBar.getChildren().addAll(
@@ -531,25 +503,6 @@ public class DoctorProfileView {
                 actionBtns.setAlignment(
                                 Pos.CENTER_RIGHT);
 
-                ImageView settingsBtnIcon = new ImageView(
-                                ResourceImage.load(
-                                                "/images/icons/ic_settings.png"));
-
-                settingsBtnIcon.setFitWidth(16);
-                settingsBtnIcon.setFitHeight(16);
-
-                Button settingsIconButton = new Button();
-
-                settingsIconButton.setGraphic(
-                                settingsBtnIcon);
-
-                settingsIconButton.getStyleClass().add(
-                                "btn-secondary-action");
-
-                settingsIconButton.setOnAction(
-                                e -> System.out.println(
-                                                "Opening Quick Settings..."));
-
                 Button accountSettingsBtn = new Button("Account Settings");
 
                 accountSettingsBtn.getStyleClass().add(
@@ -570,7 +523,6 @@ public class DoctorProfileView {
                                                 () -> new DoctorEditProfileView(stage).getScene()));
 
                 actionBtns.getChildren().addAll(
-                                settingsIconButton,
                                 accountSettingsBtn,
                                 editProfileBtn);
 

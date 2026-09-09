@@ -332,21 +332,6 @@ public class BookAppointment {
         ComboBox<String> time =
                 new ComboBox<>();
 
-        time.getItems().addAll(
-
-                "09:00 AM",
-                "09:30 AM",
-                "10:00 AM",
-                "10:30 AM",
-                "11:00 AM",
-                "11:30 AM",
-                "02:00 PM",
-                "02:30 PM",
-                "03:00 PM",
-                "03:30 PM",
-                "04:00 PM"
-        );
-
         time.setPromptText(
                 "Select time"
         );
@@ -356,6 +341,36 @@ public class BookAppointment {
         time.setMaxWidth(
                 Double.MAX_VALUE
         );
+
+        date.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (doctor.getValue() != null && newVal != null) {
+                DoctorProfile selectedDoctor = findDoctorByName(doctor.getValue());
+                if (selectedDoctor != null && selectedDoctor.getUid() != null) {
+                    List<String> slots = appointmentController.getAvailableSlots(selectedDoctor.getUid(), newVal.toString());
+                    time.getItems().clear();
+                    if (slots != null && !slots.isEmpty()) {
+                        time.getItems().addAll(slots);
+                    } else {
+                        time.setPromptText("No slots available");
+                    }
+                }
+            }
+        });
+
+        doctor.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && date.getValue() != null) {
+                DoctorProfile selectedDoctor = findDoctorByName(newVal);
+                if (selectedDoctor != null && selectedDoctor.getUid() != null) {
+                    List<String> slots = appointmentController.getAvailableSlots(selectedDoctor.getUid(), date.getValue().toString());
+                    time.getItems().clear();
+                    if (slots != null && !slots.isEmpty()) {
+                        time.getItems().addAll(slots);
+                    } else {
+                        time.setPromptText("No slots available");
+                    }
+                }
+            }
+        });
 
         // =====================================================
         // REASON

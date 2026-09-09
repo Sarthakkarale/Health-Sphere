@@ -523,7 +523,7 @@ public class MedicalTourism {
             hospitalsContainer.getChildren().add(errLbl);
         });
 
-        new Thread(task).start();
+        com.healthsphere.util.PatientBackgroundExecutor.execute(task);
 
         HBox navRow = new HBox(15);
         navRow.setAlignment(Pos.CENTER_LEFT);
@@ -1279,7 +1279,7 @@ public class MedicalTourism {
             historyListContainer.getChildren().add(errLbl);
         });
 
-        new Thread(task).start();
+        com.healthsphere.util.PatientBackgroundExecutor.execute(task);
 
         card.getChildren().addAll(headerLbl, historyListContainer);
         return card;

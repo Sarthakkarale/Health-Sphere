@@ -35,7 +35,17 @@ public class PaymentController {
             throw new IllegalArgumentException("Appointment cannot be null.");
         }
 
-        double fee = appointment.getFee() > 0 ? appointment.getFee() : 150.00;
+        double fee = appointment.getFee();
+        if (fee <= 0 && appointment.getDoctorUid() != null && !appointment.getDoctorUid().isBlank()) {
+            try {
+                com.healthsphere.dao.doctor.DoctorAvailabilityDAO availDAO = new com.healthsphere.dao.doctor.DoctorAvailabilityDAO();
+                com.healthsphere.model.DoctorAvailability avail = availDAO.getAvailability(appointment.getDoctorUid().trim());
+                if (avail != null && avail.getConsultationFee() > 0) {
+                    fee = avail.getConsultationFee();
+                    appointment.setFee(fee);
+                }
+            } catch (Exception ignored) {}
+        }
         int feePaise = (int) (fee * 100);
         String orderId = "ORD_" + System.currentTimeMillis();
 

@@ -82,6 +82,7 @@ public class MedicalReportsView {
      * Patient selector.
      */
     private ComboBox<PatientProfile> patientSelector;
+    private boolean isUpdatingSelector = false;
 
     /**
      * Controllers.
@@ -150,7 +151,20 @@ public class MedicalReportsView {
         loadTask.setOnSucceeded(event -> {
             doctorPatients = loadTask.getValue();
             if (patientSelector != null) {
-                patientSelector.getItems().setAll(doctorPatients);
+                isUpdatingSelector = true;
+                try {
+                    patientSelector.getItems().setAll(doctorPatients);
+                    if (patientUid != null && !patientUid.isBlank()) {
+                        for (PatientProfile patient : doctorPatients) {
+                            if (patient != null && patientUid.equals(patient.getUid())) {
+                                patientSelector.setValue(patient);
+                                break;
+                            }
+                        }
+                    }
+                } finally {
+                    isUpdatingSelector = false;
+                }
             }
             loadPatient();
         });
@@ -524,20 +538,25 @@ public class MedicalReportsView {
                 && !patientUid.isBlank()
                 && doctorPatients != null) {
 
-            for (PatientProfile patient :
-                    doctorPatients) {
+            isUpdatingSelector = true;
+            try {
+                for (PatientProfile patient :
+                        doctorPatients) {
 
-                if (patient != null
-                        && patientUid.equals(
-                                patient.getUid()
-                        )) {
+                    if (patient != null
+                            && patientUid.equals(
+                                    patient.getUid()
+                            )) {
 
-                    patientSelector.setValue(
-                            patient
-                    );
+                        patientSelector.setValue(
+                                patient
+                        );
 
-                    break;
+                        break;
+                    }
                 }
+            } finally {
+                isUpdatingSelector = false;
             }
         }
 
@@ -567,11 +586,19 @@ public class MedicalReportsView {
 
     private void handlePatientSelection() {
 
+        if (isUpdatingSelector) {
+            return;
+        }
+
         PatientProfile selectedPatient =
                 patientSelector.getValue();
 
 
         if (selectedPatient == null) {
+            return;
+        }
+
+        if (patientUid != null && patientUid.equals(selectedPatient.getUid())) {
             return;
         }
 
@@ -945,45 +972,6 @@ public class MedicalReportsView {
         );
 
 
-        StackPane notificationBox =
-                new StackPane();
-
-
-        ImageView bellIcon =
-                new ImageView(
-                        ResourceImage.load(
-                                "/images/icons/ic_bell.png"
-                        )
-                );
-
-        bellIcon.setFitWidth(18);
-        bellIcon.setFitHeight(18);
-
-
-        Circle badge =
-                new Circle(
-                        4,
-                        Color.web("#EF4444")
-                );
-
-        StackPane.setAlignment(
-                badge,
-                Pos.TOP_RIGHT
-        );
-
-
-        notificationBox.getChildren()
-                .addAll(
-                        bellIcon,
-                        badge
-                );
-
-        notificationBox.getStyleClass()
-                .add(
-                        "clickable-icon"
-                );
-
-
         ImageView userAvatar =
                 new ImageView(
                         ResourceImage.load(
@@ -1013,8 +1001,7 @@ public class MedicalReportsView {
 
 
         rightIcons.getChildren()
-                .addAll(
-                        notificationBox,
+                .add(
                         userAvatar
                 );
 

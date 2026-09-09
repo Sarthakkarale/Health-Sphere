@@ -274,10 +274,6 @@ public class View extends Application {
                 utilityBox.setAlignment(
                                 Pos.CENTER_RIGHT);
 
-                Button bellBtn = createIconButton(
-                                "/images/icons/icon_bell.png",
-                                "🔔");
-
                 Button helpBtn = createIconButton(
                                 "/images/icons/icon_help.png",
                                 "❓");
@@ -294,25 +290,9 @@ public class View extends Application {
                         }
                 });
 
-                // User Avatar Circle
-                StackPane avatar = new StackPane();
-
-                avatar.getStyleClass().add(
-                                "avatar-circle");
-
-                Text avatarText = new Text("img");
-
-                avatarText.setStyle(
-                                "-fx-font-size: 10px; -fx-fill: #475569;");
-
-                avatar.getChildren().add(
-                                avatarText);
-
                 utilityBox.getChildren().addAll(
-                                bellBtn,
                                 helpBtn,
-                                newSessionBtn,
-                                avatar);
+                                newSessionBtn);
 
                 header.getChildren().addAll(
                                 brandBox,

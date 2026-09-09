@@ -48,9 +48,9 @@ public class Appointments {
 
     private final PaymentController paymentController;
 
+    private com.google.cloud.firestore.ListenerRegistration incomingCallListenerReg;
 
     public Appointments(Stage stage) {
-
         this.stage = stage;
 
         this.appointmentController =
@@ -301,7 +301,10 @@ public class Appointments {
             }
         };
 
+        SessionManager.registerTask(loadTask);
+
         loadTask.setOnSucceeded(e -> {
+            if (!SessionManager.isLoggedIn()) return;
             dynamicContainer.getChildren().clear();
             appointmentsList.clear();
             appointmentsList.addAll(loadTask.getValue());
@@ -309,15 +312,14 @@ public class Appointments {
         });
 
         loadTask.setOnFailed(e -> {
+            if (!SessionManager.isLoggedIn()) return;
             dynamicContainer.getChildren().clear();
             Throwable ex = loadTask.getException();
             String err = ex != null ? ex.getMessage() : "Unable to load appointments.";
             renderFilterView(dynamicContainer, activeTabIndex[0], new ArrayList<>(), err);
         });
 
-        Thread bgThread = new Thread(loadTask);
-        bgThread.setDaemon(true);
-        bgThread.start();
+        com.healthsphere.util.PatientBackgroundExecutor.execute(loadTask);
 
         setupIncomingCallListener();
 
@@ -325,13 +327,32 @@ public class Appointments {
         // ADD CONTENT
         // =====================================================
 
+        content.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene == null && incomingCallListenerReg != null) {
+                try {
+                    incomingCallListenerReg.remove();
+                    incomingCallListenerReg = null;
+                } catch (Exception ignored) {}
+            }
+        });
+
+        if (stage != null) {
+            stage.sceneProperty().addListener((obs, oldScene, newScene) -> {
+                if (newScene != content.getScene() && incomingCallListenerReg != null) {
+                    try {
+                        incomingCallListenerReg.remove();
+                        incomingCallListenerReg = null;
+                    } catch (Exception ignored) {}
+                }
+            });
+        }
+
         content.getChildren().addAll(
                 imageRow,
                 bookingOptions,
                 filterBar,
                 dynamicContainer
         );
-
 
         return PatientUI.createScene(
 
@@ -693,7 +714,18 @@ public class Appointments {
         actions.getChildren().add(videoCallBtn);
 
         if (!isPaid) {
-            Button payNowBtn = new Button("Pay Now ₹" + (int) (appointment.getFee() > 0 ? appointment.getFee() : 150));
+            double feeToDisplay = appointment.getFee();
+            if (feeToDisplay <= 0 && appointment.getDoctorUid() != null && !appointment.getDoctorUid().isBlank()) {
+                try {
+                    com.healthsphere.dao.doctor.DoctorAvailabilityDAO availDAO = new com.healthsphere.dao.doctor.DoctorAvailabilityDAO();
+                    com.healthsphere.model.DoctorAvailability avail = availDAO.getAvailability(appointment.getDoctorUid().trim());
+                    if (avail != null && avail.getConsultationFee() > 0) {
+                        feeToDisplay = avail.getConsultationFee();
+                        appointment.setFee(feeToDisplay);
+                    }
+                } catch (Exception ignored) {}
+            }
+            Button payNowBtn = new Button("Pay Now ₹" + (int) feeToDisplay);
             payNowBtn.setStyle("-fx-background-color: #2563eb; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 16; -fx-cursor: hand;");
             payNowBtn.setOnAction(e -> handlePayNow(appointment));
             actions.getChildren().add(payNowBtn);
@@ -2505,11 +2537,24 @@ public class Appointments {
     // =========================================================
 
     private void setupIncomingCallListener() {
+        if (!SessionManager.isLoggedIn()) return;
+
+        if (incomingCallListenerReg != null) {
+            try {
+                incomingCallListenerReg.remove();
+            } catch (Exception ignored) {}
+            incomingCallListenerReg = null;
+        }
+
         String patientEmail = UserModel.getInstance().getEmail();
+        if (patientEmail == null || patientEmail.isBlank()) return;
+
         CallDao callDao = new CallDao();
 
-        callDao.listenToIncomingCalls(patientEmail, incomingCall -> {
+        incomingCallListenerReg = callDao.listenToIncomingCalls(patientEmail, incomingCall -> {
+            if (!SessionManager.isLoggedIn()) return;
             javafx.application.Platform.runLater(() -> {
+                if (!SessionManager.isLoggedIn()) return;
                 Stage dialog = new Stage();
                 dialog.initModality(javafx.stage.Modality.APPLICATION_MODAL);
                 dialog.setTitle("Incoming Video Call");

@@ -140,6 +140,10 @@ public class AvailabilityScheduleView {
 
     private DoctorProfile doctorProfile;
 
+    private DoctorAvailability currentAvailability;
+
+    private Button saveBtn;
+
     // =========================================================
     // WORKING DAYS
     // =========================================================
@@ -433,52 +437,42 @@ public class AvailabilityScheduleView {
     // =========================================================
 
     private void loadSavedAvailability() {
+        setStatus("Loading availability...", SECONDARY_TEXT);
 
-        try {
-
-            DoctorAvailability availability =
-                    controller.getAvailability(
-                            doctorUid
-                    );
-
-            if (availability == null) {
-
-                applyDefaultValues();
-
-                setStatus(
-                        "New availability settings",
-                        SECONDARY_TEXT
-                );
-
-                refreshCalendar();
-
-                return;
+        javafx.concurrent.Task<DoctorAvailability> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected DoctorAvailability call() throws Exception {
+                return controller.getAvailability(doctorUid);
             }
+        };
 
-            applyAvailabilityToUI(
-                    availability
-            );
-
-            setStatus(
-                    "Saved availability loaded",
-                    SUCCESS_GREEN
-            );
-
+        task.setOnSucceeded(e -> {
+            DoctorAvailability availability = task.getValue();
+            if (availability == null) {
+                currentAvailability = new DoctorAvailability();
+                currentAvailability.setDoctorUid(doctorUid);
+                applyDefaultValues();
+                setStatus("New availability settings", SECONDARY_TEXT);
+            } else {
+                currentAvailability = availability;
+                applyAvailabilityToUI(availability);
+                setStatus("Saved availability loaded", SUCCESS_GREEN);
+            }
             refreshCalendar();
+        });
 
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
+        task.setOnFailed(e -> {
+            Throwable ex = task.getException();
+            if (ex != null) ex.printStackTrace();
+            currentAvailability = new DoctorAvailability();
+            currentAvailability.setDoctorUid(doctorUid);
             applyDefaultValues();
-
-            setStatus(
-                    "Using default settings",
-                    WARNING_ORANGE
-            );
-
+            setStatus("Using default settings", WARNING_ORANGE);
             refreshCalendar();
-        }
+        });
+
+        SessionManager.registerTask(task);
+        new Thread(task).start();
     }
 
     // =========================================================
@@ -727,42 +721,64 @@ public class AvailabilityScheduleView {
     // =========================================================
 
     private void saveChanges() {
-
         try {
-
             validateInput();
+            DoctorAvailability availability = buildAvailabilityFromUI();
 
-            DoctorAvailability availability =
-                    buildAvailabilityFromUI();
+            if (saveBtn != null) {
+                saveBtn.setDisable(true);
+                saveBtn.setText("Saving...");
+            }
+            setStatus("Saving changes...", WARNING_ORANGE);
 
-            controller.saveAvailability(
-                    availability
-            );
+            javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<>() {
+                @Override
+                protected Void call() throws Exception {
+                    controller.saveAvailability(availability);
+                    return null;
+                }
+            };
 
-            setStatus(
-                    "Changes saved successfully",
-                    SUCCESS_GREEN
-            );
+            task.setOnSucceeded(e -> {
+                if (saveBtn != null) {
+                    saveBtn.setDisable(false);
+                    saveBtn.setText("Save Changes");
+                }
+                currentAvailability = availability;
+                setStatus("Changes saved successfully", SUCCESS_GREEN);
+                refreshCalendar();
+                showAlert(
+                        Alert.AlertType.INFORMATION,
+                        "Saved Successfully",
+                        "Your availability, appointment fee, consultation information and booking settings were saved."
+                );
+            });
 
-            refreshCalendar();
+            task.setOnFailed(e -> {
+                if (saveBtn != null) {
+                    saveBtn.setDisable(false);
+                    saveBtn.setText("Save Changes");
+                }
+                Throwable ex = task.getException();
+                if (ex != null) ex.printStackTrace();
+                setStatus("Save failed", ERROR_RED);
+                showAlert(
+                        Alert.AlertType.ERROR,
+                        "Unable to Save",
+                        ex != null ? getRootMessage(ex) : "Unable to save changes. Please try again."
+                );
+            });
 
-            showAlert(
-                    Alert.AlertType.INFORMATION,
-                    "Saved Successfully",
-                    "Your availability, appointment fee, "
-                            + "consultation information and "
-                            + "booking settings were saved."
-            );
+            SessionManager.registerTask(task);
+            new Thread(task).start();
 
         } catch (Exception e) {
-
+            if (saveBtn != null) {
+                saveBtn.setDisable(false);
+                saveBtn.setText("Save Changes");
+            }
             e.printStackTrace();
-
-            setStatus(
-                    "Save failed",
-                    ERROR_RED
-            );
-
+            setStatus("Save failed", ERROR_RED);
             showAlert(
                     Alert.AlertType.ERROR,
                     "Unable to Save",
@@ -949,6 +965,10 @@ public class AvailabilityScheduleView {
                         consultationRoomField.getText()
                 )
         );
+
+        if (currentAvailability != null && currentAvailability.getOffSlots() != null) {
+            availability.setOffSlots(new java.util.ArrayList<>(currentAvailability.getOffSlots()));
+        }
 
         return availability;
     }
@@ -2057,7 +2077,8 @@ public class AvailabilityScheduleView {
 
                 VBox cell =
                         createCalendarCell(
-                                date
+                                date,
+                                times[row]
                         );
 
                 grid.add(
@@ -2086,7 +2107,8 @@ public class AvailabilityScheduleView {
     // =========================================================
 
     private VBox createCalendarCell(
-            LocalDate date) {
+            LocalDate date,
+            String timeStr) {
 
         VBox cell =
                 new VBox(3);
@@ -2101,23 +2123,29 @@ public class AvailabilityScheduleView {
                 )
         );
 
-        DayControls day =
-                findDay(
-                        capitalize(
-                                date.getDayOfWeek()
-                                        .toString()
-                                        .toLowerCase()
-                        )
-                );
+        cell.setAlignment(Pos.CENTER);
 
-        if (day != null
-                && day.checkBox
-                        .isSelected()) {
+        String dayName = capitalize(
+                date.getDayOfWeek()
+                        .toString()
+                        .toLowerCase()
+        );
+
+        DayControls day =
+                findDay(dayName);
+
+        boolean dayEnabled = day != null && day.checkBox.isSelected();
+        boolean slotOff = currentAvailability != null && currentAvailability.isSlotOff(dayName, timeStr);
+        boolean isAvailable = dayEnabled && !slotOff;
+
+        cell.setCursor(javafx.scene.Cursor.HAND);
+
+        if (isAvailable) {
 
             cell.setStyle(
                     "-fx-background-color: "
                             + SUCCESS_LIGHT
-                            + ";"
+                            + "; -fx-border-color: #A7F3D0; -fx-border-radius: 4; -fx-background-radius: 4;"
             );
 
             Label available =
@@ -2140,7 +2168,7 @@ public class AvailabilityScheduleView {
         } else {
 
             cell.setStyle(
-                    "-fx-background-color: white;"
+                    "-fx-background-color: #F1F5F9; -fx-border-color: #E2E8F0; -fx-border-radius: 4; -fx-background-radius: 4;"
             );
 
             Label off =
@@ -2157,6 +2185,20 @@ public class AvailabilityScheduleView {
                     off
             );
         }
+
+        cell.setOnMouseClicked(event -> {
+            if (currentAvailability == null) {
+                currentAvailability = buildAvailabilityFromUI();
+            }
+            if (!dayEnabled) {
+                if (day != null) {
+                    day.checkBox.setSelected(true);
+                }
+            } else {
+                currentAvailability.toggleSlotOff(dayName, timeStr);
+            }
+            refreshCalendar();
+        });
 
         return cell;
     }
@@ -2427,19 +2469,19 @@ public class AvailabilityScheduleView {
                         loadSavedAvailability()
         );
 
-        Button save =
+        saveBtn =
                 createPrimaryButton(
                         "Save Changes"
                 );
 
-        save.setOnAction(
+        saveBtn.setOnAction(
                 event ->
                         saveChanges()
         );
 
         actions.getChildren().addAll(
                 refresh,
-                save
+                saveBtn
         );
 
         header.setLeft(

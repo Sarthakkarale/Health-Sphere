@@ -141,6 +141,7 @@ public class ShimmerPlaceholder {
 
     /**
      * Applies smooth fade pulsing animation to simulate shimmer.
+     * Auto-stops when the node is detached from its parent or scene graph to prevent memory leaks.
      */
     private static void applyPulseAnimation(Node node) {
         FadeTransition fade = new FadeTransition(Duration.millis(650), node);
@@ -149,5 +150,21 @@ public class ShimmerPlaceholder {
         fade.setCycleCount(Animation.INDEFINITE);
         fade.setAutoReverse(true);
         fade.play();
+
+        node.parentProperty().addListener((obs, oldParent, newParent) -> {
+            if (newParent == null) {
+                try {
+                    fade.stop();
+                } catch (Exception ignored) {}
+            }
+        });
+
+        node.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene == null) {
+                try {
+                    fade.stop();
+                } catch (Exception ignored) {}
+            }
+        });
     }
 }

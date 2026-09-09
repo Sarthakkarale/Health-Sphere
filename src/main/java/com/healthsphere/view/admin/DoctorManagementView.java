@@ -717,7 +717,11 @@ public class DoctorManagementView extends ScrollPane {
                                                 .getVerificationStatus()
                                                 .equalsIgnoreCase(
                                                         selectedVerification
-                                                );
+                                                )
+                                                ||
+                                        ("APPROVED".equalsIgnoreCase(selectedVerification)
+                                                && ("VERIFIED".equalsIgnoreCase(doctor.getVerificationStatus())
+                                                || "APPROVED".equalsIgnoreCase(doctor.getVerificationStatus())));
 
                                 boolean matchesSpecialization =
                                         selectedSpecialization == null

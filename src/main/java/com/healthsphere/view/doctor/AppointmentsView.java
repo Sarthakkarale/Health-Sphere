@@ -633,48 +633,6 @@ public class AppointmentsView {
         );
 
         // --------------------------------------------------------
-        // NOTIFICATION
-        // --------------------------------------------------------
-
-        StackPane notification =
-                new StackPane();
-
-        ImageView bell =
-                createImageView(
-                        "/images/icons/ic_bell.png",
-                        20,
-                        20
-                );
-
-        Circle notificationDot =
-                new Circle(
-                        4,
-                        Color.web(
-                                "#EF4444"
-                        )
-                );
-
-        StackPane.setAlignment(
-                notificationDot,
-                Pos.TOP_RIGHT
-        );
-
-        if (bell != null) {
-
-            notification
-                    .getChildren()
-                    .add(
-                            bell
-                    );
-        }
-
-        notification
-                .getChildren()
-                .add(
-                        notificationDot
-                );
-
-        // --------------------------------------------------------
         // AVATAR
         // --------------------------------------------------------
 
@@ -718,8 +676,7 @@ public class AppointmentsView {
                 .getChildren()
                 .addAll(
                         searchContainer,
-                        spacer,
-                        notification
+                        spacer
                 );
 
         if (avatar != null) {

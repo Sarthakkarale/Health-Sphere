@@ -235,14 +235,6 @@ public class NewAppointmentView {
         HBox rightIcons = new HBox(18);
         rightIcons.setAlignment(Pos.CENTER_RIGHT);
 
-        StackPane notificationBox = new StackPane();
-        ImageView bellIcon = new ImageView(ResourceImage.load("/images/icons/ic_bell.png"));
-        bellIcon.setFitWidth(18); bellIcon.setFitHeight(18);
-        Circle badge = new Circle(4, Color.RED);
-        StackPane.setAlignment(badge, Pos.TOP_RIGHT);
-        notificationBox.getChildren().addAll(bellIcon, badge);
-        notificationBox.getStyleClass().add("clickable-icon");
-
         ImageView userAvatar = new ImageView(ResourceImage.load("/images/doctor/portrait-3d-male-doctor.png"));
         userAvatar.setFitWidth(32); userAvatar.setFitHeight(32);
         Circle clip = new Circle(16, 16, 16);
@@ -250,7 +242,7 @@ public class NewAppointmentView {
         userAvatar.getStyleClass().add("clickable-icon");
         userAvatar.setOnMouseClicked(e -> Navigation.goTo(stage, () -> new DoctorProfileView(stage).getScene()));
 
-        rightIcons.getChildren().addAll(notificationBox, userAvatar);
+        rightIcons.getChildren().add(userAvatar);
         topBar.getChildren().addAll(searchField, spacer, rightIcons);
         return topBar;
     }

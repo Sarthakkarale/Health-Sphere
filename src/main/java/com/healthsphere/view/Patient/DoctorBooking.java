@@ -227,21 +227,6 @@ public class DoctorBooking {
         ComboBox<String> time =
                 new ComboBox<>();
 
-        time.getItems().addAll(
-
-                "09:00 AM",
-                "09:30 AM",
-                "10:00 AM",
-                "10:30 AM",
-                "11:00 AM",
-                "11:30 AM",
-                "02:00 PM",
-                "02:30 PM",
-                "03:00 PM",
-                "03:30 PM",
-                "04:00 PM"
-        );
-
         time.setPromptText(
                 "Select time"
         );
@@ -251,6 +236,58 @@ public class DoctorBooking {
         time.setMaxWidth(
                 Double.MAX_VALUE
         );
+
+        // =====================================================
+        // DYNAMIC SLOTS UPDATER
+        // =====================================================
+
+        date.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (doctor.getValue() != null && newVal != null) {
+                List<String> slots = appointmentController.getAvailableSlots(doctor.getValue().getUid(), newVal.toString());
+                time.getItems().clear();
+                if (slots != null && !slots.isEmpty()) {
+                    time.getItems().addAll(slots);
+                } else {
+                    time.setPromptText("No slots available");
+                }
+            }
+        });
+
+        Label feeLabel = new Label("Consultation Fee: Select a doctor");
+        feeLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1E293B;");
+
+        doctor.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && date.getValue() != null) {
+                List<String> slots = appointmentController.getAvailableSlots(newVal.getUid(), date.getValue().toString());
+                time.getItems().clear();
+                if (slots != null && !slots.isEmpty()) {
+                    time.getItems().addAll(slots);
+                } else {
+                    time.setPromptText("No slots available");
+                }
+            }
+
+            if (newVal != null && newVal.getUid() != null) {
+                com.healthsphere.util.PatientBackgroundExecutor.execute(() -> {
+                    try {
+                        com.healthsphere.dao.doctor.DoctorAvailabilityDAO availDao = new com.healthsphere.dao.doctor.DoctorAvailabilityDAO();
+                        com.healthsphere.model.DoctorAvailability avail = availDao.getAvailability(newVal.getUid().trim());
+                        javafx.application.Platform.runLater(() -> {
+                            if (avail != null && avail.getConsultationFee() > 0) {
+                                feeLabel.setText("Consultation Fee: ₹" + (int) avail.getConsultationFee());
+                                feeLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #059669;");
+                            } else {
+                                feeLabel.setText("Consultation Fee: Not configured by doctor");
+                                feeLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #D97706;");
+                            }
+                        });
+                    } catch (Exception ignored) {}
+                });
+            } else {
+                feeLabel.setText("Consultation Fee: Select a doctor");
+                feeLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1E293B;");
+            }
+        });
 
         // =====================================================
         // REASON
@@ -277,7 +314,8 @@ public class DoctorBooking {
                         label("Patient Name"),
                         patientName,
                         label("Doctor"),
-                        doctor
+                        doctor,
+                        feeLabel
                 );
 
         // =====================================================
@@ -395,12 +433,15 @@ public class DoctorBooking {
             ComboBox<DoctorProfile> doctorComboBox,
             ComboBox<String> specialtyComboBox) {
 
-        try {
+        javafx.concurrent.Task<List<DoctorProfile>> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected List<DoctorProfile> call() {
+                return appointmentController.getAllDoctors();
+            }
+        };
 
-            List<DoctorProfile> doctors =
-                    appointmentController
-                            .getAllDoctors();
-
+        task.setOnSucceeded(e -> {
+            List<DoctorProfile> doctors = task.getValue();
             doctorComboBox.getItems().clear();
             specialtyComboBox.getItems().clear();
 
@@ -433,78 +474,42 @@ public class DoctorBooking {
                 }
             }
 
-            // Display doctor name instead of
-            // object memory address.
+            // Display doctor name instead of object memory address.
             doctorComboBox.setButtonCell(
                     new javafx.scene.control.ListCell<DoctorProfile>() {
-
                         @Override
-                        protected void updateItem(
-                                DoctorProfile doctor,
-                                boolean empty) {
-
-                            super.updateItem(
-                                    doctor,
-                                    empty
-                            );
-
-                            if (empty ||
-                                    doctor == null) {
-
-                                setText(
-                                        "Select doctor"
-                                );
-
+                        protected void updateItem(DoctorProfile doctor, boolean empty) {
+                            super.updateItem(doctor, empty);
+                            if (empty || doctor == null) {
+                                setText("Select doctor");
                             } else {
-
-                                setText(
-                                        getDoctorDisplayName(
-                                                doctor
-                                        )
-                                );
+                                setText(getDoctorDisplayName(doctor));
                             }
                         }
                     }
             );
 
             doctorComboBox.setCellFactory(
-                    listView ->
-                            new javafx.scene.control.ListCell<DoctorProfile>() {
-
-                                @Override
-                                protected void updateItem(
-                                        DoctorProfile doctor,
-                                        boolean empty) {
-
-                                    super.updateItem(
-                                            doctor,
-                                            empty
-                                    );
-
-                                    if (empty ||
-                                            doctor == null) {
-
-                                        setText(null);
-
-                                    } else {
-
-                                        setText(
-                                                getDoctorDisplayName(
-                                                        doctor
-                                                )
-                                        );
-                                    }
-                                }
+                    listView -> new javafx.scene.control.ListCell<DoctorProfile>() {
+                        @Override
+                        protected void updateItem(DoctorProfile doctor, boolean empty) {
+                            super.updateItem(doctor, empty);
+                            if (empty || doctor == null) {
+                                setText(null);
+                            } else {
+                                setText(getDoctorDisplayName(doctor));
                             }
+                        }
+                    }
             );
+        });
 
-        } catch (Exception e) {
+        task.setOnFailed(e -> {
+            Throwable ex = task.getException();
+            showError("Unable to load doctors.\n\n" + (ex != null ? ex.getMessage() : ""));
+        });
 
-            showError(
-                    "Unable to load doctors.\n\n"
-                            + e.getMessage()
-            );
-        }
+        com.healthsphere.util.PatientBackgroundExecutor.execute(task);
     }
 
     // =========================================================
@@ -548,50 +553,26 @@ public class DoctorBooking {
     private void loadPatientName(
             TextField patientName) {
 
-        try {
-
-            PatientProfile profile =
-                    patientController
-                            .getCurrentPatientProfile();
-
-            if (profile == null) {
-
-                patientName.setText(
-                        "Patient"
-                );
-
-                return;
+        javafx.concurrent.Task<String> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected String call() {
+                try {
+                    PatientProfile profile = patientController.getCurrentPatientProfile();
+                    if (profile == null) return "Patient";
+                    String firstName = profile.getFirstName() == null ? "" : profile.getFirstName().trim();
+                    String lastName = profile.getLastName() == null ? "" : profile.getLastName().trim();
+                    String fullName = (firstName + " " + lastName).trim();
+                    return fullName.isBlank() ? "Patient" : fullName;
+                } catch (Exception e) {
+                    return "Patient";
+                }
             }
+        };
 
-            String firstName =
-                    profile.getFirstName() == null
-                            ? ""
-                            : profile.getFirstName()
-                                    .trim();
+        task.setOnSucceeded(e -> patientName.setText(task.getValue()));
+        task.setOnFailed(e -> patientName.setText("Patient"));
 
-            String lastName =
-                    profile.getLastName() == null
-                            ? ""
-                            : profile.getLastName()
-                                    .trim();
-
-            String fullName =
-                    (firstName + " " + lastName)
-                            .trim();
-
-            patientName.setText(
-
-                    fullName.isBlank()
-                            ? "Patient"
-                            : fullName
-            );
-
-        } catch (Exception e) {
-
-            patientName.setText(
-                    "Patient"
-            );
-        }
+        com.healthsphere.util.PatientBackgroundExecutor.execute(task);
     }
 
     // =========================================================

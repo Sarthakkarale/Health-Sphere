@@ -146,14 +146,7 @@ public class DoctorSidebar {
         if (logoutIcon != null) logout.getChildren().add(logoutIcon);
         logout.getChildren().add(logoutLabel);
 
-        logout.setOnMouseClicked(e -> {
-            try {
-                SessionManager.getInstance().clearSession();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-            Navigation.goTo(stage, () -> new LoginView(stage).getScene());
-        });
+        logout.setOnMouseClicked(e -> Navigation.logout(stage));
 
         sidebar.getChildren().addAll(logoSection, navItems, spacer, profile, logout);
         return sidebar;

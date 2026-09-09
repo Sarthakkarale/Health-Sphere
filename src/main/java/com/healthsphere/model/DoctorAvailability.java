@@ -374,4 +374,41 @@ public class DoctorAvailability {
     public void setConsultationRoom(String consultationRoom) {
         this.consultationRoom = consultationRoom;
     }
+
+    // =========================================================
+    // SLOT OVERRIDES (OFF SLOTS)
+    // =========================================================
+
+    private java.util.List<String> offSlots = new java.util.ArrayList<>();
+
+    public java.util.List<String> getOffSlots() {
+        if (offSlots == null) {
+            offSlots = new java.util.ArrayList<>();
+        }
+        return offSlots;
+    }
+
+    public void setOffSlots(java.util.List<String> offSlots) {
+        this.offSlots = offSlots != null ? offSlots : new java.util.ArrayList<>();
+    }
+
+    public boolean isSlotOff(String dayName, String timeStr) {
+        if (offSlots == null || dayName == null || timeStr == null) {
+            return false;
+        }
+        String key = (dayName.trim() + "_" + timeStr.trim()).toUpperCase();
+        return offSlots.contains(key);
+    }
+
+    public void toggleSlotOff(String dayName, String timeStr) {
+        if (offSlots == null) {
+            offSlots = new java.util.ArrayList<>();
+        }
+        String key = (dayName.trim() + "_" + timeStr.trim()).toUpperCase();
+        if (offSlots.contains(key)) {
+            offSlots.remove(key);
+        } else {
+            offSlots.add(key);
+        }
+    }
 }

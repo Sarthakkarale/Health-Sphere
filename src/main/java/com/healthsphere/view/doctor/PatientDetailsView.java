@@ -784,44 +784,6 @@ public class PatientDetailsView {
                         doctorSpecializationLabel
                 );
 
-        StackPane notificationBox =
-                new StackPane();
-
-        ImageView bellIcon =
-                createImageView(
-                        "/images/icons/ic_bell.png",
-                        18,
-                        18
-                );
-
-        if (bellIcon != null) {
-
-            notificationBox
-                    .getChildren()
-                    .add(
-                            bellIcon
-                    );
-        }
-
-        Circle notificationBadge =
-                new Circle(
-                        4,
-                        Color.web(
-                                "#EF4444"
-                        )
-                );
-
-        StackPane.setAlignment(
-                notificationBadge,
-                Pos.TOP_RIGHT
-        );
-
-        notificationBox
-                .getChildren()
-                .add(
-                        notificationBadge
-                );
-
         HBox doctorProfile =
                 new HBox(10);
 
@@ -881,7 +843,6 @@ public class PatientDetailsView {
                 .addAll(
                         searchContainer,
                         spacer,
-                        notificationBox,
                         doctorProfile
                 );
 

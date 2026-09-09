@@ -600,7 +600,7 @@ public class HospitalManagementView extends ScrollPane {
         statusFilter.getItems().addAll(
                 "All Statuses",
                 "PENDING",
-                "VERIFIED",
+                "APPROVED",
                 "REJECTED"
         );
 
@@ -713,7 +713,11 @@ public class HospitalManagementView extends ScrollPane {
                                         ||
                                         hospitalStatus.equalsIgnoreCase(
                                                 safe(selectedStatus)
-                                        );
+                                        )
+                                        ||
+                                        ("APPROVED".equalsIgnoreCase(selectedStatus)
+                                                && ("VERIFIED".equalsIgnoreCase(hospitalStatus)
+                                                || "APPROVED".equalsIgnoreCase(hospitalStatus)));
 
                         boolean matchesCity =
                                 "All Cities".equals(

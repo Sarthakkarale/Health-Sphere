@@ -1118,7 +1118,7 @@ public class UserManagementView {
         // ========================================================
 
         Label statusLabel =
-                createApprovedStatusLabel();
+                createApprovedStatusLabel(user != null ? user.role : null);
 
         // ========================================================
         // ADD TO GRID
@@ -1149,11 +1149,16 @@ public class UserManagementView {
     // APPROVED STATUS
     // ============================================================
 
-    private Label createApprovedStatusLabel() {
+    private Label createApprovedStatusLabel(String role) {
+
+        String labelText = "● Approved";
+        if (role != null && "PATIENT".equalsIgnoreCase(role.trim())) {
+            labelText = "● Active";
+        }
 
         Label label =
                 new Label(
-                        "● Approved"
+                        labelText
                 );
 
         label.setAlignment(

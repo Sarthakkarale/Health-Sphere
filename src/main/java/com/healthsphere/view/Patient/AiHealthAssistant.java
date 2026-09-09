@@ -241,7 +241,7 @@ public class AiHealthAssistant {
             Platform.runLater(() -> renderScopeNoticeCard("Unable to process your request at this time. Please try again."));
         });
 
-        new Thread(task).start();
+        com.healthsphere.util.PatientBackgroundExecutor.execute(task);
     }
 
     /**

@@ -73,7 +73,12 @@ public class AboutUs {
                 "-fx-padding: 8px 18px;" +
                 "-fx-cursor: hand;"
         ));
-        backBtn.setOnAction(e -> stage.setScene(new ProfileSettings(stage).getScene()));
+        backBtn.setOnAction(e -> {
+            System.out.println("[Patient] About Us back button clicked");
+            if (!com.healthsphere.util.Navigation.goBack(stage)) {
+                stage.setScene(new ProfileSettings(stage).getScene());
+            }
+        });
 
         Label headerTitle = new Label("About Us");
         headerTitle.setStyle(
@@ -124,10 +129,16 @@ public class AboutUs {
         photoSection.setPadding(new Insets(6, 0, 10, 0));
 
         try {
-            Image image = new Image(getClass().getResourceAsStream("/images/shashi_sir.jpg"));
+            Image image = com.healthsphere.util.ResourceImage.load("/images/shashi_sir.jpg", 300, 300, true);
             ImageView photoView = new ImageView(image);
             photoView.setPreserveRatio(true);
             photoView.setFitHeight(260);
+
+            // Smooth rounded clipping directly on photo (no property binding feedback loop)
+            Rectangle clip = new Rectangle(260, 260);
+            clip.setArcWidth(22);
+            clip.setArcHeight(22);
+            photoView.setClip(clip);
 
             // Container frame with white rounded background and drop shadow
             StackPane frame = new StackPane(photoView);
@@ -141,14 +152,6 @@ public class AboutUs {
                     "-fx-border-radius: 18px;" +
                     "-fx-effect: dropshadow(three-pass-box, rgba(18, 53, 91, 0.15), 18, 0, 0, 6);"
             );
-
-            // Smooth rounded clipping on photo
-            Rectangle clip = new Rectangle();
-            clip.setArcWidth(22);
-            clip.setArcHeight(22);
-            clip.widthProperty().bind(frame.widthProperty());
-            clip.heightProperty().bind(frame.heightProperty());
-            frame.setClip(clip);
 
             Label nameCaption = new Label("Shashi Sir");
             nameCaption.setStyle(
@@ -300,6 +303,13 @@ public class AboutUs {
                 modulesSection,
                 highlightCard
         );
+
+        System.out.println("[Patient] About Us view created & getScene initialized");
+        content.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene == null) {
+                System.out.println("[Patient] About Us view disposed");
+            }
+        });
 
         return PatientUI.createScene(
                 stage,

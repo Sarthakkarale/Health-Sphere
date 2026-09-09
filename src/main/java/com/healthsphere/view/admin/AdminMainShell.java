@@ -568,17 +568,7 @@ public class AdminMainShell {
         );
 
         logoutBtn.setOnAction(e -> {
-
-            SessionManager.clearSession();
-
-            LoginView loginView =
-                    new LoginView(
-                            primaryStage
-                    );
-
-            primaryStage.setScene(
-                    loginView.getScene()
-            );
+            com.healthsphere.util.Navigation.logout(primaryStage);
         });
 
         return logoutBtn;

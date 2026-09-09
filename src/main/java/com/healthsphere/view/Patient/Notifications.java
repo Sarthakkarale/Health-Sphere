@@ -214,9 +214,7 @@ public class Notifications {
             notificationsCard.getChildren().add(errLbl);
         });
 
-        Thread t = new Thread(task);
-        t.setDaemon(true);
-        t.start();
+        com.healthsphere.util.PatientBackgroundExecutor.execute(task);
     }
 
     // =========================================================

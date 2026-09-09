@@ -539,17 +539,7 @@ public class DoctorPendingApprovalView {
                 Double.MAX_VALUE
         );
 
-        backToLoginBtn.setOnAction(e -> {
-
-            SessionManager.clearSession();
-
-            LoginView loginView =
-                    new LoginView(stage);
-
-            stage.setScene(
-                    loginView.getScene()
-            );
-        });
+        backToLoginBtn.setOnAction(e -> com.healthsphere.util.Navigation.logout(stage));
 
         // ---------------------------------------------------------------------
         // SUPPORT

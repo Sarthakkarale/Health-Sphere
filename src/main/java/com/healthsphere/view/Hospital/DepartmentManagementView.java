@@ -1,7 +1,9 @@
 package com.healthsphere.view.hospital;
 
 import com.healthsphere.controller.hospital.DepartmentController;
+import com.healthsphere.controller.hospital.DoctorController;
 import com.healthsphere.model.HospitalDepartment;
+import com.healthsphere.model.HospitalDoctor;
 import com.healthsphere.util.SessionManager;
 import com.healthsphere.util.Navigation;
 import com.healthsphere.util.ShimmerPlaceholder;
@@ -24,7 +26,9 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class DepartmentManagementView {
@@ -65,6 +69,7 @@ public class DepartmentManagementView {
     // =========================================================
 
     private final DepartmentController departmentController;
+    private final DoctorController doctorController;
 
     // =========================================================
     // UI PRESENTATION MODEL
@@ -269,6 +274,18 @@ public class DepartmentManagementView {
 
     private ComboBox<String> categoryFilter;
 
+    private static class DepartmentLoadResult {
+        final List<HospitalDepartment> departments;
+        final Map<String, Integer> doctorCounts;
+
+        DepartmentLoadResult(
+                List<HospitalDepartment> departments,
+                Map<String, Integer> doctorCounts) {
+            this.departments = departments;
+            this.doctorCounts = doctorCounts;
+        }
+    }
+
     // =========================================================
     // CONSTRUCTOR
     // =========================================================
@@ -277,6 +294,8 @@ public class DepartmentManagementView {
 
         departmentController =
                 new DepartmentController();
+        doctorController =
+                new DoctorController();
     }
 
     // =========================================================
@@ -343,23 +362,57 @@ public class DepartmentManagementView {
             departmentGridPane.getChildren().add(ShimmerPlaceholder.createListShimmer(3));
         }
 
-        javafx.concurrent.Task<List<HospitalDepartment>> loadTask =
+        javafx.concurrent.Task<DepartmentLoadResult> loadTask =
                 new javafx.concurrent.Task<>() {
                     @Override
-                    protected List<HospitalDepartment> call() throws Exception {
-                        return departmentController.getAllDepartments();
+                    protected DepartmentLoadResult call() throws Exception {
+                        List<HospitalDepartment> departments = departmentController.getAllDepartments();
+                        List<HospitalDoctor> doctors = doctorController.getAllDoctors();
+
+                        Map<String, Integer> counts = new HashMap<>();
+                        if (departments != null) {
+                            for (HospitalDepartment dept : departments) {
+                                if (dept == null || !dept.isActive()) {
+                                    continue;
+                                }
+                                int count = 0;
+                                if (doctors != null) {
+                                    for (HospitalDoctor doc : doctors) {
+                                        if (doc == null || !doc.isActive()) {
+                                            continue;
+                                        }
+                                        if ("Inactive".equalsIgnoreCase(doc.getStatus())) {
+                                            continue;
+                                        }
+                                        String docDept = doc.getDepartmentId();
+                                        if (docDept != null && !docDept.trim().isEmpty()) {
+                                            docDept = docDept.trim();
+                                            boolean matchesId = docDept.equalsIgnoreCase(dept.getDepartmentId());
+                                            boolean matchesName = dept.getName() != null
+                                                    && docDept.equalsIgnoreCase(dept.getName().trim());
+                                            if (matchesId || matchesName) {
+                                                count++;
+                                            }
+                                        }
+                                    }
+                                }
+                                counts.put(dept.getDepartmentId(), count);
+                            }
+                        }
+                        return new DepartmentLoadResult(departments, counts);
                     }
                 };
 
         loadTask.setOnSucceeded(event -> {
             masterDepartmentList.clear();
-            List<HospitalDepartment> departments = loadTask.getValue();
-            if (departments != null) {
-                for (HospitalDepartment hospitalDepartment : departments) {
+            DepartmentLoadResult result = loadTask.getValue();
+            if (result != null && result.departments != null) {
+                for (HospitalDepartment hospitalDepartment : result.departments) {
                     if (hospitalDepartment == null || !hospitalDepartment.isActive()) {
                         continue;
                     }
-                    masterDepartmentList.add(convertToUIDepartment(hospitalDepartment));
+                    int count = result.doctorCounts.getOrDefault(hospitalDepartment.getDepartmentId(), 0);
+                    masterDepartmentList.add(convertToUIDepartment(hospitalDepartment, count));
                 }
             }
             filteredDepartmentList = new FilteredList<>(masterDepartmentList, p -> true);
@@ -381,7 +434,8 @@ public class DepartmentManagementView {
     // =========================================================
 
     private Department convertToUIDepartment(
-            HospitalDepartment hospitalDepartment) {
+            HospitalDepartment hospitalDepartment,
+            int doctorCount) {
 
         String category =
                 hospitalDepartment.getCategory();
@@ -465,7 +519,7 @@ public class DepartmentManagementView {
                 hospitalDepartment.getDepartmentId(),
                 hospitalDepartment.getName(),
                 head,
-                0,
+                doctorCount,
                 0,
                 category,
                 themeColor,

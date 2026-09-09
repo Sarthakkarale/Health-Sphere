@@ -684,13 +684,12 @@ public class HospitalVerificationView {
                             .toUpperCase();
 
             /*
-             * Older DAO records may contain APPROVED.
-             * Current UI convention is VERIFIED.
+             * Display canonical approved status as APPROVED.
              */
-            if ("APPROVED".equals(status)) {
+            if ("VERIFIED".equals(status)) {
 
                 status =
-                        "VERIFIED";
+                        "APPROVED";
             }
         }
 

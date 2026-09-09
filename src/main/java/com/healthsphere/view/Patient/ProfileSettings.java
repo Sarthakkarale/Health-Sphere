@@ -39,40 +39,7 @@ public class ProfileSettings {
 
     public Scene getScene() {
 
-        // =====================================================
-        // LOAD CURRENT PATIENT PROFILE
-        // =====================================================
-
-        PatientProfile patientProfile;
-
-        try {
-
-            patientProfile =
-                    patientController
-                            .getCurrentPatientProfile();
-
-        } catch (IllegalStateException e) {
-
-            return createErrorScene(
-                    "Your session has expired. Please login again."
-            );
-
-        } catch (DatabaseException e) {
-
-            e.printStackTrace();
-
-            return createErrorScene(
-                    "Unable to load your patient profile."
-            );
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            return createErrorScene(
-                    "An unexpected error occurred while loading your profile."
-            );
-        }
+        PatientProfile patientProfile = new PatientProfile();
 
         // =====================================================
         // MAIN CONTENT
@@ -290,6 +257,27 @@ public class ProfileSettings {
                         )
                 );
 
+        // Async task to fetch profile data in background
+        javafx.concurrent.Task<PatientProfile> fetchProfileTask = new javafx.concurrent.Task<>() {
+            @Override
+            protected PatientProfile call() throws Exception {
+                return patientController.getCurrentPatientProfile();
+            }
+        };
+        fetchProfileTask.setOnSucceeded(e -> {
+            PatientProfile profile = fetchProfileTask.getValue();
+            if (profile != null) {
+                String uName = buildFullName(profile.getFirstName(), profile.getLastName());
+                name.setText(uName.isBlank() ? "Patient" : uName);
+                patientId.setText("Patient ID: " + safeValue(profile.getUid()));
+                nameField.setText(uName);
+                emailField.setText(safeValue(profile.getEmail()));
+                phoneField.setText(safeValue(profile.getPhone()));
+                cityField.setText(safeValue(profile.getAddress()));
+            }
+        });
+        com.healthsphere.util.PatientBackgroundExecutor.execute(fetchProfileTask);
+
         // =====================================================
         // NAME
         // =====================================================
@@ -452,10 +440,13 @@ public class ProfileSettings {
                         "About Us",
                         "Learn more about HealthSphere digital healthcare ecosystem.",
                         "About Us",
-                        () -> stage.setScene(
-                                new AboutUs(stage)
-                                        .getScene()
-                        )
+                        () -> {
+                            System.out.println("[Patient] About Us button clicked");
+                            com.healthsphere.util.Navigation.goTo(stage, () ->
+                                    new AboutUs(stage)
+                                            .getScene()
+                            );
+                        }
                 )
         );
 
@@ -617,10 +608,7 @@ public class ProfileSettings {
         );
 
         logout.setOnAction(e -> {
-
-            SessionManager.clearSession();
-
-            showLogin();
+            com.healthsphere.util.Navigation.logout(stage);
         });
 
         // =====================================================
@@ -1189,54 +1177,14 @@ public class ProfileSettings {
             double width,
             double height
     ) {
-
-        ImageView view =
-                new ImageView();
-
-        var resource =
-                getClass().getResource(
-                        path
-                );
-
-        if (resource == null) {
-
-            System.err.println(
-                    "Profile image not found: "
-                            + path
-            );
-
-            view.setFitWidth(
-                    width
-            );
-
-            view.setFitHeight(
-                    height
-            );
-
-            return view;
+        ImageView view = new ImageView();
+        Image image = com.healthsphere.util.ResourceImage.load(path, (int) width, (int) height, false);
+        if (image != null) {
+            view.setImage(image);
         }
-
-        Image image =
-                new Image(
-                        resource.toExternalForm()
-                );
-
-        view.setImage(
-                image
-        );
-
-        view.setFitWidth(
-                width
-        );
-
-        view.setFitHeight(
-                height
-        );
-
-        view.setPreserveRatio(
-                false
-        );
-
+        view.setFitWidth(width);
+        view.setFitHeight(height);
+        view.setPreserveRatio(false);
         return view;
     }
 
@@ -1248,81 +1196,14 @@ public class ProfileSettings {
             String path,
             double size
     ) {
-
-        ImageView view =
-                new ImageView();
-
-        var resource =
-                getClass().getResource(
-                        path
-                );
-
-        if (resource == null) {
-
-            System.err.println(
-                    "Profile image not found: "
-                            + path
-            );
-
-            view.setFitWidth(
-                    size
-            );
-
-            view.setFitHeight(
-                    size
-            );
-
-            return view;
+        ImageView view = new ImageView();
+        Image image = com.healthsphere.util.ResourceImage.load(path, (int) size, (int) size, true);
+        if (image != null) {
+            view.setImage(image);
         }
-
-        Image image =
-                new Image(
-                        resource.toExternalForm()
-                );
-
-        view.setImage(
-                image
-        );
-
-        double imageWidth =
-                image.getWidth();
-
-        double imageHeight =
-                image.getHeight();
-
-        double cropSize =
-                Math.min(
-                        imageWidth,
-                        imageHeight
-                );
-
-        double x =
-                (imageWidth - cropSize) / 2;
-
-        double y =
-                (imageHeight - cropSize) / 2;
-
-        view.setViewport(
-                new Rectangle2D(
-                        x,
-                        y,
-                        cropSize,
-                        cropSize
-                )
-        );
-
-        view.setFitWidth(
-                size
-        );
-
-        view.setFitHeight(
-                size
-        );
-
-        view.setPreserveRatio(
-                false
-        );
-
+        view.setFitWidth(size);
+        view.setFitHeight(size);
+        view.setPreserveRatio(false);
         return view;
     }
 

@@ -68,8 +68,6 @@ public class Dashboard {
 
     public Scene getScene() {
 
-        String patientName = loadPatientName();
-
         VBox content = new VBox(24);
 
         content.setPadding(new Insets(5));
@@ -83,15 +81,28 @@ public class Dashboard {
 
         VBox welcomeBox = new VBox(6);
 
-        Label welcome = new Label(
-                "Good day, " + patientName + "!"
-        );
+        Label welcome = new Label("Good day, Patient!");
 
         welcome.setStyle(
                 "-fx-font-size: 28px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #0f172a;"
         );
+
+        // Load Patient Name asynchronously to prevent blocking navigation
+        javafx.concurrent.Task<String> loadNameTask = new javafx.concurrent.Task<>() {
+            @Override
+            protected String call() {
+                return loadPatientName();
+            }
+        };
+        loadNameTask.setOnSucceeded(e -> {
+            String name = loadNameTask.getValue();
+            if (name != null && !name.isEmpty()) {
+                welcome.setText("Good day, " + name + "!");
+            }
+        });
+        com.healthsphere.util.PatientBackgroundExecutor.execute(loadNameTask);
 
         Label welcomeSubtitle = new Label(
                 "Welcome back to HealthSphere. " +
@@ -482,16 +493,25 @@ public class Dashboard {
 
         imageTimeline.play();
 
-        container.sceneProperty().addListener(
-                (observable, oldScene, newScene) -> {
+        container.parentProperty().addListener((obs, oldParent, newParent) -> {
+            if (newParent == null && imageTimeline != null) {
+                imageTimeline.stop();
+            }
+        });
 
-                    if (newScene == null &&
-                            imageTimeline != null) {
+        container.sceneProperty().addListener((observable, oldScene, newScene) -> {
+            if (newScene == null && imageTimeline != null) {
+                imageTimeline.stop();
+            }
+        });
 
-                        imageTimeline.stop();
-                    }
+        if (stage != null) {
+            stage.sceneProperty().addListener((obs, oldScene, newScene) -> {
+                if (imageTimeline != null && newScene != container.getScene()) {
+                    imageTimeline.stop();
                 }
-        );
+            });
+        }
 
         return container;
     }

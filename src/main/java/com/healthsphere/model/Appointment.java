@@ -28,7 +28,7 @@ public class Appointment {
 
     // Payment fields: PENDING / PAID
     private String paymentStatus = "PENDING";
-    private double fee = 150.00;
+    private double fee = 0.0;
 
     private String createdAt;
     private String updatedAt;

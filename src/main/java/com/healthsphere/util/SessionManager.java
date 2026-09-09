@@ -1,7 +1,13 @@
 package com.healthsphere.util;
 
+import com.google.cloud.firestore.ListenerRegistration;
 import com.healthsphere.model.AuthenticationResponse;
 import com.healthsphere.model.UserProfile;
+import javafx.concurrent.Task;
+
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class SessionManager {
 
@@ -12,11 +18,36 @@ public final class SessionManager {
     private static volatile AuthenticationResponse currentUser;
     private static String cachedDoctorName = null;
 
+    // Active listeners & tasks tracked for automatic cleanup on logout
+    private static final Set<ListenerRegistration> ACTIVE_LISTENERS = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private static final Set<Task<?>> ACTIVE_TASKS = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
     private SessionManager() {
     }
 
     public static SessionManager getInstance() {
         return INSTANCE;
+    }
+
+    public static void registerListener(ListenerRegistration listener) {
+        if (listener != null) {
+            ACTIVE_LISTENERS.add(listener);
+        }
+    }
+
+    public static void unregisterListener(ListenerRegistration listener) {
+        if (listener != null) {
+            ACTIVE_LISTENERS.remove(listener);
+        }
+    }
+
+    public static void registerTask(Task<?> task) {
+        if (task != null) {
+            ACTIVE_TASKS.add(task);
+            task.onSucceededProperty().addListener((obs, oldVal, newVal) -> ACTIVE_TASKS.remove(task));
+            task.onFailedProperty().addListener((obs, oldVal, newVal) -> ACTIVE_TASKS.remove(task));
+            task.onCancelledProperty().addListener((obs, oldVal, newVal) -> ACTIVE_TASKS.remove(task));
+        }
     }
 
     public static synchronized void createSession(AuthenticationResponse authResponse) {
@@ -161,6 +192,39 @@ public final class SessionManager {
     }
 
     public static synchronized void clearSession() {
+        // Detach all registered Firestore snapshot listeners
+        for (ListenerRegistration listener : ACTIVE_LISTENERS) {
+            try {
+                if (listener != null) {
+                    listener.remove();
+                }
+            } catch (Exception ignored) {}
+        }
+        ACTIVE_LISTENERS.clear();
+
+        // Cancel running background tasks
+        for (Task<?> task : ACTIVE_TASKS) {
+            try {
+                if (task != null && task.isRunning()) {
+                    task.cancel(true);
+                }
+            } catch (Exception ignored) {}
+        }
+        ACTIVE_TASKS.clear();
+
+        // Clear cached patient profile and user model state
+        try {
+            com.healthsphere.controller.patient.PatientController.clearCachedPatientProfile();
+        } catch (Exception ignored) {}
+
+        try {
+            com.healthsphere.model.UserModel.getInstance().setEmail(null);
+            com.healthsphere.model.UserModel.getInstance().setName(null);
+        } catch (Exception ignored) {}
+
+        // Clear scene navigation history
+        Navigation.clearHistory();
+
         SessionManager session = getInstance();
         session.authenticationResponse = null;
         currentUserProfile = null;
