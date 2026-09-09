@@ -761,6 +761,11 @@ private static HBox navItem(
 private static String currentActivePage = null;
 private static long lastNavigationTime = 0;
 
+public static void clearViewCache() {
+    currentActivePage = null;
+    lastNavigationTime = 0;
+}
+
 // =========================================================
 // CENTRALIZED NAVIGATION
 // =========================================================

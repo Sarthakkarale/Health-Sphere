@@ -212,9 +212,13 @@ public final class SessionManager {
         }
         ACTIVE_TASKS.clear();
 
-        // Clear cached patient profile and user model state
+        // Clear cached patient profile, DAO caches and user model state
         try {
             com.healthsphere.controller.patient.PatientController.clearCachedPatientProfile();
+            com.healthsphere.controller.patient.HospitalController.clearCache();
+            com.healthsphere.dao.authentication.DoctorDAO.clearCache();
+            com.healthsphere.dao.doctor.DoctorDAO.clearCache();
+            com.healthsphere.view.Patient.PatientUI.clearViewCache();
         } catch (Exception ignored) {}
 
         try {

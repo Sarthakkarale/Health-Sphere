@@ -2279,43 +2279,14 @@ public class Appointments {
             double width,
             double height) {
 
-        ImageView view =
-                new ImageView();
-
-        var resource =
-                getClass().getResource(
-                        path
-                );
-
-
-        if (resource == null) {
-
-            System.err.println(
-                    "Appointment image not found: "
-                            + path
-            );
-
-            view.setFitWidth(width);
-
-            view.setFitHeight(height);
-
-            return view;
+        ImageView view = new ImageView();
+        Image image = com.healthsphere.util.ResourceImage.load(path, width, height, false);
+        if (image != null) {
+            view.setImage(image);
         }
-
-
-        Image image =
-                new Image(
-                        resource.toExternalForm()
-                );
-
-        view.setImage(image);
-
         view.setFitWidth(width);
-
         view.setFitHeight(height);
-
         view.setPreserveRatio(false);
-
         return view;
     }
 

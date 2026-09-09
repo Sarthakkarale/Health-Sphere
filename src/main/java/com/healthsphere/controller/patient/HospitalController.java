@@ -17,13 +17,27 @@ public class HospitalController {
                 new HospitalDAO();
     }
 
-    // =========================================================
-    // GET ALL HOSPITALS
-    // =========================================================
+    private static volatile List<HospitalProfile> CACHED_HOSPITALS = null;
+    private static volatile long LAST_CACHE_TIME = 0;
+    private static final long CACHE_TTL_MS = 60_000; // 60 seconds
 
     public List<HospitalProfile> getAllHospitals() {
+        long now = System.currentTimeMillis();
+        if (CACHED_HOSPITALS != null && (now - LAST_CACHE_TIME < CACHE_TTL_MS)) {
+            return new ArrayList<>(CACHED_HOSPITALS);
+        }
 
-        return hospitalDAO.getAllHospitals();
+        List<HospitalProfile> fresh = hospitalDAO.getAllHospitals();
+        if (fresh != null) {
+            CACHED_HOSPITALS = new ArrayList<>(fresh);
+            LAST_CACHE_TIME = now;
+        }
+        return fresh != null ? fresh : new ArrayList<>();
+    }
+
+    public static void clearCache() {
+        CACHED_HOSPITALS = null;
+        LAST_CACHE_TIME = 0;
     }
 
     // =========================================================

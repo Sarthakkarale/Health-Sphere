@@ -76,6 +76,17 @@ public class DoctorDAO {
         }
     }
 
+    private static volatile List<DoctorProfile> CACHED_ALL_DOCTORS = null;
+    private static volatile long LAST_ALL_DOCTORS_TIME = 0;
+    private static final Map<String, DoctorProfile> PROFILE_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final long CACHE_TTL_MS = 60_000;
+
+    public static void clearCache() {
+        CACHED_ALL_DOCTORS = null;
+        LAST_ALL_DOCTORS_TIME = 0;
+        PROFILE_CACHE.clear();
+    }
+
     /**
      * Get a doctor profile by Firebase UID.
      */
@@ -83,6 +94,10 @@ public class DoctorDAO {
             String uid) {
 
         validateUid(uid);
+
+        if (PROFILE_CACHE.containsKey(uid.trim())) {
+            return PROFILE_CACHE.get(uid.trim());
+        }
 
         try {
 
@@ -102,13 +117,11 @@ public class DoctorDAO {
                             DoctorProfile.class
                     );
 
-            if (doctor != null &&
-                    (doctor.getUid() == null ||
-                     doctor.getUid().isBlank())) {
-
-                doctor.setUid(
-                        document.getId()
-                );
+            if (doctor != null) {
+                if (doctor.getUid() == null || doctor.getUid().isBlank()) {
+                    doctor.setUid(document.getId());
+                }
+                PROFILE_CACHE.put(uid.trim(), doctor);
             }
 
             return doctor;
@@ -135,6 +148,11 @@ public class DoctorDAO {
      * Get all doctor profiles.
      */
     public List<DoctorProfile> getAllDoctorProfiles() {
+        long now = System.currentTimeMillis();
+        if (CACHED_ALL_DOCTORS != null && (now - LAST_ALL_DOCTORS_TIME < CACHE_TTL_MS)) {
+            return new ArrayList<>(CACHED_ALL_DOCTORS);
+        }
+
         try {
             QuerySnapshot snapshot =
                     firestore
@@ -159,9 +177,15 @@ public class DoctorDAO {
                             doctor.setUid(document.getId());
                         }
                         doctors.add(doctor);
+                        if (doctor.getUid() != null) {
+                            PROFILE_CACHE.put(doctor.getUid().trim(), doctor);
+                        }
                     }
                 }
             }
+
+            CACHED_ALL_DOCTORS = new ArrayList<>(doctors);
+            LAST_ALL_DOCTORS_TIME = now;
 
             return doctors;
 

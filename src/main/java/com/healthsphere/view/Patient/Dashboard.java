@@ -521,31 +521,10 @@ public class Dashboard {
     // =========================================================
 
     private Image loadImage(String path) {
-
         try {
-
-            java.net.URL resource =
-                    getClass().getResource(path);
-
-            if (resource == null) {
-
-                System.err.println(
-                        "Image not found: " + path
-                );
-
-                return null;
-            }
-
-            return new Image(
-                    resource.toExternalForm()
-            );
-
+            return com.healthsphere.util.ResourceImage.load(path, 1200, 290, true);
         } catch (Exception e) {
-
-            System.err.println(
-                    "Unable to load image: " + path
-            );
-
+            System.err.println("Unable to load image: " + path);
             return null;
         }
     }

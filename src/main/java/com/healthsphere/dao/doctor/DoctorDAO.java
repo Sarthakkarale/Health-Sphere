@@ -20,7 +20,23 @@ public class DoctorDAO {
         this.db = FirebaseConfig.getFirestore();
     }
 
+    private static volatile List<DoctorProfile> CACHED_ALL_DOCTORS = null;
+    private static volatile long LAST_ALL_DOCTORS_TIME = 0;
+    private static final java.util.Map<String, DoctorProfile> PROFILE_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final long CACHE_TTL_MS = 60_000;
+
+    public static void clearCache() {
+        CACHED_ALL_DOCTORS = null;
+        LAST_ALL_DOCTORS_TIME = 0;
+        PROFILE_CACHE.clear();
+    }
+
     public List<DoctorProfile> getAllDoctors() {
+        long now = System.currentTimeMillis();
+        if (CACHED_ALL_DOCTORS != null && (now - LAST_ALL_DOCTORS_TIME < CACHE_TTL_MS)) {
+            return new ArrayList<>(CACHED_ALL_DOCTORS);
+        }
+
         List<DoctorProfile> doctors = new ArrayList<>();
         try {
             ApiFuture<QuerySnapshot> future = db.collection("doctors").get();
@@ -33,9 +49,14 @@ public class DoctorDAO {
                             doctor.setUid(document.getId());
                         }
                         doctors.add(doctor);
+                        if (doctor.getUid() != null) {
+                            PROFILE_CACHE.put(doctor.getUid().trim(), doctor);
+                        }
                     }
                 }
             }
+            CACHED_ALL_DOCTORS = new ArrayList<>(doctors);
+            LAST_ALL_DOCTORS_TIME = now;
             return doctors;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -53,16 +74,22 @@ public class DoctorDAO {
         if (uid == null || uid.isBlank()) {
             return null;
         }
+        if (PROFILE_CACHE.containsKey(uid.trim())) {
+            return PROFILE_CACHE.get(uid.trim());
+        }
         try {
             DocumentSnapshot document = db.collection("doctors").document(uid).get().get();
             if (!document.exists()) {
                 return null;
             }
-            DoctorProfile profile = document.toObject(DoctorProfile.class);
-            if (profile != null && (profile.getUid() == null || profile.getUid().isBlank())) {
-                profile.setUid(document.getId());
+            DoctorProfile doctor = document.toObject(DoctorProfile.class);
+            if (doctor != null) {
+                if (doctor.getUid() == null || doctor.getUid().isBlank()) {
+                    doctor.setUid(document.getId());
+                }
+                PROFILE_CACHE.put(uid.trim(), doctor);
             }
-            return profile;
+            return doctor;
         } catch (Exception e) {
             throw new DatabaseException("Unable to retrieve doctor profile.", e);
         }
