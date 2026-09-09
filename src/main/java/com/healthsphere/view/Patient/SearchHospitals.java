@@ -9,6 +9,7 @@ import com.healthsphere.controller.patient.ReviewController;
 import com.healthsphere.dao.authentication.DoctorDAO;
 import com.healthsphere.model.DoctorProfile;
 import com.healthsphere.model.HospitalProfile;
+import com.healthsphere.util.ResourceImage;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -1514,16 +1515,12 @@ public class SearchHospitals {
 
             try {
 
-                view.setImage(
-                        new Image(
-                                resource.toExternalForm()
-                        )
-                );
-
-                return view;
-
+                Image img = ResourceImage.load(path, 120, 120, true);
+                if (img != null) {
+                    view.setImage(img);
+                    return view;
+                }
             } catch (Exception e) {
-
                 System.err.println(
                         "Unable to load hospital image: "
                                 + path
@@ -1552,26 +1549,13 @@ public class SearchHospitals {
         };
 
         for (String path : images) {
-
-            var resource =
-                    getClass().getResource(path);
-
-            if (resource == null) {
-                continue;
-            }
-
             try {
-
-                view.setImage(
-                        new Image(
-                                resource.toExternalForm()
-                        )
-                );
-
-                return view;
-
+                Image img = ResourceImage.load(path, 120, 120, true);
+                if (img != null) {
+                    view.setImage(img);
+                    return view;
+                }
             } catch (Exception e) {
-
                 System.err.println(
                         "Unable to load doctor image: "
                                 + path

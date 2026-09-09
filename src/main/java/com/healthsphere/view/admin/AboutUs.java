@@ -1,22 +1,20 @@
-package com.healthsphere.view.Patient;
+package com.healthsphere.view.admin;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.Separator;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
+
+import com.healthsphere.util.ResourceImage;
 
 public class AboutUs {
 
@@ -26,68 +24,40 @@ public class AboutUs {
         this.stage = stage;
     }
 
-    public Scene getScene() {
+    public Parent getView() {
         VBox content = new VBox(24);
-        content.setPadding(new Insets(10, 10, 30, 10));
+        content.setPadding(new Insets(24, 32, 32, 32));
         content.setFillWidth(true);
-        content.setMinWidth(0);
-        content.setMaxWidth(Double.MAX_VALUE);
+        content.setStyle("-fx-background-color: #F8FAFC;");
 
         // =====================================================
-        // 1. GRADIENT TOP HEADER BAR WITH BACK BUTTON
+        // 1. ADMIN HEADER BAR
         // =====================================================
         HBox headerBar = new HBox(16);
         headerBar.setAlignment(Pos.CENTER_LEFT);
-        headerBar.setPadding(new Insets(16, 24, 16, 24));
+        headerBar.setPadding(new Insets(20, 28, 20, 28));
         headerBar.setStyle(
-                "-fx-background-color: linear-gradient(to right, #12355B 0%, #2F80ED 60%, #7DAAF5 100%);" +
-                "-fx-background-radius: 14px;" +
-                "-fx-effect: dropshadow(three-pass-box, rgba(18, 53, 91, 0.15), 14, 0, 0, 4);"
+                "-fx-background-color: linear-gradient(to right, #0F172A 0%, #1E293B 60%, #3B82F6 100%);" +
+                "-fx-background-radius: 16px;" +
+                "-fx-effect: dropshadow(three-pass-box, rgba(15, 23, 42, 0.2), 16, 0, 0, 4);"
         );
 
-        Button backBtn = new Button("←  Back");
-        backBtn.setStyle(
-                "-fx-background-color: rgba(255, 255, 255, 0.18);" +
-                "-fx-text-fill: #FFFFFF;" +
-                "-fx-font-weight: bold;" +
-                "-fx-font-size: 13px;" +
-                "-fx-background-radius: 8px;" +
-                "-fx-padding: 8px 18px;" +
-                "-fx-cursor: hand;"
-        );
-        backBtn.setOnMouseEntered(e -> backBtn.setStyle(
-                "-fx-background-color: rgba(255, 255, 255, 0.32);" +
-                "-fx-text-fill: #FFFFFF;" +
-                "-fx-font-weight: bold;" +
-                "-fx-font-size: 13px;" +
-                "-fx-background-radius: 8px;" +
-                "-fx-padding: 8px 18px;" +
-                "-fx-cursor: hand;"
-        ));
-        backBtn.setOnMouseExited(e -> backBtn.setStyle(
-                "-fx-background-color: rgba(255, 255, 255, 0.18);" +
-                "-fx-text-fill: #FFFFFF;" +
-                "-fx-font-weight: bold;" +
-                "-fx-font-size: 13px;" +
-                "-fx-background-radius: 8px;" +
-                "-fx-padding: 8px 18px;" +
-                "-fx-cursor: hand;"
-        ));
-        backBtn.setOnAction(e -> {
-            System.out.println("[Patient] About Us back button clicked");
-            if (!com.healthsphere.util.Navigation.goBack(stage)) {
-                stage.setScene(new ProfileSettings(stage).getScene());
-            }
-        });
-
-        Label headerTitle = new Label("About Us");
+        VBox headerText = new VBox(4);
+        Label headerTitle = new Label("About HealthSphere Platform");
         headerTitle.setStyle(
                 "-fx-font-size: 26px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #FFFFFF;"
         );
 
-        headerBar.getChildren().addAll(backBtn, headerTitle);
+        Label headerSub = new Label("Enterprise Healthcare Infrastructure & Organization Overview");
+        headerSub.setStyle(
+                "-fx-font-size: 13px;" +
+                "-fx-text-fill: #94A3B8;"
+        );
+
+        headerText.getChildren().addAll(headerTitle, headerSub);
+        headerBar.getChildren().add(headerText);
 
         // =====================================================
         // 2. HEALTHSPHERE BRANDING SECTION
@@ -102,14 +72,14 @@ public class AboutUs {
         brandTitle.setStyle(
                 "-fx-font-size: 32px;" +
                 "-fx-font-weight: 800;" +
-                "-fx-text-fill: #12355B;"
+                "-fx-text-fill: #0F172A;"
         );
 
         Label brandSubtitle = new Label("AI Powered Healthcare Management System");
         brandSubtitle.setStyle(
                 "-fx-font-size: 15px;" +
                 "-fx-font-weight: bold;" +
-                "-fx-text-fill: #2F80ED;"
+                "-fx-text-fill: #2563EB;"
         );
 
         Label brandTagline = new Label("\"Connecting Patients, Doctors and Hospitals\"");
@@ -122,25 +92,23 @@ public class AboutUs {
         brandBox.getChildren().addAll(brandLogo, brandTitle, brandSubtitle, brandTagline);
 
         // =====================================================
-        // 3. SHASHI SIR PHOTO SECTION (ONLY ONE PERSONAL PHOTO)
+        // 3. SHASHI SIR PHOTO SECTION
         // =====================================================
         VBox photoSection = new VBox(10);
         photoSection.setAlignment(Pos.CENTER);
         photoSection.setPadding(new Insets(6, 0, 10, 0));
 
         try {
-            Image image = com.healthsphere.util.ResourceImage.load("/images/shashi_sir.jpg", 300, 300, true);
+            Image image = ResourceImage.load("/images/shashi_sir.jpg", 300, 300, true);
             ImageView photoView = new ImageView(image);
             photoView.setPreserveRatio(true);
             photoView.setFitHeight(260);
 
-            // Smooth rounded clipping directly on photo (no property binding feedback loop)
             Rectangle clip = new Rectangle(260, 260);
             clip.setArcWidth(22);
             clip.setArcHeight(22);
             photoView.setClip(clip);
 
-            // Container frame with white rounded background and drop shadow
             StackPane frame = new StackPane(photoView);
             frame.setAlignment(Pos.CENTER);
             frame.setStyle(
@@ -150,20 +118,20 @@ public class AboutUs {
                     "-fx-border-color: #CBD5E1;" +
                     "-fx-border-width: 1px;" +
                     "-fx-border-radius: 18px;" +
-                    "-fx-effect: dropshadow(three-pass-box, rgba(18, 53, 91, 0.15), 18, 0, 0, 6);"
+                    "-fx-effect: dropshadow(three-pass-box, rgba(15, 23, 42, 0.12), 18, 0, 0, 6);"
             );
 
             Label nameCaption = new Label("Shashi Sir");
             nameCaption.setStyle(
                     "-fx-font-size: 18px;" +
                     "-fx-font-weight: bold;" +
-                    "-fx-text-fill: #12355B;"
+                    "-fx-text-fill: #0F172A;"
             );
 
             photoSection.getChildren().addAll(frame, nameCaption);
         } catch (Exception ex) {
             Label placeholder = new Label("Shashi Sir");
-            placeholder.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #12355B;");
+            placeholder.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #0F172A;");
             photoSection.getChildren().add(placeholder);
         }
 
@@ -181,7 +149,6 @@ public class AboutUs {
         // 5. ABOUT HEALTHSPHERE CARD
         // =====================================================
         VBox aboutCard = new VBox(12);
-        aboutCard.getStyleClass().add("white-card");
         aboutCard.setStyle(
                 "-fx-background-color: #FFFFFF;" +
                 "-fx-background-radius: 16px;" +
@@ -189,14 +156,14 @@ public class AboutUs {
                 "-fx-border-color: #E2E8F0;" +
                 "-fx-border-width: 1px;" +
                 "-fx-border-radius: 16px;" +
-                "-fx-effect: dropshadow(three-pass-box, rgba(18, 53, 91, 0.06), 14, 0, 0, 4);"
+                "-fx-effect: dropshadow(three-pass-box, rgba(15, 23, 42, 0.04), 14, 0, 0, 4);"
         );
 
-        Label aboutHeading = new Label("About HealthSphere");
+        Label aboutHeading = new Label("About HealthSphere Architecture");
         aboutHeading.setStyle(
                 "-fx-font-size: 18px;" +
                 "-fx-font-weight: bold;" +
-                "-fx-text-fill: #12355B;"
+                "-fx-text-fill: #0F172A;"
         );
 
         Label aboutDesc1 = new Label(
@@ -212,7 +179,7 @@ public class AboutUs {
         );
         aboutDesc2.setWrapText(true);
         aboutDesc2.setMaxWidth(Double.MAX_VALUE);
-        aboutDesc2.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #12355B; -fx-line-spacing: 3px;");
+        aboutDesc2.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #0F172A; -fx-line-spacing: 3px;");
 
         aboutCard.getChildren().addAll(aboutHeading, aboutDesc1, aboutDesc2);
 
@@ -224,7 +191,7 @@ public class AboutUs {
         modulesTitle.setStyle(
                 "-fx-font-size: 20px;" +
                 "-fx-font-weight: bold;" +
-                "-fx-text-fill: #12355B;"
+                "-fx-text-fill: #0F172A;"
         );
 
         GridPane modulesGrid = new GridPane();
@@ -263,8 +230,8 @@ public class AboutUs {
         // =====================================================
         VBox highlightCard = new VBox(8);
         highlightCard.setStyle(
-                "-fx-background-color: #EEF5FF;" +
-                "-fx-border-color: #2F80ED;" +
+                "-fx-background-color: #EFF6FF;" +
+                "-fx-border-color: #3B82F6;" +
                 "-fx-border-width: 1.5px;" +
                 "-fx-border-radius: 14px;" +
                 "-fx-background-radius: 14px;" +
@@ -275,7 +242,7 @@ public class AboutUs {
         highlightTitle.setStyle(
                 "-fx-font-size: 16px;" +
                 "-fx-font-weight: bold;" +
-                "-fx-text-fill: #2F80ED;"
+                "-fx-text-fill: #1D4ED8;"
         );
 
         Label highlightText = new Label(
@@ -285,15 +252,13 @@ public class AboutUs {
         highlightText.setMaxWidth(Double.MAX_VALUE);
         highlightText.setStyle(
                 "-fx-font-size: 14px;" +
-                "-fx-text-fill: #172B4D;" +
+                "-fx-text-fill: #1E293B;" +
                 "-fx-line-spacing: 3px;"
         );
 
         highlightCard.getChildren().addAll(highlightTitle, highlightText);
 
-        // =====================================================
-        // ASSEMBLE ALL CONTENT
-        // =====================================================
+        // ASSEMBLE CONTENT
         content.getChildren().addAll(
                 headerBar,
                 brandBox,
@@ -304,25 +269,17 @@ public class AboutUs {
                 highlightCard
         );
 
-        System.out.println("[Patient] About Us view created & getScene initialized");
-        content.sceneProperty().addListener((obs, oldScene, newScene) -> {
-            if (newScene == null) {
-                System.out.println("[Patient] About Us view disposed");
-            }
-        });
+        ScrollPane scrollPane = new ScrollPane(content);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background-color: #F8FAFC; -fx-background: #F8FAFC;");
 
-        return PatientUI.createScene(
-                stage,
-                "Profile & Settings",
-                "About Us",
-                "HealthSphere — AI Powered Healthcare Management System",
-                content
-        );
+        return scrollPane;
     }
 
-    // =========================================================
-    // HELPER: CREATE WHITE CARD
-    // =========================================================
+    public Scene getScene() {
+        return new Scene(getView(), stage.getWidth(), stage.getHeight());
+    }
+
     private VBox createWhiteCard(String headingText, String bodyText) {
         VBox card = new VBox(10);
         card.setStyle(
@@ -332,14 +289,14 @@ public class AboutUs {
                 "-fx-border-color: #E2E8F0;" +
                 "-fx-border-width: 1px;" +
                 "-fx-border-radius: 16px;" +
-                "-fx-effect: dropshadow(three-pass-box, rgba(18, 53, 91, 0.06), 14, 0, 0, 4);"
+                "-fx-effect: dropshadow(three-pass-box, rgba(15, 23, 42, 0.04), 14, 0, 0, 4);"
         );
 
         Label heading = new Label(headingText);
         heading.setStyle(
                 "-fx-font-size: 18px;" +
                 "-fx-font-weight: bold;" +
-                "-fx-text-fill: #12355B;"
+                "-fx-text-fill: #0F172A;"
         );
 
         Label body = new Label(bodyText);
@@ -355,9 +312,6 @@ public class AboutUs {
         return card;
     }
 
-    // =========================================================
-    // HELPER: CREATE MODULE CARD
-    // =========================================================
     private VBox createModuleCard(String titleText, String descText) {
         VBox card = new VBox(8);
         card.setPadding(new Insets(16, 18, 16, 18));
@@ -368,20 +322,20 @@ public class AboutUs {
                 "-fx-border-color: #E2E8F0;" +
                 "-fx-border-width: 1px;" +
                 "-fx-border-radius: 12px;" +
-                "-fx-effect: dropshadow(three-pass-box, rgba(18, 53, 91, 0.04), 10, 0, 0, 2);"
+                "-fx-effect: dropshadow(three-pass-box, rgba(15, 23, 42, 0.03), 10, 0, 0, 2);"
         );
 
         HBox titleHeader = new HBox(8);
         titleHeader.setAlignment(Pos.CENTER_LEFT);
 
         Label dot = new Label("•");
-        dot.setStyle("-fx-text-fill: #2F80ED; -fx-font-size: 18px; -fx-font-weight: bold;");
+        dot.setStyle("-fx-text-fill: #2563EB; -fx-font-size: 18px; -fx-font-weight: bold;");
 
         Label title = new Label(titleText);
         title.setStyle(
                 "-fx-font-size: 14px;" +
                 "-fx-font-weight: bold;" +
-                "-fx-text-fill: #12355B;"
+                "-fx-text-fill: #0F172A;"
         );
 
         titleHeader.getChildren().addAll(dot, title);
@@ -399,9 +353,6 @@ public class AboutUs {
         return card;
     }
 
-    // =========================================================
-    // HELPER: SAFE IMAGE VIEW
-    // =========================================================
     private ImageView createSafeImageView(String path, double width, double height) {
         ImageView imageView = new ImageView();
         imageView.setFitWidth(width);
@@ -409,7 +360,7 @@ public class AboutUs {
         imageView.setPreserveRatio(true);
 
         try {
-            Image img = com.healthsphere.util.ResourceImage.load(path, (int) width, (int) height, true);
+            Image img = ResourceImage.load(path, width, height, true);
             if (img != null) {
                 imageView.setImage(img);
             }

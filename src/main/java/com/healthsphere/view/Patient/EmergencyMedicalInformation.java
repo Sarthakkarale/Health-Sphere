@@ -273,9 +273,7 @@ public class EmergencyMedicalInformation {
 
         if (resource != null) {
 
-            Image image = new Image(
-                    resource.toExternalForm()
-            );
+            Image image = com.healthsphere.util.ResourceImage.load(path, 800, 250, true);
 
             ImageView view = new ImageView(image);
 
@@ -332,9 +330,7 @@ public class EmergencyMedicalInformation {
 
         if (resource != null) {
 
-            Image image = new Image(
-                    resource.toExternalForm()
-            );
+            Image image = com.healthsphere.util.ResourceImage.load(path, 800, 210, true);
 
             ImageView view = new ImageView(image);
 

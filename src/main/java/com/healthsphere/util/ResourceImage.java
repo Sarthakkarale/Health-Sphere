@@ -25,7 +25,10 @@ public final class ResourceImage {
             return new Image(TRANSPARENT_PIXEL);
         }
 
-        String cacheKey = resourcePath + "_" + (int)reqWidth + "x" + (int)reqHeight;
+        double targetW = reqWidth > 0 ? reqWidth : 400;
+        double targetH = reqHeight > 0 ? reqHeight : 400;
+
+        String cacheKey = resourcePath + "_" + (int)targetW + "x" + (int)targetH;
         Image cached = CACHE.get(cacheKey);
         if (cached != null) {
             return cached;
@@ -39,12 +42,7 @@ public final class ResourceImage {
             return new Image(TRANSPARENT_PIXEL);
         }
 
-        Image img;
-        if (reqWidth > 0 && reqHeight > 0) {
-            img = new Image(stream, reqWidth, reqHeight, preserveRatio, true);
-        } else {
-            img = new Image(stream);
-        }
+        Image img = new Image(stream, targetW, targetH, preserveRatio, true);
 
         CACHE.put(cacheKey, img);
         return img;

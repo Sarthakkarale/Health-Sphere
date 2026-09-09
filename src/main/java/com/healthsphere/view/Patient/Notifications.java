@@ -1306,10 +1306,7 @@ public class Notifications {
         // LOAD IMAGE
         // =====================================================
 
-        Image image =
-                new Image(
-                        resource.toExternalForm()
-                );
+        Image image = com.healthsphere.util.ResourceImage.load(path, width, height, true);
 
         view.setImage(
                 image

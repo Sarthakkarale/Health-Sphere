@@ -431,24 +431,7 @@ public class ProfileSettings {
                 )
         );
 
-        /*
-         * About Us
-         */
 
-        preferences.getChildren().add(
-                setting(
-                        "About Us",
-                        "Learn more about HealthSphere digital healthcare ecosystem.",
-                        "About Us",
-                        () -> {
-                            System.out.println("[Patient] About Us button clicked");
-                            com.healthsphere.util.Navigation.goTo(stage, () ->
-                                    new AboutUs(stage)
-                                            .getScene()
-                            );
-                        }
-                )
-        );
 
         // =====================================================
         // SAVE BUTTON

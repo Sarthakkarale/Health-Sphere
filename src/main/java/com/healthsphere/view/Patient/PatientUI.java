@@ -1,5 +1,6 @@
 package com.healthsphere.view.Patient;
 
+import com.healthsphere.util.ResourceImage;
 import com.healthsphere.util.SessionManager;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -338,13 +339,7 @@ private static Button createFloatingAIButton(
 
     try {
 
-        Image icon =
-                new Image(
-                        PatientUI.class
-                                .getResourceAsStream(
-                                        "/images/logo/chatbot.png"
-                                )
-                );
+        Image icon = ResourceImage.load("/images/logo/chatbot.png", 30, 30, true);
 
         ImageView iconView =
                 new ImageView(icon);

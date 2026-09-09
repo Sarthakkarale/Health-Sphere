@@ -1505,10 +1505,7 @@ public class BookAppointment {
             return view;
         }
 
-        Image image =
-                new Image(
-                        resource.toExternalForm()
-                );
+        Image image = com.healthsphere.util.ResourceImage.load(path, width, height, true);
 
         view.setImage(
                 image

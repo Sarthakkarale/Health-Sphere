@@ -1094,10 +1094,7 @@ public class HealthPassport {
             return box;
         }
 
-        Image image =
-                new Image(
-                        resource.toExternalForm()
-                );
+        Image image = com.healthsphere.util.ResourceImage.load(path, 240, 140, true);
 
         ImageView imageView =
                 new ImageView(image);

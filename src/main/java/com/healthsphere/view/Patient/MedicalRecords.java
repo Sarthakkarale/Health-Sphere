@@ -1052,8 +1052,11 @@ public class MedicalRecords {
         if (imageResource != null) {
 
             Image image =
-                    new Image(
-                            imageResource.toExternalForm()
+                    com.healthsphere.util.ResourceImage.load(
+                            "/images/medicalrecords/medicalrecord5.jpg",
+                            400,
+                            300,
+                            true
                     );
 
 
@@ -1288,8 +1291,11 @@ public class MedicalRecords {
         if (templateResource != null) {
 
             Image backgroundImage =
-                    new Image(
-                            templateResource.toExternalForm()
+                    com.healthsphere.util.ResourceImage.load(
+                            "/images/medicalrecords/prescription_template.jpg",
+                            600,
+                            800,
+                            true
                     );
 
 
@@ -1922,11 +1928,10 @@ public class MedicalRecords {
 
 
         Image image =
-                new Image(
-                        resource.toExternalForm(),
+                com.healthsphere.util.ResourceImage.load(
+                        path,
                         260,
                         145,
-                        true,
                         true
                 );
 

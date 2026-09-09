@@ -505,8 +505,11 @@ public class HealthyLifestyle {
         if (resource != null) {
 
             Image image =
-                    new Image(
-                            resource.toExternalForm()
+                    com.healthsphere.util.ResourceImage.load(
+                            imagePath,
+                            218,
+                            188,
+                            true
                     );
 
             ImageView imageView =

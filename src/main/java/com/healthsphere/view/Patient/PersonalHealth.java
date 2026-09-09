@@ -150,8 +150,11 @@ public class PersonalHealth {
         if (imageResource != null) {
 
             Image personalHealthImage =
-                    new Image(
-                            imageResource.toExternalForm()
+                    com.healthsphere.util.ResourceImage.load(
+                            "/images/profile/profile6.jpg",
+                            190,
+                            190,
+                            true
                     );
 
             ImageView imageView =

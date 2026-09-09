@@ -343,12 +343,8 @@ public class EmergencyAssistance {
             return imageView;
         }
 
-        Image image = new Image(
-                resource.toExternalForm()
-        );
-
+        Image image = com.healthsphere.util.ResourceImage.load(imagePath, size, size, true);
         imageView.setImage(image);
-
         imageView.setFitWidth(size);
         imageView.setFitHeight(size);
 

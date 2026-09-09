@@ -618,14 +618,7 @@ public class AiHealthAssistant {
         );
 
         try {
-            var stream = getClass().getResourceAsStream(path);
-            if (stream == null) {
-                Label error = new Label("Image unavailable");
-                error.setStyle("-fx-text-fill: #64748b;");
-                box.getChildren().add(error);
-                return box;
-            }
-            Image image = new Image(stream);
+            Image image = com.healthsphere.util.ResourceImage.load(path, 260, 145, true);
             ImageView imageView = new ImageView(image);
             imageView.setFitWidth(260);
             imageView.setFitHeight(145);

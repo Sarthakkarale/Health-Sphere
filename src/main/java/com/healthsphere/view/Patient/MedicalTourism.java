@@ -1470,9 +1470,9 @@ public class MedicalTourism {
 
     private ImageView createImageView(String path, double width, double height) {
         try {
-            InputStream is = MedicalTourism.class.getResourceAsStream(path);
-            if (is != null) {
-                ImageView iv = new ImageView(new Image(is));
+            Image img = com.healthsphere.util.ResourceImage.load(path, width, height, true);
+            if (img != null) {
+                ImageView iv = new ImageView(img);
                 iv.setFitWidth(width);
                 iv.setFitHeight(height);
                 iv.setPreserveRatio(true);

@@ -312,9 +312,7 @@ public class EmergencyNumbers {
 
         if (resource != null) {
 
-            Image image = new Image(
-                    resource.toExternalForm()
-            );
+            Image image = com.healthsphere.util.ResourceImage.load(path, 800, 250, true);
 
             ImageView imageView = new ImageView(image);
 

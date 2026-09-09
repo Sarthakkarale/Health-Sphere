@@ -392,8 +392,11 @@ public class AmbulanceSupport {
         if (resource != null) {
 
             Image image =
-                    new Image(
-                            resource.toExternalForm()
+                    com.healthsphere.util.ResourceImage.load(
+                            path,
+                            800,
+                            250,
+                            true
                     );
 
             ImageView view =
