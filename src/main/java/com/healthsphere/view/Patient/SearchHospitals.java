@@ -42,6 +42,8 @@ public class SearchHospitals {
     private TextField hospitalSearchField;
     private TextField doctorSearchField;
 
+    private Scene scene;
+
     // =========================================================
     // CONSTRUCTOR
     // =========================================================
@@ -417,23 +419,25 @@ public class SearchHospitals {
         );
 
         // =====================================================
-        // LOAD DATA
-        // =====================================================
-
-        loadHospitals();
-        loadDoctors();
-
-        // =====================================================
         // CREATE PATIENT SCENE
         // =====================================================
 
-        return PatientUI.createScene(
+        this.scene = PatientUI.createScene(
                 stage,
                 "Search Hospitals",
                 "Search Hospitals & Doctors",
                 "Find hospitals and doctors in one place.",
                 content
         );
+
+        // =====================================================
+        // LOAD DATA
+        // =====================================================
+
+        loadHospitals();
+        loadDoctors();
+
+        return this.scene;
     }
 
     // =========================================================
@@ -455,11 +459,17 @@ public class SearchHospitals {
         };
 
         task.setOnSucceeded(e -> {
+            if (stage != null && stage.getScene() != null && this.scene != null && stage.getScene() != this.scene) {
+                return;
+            }
             allHospitals = task.getValue();
             displayHospitals(allHospitals);
         });
 
         task.setOnFailed(e -> {
+            if (stage != null && stage.getScene() != null && this.scene != null && stage.getScene() != this.scene) {
+                return;
+            }
             Throwable ex = task.getException();
             if (ex != null) ex.printStackTrace();
             showHospitalError("Unable to load hospitals.");
@@ -489,11 +499,17 @@ public class SearchHospitals {
         };
 
         task.setOnSucceeded(e -> {
+            if (stage != null && stage.getScene() != null && this.scene != null && stage.getScene() != this.scene) {
+                return;
+            }
             allDoctors = task.getValue();
             displayDoctors(allDoctors);
         });
 
         task.setOnFailed(e -> {
+            if (stage != null && stage.getScene() != null && this.scene != null && stage.getScene() != this.scene) {
+                return;
+            }
             Throwable ex = task.getException();
             if (ex != null) ex.printStackTrace();
             showDoctorError("Unable to load doctors.");
@@ -505,7 +521,7 @@ public class SearchHospitals {
     }
 
     // =========================================================
-    // FILTER HOSPITALS
+    // FILTER HOSPITALS (IN-MEMORY FAST FILTER)
     // =========================================================
 
     private void filterHospitals(
@@ -521,32 +537,23 @@ public class SearchHospitals {
             return;
         }
 
-        try {
+        String search = searchText.trim().toLowerCase();
+        List<HospitalProfile> filtered = new ArrayList<>();
 
-            List<HospitalProfile> filtered =
-                    hospitalController
-                            .searchHospitals(
-                                    searchText.trim()
-                            );
+        for (HospitalProfile hospital : allHospitals) {
+            if (hospital == null) continue;
 
-            if (filtered == null) {
+            String hospitalName = safeDisplay(hospital.getHospitalName(), "").toLowerCase();
+            String address = safeDisplay(hospital.getAddress(), "").toLowerCase();
+            String hospitalType = safeDisplay(hospital.getHospitalType(), "").toLowerCase();
+            String contact = safeDisplay(hospital.getContact(), "").toLowerCase();
 
-                filtered =
-                        new ArrayList<>();
+            if (hospitalName.contains(search) || address.contains(search) || hospitalType.contains(search) || contact.contains(search)) {
+                filtered.add(hospital);
             }
-
-            displayHospitals(
-                    filtered
-            );
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            showHospitalError(
-                    "Unable to search hospitals."
-            );
         }
+
+        displayHospitals(filtered);
     }
 
     // =========================================================
@@ -972,12 +979,16 @@ public class SearchHospitals {
         // RATING
         // =====================================================
 
-        String hospRatingText = reviewController.getFormattedRatingText("HOSPITAL", hospital.getUid());
-
         Label hospRatingLabel =
                 new Label(
-                        hospRatingText
+                        reviewController.getFormattedRatingText("HOSPITAL", hospital.getUid())
                 );
+
+        reviewController.getFormattedRatingTextAsync("HOSPITAL", hospital.getUid(), text -> {
+            if (hospRatingLabel != null && text != null) {
+                hospRatingLabel.setText(text);
+            }
+        });
 
         hospRatingLabel.setWrapText(true);
 
@@ -1189,12 +1200,16 @@ public class SearchHospitals {
         // RATING
         // =====================================================
 
-        String docRatingText = reviewController.getFormattedRatingText("DOCTOR", doctor.getUid());
-
         Label docRatingLabel =
                 new Label(
-                        docRatingText
+                        reviewController.getFormattedRatingText("DOCTOR", doctor.getUid())
                 );
+
+        reviewController.getFormattedRatingTextAsync("DOCTOR", doctor.getUid(), text -> {
+            if (docRatingLabel != null && text != null) {
+                docRatingLabel.setText(text);
+            }
+        });
 
         docRatingLabel.setWrapText(true);
 

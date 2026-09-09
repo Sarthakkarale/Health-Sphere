@@ -209,9 +209,14 @@ public class ReviewController {
         // SAVE
         // -----------------------------------------------------
 
-        return reviewDAO.createReview(
+        Review created = reviewDAO.createReview(
                 review
         );
+        if (created != null && targetType != null && targetId != null) {
+            String cacheKey = targetType.trim().toUpperCase() + ":" + targetId.trim();
+            RATING_TEXT_CACHE.remove(cacheKey);
+        }
+        return created;
     }
 
     // =========================================================
@@ -250,6 +255,9 @@ public class ReviewController {
         );
     }
 
+    // In-memory cache for rating strings to avoid blocking UI rendering with repeated DB calls
+    private static final java.util.concurrent.ConcurrentHashMap<String, String> RATING_TEXT_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+
     // =========================================================
     // GET AVERAGE RATING & REVIEW COUNT
     // =========================================================
@@ -273,18 +281,52 @@ public class ReviewController {
         if (targetType == null || targetType.isBlank() || targetId == null || targetId.isBlank()) {
             return "No ratings yet";
         }
+        String cacheKey = targetType.trim().toUpperCase() + ":" + targetId.trim();
+        if (RATING_TEXT_CACHE.containsKey(cacheKey)) {
+            return RATING_TEXT_CACHE.get(cacheKey);
+        }
+        return calculateAndCacheRatingText(targetType, targetId, cacheKey);
+    }
+
+    public void getFormattedRatingTextAsync(String targetType, String targetId, java.util.function.Consumer<String> callback) {
+        if (targetType == null || targetType.isBlank() || targetId == null || targetId.isBlank()) {
+            if (callback != null) callback.accept("No ratings yet");
+            return;
+        }
+        String cacheKey = targetType.trim().toUpperCase() + ":" + targetId.trim();
+        if (RATING_TEXT_CACHE.containsKey(cacheKey)) {
+            if (callback != null) callback.accept(RATING_TEXT_CACHE.get(cacheKey));
+            return;
+        }
+        com.healthsphere.util.AppBackgroundExecutor.execute(() -> {
+            String formatted = calculateAndCacheRatingText(targetType, targetId, cacheKey);
+            if (callback != null) {
+                javafx.application.Platform.runLater(() -> callback.accept(formatted));
+            }
+        });
+    }
+
+    private String calculateAndCacheRatingText(String targetType, String targetId, String cacheKey) {
         try {
             int count = getReviewCount(targetType, targetId);
             if (count == 0) {
-                return "No ratings yet";
+                String val = "No ratings yet";
+                RATING_TEXT_CACHE.put(cacheKey, val);
+                return val;
             }
             double avg = getAverageRating(targetType, targetId);
             if (avg <= 0.0) {
-                return "No ratings yet";
+                String val = "No ratings yet";
+                RATING_TEXT_CACHE.put(cacheKey, val);
+                return val;
             }
-            return String.format("★ %.1f  (%d %s)", avg, count, count == 1 ? "Review" : "Reviews");
+            String result = String.format("★ %.1f  (%d %s)", avg, count, count == 1 ? "Review" : "Reviews");
+            RATING_TEXT_CACHE.put(cacheKey, result);
+            return result;
         } catch (Exception e) {
-            return "No ratings yet";
+            String val = "No ratings yet";
+            RATING_TEXT_CACHE.put(cacheKey, val);
+            return val;
         }
     }
 

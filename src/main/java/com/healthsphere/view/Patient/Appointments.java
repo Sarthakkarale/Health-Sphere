@@ -39,6 +39,7 @@ import com.healthsphere.util.SessionManager;
 public class Appointments {
 
     private final Stage stage;
+    private Scene scene;
 
     private final AppointmentController appointmentController;
 
@@ -305,6 +306,7 @@ public class Appointments {
 
         loadTask.setOnSucceeded(e -> {
             if (!SessionManager.isLoggedIn()) return;
+            if (stage != null && stage.getScene() != null && this.scene != null && stage.getScene() != this.scene) return;
             dynamicContainer.getChildren().clear();
             appointmentsList.clear();
             appointmentsList.addAll(loadTask.getValue());
@@ -313,6 +315,7 @@ public class Appointments {
 
         loadTask.setOnFailed(e -> {
             if (!SessionManager.isLoggedIn()) return;
+            if (stage != null && stage.getScene() != null && this.scene != null && stage.getScene() != this.scene) return;
             dynamicContainer.getChildren().clear();
             Throwable ex = loadTask.getException();
             String err = ex != null ? ex.getMessage() : "Unable to load appointments.";
@@ -354,7 +357,7 @@ public class Appointments {
                 dynamicContainer
         );
 
-        return PatientUI.createScene(
+        this.scene = PatientUI.createScene(
 
                 stage,
 
@@ -366,6 +369,8 @@ public class Appointments {
 
                 content
         );
+
+        return this.scene;
     }
 
 
@@ -714,21 +719,26 @@ public class Appointments {
         actions.getChildren().add(videoCallBtn);
 
         if (!isPaid) {
-            double feeToDisplay = appointment.getFee();
-            if (feeToDisplay <= 0 && appointment.getDoctorUid() != null && !appointment.getDoctorUid().isBlank()) {
-                try {
-                    com.healthsphere.dao.doctor.DoctorAvailabilityDAO availDAO = new com.healthsphere.dao.doctor.DoctorAvailabilityDAO();
-                    com.healthsphere.model.DoctorAvailability avail = availDAO.getAvailability(appointment.getDoctorUid().trim());
-                    if (avail != null && avail.getConsultationFee() > 0) {
-                        feeToDisplay = avail.getConsultationFee();
-                        appointment.setFee(feeToDisplay);
-                    }
-                } catch (Exception ignored) {}
-            }
+            double feeToDisplay = Math.max(0, appointment.getFee());
             Button payNowBtn = new Button("Pay Now ₹" + (int) feeToDisplay);
             payNowBtn.setStyle("-fx-background-color: #2563eb; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 16; -fx-cursor: hand;");
             payNowBtn.setOnAction(e -> handlePayNow(appointment));
             actions.getChildren().add(payNowBtn);
+
+            if (feeToDisplay <= 0 && appointment.getDoctorUid() != null && !appointment.getDoctorUid().isBlank()) {
+                String docUid = appointment.getDoctorUid().trim();
+                com.healthsphere.util.AppBackgroundExecutor.execute(() -> {
+                    try {
+                        com.healthsphere.dao.doctor.DoctorAvailabilityDAO availDAO = new com.healthsphere.dao.doctor.DoctorAvailabilityDAO();
+                        com.healthsphere.model.DoctorAvailability avail = availDAO.getAvailability(docUid);
+                        if (avail != null && avail.getConsultationFee() > 0) {
+                            double fee = avail.getConsultationFee();
+                            appointment.setFee(fee);
+                            javafx.application.Platform.runLater(() -> payNowBtn.setText("Pay Now ₹" + (int) fee));
+                        }
+                    } catch (Exception ignored) {}
+                });
+            }
         }
 
         box.getChildren().addAll(
@@ -1977,212 +1987,52 @@ public class Appointments {
         }
 
 
-        try {
+        VBox doctorDetails = PatientUI.card("Doctor Details");
+        Label loadingLabel = new Label("Loading doctor details...");
+        loadingLabel.setStyle("-fx-text-fill: #64748b; -fx-font-size: 14px;");
+        doctorDetails.getChildren().add(loadingLabel);
+        content.getChildren().add(doctorDetails);
 
-            DoctorProfile doctorProfile =
-                    doctorDAO.getDoctorProfile(
-                            doctorUid
+        com.healthsphere.util.AppBackgroundExecutor.execute(() -> {
+            try {
+                DoctorProfile doctorProfile = doctorDAO.getDoctorProfile(doctorUid);
+                String doctorName = buildDoctorName(doctorProfile, appointment);
+                String specialization = safe(doctorProfile != null ? doctorProfile.getSpecialization() : null, safe(appointment.getSpecialty(), "Not available"));
+                String experience = safe(doctorProfile != null ? doctorProfile.getExperience() : null, "Not available");
+                String hospitalAffiliation = safe(doctorProfile != null ? doctorProfile.getHospitalAffiliation() : null, "Not available");
+                String phone = safe(doctorProfile != null ? doctorProfile.getPhone() : null, "Not available");
+
+                javafx.application.Platform.runLater(() -> {
+                    doctorDetails.getChildren().clear();
+                    doctorDetails.getChildren().addAll(
+                            detailLabel("Doctor", doctorName),
+                            detailLabel("Specialization", specialization),
+                            detailLabel("Experience", experience),
+                            detailLabel("Hospital Affiliation", hospitalAffiliation),
+                            detailLabel("Phone", phone)
                     );
+                });
+            } catch (Exception e) {
+                javafx.application.Platform.runLater(() -> {
+                    doctorDetails.getChildren().clear();
+                    doctorDetails.getChildren().add(errorLabel("Unable to load doctor details."));
+                });
+            }
+        });
 
+        // =================================================
+        // CONSULTATION INFORMATION
+        // =================================================
 
-            VBox doctorDetails =
-                    PatientUI.card(
-                            "Doctor Details"
-                    );
+        VBox consultationDetails = PatientUI.card("Consultation Information");
+        consultationDetails.getChildren().addAll(
+                detailLabel("Appointment Date", formatDate(appointment.getAppointmentDate())),
+                detailLabel("Appointment Time", safe(appointment.getAppointmentTime(), "Not available")),
+                detailLabel("Specialty", safe(appointment.getSpecialty(), "Not available")),
+                detailLabel("Reason for Visit", safe(appointment.getReason(), "Not available"))
+        );
 
-
-            String doctorName =
-                    buildDoctorName(
-                            doctorProfile,
-                            appointment
-                    );
-
-
-            String specialization =
-                    safe(
-                            doctorProfile != null
-                                    ? doctorProfile.getSpecialization()
-                                    : null,
-
-                            safe(
-                                    appointment.getSpecialty(),
-                                    "Not available"
-                            )
-                    );
-
-
-            String experience =
-                    safe(
-                            doctorProfile != null
-                                    ? doctorProfile.getExperience()
-                                    : null,
-
-                            "Not available"
-                    );
-
-
-            String hospitalAffiliation =
-                    safe(
-                            doctorProfile != null
-                                    ? doctorProfile.getHospitalAffiliation()
-                                    : null,
-
-                            "Not available"
-                    );
-
-
-            String phone =
-                    safe(
-                            doctorProfile != null
-                                    ? doctorProfile.getPhone()
-                                    : null,
-
-                            "Not available"
-                    );
-
-
-            doctorDetails.getChildren().addAll(
-
-                    detailLabel(
-                            "Doctor",
-                            doctorName
-                    ),
-
-                    detailLabel(
-                            "Specialization",
-                            specialization
-                    ),
-
-                    detailLabel(
-                            "Experience",
-                            experience
-                    ),
-
-                    detailLabel(
-                            "Hospital Affiliation",
-                            hospitalAffiliation
-                    ),
-
-                    detailLabel(
-                            "Phone",
-                            phone
-                    )
-            );
-
-
-            content.getChildren().add(
-                    doctorDetails
-            );
-
-
-            // =================================================
-            // CONSULTATION INFORMATION
-            // =================================================
-
-            VBox consultationDetails =
-                    PatientUI.card(
-                            "Consultation Information"
-                    );
-
-
-            consultationDetails.getChildren().addAll(
-
-                    detailLabel(
-                            "Appointment Date",
-                            formatDate(
-                                    appointment.getAppointmentDate()
-                            )
-                    ),
-
-                    detailLabel(
-                            "Appointment Time",
-                            safe(
-                                    appointment.getAppointmentTime(),
-                                    "Not available"
-                            )
-                    ),
-
-                    detailLabel(
-                            "Specialty",
-                            safe(
-                                    appointment.getSpecialty(),
-                                    specialization
-                            )
-                    ),
-
-                    detailLabel(
-                            "Reason for Visit",
-                            safe(
-                                    appointment.getReason(),
-                                    "Not available"
-                            )
-                    )
-            );
-
-
-            content.getChildren().add(
-                    consultationDetails
-            );
-
-
-        } catch (Exception e) {
-
-            System.err.println(
-                    "Unable to load doctor details: "
-                            + e.getMessage()
-            );
-
-
-            VBox errorCard =
-                    PatientUI.card(
-                            "Doctor Details"
-                    );
-
-
-            errorCard.getChildren().addAll(
-
-                    detailLabel(
-                            "Doctor",
-                            safe(
-                                    appointment.getDoctorName(),
-                                    "Doctor"
-                            )
-                    ),
-
-                    detailLabel(
-                            "Specialty",
-                            safe(
-                                    appointment.getSpecialty(),
-                                    "Not available"
-                            )
-                    ),
-
-                    detailLabel(
-                            "Appointment Date",
-                            formatDate(
-                                    appointment.getAppointmentDate()
-                            )
-                    ),
-
-                    detailLabel(
-                            "Appointment Time",
-                            safe(
-                                    appointment.getAppointmentTime(),
-                                    "Not available"
-                            )
-                    ),
-
-                    errorLabel(
-                            "Some additional doctor information "
-                                    + "could not be loaded."
-                    )
-            );
-
-
-            content.getChildren().add(
-                    errorCard
-            );
-        }
+        content.getChildren().add(consultationDetails);
     }
 
 

@@ -758,18 +758,28 @@ private static HBox navItem(
     return item;
 }
 
+private static String currentActivePage = null;
+private static long lastNavigationTime = 0;
+
 // =========================================================
 // CENTRALIZED NAVIGATION
 // =========================================================
 
-private static void navigate(
+private static synchronized void navigate(
         Stage stage,
         String page
 ) {
 
-    if (stage == null) {
+    if (stage == null || page == null) {
         return;
     }
+
+    long now = System.currentTimeMillis();
+    if (page.equals(currentActivePage) && (now - lastNavigationTime < 400)) {
+        return;
+    }
+    currentActivePage = page;
+    lastNavigationTime = now;
 
     Scene scene;
 
