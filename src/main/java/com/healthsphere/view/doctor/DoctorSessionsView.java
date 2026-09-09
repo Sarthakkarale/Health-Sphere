@@ -143,9 +143,7 @@ public class DoctorSessionsView {
             renderAppointmentCards();
         });
 
-        Thread backgroundThread = new Thread(loadTask);
-        backgroundThread.setDaemon(true);
-        backgroundThread.start();
+        com.healthsphere.util.AppBackgroundExecutor.execute(loadTask);
     }
 
     private boolean isAcceptedAppointment(Appointment apt) {

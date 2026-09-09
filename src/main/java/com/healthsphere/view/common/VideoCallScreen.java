@@ -334,7 +334,7 @@ public class VideoCallScreen extends VBox {
         endTask.setOnSucceeded(evt -> Platform.runLater(this::terminateCallSilently));
         endTask.setOnFailed(evt -> Platform.runLater(this::terminateCallSilently));
         
-        new Thread(endTask).start();
+        com.healthsphere.util.AppBackgroundExecutor.execute(endTask);
     }
 
     private void terminateCallSilently() {

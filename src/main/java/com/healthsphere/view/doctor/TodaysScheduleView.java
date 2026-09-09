@@ -171,9 +171,7 @@ public class TodaysScheduleView {
             updateScheduleView();
         });
 
-        Thread thread = new Thread(loadTask);
-        thread.setDaemon(true);
-        thread.start();
+        com.healthsphere.util.AppBackgroundExecutor.execute(loadTask);
     }
 
     private void loadDoctorAppointments() {

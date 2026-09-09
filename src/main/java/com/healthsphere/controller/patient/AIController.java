@@ -25,9 +25,7 @@ public class AIController {
     private final Gson gson;
 
     public AIController() {
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(12))
-                .build();
+        this.httpClient = com.healthsphere.util.SharedHttpClient.getInstance();
         this.gson = new Gson();
     }
 

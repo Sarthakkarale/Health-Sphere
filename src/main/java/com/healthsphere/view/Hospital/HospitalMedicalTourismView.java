@@ -257,7 +257,7 @@ public class HospitalMedicalTourismView {
             requestsContainer.getChildren().add(errLbl);
         });
 
-        new Thread(task).start();
+        com.healthsphere.util.AppBackgroundExecutor.execute(task);
     }
 
     private void applyFilter() {
@@ -876,7 +876,7 @@ public class HospitalMedicalTourismView {
             travelRequestsContainer.getChildren().add(errLbl);
         });
 
-        new Thread(task).start();
+        com.healthsphere.util.AppBackgroundExecutor.execute(task);
     }
 
     private void applyTravelFilter() {

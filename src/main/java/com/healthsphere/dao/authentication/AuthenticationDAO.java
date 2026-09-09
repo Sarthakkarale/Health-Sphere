@@ -17,7 +17,7 @@ public class AuthenticationDAO {
     private final ObjectMapper objectMapper;
 
     public AuthenticationDAO() {
-        this.httpClient = HttpClient.newHttpClient();
+        this.httpClient = com.healthsphere.util.SharedHttpClient.getInstance();
         this.objectMapper = new ObjectMapper();
     }
 

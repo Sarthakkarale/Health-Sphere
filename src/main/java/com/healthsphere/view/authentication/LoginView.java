@@ -588,9 +588,7 @@ public class LoginView {
                                 }
                         });
 
-                        Thread authThread = new Thread(loginTask);
-                        authThread.setDaemon(true);
-                        authThread.start();
+                        com.healthsphere.util.AppBackgroundExecutor.execute(loginTask);
                 });
 
                 createAccountBtn.setOnAction(

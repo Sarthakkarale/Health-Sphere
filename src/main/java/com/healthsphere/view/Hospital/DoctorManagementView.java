@@ -428,7 +428,7 @@ public class DoctorManagementView {
             showAlert("Unable to Load Doctors", getRootMessage(loadTask.getException()));
         });
 
-        new Thread(loadTask).start();
+        com.healthsphere.util.AppBackgroundExecutor.execute(loadTask);
     }
 
     // =========================================================

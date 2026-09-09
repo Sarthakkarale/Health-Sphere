@@ -11,19 +11,14 @@ import java.util.function.Supplier;
 public final class Navigation {
 
     private static final int MAX_HISTORY_SIZE = 4;
-    private static final Deque<Scene> history = new ArrayDeque<>();
+    private static final Deque<Supplier<Scene>> history = new ArrayDeque<>();
 
     private Navigation() { }
 
-    public static void goTo(Stage stage, Supplier<Scene> nextScene) {
-        Scene current = stage.getScene();
-        if (current != null) {
-            if (history.size() >= MAX_HISTORY_SIZE) {
-                history.removeLast(); // Evict oldest scene graph to prevent RAM retention
-            }
-            history.push(current);
+    public static void goTo(Stage stage, Supplier<Scene> nextSceneSupplier) {
+        if (nextSceneSupplier != null && stage != null) {
+            stage.setScene(nextSceneSupplier.get());
         }
-        stage.setScene(nextScene.get());
     }
 
     /** Back action exposed as Runnable so it can be attached to any Back button. */
@@ -33,8 +28,11 @@ public final class Navigation {
 
     public static boolean goBack(Stage stage) {
         if (!history.isEmpty()) {
-            stage.setScene(history.pop());
-            return true;
+            Supplier<Scene> prevSupplier = history.pop();
+            if (prevSupplier != null && stage != null) {
+                stage.setScene(prevSupplier.get());
+                return true;
+            }
         }
         return false;
     }

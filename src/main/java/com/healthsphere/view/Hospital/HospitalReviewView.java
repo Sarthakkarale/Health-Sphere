@@ -400,9 +400,7 @@ public class HospitalReviewView {
             applyFiltersAndRender();
         });
 
-        Thread bgThread = new Thread(task);
-        bgThread.setDaemon(true);
-        bgThread.start();
+        com.healthsphere.util.AppBackgroundExecutor.execute(task);
     }
 
     // =========================================================

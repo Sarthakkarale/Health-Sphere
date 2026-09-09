@@ -107,7 +107,7 @@
                     <target>17</target>
                     <fork>true</fork>
                     <meminitial>256m</meminitial>
-                    <maxmem>512m</maxmem>
+                    <maxmem>1024m</maxmem>
                 </configuration>
             </plugin>
 
@@ -119,8 +119,8 @@
                 <configuration>
                     <mainClass>com.healthsphere.Main</mainClass>
                     <options>
-                        <option>-Xms256m</option>
-                        <option>-Xmx512m</option>
+                        <option>-Xms512m</option>
+                        <option>-Xmx2048m</option>
                     </options>
                 </configuration>
             </plugin>

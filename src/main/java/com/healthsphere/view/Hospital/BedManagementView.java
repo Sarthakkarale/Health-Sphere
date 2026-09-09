@@ -277,7 +277,7 @@ public class BedManagementView {
             }
         };
 
-        new Thread(loadTask).start();
+        com.healthsphere.util.AppBackgroundExecutor.execute(loadTask);
     }
 
     // =========================================================
@@ -3006,7 +3006,7 @@ public class BedManagementView {
                     showAlert(Alert.AlertType.ERROR, "Unable to Add Bed", getErrorMessage(getException()));
                 }
             };
-            new Thread(saveTask).start();
+            com.healthsphere.util.AppBackgroundExecutor.execute(saveTask);
         });
 
         buttonBox.getChildren().addAll(cancelBtn, saveButton);

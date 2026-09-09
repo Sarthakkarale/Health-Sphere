@@ -2661,7 +2661,7 @@ public class HospitalDashboardView {
             );
         });
 
-        new Thread(loadTask).start();
+        com.healthsphere.util.AppBackgroundExecutor.execute(loadTask);
     }
 
     // =========================================================

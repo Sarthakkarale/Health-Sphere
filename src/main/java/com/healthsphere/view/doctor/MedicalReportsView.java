@@ -169,9 +169,7 @@ public class MedicalReportsView {
             loadPatient();
         });
 
-        Thread thread = new Thread(loadTask);
-        thread.setDaemon(true);
-        thread.start();
+        com.healthsphere.util.AppBackgroundExecutor.execute(loadTask);
     }
 
 

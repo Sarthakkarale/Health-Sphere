@@ -16,7 +16,7 @@ public class RazorpayService {
     private static final String KEY_SECRET = "Gbmwc3PLNjX0hjlBqd9TX46o";
     private static final String X_ACCOUNT_NUMBER = "233445566778899";
 
-    private final HttpClient http = HttpClient.newHttpClient();
+    private final HttpClient http = com.healthsphere.util.SharedHttpClient.getInstance();
 
     /**
      * Basics auth.

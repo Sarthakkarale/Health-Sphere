@@ -471,8 +471,7 @@ public class AvailabilityScheduleView {
             refreshCalendar();
         });
 
-        SessionManager.registerTask(task);
-        new Thread(task).start();
+        com.healthsphere.util.AppBackgroundExecutor.execute(task);
     }
 
     // =========================================================
@@ -769,8 +768,7 @@ public class AvailabilityScheduleView {
                 );
             });
 
-            SessionManager.registerTask(task);
-            new Thread(task).start();
+            com.healthsphere.util.AppBackgroundExecutor.execute(task);
 
         } catch (Exception e) {
             if (saveBtn != null) {

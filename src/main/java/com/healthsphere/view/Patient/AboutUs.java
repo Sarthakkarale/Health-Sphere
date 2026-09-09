@@ -409,8 +409,9 @@ public class AboutUs {
         imageView.setPreserveRatio(true);
 
         try {
-            if (getClass().getResource(path) != null) {
-                imageView.setImage(new Image(getClass().getResourceAsStream(path)));
+            Image img = com.healthsphere.util.ResourceImage.load(path, (int) width, (int) height, true);
+            if (img != null) {
+                imageView.setImage(img);
             }
         } catch (Exception ignored) {
         }

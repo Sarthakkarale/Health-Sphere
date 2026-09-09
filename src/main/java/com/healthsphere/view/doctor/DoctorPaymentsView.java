@@ -180,9 +180,7 @@ public class DoctorPaymentsView {
             listCard.getChildren().add(errorMsg);
         });
 
-        Thread bgThread = new Thread(task);
-        bgThread.setDaemon(true);
-        bgThread.start();
+        com.healthsphere.util.AppBackgroundExecutor.execute(task);
 
         return new Scene(mainRoot, stage.getWidth() > 0 ? stage.getWidth() : 1200, stage.getHeight() > 0 ? stage.getHeight() : 750);
     }

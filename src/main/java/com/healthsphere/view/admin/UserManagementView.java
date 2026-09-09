@@ -769,9 +769,7 @@ public class UserManagementView {
             showErrorAlert("Unable to Load Users", "The approved user directory could not be loaded from Firestore.\n\n" + (ex != null ? ex.getMessage() : ""));
         });
 
-        Thread bgThread = new Thread(loadTask);
-        bgThread.setDaemon(true);
-        bgThread.start();
+        com.healthsphere.util.AppBackgroundExecutor.execute(loadTask);
     }
 
     // ============================================================

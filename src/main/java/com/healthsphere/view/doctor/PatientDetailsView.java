@@ -212,9 +212,7 @@ public class PatientDetailsView {
             }
         });
 
-        Thread thread = new Thread(loadTask);
-        thread.setDaemon(true);
-        thread.start();
+        com.healthsphere.util.AppBackgroundExecutor.execute(loadTask);
     }
 
     private void loadSelectedPatientDataAsync() {
@@ -251,9 +249,7 @@ public class PatientDetailsView {
             refreshPatientUI();
         });
 
-        Thread t = new Thread(task);
-        t.setDaemon(true);
-        t.start();
+        com.healthsphere.util.AppBackgroundExecutor.execute(task);
     }
 
     // ============================================================

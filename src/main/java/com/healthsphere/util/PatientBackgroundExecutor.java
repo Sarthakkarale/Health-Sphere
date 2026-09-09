@@ -13,46 +13,17 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class PatientBackgroundExecutor {
 
-    private static final int THREAD_POOL_SIZE = 4;
-
-    private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(THREAD_POOL_SIZE, new ThreadFactory() {
-        private final AtomicInteger threadNumber = new AtomicInteger(1);
-
-        @Override
-        public Thread newThread(Runnable r) {
-            Thread thread = new Thread(r, "PatientBackgroundWorker-" + threadNumber.getAndIncrement());
-            thread.setDaemon(true);
-            return thread;
-        }
-    });
-
     private PatientBackgroundExecutor() {}
 
-    /**
-     * Submits a JavaFX Task to run on the shared background thread pool.
-     */
     public static <T> void execute(Task<T> task) {
-        if (task != null) {
-            EXECUTOR.submit(task);
-        }
+        AppBackgroundExecutor.execute(task);
     }
 
-    /**
-     * Submits a Runnable to run on the shared background thread pool.
-     */
     public static void execute(Runnable runnable) {
-        if (runnable != null) {
-            EXECUTOR.submit(runnable);
-        }
+        AppBackgroundExecutor.execute(runnable);
     }
 
-    /**
-     * Helper to safely execute a task and handle lifecycle check.
-     */
     public static <T> Task<T> submitTask(Task<T> task) {
-        if (task != null) {
-            EXECUTOR.submit(task);
-        }
-        return task;
+        return AppBackgroundExecutor.submitTask(task);
     }
 }

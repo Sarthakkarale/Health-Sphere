@@ -426,7 +426,7 @@ public class DepartmentManagementView {
             showAlert("Department Loading Error", getErrorMessage(loadTask.getException()));
         });
 
-        new Thread(loadTask).start();
+        com.healthsphere.util.AppBackgroundExecutor.execute(loadTask);
     }
 
     // =========================================================

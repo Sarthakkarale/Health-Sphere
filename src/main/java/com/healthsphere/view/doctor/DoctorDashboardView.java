@@ -194,9 +194,7 @@ public class DoctorDashboardView {
             updateUIWithLoadedData(new DoctorDashboardData(new ArrayList<>(), 0.0, 0));
         });
 
-        Thread thread = new Thread(loadTask);
-        thread.setDaemon(true);
-        thread.start();
+        com.healthsphere.util.AppBackgroundExecutor.execute(loadTask);
     }
 
     private void loadDashboardData() {

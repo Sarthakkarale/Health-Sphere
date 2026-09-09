@@ -144,9 +144,7 @@ public class DoctorProfileView {
                         if (balAmountLabel != null) balAmountLabel.setText("Unable to load account balance.");
                 });
 
-                Thread bgThread = new Thread(task);
-                bgThread.setDaemon(true);
-                bgThread.start();
+                com.healthsphere.util.AppBackgroundExecutor.execute(task);
         }
 
         // ============================================================

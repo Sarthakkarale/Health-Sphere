@@ -15,7 +15,7 @@ public class FirebaseAuthTest {
 
         try {
 
-            HttpClient httpClient = HttpClient.newHttpClient();
+            HttpClient httpClient = SharedHttpClient.getInstance();
 
             ObjectMapper objectMapper = new ObjectMapper();
 

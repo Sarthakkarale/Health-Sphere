@@ -184,7 +184,7 @@ public class DoctorMedicalTourismView {
             requestsContainer.getChildren().add(errLbl);
         });
 
-        new Thread(task).start();
+        com.healthsphere.util.AppBackgroundExecutor.execute(task);
     }
 
     private VBox createDoctorRequestCard(MedicalTourismRequest req) {

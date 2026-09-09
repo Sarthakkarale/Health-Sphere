@@ -246,7 +246,7 @@ public class AppointmentManagementView {
             );
         });
 
-        new Thread(loadTask).start();
+        com.healthsphere.util.AppBackgroundExecutor.execute(loadTask);
     }
 
     // =========================================================
