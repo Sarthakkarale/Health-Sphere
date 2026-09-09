@@ -10,10 +10,29 @@ import java.time.Duration;
  */
 public final class SharedHttpClient {
 
-    private static final HttpClient INSTANCE = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(10))
-            .followRedirects(HttpClient.Redirect.NORMAL)
-            .build();
+    private static final HttpClient INSTANCE;
+
+    static {
+        java.util.concurrent.atomic.AtomicInteger threadCount = new java.util.concurrent.atomic.AtomicInteger(1);
+        HttpClient client;
+        try {
+            client = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofSeconds(10))
+                    .followRedirects(HttpClient.Redirect.NORMAL)
+                    .executor(java.util.concurrent.Executors.newFixedThreadPool(4, r -> {
+                        Thread t = new Thread(r, "SharedHttpClient-Worker-" + threadCount.getAndIncrement());
+                        t.setDaemon(true);
+                        return t;
+                    }))
+                    .build();
+        } catch (Exception e) {
+            client = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofSeconds(10))
+                    .followRedirects(HttpClient.Redirect.NORMAL)
+                    .build();
+        }
+        INSTANCE = client;
+    }
 
     private SharedHttpClient() { }
 
