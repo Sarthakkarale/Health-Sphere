@@ -189,11 +189,6 @@ public class AdminMainShell {
                         "⚙️  Neural Settings"
                 );
 
-        Button aboutUsBtn =
-                createNavButton(
-                        "ℹ️  About Us"
-                );
-
         allNavButtons =
                 List.of(
                         dashboardBtn,
@@ -201,8 +196,7 @@ public class AdminMainShell {
                         hospitalBtn,
                         doctorBtn,
                         analyticsBtn,
-                        settingsBtn,
-                        aboutUsBtn
+                        settingsBtn
                 );
 
         // =====================================================
@@ -320,26 +314,6 @@ public class AdminMainShell {
         });
 
         // =====================================================
-        // ABOUT US
-        // =====================================================
-
-        aboutUsBtn.setOnAction(e -> {
-
-            setActiveButton(
-                    aboutUsBtn
-            );
-
-            AboutUs aboutUsView =
-                    new AboutUs(
-                            primaryStage
-                    );
-
-            rootLayout.setCenter(
-                    aboutUsView.getView()
-            );
-        });
-
-        // =====================================================
         // SPACER
         // =====================================================
 
@@ -380,8 +354,6 @@ public class AdminMainShell {
                 analyticsBtn,
 
                 settingsBtn,
-
-                aboutUsBtn,
 
                 spacer,
 
